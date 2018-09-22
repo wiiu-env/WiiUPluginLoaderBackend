@@ -1,0 +1,12 @@
+build/*
+*.cbp
+*.elf
+*.cscope_file_list
+*.layout
+screenshots/*
+release/*
+*.mod
+*.id*
+*.nam
+*.til
+*.layout

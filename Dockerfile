@@ -15,7 +15,7 @@ COPY --from=wiiulegacy/libntfs:2013.1.13 /artifacts $DEVKITPRO/portlibs
 COPY --from=wiiulegacy/libutils:0.1 /artifacts $DEVKITPRO/portlibs
 COPY --from=wiiulegacy/libgui:0.1 /artifacts $DEVKITPRO/portlibs
 
-RUN wget https://github.com/Maschell/WiiUPluginLoader/libs/portlibs.zip  && \
+RUN wget https://github.com/Maschell/WiiUPluginLoader/raw/master/libs/portlibs.zip && \
 	7z x -y portlibs.zip -o${DEVKITPRO} && \
 	rm portlibs.zip
 	

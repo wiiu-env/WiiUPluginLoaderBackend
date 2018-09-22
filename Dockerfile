@@ -4,8 +4,8 @@ FROM wups/core:latest
 RUN rm -rf $DEVKITPRO/portlibs
 
 # Install devkitARM. Needed to build mocha.
-RUN yes | sudo dkp-pacman -Syu devkitARM --needed 
 ENV DEVKITARM=${DEVKITPRO}/devkitARM
+COPY --from=devkitpro/devkitarm $DEVKITARM $DEVKITARM
 
 # Get dependencies
 COPY --from=wiiulegacy/dynamic_libs:0.1 /artifacts $DEVKITPRO/portlibs

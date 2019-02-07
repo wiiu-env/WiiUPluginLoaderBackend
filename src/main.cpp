@@ -149,7 +149,6 @@ extern "C" int32_t Menu_Main(int32_t argc, char **argv) {
     if(!isInMiiMakerHBL()) {
         DEBUG_FUNCTION_LINE("Apply patches.\n");
         ApplyPatchesAndCallHookStartingApp();
-        ConfigUtils::loadConfigFromSD();
 
         if(MemoryMapping::isMemoryMapped()) {
             DEBUG_FUNCTION_LINE("Mapping was already done. Running %016llX\n",gGameTitleID);
@@ -172,6 +171,7 @@ extern "C" int32_t Menu_Main(int32_t argc, char **argv) {
         CallHook(WUPS_LOADER_HOOK_INIT_KERNEL);
         CallHook(WUPS_LOADER_HOOK_INIT_FS);
         CallHook(WUPS_LOADER_HOOK_INIT_OVERLAY);
+        ConfigUtils::loadConfigFromSD();
         CallHook(WUPS_LOADER_HOOK_INIT_PLUGIN);
         DEBUG_FUNCTION_LINE("Loading the system menu.\n");
         DeInit();

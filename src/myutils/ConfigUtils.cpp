@@ -342,11 +342,34 @@ void ConfigUtils::deleteConfigInformation(std::vector<ConfigInformation *> confi
 }
 
 void ConfigUtils::loadConfigFromSD() {
-    deleteConfigInformation(getConfigInformation());
+    std::vector<ConfigInformation *> configInfos = getConfigInformation();
+    
+    for (auto & curConfig : configInfos) {
+        curConfig->loadValuesFromSD();
+    }
+    
+    deleteConfigInformation(configInfos);
+}
+
+void ConfigUtils::saveConfigToSD() {
+    std::vector<ConfigInformation *> configInfos = getConfigInformation();
+    
+    for (auto & curConfig : configInfos) {
+        curConfig->updateAndSaveSettings(true);
+    }
+    
+    deleteConfigInformation(configInfos);
 }
 
 void ConfigUtils::openConfigMenu() {
     std::vector<ConfigInformation *> configInfos = getConfigInformation();
+    
+    // We rely on the default values here.
+    //if(loadFromSD){
+    //    for (auto & curConfig : configInfos) {
+    //        configs.loadValuesFromSD();
+    //    }
+    //}
 
     std::vector<WUPSConfig *> configs;
 
@@ -362,6 +385,10 @@ void ConfigUtils::openConfigMenu() {
 
     for (auto & curConfig : configs) {
         DCFlushRange(curConfig, sizeof(WUPSConfig));
+    }
+    
+    for (auto & curConfig : configInfos) {
+        curConfig->updateAndSaveSettings(false);
     }
 
     deleteConfigInformation(configInfos);

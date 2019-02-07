@@ -25,12 +25,10 @@ ConfigInformation::ConfigInformation(WUPSConfig * config, std::string persistPat
     this->persistPath = persistPath;
     this->persistFileName = persistFileName;
     createConfigSettings();
-    loadValuesFromSD();
 }
 
 ConfigInformation::~ConfigInformation() {
     if(configSettings != NULL) {
-        updateAndSaveSettings();
         delete configSettings;
         configSettings = NULL;
     }
@@ -89,12 +87,12 @@ bool ConfigInformation::loadValuesFromSD() {
     return true;
 }
 
-void ConfigInformation::updateAndSaveSettings() {
+void ConfigInformation::updateAndSaveSettings(bool forceAll) {
     if(this->config == NULL || this->configSettings == NULL) {
         return;
     }
     updateConfigSettings();
-    configSettings->Save();
+    configSettings->Save(forceAll);
 }
 
 bool ConfigInformation::updateConfigSettings() {

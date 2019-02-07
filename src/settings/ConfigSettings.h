@@ -37,7 +37,7 @@ public:
     //!Load Settings
     bool Load();
     //!Save Settings
-    bool Save();
+    bool Save(bool force);
     //!Reset Settings
     bool Reset();
 

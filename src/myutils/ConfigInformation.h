@@ -35,12 +35,13 @@ public:
 
     /**
         Deletes the given WUPSConfig
-        Calls updateAndSaveSettings
         Deletes the created ConfigSettings
     **/
     ~ConfigInformation();
 
-    void updateAndSaveSettings();
+    void updateAndSaveSettings(bool forceAll);
+    
+    bool loadValuesFromSD();
 
     WUPSConfig * getConfig() {
         return config;
@@ -48,7 +49,6 @@ public:
 
 private:
     bool createConfigSettings();
-    bool loadValuesFromSD();
     bool updateConfigSettings();
 
     WUPSConfig * config = NULL;

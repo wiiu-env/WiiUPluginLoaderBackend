@@ -29,6 +29,7 @@ DECL(uint32_t, ProcUIProcessMessages, uint32_t u) {
         CallHook(WUPS_LOADER_HOOK_APP_STATUS_CHANGED);
         if(gAppStatus == WUPS_APP_STATUS_CLOSED) {
             CallHook(WUPS_LOADER_HOOK_ENDING_APPLICATION);
+            ConfigUtils::saveConfigToSD();
             DeInit();
         }
     }

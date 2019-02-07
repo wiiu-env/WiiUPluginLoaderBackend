@@ -181,7 +181,7 @@ bool ConfigSettings::Reset() {
     this->SetDefault();
     bChanged = true;
 
-    if (this->Save()) {
+    if (this->Save(true)) {
         return true;
     }
 
@@ -197,8 +197,8 @@ int32_t ConfigSettings::getIdByName(std::string configID) {
     return -1;
 }
 
-bool ConfigSettings::Save() {
-    if(!bChanged) {
+bool ConfigSettings::Save(bool force) {
+    if(!force && !bChanged) {
         DEBUG_FUNCTION_LINE("Nothing has changed, we can skip\n");
         return true;
     }

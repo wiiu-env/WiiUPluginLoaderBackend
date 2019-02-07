@@ -26,15 +26,21 @@ class ConfigUtils {
 public:
     /**
         Loads the configuration files of all loaded plugins from the SDCard
-        and triggers the "loadValue" if they differ the default value.
+        and triggers the "callback" if they differ the default/current value.
     **/
     static void loadConfigFromSD();
+    
+     /**
+        Get the current values from all plugins via the WUPS_GET_CONFIG() hook and
+        save them to the SD Card.
+    **/
+    static void saveConfigToSD();
 
     /**
         Opens the configuration menu where plugins can be configured.
         Plugins need to implement the WUPS_GET_CONFIG() hook to show up in the menu.
         The menu will be rendered on the TV and DRC screen, with optimization for the DRC.
-        If the menu is low, the menu may be only rendered to the DRC.
+        If the memory is low, the menu may be only rendered to the DRC.
     **/
     static void openConfigMenu();
 
@@ -66,7 +72,7 @@ private:
         default value. This behaviour may change in the future.
         See the ConfigInformation class for more information.
     **/
-    static std::vector<ConfigInformation *> getConfigInformation();
+    static std::vector<ConfigInformation *> getConfigInformation();    
 
     /**
         Delete a list of ConfigInformation.

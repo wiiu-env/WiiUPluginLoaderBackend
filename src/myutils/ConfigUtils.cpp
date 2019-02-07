@@ -166,7 +166,19 @@ void ConfigUtils::configMenuOpenedCallback(wups_overlay_options_type_t screen, v
         }
         if(vpad_data.btns_d & VPAD_BUTTON_RIGHT) {
             pressedButtons |= WUPS_CONFIG_BUTTON_RIGHT;
+        }		
+		if(vpad_data.btns_d & VPAD_BUTTON_L) {
+            pressedButtons |= WUPS_CONFIG_BUTTON_L;
         }
+        if(vpad_data.btns_d & VPAD_BUTTON_R) {
+            pressedButtons |= WUPS_CONFIG_BUTTON_R;
+        }
+		if(vpad_data.btns_d & VPAD_BUTTON_ZL) {
+            pressedButtons |= WUPS_CONFIG_BUTTON_ZL;
+        }
+        if(vpad_data.btns_d & VPAD_BUTTON_ZR) {
+            pressedButtons |= WUPS_CONFIG_BUTTON_ZR;
+        }			
 
         if(vpad_data.btns_r & VPAD_BUTTON_DOWN) {
             newSelect++;

@@ -82,7 +82,7 @@ bool ConfigInformation::loadValuesFromSD() {
             if(prevValue.compare(loadedValue) != 0) {
                 //DEBUG_FUNCTION_LINE("Call loadValue\n");
                 curItem->loadValue(loadedValue);
-                // calling the callback here is _NOT_ needed. It will be called when the menu is closed.
+                curItem->callCallback();
             }
         }
     }

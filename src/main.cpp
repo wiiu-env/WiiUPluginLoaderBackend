@@ -95,6 +95,10 @@ extern "C" int32_t Menu_Main(int32_t argc, char **argv) {
     init_kernel_syscalls();
     wups_init_kernel_syscalls();
 
+    if(!MemoryMapping::isMemoryMapped()) {
+        MemoryMapping::setupMemoryMapping();
+    }
+
     gGameTitleID = OSGetTitleID();
 
     int32_t result = 0;
@@ -129,12 +133,7 @@ extern "C" int32_t Menu_Main(int32_t argc, char **argv) {
         memoryRelease();
         CSettings::destroyInstance();
         PluginLoader::destroyInstance();
-    }
 
-    if(result == APPLICATION_CLOSE_APPLY_MEMORY) {
-        if(!MemoryMapping::isMemoryMapped()) {
-            MemoryMapping::setupMemoryMapping();
-        }
     }
 
     DEBUG_FUNCTION_LINE("Do relocations\n");
@@ -153,7 +152,7 @@ extern "C" int32_t Menu_Main(int32_t argc, char **argv) {
         if(MemoryMapping::isMemoryMapped()) {
             DEBUG_FUNCTION_LINE("Mapping was already done. Running %016llX\n",gGameTitleID);
             readAndPrintSegmentRegister(NULL,NULL);
-            MemoryMapping::readTestValuesFromMemory();
+            //MemoryMapping::readTestValuesFromMemory();
         } else {
             DEBUG_FUNCTION_LINE("<-----------------------------------------------------> \n");
             DEBUG_FUNCTION_LINE("<---------------- COPY PASTE ME START-----------------> \n");

@@ -349,10 +349,10 @@ void MemoryMapping::setupMemoryMapping() {
 
     runOnAllCores(readAndPrintSegmentRegister,NULL,0,16,0x80000);
 
-    searchEmptyMemoryRegions();
+    //searchEmptyMemoryRegions();
 
-    writeTestValuesToMemory();
-    readTestValuesFromMemory();
+    //writeTestValuesToMemory();
+    //readTestValuesFromMemory();
 }
 
 

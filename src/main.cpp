@@ -52,6 +52,7 @@
 #include "Application.h"
 #include "patcher/function_patcher.h"
 #include "patcher/hooks_patcher.h"
+#include "patcher/hooks_patcher_static.h"
 #include "plugin/dynamic_linking_defines.h"
 #include "myutils/mocha.h"
 #include "myutils/libntfs.h"
@@ -136,6 +137,9 @@ extern "C" int32_t Menu_Main(int32_t argc, char **argv) {
 
     }
 
+    DEBUG_FUNCTION_LINE("Patch own stuff\n");
+    PatchInvidualMethodHooks(method_hooks_hooks_static, method_hooks_size_hooks_static, method_calls_hooks_static);
+
     DEBUG_FUNCTION_LINE("Do relocations\n");
 
     std::vector<dyn_linking_relocation_entry_t *> relocations = DynamicLinkingHelper::getInstance()->getAllValidDynamicLinkingRelocations();
@@ -190,6 +194,7 @@ extern "C" int32_t Menu_Main(int32_t argc, char **argv) {
 }
 
 void ApplyPatchesAndCallHookStartingApp() {
+    PatchInvidualMethodHooks(method_hooks_hooks_static, method_hooks_size_hooks_static, method_calls_hooks_static);
     PatchInvidualMethodHooks(method_hooks_hooks, method_hooks_size_hooks, method_calls_hooks);
     for(int32_t plugin_index=0; plugin_index<gbl_replacement_data.number_used_plugins; plugin_index++) {
         CallHookEx(WUPS_LOADER_HOOK_STARTING_APPLICATION,plugin_index);
@@ -208,6 +213,7 @@ void RestorePatches() {
         new_RestoreInvidualInstructions(&gbl_replacement_data.plugin_data[plugin_index]);
     }
     RestoreInvidualInstructions(method_hooks_hooks, method_hooks_size_hooks);
+    RestoreInvidualInstructions(method_hooks_hooks_static, method_hooks_size_hooks_static);
 }
 
 int32_t isInMiiMakerHBL() {

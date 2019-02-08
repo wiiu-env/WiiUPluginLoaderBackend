@@ -54,6 +54,7 @@
 #include "patcher/hooks_patcher.h"
 #include "patcher/hooks_patcher_static.h"
 #include "plugin/dynamic_linking_defines.h"
+#include "myutils/mem_utils.h"
 #include "myutils/mocha.h"
 #include "myutils/libntfs.h"
 #include "myutils/libfat.h"
@@ -135,6 +136,7 @@ extern "C" int32_t Menu_Main(int32_t argc, char **argv) {
         CSettings::destroyInstance();
         PluginLoader::destroyInstance();
 
+        MemoryUtils::init();
     }
 
     DEBUG_FUNCTION_LINE("Patch own stuff\n");
@@ -171,6 +173,7 @@ extern "C" int32_t Menu_Main(int32_t argc, char **argv) {
     }
 
     if(result == APPLICATION_CLOSE_APPLY || result == APPLICATION_CLOSE_APPLY_MEMORY) {
+        CallHook(WUPS_LOADER_HOOK_INIT_VID_MEM);
         CallHook(WUPS_LOADER_HOOK_INIT_KERNEL);
         CallHook(WUPS_LOADER_HOOK_INIT_FS);
         CallHook(WUPS_LOADER_HOOK_INIT_OVERLAY);

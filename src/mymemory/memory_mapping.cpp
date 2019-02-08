@@ -76,6 +76,14 @@ uint32_t MemoryMapping::getHeapSize() {
     return getAreaSizeFromPageTable(MEMORY_START_PLUGIN_HEAP,MEMORY_START_PLUGIN_HEAP_END - MEMORY_START_PLUGIN_HEAP);
 }
 
+uint32_t MemoryMapping::getVideoMemoryAddress() {
+    return MEMORY_START_VIDEO_SPACE;
+}
+
+uint32_t MemoryMapping::getVideoMemorySize() {
+    return getAreaSizeFromPageTable(MEMORY_START_VIDEO_SPACE,MEMORY_START_VIDEO_SPACE_END - MEMORY_START_VIDEO_SPACE);
+}
+
 void MemoryMapping::searchEmptyMemoryRegions() {
     DEBUG_FUNCTION_LINE("Searching for empty memory.\n");
 

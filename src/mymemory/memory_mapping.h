@@ -35,7 +35,8 @@ typedef struct _memory_mapping_t {
 #define MEMORY_START_BASE               0x80000000
 
 #define MEMORY_LOADER_SPACE_SIZE        0x00800000      // At most: 8MB for the plugin loader.
-#define MEMORY_PLUGIN_SPACE_SIZE        0x07800000      // At most: 120MB for plugins.
+#define MEMORY_PLUGIN_SPACE_SIZE        0x04000000      // At most: 64MB for plugins.
+#define MEMORY_VIDEO_SPACE_SIZE         0x03600000      // At most: 56MB for video.
 #define MEMORY_PLUGIN_HEAP_SIZE         0x08000000      // At most: 128MB for plugins heap.
 
 #define MEMORY_START_PLUGIN_LOADER      MEMORY_START_BASE
@@ -44,7 +45,10 @@ typedef struct _memory_mapping_t {
 #define MEMORY_START_PLUGIN_SPACE       MEMORY_START_PLUGIN_LOADER_END
 #define MEMORY_START_PLUGIN_SPACE_END   MEMORY_START_PLUGIN_SPACE + MEMORY_PLUGIN_SPACE_SIZE
 
-#define MEMORY_START_PLUGIN_HEAP        MEMORY_START_PLUGIN_SPACE_END
+#define MEMORY_START_VIDEO_SPACE        MEMORY_START_PLUGIN_SPACE_END
+#define MEMORY_START_VIDEO_SPACE_END    MEMORY_START_VIDEO_SPACE + MEMORY_VIDEO_SPACE_SIZE
+
+#define MEMORY_START_PLUGIN_HEAP        MEMORY_START_VIDEO_SPACE_END
 #define MEMORY_START_PLUGIN_HEAP_END    MEMORY_START_PLUGIN_HEAP + MEMORY_PLUGIN_HEAP_SIZE
 
 const memory_values_t mem_vals_loader[] = {
@@ -54,6 +58,40 @@ const memory_values_t mem_vals_loader[] = {
 
 const memory_values_t mem_vals_plugins[] = {
     {0x28000000 + 0x06E20000          , 0x28000000 + 0x07E20000},               // 16MB         0x80800000 0x81800000 -> 0x2EF00000 0x2FF00000
+    {0,0}
+};
+
+const memory_values_t mem_vals_video[] = {
+    // The GPU doesn't have access to the 0x28000000 - 0x32000000 area, so we need memory from somewhere else.
+    // From the SharedReadHeap of the loader.
+    //
+    // #define TinyHeap_Alloc ((int32_t (*)(void* heap, int32_t size, int32_t align,void ** outPtr))0x0101235C)
+    // #define TinyHeap_Free ((void (*)(void* heap, void * ptr))0x01012814)
+    // uint32_t SharedReadHeapTrackingAddr = 0xFA000000 + 0x18 + 0x830 // see https://github.com/decaf-emu/decaf-emu/blob/master/src/libdecaf/src/cafe/loader/cafe_loader_shared.cpp#L490
+    //
+    // Map the area of the heap to somewhere in the user space and test allocation with
+    // void * heap = (void*) SharedReadHeapTrackingAddr - [delta due mapping e.g (0xF8000000 + 0x80000000)];
+    // int size = 0x20000; // value have to be a multiple of 0x20000;
+    // while(true){
+    //     void * outPtr = NULL;
+    //     if(TinyHeap_Alloc(heap,size, 0x20000,&outPtr) == 0){ // value have to be a multiple of 0x20000;
+    //         DEBUG_FUNCTION_LINE("Allocated %d kb on heap %08X (PA %08X)\n",size/1024,(uint32_t)outPtr, OSEffectiveToPhysical(outPtr));
+    //         TinyHeap_Free(heap, outPtr);
+    //     }else{
+    //         DEBUG_FUNCTION_LINE("Failed %08X\n",(uint32_t)outPtr);
+    //         break;
+    //     }
+    //     size += 0x20000; // value have to be a multiple of 0x20000;
+    // }
+    //
+    {0x1A020000 , 0x1A020000 +0xE60000}, // size: 14720 kB
+    // The following chunk were empty while early tests and are maybe promising. However we can get 15mb from
+    // a loader heap. Which should be enough for now.
+    //{0x14000000 + 0x02E00000 , 0x14000000 +0x034E0000}, // size: 7040 kB
+    //{0x14000000 + 0x02820000 , 0x14000000 +0x02C20000}, // size: 4096 kB
+    //{0x14000000 + 0x05AE0000 , 0x14000000 +0x06000000}, // size: 5248 kB
+    //{0x14000000 + 0x08040000 , 0x14000000 +0x08400000}, // size: 3840 kB
+    //{0x18000000 , 0x18000000 +0x3000000}, // size: 3840 kB
     {0,0}
 };
 
@@ -105,6 +143,7 @@ const memory_mapping_t mem_mapping[] = {
     {MEMORY_START_PLUGIN_LOADER,    mem_vals_loader},
     {MEMORY_START_PLUGIN_SPACE,     mem_vals_plugins},
     {MEMORY_START_PLUGIN_HEAP,      mem_vals_heap},
+    {MEMORY_START_VIDEO_SPACE,      mem_vals_video},
     {0,NULL}
 };
 

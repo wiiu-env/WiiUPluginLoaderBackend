@@ -325,7 +325,7 @@ void MemoryMapping::setupMemoryMapping() {
     // This is nice because it leads to SR[8] which also seems to be unused (was set to 0x30FFFFFF)
     // The content of the segment was chosen randomly.
     uint32_t segment_index = MEMORY_START_BASE >> 28;
-    uint32_t segment_content = 0x20000000 | SEGMENT_UNIQUE_ID;
+    uint32_t segment_content = 0x00000000 | SEGMENT_UNIQUE_ID;
 
     DEBUG_FUNCTION_LINE("Setting SR[%d] to %08X\n",segment_index,segment_content);
     srTableCpy.value[segment_index] = segment_content;
@@ -549,9 +549,8 @@ void MemoryMapping::printPageTableTranslation(sr_table_t srTable, uint32_t * tra
 
     for(std::vector<pageInformation>::iterator it = pageInfos.begin(); it != pageInfos.end(); ++it) {
         pageInformation cur = *it;
-        // TODO: print if it's executable
         DEBUG_FUNCTION_LINE("%08X %08X -> %08X %08X. user access %s. supervisor access %s. %s\n",cur.addr,cur.addr+cur.size,cur.phys,cur.phys+cur.size,cur.kp ? access2[cur.pp] : access1[cur.pp],
-                            cur.ks ? access2[cur.pp] : access1[cur.pp],cur.nx? " not executable " : " executable");
+                            cur.ks ? access2[cur.pp] : access1[cur.pp],cur.nx? "not executable" : "executable");
     }
 }
 

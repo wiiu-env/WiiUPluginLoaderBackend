@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
 #ifndef __MEMORY_UTILS_UTILS_H_
-#define __SCREEN_UTILS_H_
+#define __MEMORY_UTILS_UTILS_H_
 
 class MemoryUtils {
 public:

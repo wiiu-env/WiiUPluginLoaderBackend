@@ -25,6 +25,7 @@ typedef struct _memory_values_t {
 
 typedef struct _memory_mapping_t {
     uint32_t effective_start_address;
+    uint32_t effective_end_address;
     const memory_values_t* physical_addresses;
 } memory_mapping_t;
 
@@ -140,11 +141,11 @@ const memory_values_t mem_vals_heap[] = {
 };
 
 const memory_mapping_t mem_mapping[] = {
-    {MEMORY_START_PLUGIN_LOADER,    mem_vals_loader},
-    {MEMORY_START_PLUGIN_SPACE,     mem_vals_plugins},
-    {MEMORY_START_PLUGIN_HEAP,      mem_vals_heap},
-    {MEMORY_START_VIDEO_SPACE,      mem_vals_video},
-    {0,NULL}
+    {MEMORY_START_VIDEO_SPACE,      MEMORY_START_VIDEO_SPACE_END,   mem_vals_video},
+    {MEMORY_START_PLUGIN_LOADER,    MEMORY_START_PLUGIN_LOADER_END, mem_vals_loader},
+    {MEMORY_START_PLUGIN_SPACE,     MEMORY_START_PLUGIN_SPACE_END,  mem_vals_plugins},
+    {MEMORY_START_PLUGIN_HEAP,      MEMORY_START_PLUGIN_HEAP_END,   mem_vals_heap},
+    {0,0,NULL}
 };
 
 class MemoryMapping {
@@ -166,7 +167,19 @@ public:
 
     static uint32_t getHeapSize();
 
+    static uint32_t getVideoMemoryAddress();
+
+    static uint32_t getVideoMemorySize();
+
     static uint32_t getAreaSizeFromPageTable(uint32_t start, uint32_t maxSize);
+
+    // Caution when using the result. A chunk of memory in effective address may be split up
+    // into several small chunks inside physical space.
+    static uint32_t PhysicalToEffective(uint32_t phyiscalAddress);
+
+    // Caution when using the result. A chunk of memory in effective address may be split up
+    // into several small chunks inside physical space.
+    static uint32_t EffectiveToPhysical(uint32_t effectiveAddress);
 
 private:
 

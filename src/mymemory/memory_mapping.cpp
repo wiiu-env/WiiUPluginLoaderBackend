@@ -675,3 +675,66 @@ bool MemoryMapping::mapMemory(uint32_t pa_start_address,uint32_t pa_end_address,
     return true;
 }
 
+uint32_t MemoryMapping::PhysicalToEffective(uint32_t phyiscalAddress){
+    uint32_t result = 0;
+    const memory_values_t * curMemValues = NULL;
+    int32_t curOffset = 0;
+    //iterate through all own mapped memory regions
+    for(int32_t i = 0;true;i++){
+        if(mem_mapping[i].physical_addresses == NULL){
+            break;
+        }
+
+        curMemValues = mem_mapping[i].physical_addresses;
+        uint32_t curOffsetInEA = 0;
+        // iterate through all memory values of this region
+        for(int32_t j= 0;true;j++){
+            if(curMemValues[j].end_address == 0){
+                break;
+            }
+            if(phyiscalAddress >= curMemValues[j].start_address && phyiscalAddress < curMemValues[j].end_address){
+                // calculate the EA
+                result = (phyiscalAddress - curMemValues[j].start_address)  + (mem_mapping[i].effective_start_address + curOffsetInEA);
+                return result;
+            }
+            curOffsetInEA += curMemValues[j].end_address - curMemValues[j].start_address;
+        }
+    }
+
+    return result;
+}
+
+uint32_t MemoryMapping::EffectiveToPhysical(uint32_t effectiveAddress){
+    uint32_t result = 0;
+    // CAUTION: The data may be fragmented between multiple areas in PA.
+    const memory_values_t * curMemValues = NULL;
+    int32_t curOffset = 0;
+
+    for(int32_t i = 0;true;i++){
+        if(mem_mapping[i].physical_addresses == NULL){
+            break;
+        }
+        if(effectiveAddress >= mem_mapping[i].effective_start_address && effectiveAddress < mem_mapping[i].effective_end_address){
+            curMemValues = mem_mapping[i].physical_addresses;
+            curOffset = mem_mapping[i].effective_start_address;
+            break;
+        }
+    }
+
+    if(curMemValues == NULL){
+        return result;
+    }
+
+    for(int32_t i= 0;true;i++){
+        if(curMemValues[i].end_address == 0){
+            break;
+        }
+        int32_t curChunkSize = curMemValues[i].end_address - curMemValues[i].start_address;
+        if(effectiveAddress < (curOffset + curChunkSize)){
+            result = (effectiveAddress - curOffset) + curMemValues[i].start_address;
+            break;
+        }
+        curOffset += curChunkSize;
+    }
+    return result;
+}

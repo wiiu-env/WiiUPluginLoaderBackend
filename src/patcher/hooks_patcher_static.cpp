@@ -25,7 +25,7 @@ DECL(void, __PPCExit, void) {
 
 DECL_FUNCTION(uint32_t, __OSPhysicalToEffectiveCached, uint32_t phyiscalAddress) {
     uint32_t result = real___OSPhysicalToEffectiveCached(phyiscalAddress);
-    if(result == 0){
+    if(result == 0) {
         result = MemoryMapping::PhysicalToEffective(phyiscalAddress);
         //DEBUG_FUNCTION_LINE("__OSPhysicalToEffectiveCached in %08X out %08X\n",phyiscalAddress,result);
     }
@@ -34,7 +34,7 @@ DECL_FUNCTION(uint32_t, __OSPhysicalToEffectiveCached, uint32_t phyiscalAddress)
 
 DECL_FUNCTION(uint32_t, __OSPhysicalToEffectiveUncached, uint32_t phyiscalAddress) {
     uint32_t result = real___OSPhysicalToEffectiveUncached(phyiscalAddress);
-    if(result == 0){
+    if(result == 0) {
         result = MemoryMapping::PhysicalToEffective(phyiscalAddress);
         //DEBUG_FUNCTION_LINE("__OSPhysicalToEffectiveUncached in %08X out %08X\n",phyiscalAddress,result);
         return result;
@@ -45,7 +45,7 @@ DECL_FUNCTION(uint32_t, __OSPhysicalToEffectiveUncached, uint32_t phyiscalAddres
 
 DECL_FUNCTION(uint32_t, OSEffectiveToPhysical, uint32_t virtualAddress) {
     uint32_t result = real_OSEffectiveToPhysical(virtualAddress);
-    if(result == 0){
+    if(result == 0) {
         result = MemoryMapping::EffectiveToPhysical(virtualAddress);
         //DEBUG_FUNCTION_LINE("OSEffectiveToPhysical in %08X out %08X\n",virtualAddress,result);
         return result;
@@ -53,9 +53,9 @@ DECL_FUNCTION(uint32_t, OSEffectiveToPhysical, uint32_t virtualAddress) {
     return result;
 }
 
-DECL_FUNCTION(int32_t, OSIsAddressValid, uint32_t virtualAddress){
+DECL_FUNCTION(int32_t, OSIsAddressValid, uint32_t virtualAddress) {
     int32_t result = real_OSIsAddressValid(virtualAddress);
-    if(result == 0){
+    if(result == 0) {
         result = (MemoryMapping::EffectiveToPhysical(virtualAddress) > 0);
         //DEBUG_FUNCTION_LINE("OSIsAddressValid in %08X out %d\n",virtualAddress,result);
         return result;

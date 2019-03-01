@@ -148,7 +148,7 @@ extern "C" int32_t Menu_Main(int32_t argc, char **argv) {
         g_vid_originalContextSave = NULL;
         g_vid_ownContextState = NULL;
         g_NotInLoader = false;
-    }else{
+    } else {
         g_NotInLoader = true;
     }
 

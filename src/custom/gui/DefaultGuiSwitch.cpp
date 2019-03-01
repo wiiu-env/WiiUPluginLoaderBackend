@@ -20,16 +20,15 @@
  */
 
 DefaultGuiSwitch::DefaultGuiSwitch(bool checked)
- : GuiSwitch(NULL,checked)
- ,switchbase_imgdata(Resources::GetImageData("switchIconBase.png"))
- ,switchbase_img(switchbase_imgdata)
- ,switchbase_highlighted_imgdata(Resources::GetImageData("switchIconBaseHighlighted.png"))
- ,switchbase_highlighted_img(switchbase_highlighted_imgdata)
- ,switchOn_imgdata(Resources::GetImageData("switchIconOn.png"))
- ,switchOn_img(switchOn_imgdata)
- ,switchOff_imgdata(Resources::GetImageData("switchIconOff.png"))
- ,switchOff_img(switchOff_imgdata)
-{
+    : GuiSwitch(NULL,checked)
+    ,switchbase_imgdata(Resources::GetImageData("switchIconBase.png"))
+    ,switchbase_img(switchbase_imgdata)
+    ,switchbase_highlighted_imgdata(Resources::GetImageData("switchIconBaseHighlighted.png"))
+    ,switchbase_highlighted_img(switchbase_highlighted_imgdata)
+    ,switchOn_imgdata(Resources::GetImageData("switchIconOn.png"))
+    ,switchOn_img(switchOn_imgdata)
+    ,switchOff_imgdata(Resources::GetImageData("switchIconOff.png"))
+    ,switchOff_img(switchOff_imgdata) {
     setSize(switchbase_img.getWidth(),switchbase_img.getHeight());
     this->setImageBackground(&switchbase_img);
     this->setImageHighlighted(&switchbase_highlighted_img);
@@ -39,8 +38,7 @@ DefaultGuiSwitch::DefaultGuiSwitch(bool checked)
 /**
  * Destructor for the DefaultGuiSwitch class.
  */
-DefaultGuiSwitch::~DefaultGuiSwitch()
-{
+DefaultGuiSwitch::~DefaultGuiSwitch() {
     Resources::RemoveImageData(switchbase_imgdata);
     Resources::RemoveImageData(switchbase_highlighted_imgdata);
     Resources::RemoveImageData(switchOn_imgdata);

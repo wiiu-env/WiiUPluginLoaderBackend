@@ -24,14 +24,14 @@
 
 int32_t memHandle __attribute__((section(".data"))) = -1;
 
-void MemoryUtils::init(){
+void MemoryUtils::init() {
     memHandle = MEMCreateExpHeapEx((void*)MemoryMapping::getVideoMemoryAddress(), MemoryMapping::getVideoMemorySize(), 0);
 }
 
-void* MemoryUtils::alloc(uint32_t size, int32_t align){
+void* MemoryUtils::alloc(uint32_t size, int32_t align) {
     return MEMAllocFromExpHeapEx(memHandle,size, align);
 }
 
-void MemoryUtils::free(void * ptr){
-   MEMFreeToExpHeap(memHandle,ptr);
+void MemoryUtils::free(void * ptr) {
+    MEMFreeToExpHeap(memHandle,ptr);
 }

@@ -272,7 +272,7 @@ bool ElfTools::elfLink(Elf *elf, size_t shndx, void *destination, Elf32_Sym *sym
                     uint32_t size = symtab[symbol].st_size;
 
                     uint32_t address = pluginData->getMemoryForCommonBySymbol(symbol, align, size);
-                    if(address == 0){
+                    if(address == 0) {
                         DEBUG_FUNCTION_LINE("Failed to get memory for common relocation\n");
                         return false;
                     }
@@ -494,7 +494,8 @@ bool ElfTools::elfLinkOne(char type, size_t offset, int32_t addend, void *destin
 
     result = true;
 exit_error:
-    if (!result) DEBUG_FUNCTION_LINE("Plugin_ElfLinkOne: exit_error\n");
+    if (!result)
+        DEBUG_FUNCTION_LINE("Plugin_ElfLinkOne: exit_error\n");
     return result;
 }
 

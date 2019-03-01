@@ -29,10 +29,10 @@ public:
         and triggers the "callback" if they differ the default/current value.
     **/
     static void loadConfigFromSD();
-    
-     /**
-        Get the current values from all plugins via the WUPS_GET_CONFIG() hook and
-        save them to the SD Card.
+
+    /**
+       Get the current values from all plugins via the WUPS_GET_CONFIG() hook and
+       save them to the SD Card.
     **/
     static void saveConfigToSD();
 
@@ -72,7 +72,7 @@ private:
         default value. This behaviour may change in the future.
         See the ConfigInformation class for more information.
     **/
-    static std::vector<ConfigInformation *> getConfigInformation();    
+    static std::vector<ConfigInformation *> getConfigInformation();
 
     /**
         Delete a list of ConfigInformation.

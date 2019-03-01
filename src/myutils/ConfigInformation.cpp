@@ -104,7 +104,7 @@ bool ConfigInformation::updateConfigSettings() {
         for (auto & curItem : curCat->getItems()) {
             std::string configID = curItem->getConfigID();
             std::string newValue = curItem->persistValue();
-            if(this->configSettings->setValueAsString(this->configSettings->getIdByName(configID), newValue)){
+            if(this->configSettings->setValueAsString(this->configSettings->getIdByName(configID), newValue)) {
                 // When the value has changed, call the callback.
                 DEBUG_FUNCTION_LINE("Called callback. Reason. Menu was closed and value has changed\n");
                 curItem->callCallback();

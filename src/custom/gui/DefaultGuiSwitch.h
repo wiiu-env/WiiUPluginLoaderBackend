@@ -20,26 +20,26 @@
 #include <gui/GuiSwitch.h>
 
 //!A simple switch
-class DefaultGuiSwitch : public GuiSwitch{
-	public:
-		//!Constructor
-		//!\param checked Checked
-		DefaultGuiSwitch(bool checked);
-		//!Destructor
-		virtual ~DefaultGuiSwitch();
+class DefaultGuiSwitch : public GuiSwitch {
+public:
+    //!Constructor
+    //!\param checked Checked
+    DefaultGuiSwitch(bool checked);
+    //!Destructor
+    virtual ~DefaultGuiSwitch();
 
-	protected:
-        GuiImageData * switchbase_imgdata = NULL;
-        GuiImage switchbase_img;
+protected:
+    GuiImageData * switchbase_imgdata = NULL;
+    GuiImage switchbase_img;
 
-        GuiImageData * switchbase_highlighted_imgdata = NULL;
-        GuiImage switchbase_highlighted_img;
+    GuiImageData * switchbase_highlighted_imgdata = NULL;
+    GuiImage switchbase_highlighted_img;
 
-        GuiImageData * switchOn_imgdata = NULL;
-        GuiImage switchOn_img;
+    GuiImageData * switchOn_imgdata = NULL;
+    GuiImage switchOn_img;
 
-        GuiImageData * switchOff_imgdata = NULL;
-        GuiImage switchOff_img;
+    GuiImageData * switchOff_imgdata = NULL;
+    GuiImage switchOff_img;
 };
 
 #endif

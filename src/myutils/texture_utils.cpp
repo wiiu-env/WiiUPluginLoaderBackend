@@ -22,15 +22,14 @@
 #include <dynamic_libs/gx2_types.h>
 #include "mem_utils.h"
 
-void gdImageToUnormR8G8B8A8(gdImagePtr gdImg, u32 *imgBuffer, u32 width, u32 height, u32 pitch){
-    for(u32 y = 0; y < height; ++y)
-    {
-        for(u32 x = 0; x < width; ++x)
-        {
-			u32 pixel = gdImageGetPixel(gdImg, x, y);
+void gdImageToUnormR8G8B8A8(gdImagePtr gdImg, u32 *imgBuffer, u32 width, u32 height, u32 pitch) {
+    for(u32 y = 0; y < height; ++y) {
+        for(u32 x = 0; x < width; ++x) {
+            u32 pixel = gdImageGetPixel(gdImg, x, y);
 
-			u8 a = 254 - 2*((u8)gdImageAlpha(gdImg, pixel));
-			if(a == 254) a++;
+            u8 a = 254 - 2*((u8)gdImageAlpha(gdImg, pixel));
+            if(a == 254)
+                a++;
 
             u8 r = gdImageRed(gdImg, pixel);
             u8 g = gdImageGreen(gdImg, pixel);
@@ -111,8 +110,8 @@ void TextureUtils::copyToTexture(GX2ColorBuffer* sourceBuffer, GX2Texture * targ
     }
 }
 
-bool TextureUtils::convertImageToTexture(const uint8_t *img, int32_t imgSize, void * _texture){
-    if(!img || (imgSize < 8) || _texture == NULL){
+bool TextureUtils::convertImageToTexture(const uint8_t *img, int32_t imgSize, void * _texture) {
+    if(!img || (imgSize < 8) || _texture == NULL) {
         return false;
     }
     GX2Texture * texture = (GX2Texture *) _texture;
@@ -137,7 +136,7 @@ bool TextureUtils::convertImageToTexture(const uint8_t *img, int32_t imgSize, vo
         //gdImg = gdImageCreateFromTgaPtr(imgSize, (uint8_t*) img);
     }
 
-    if(gdImg == 0){
+    if(gdImg == 0) {
         return false;
     }
 

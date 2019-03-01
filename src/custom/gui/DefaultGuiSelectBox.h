@@ -20,26 +20,26 @@
 #include <gui/GuiSelectBox.h>
 
 //!A simple select box with default values.
-class DefaultGuiSelectBox : public GuiSelectBox{
-	public:
-		//!Constructor
-		//!\param checked Checked
-		DefaultGuiSelectBox(std::string caption, GuiFrame *parent = NULL);
-		//!Destructor
-		virtual ~DefaultGuiSelectBox();
+class DefaultGuiSelectBox : public GuiSelectBox {
+public:
+    //!Constructor
+    //!\param checked Checked
+    DefaultGuiSelectBox(std::string caption, GuiFrame *parent = NULL);
+    //!Destructor
+    virtual ~DefaultGuiSelectBox();
 
-	protected:
-        GuiImageData * topBackgroundImg_imgdata;
-        GuiImage topBackgroundImg_img;
+protected:
+    GuiImageData * topBackgroundImg_imgdata;
+    GuiImage topBackgroundImg_img;
 
-        GuiImageData * topHighlightedImg_imgdata;
-        GuiImage topHighlightedImg_img;
+    GuiImageData * topHighlightedImg_imgdata;
+    GuiImage topHighlightedImg_img;
 
-        GuiImageData * valueImageData;
-        GuiImageData * valueSelectedImageData;
-        GuiImageData * valueHighlightedImageData;
+    GuiImageData * valueImageData;
+    GuiImageData * valueSelectedImageData;
+    GuiImageData * valueHighlightedImageData;
 
-        GuiSound * buttonClickSound;
+    GuiSound * buttonClickSound;
 };
 
 #endif

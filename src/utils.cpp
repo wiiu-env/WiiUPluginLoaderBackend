@@ -25,9 +25,9 @@ void CallHook(wups_loader_hook_type_t hook_type) {
 #ifdef __cplusplus
 extern "C" {
 #endif
-    // Part of libutils
-    extern uint32_t kern_read(const void *addr);
-    extern void kern_write(void *addr, uint32_t value);
+// Part of libutils
+extern uint32_t kern_read(const void *addr);
+extern void kern_write(void *addr, uint32_t value);
 #ifdef __cplusplus
 }
 #endif
@@ -54,7 +54,7 @@ void CallHookEx(wups_loader_hook_type_t hook_type, int32_t plugin_index_needed) 
             continue;
         }
 
-        #warning TODO: change the order of the wups_loader_hook_type_t enum before an offical release.
+#warning TODO: change the order of the wups_loader_hook_type_t enum before an offical release.
         //DEBUG_FUNCTION_LINE("Checking hook functions for %s.\n",plugin_data->plugin_name);
         //DEBUG_FUNCTION_LINE("Found hooks: %d\n",plugin_data->number_used_hooks);
         for(int32_t j=0; j<plugin_data->number_used_hooks; j++) {
@@ -99,7 +99,7 @@ void CallHookEx(wups_loader_hook_type_t hook_type, int32_t plugin_index_needed) 
                         if(gSDInitDone & WUPS_USB_MOUNTED) {
                             args.usb_mounted = true;
                         }
-                        if(plugin_data->kernel_allowed && plugin_data->kernel_init_done){
+                        if(plugin_data->kernel_allowed && plugin_data->kernel_init_done) {
                             args.kernel_access = true;
                         }
                         ((void (*)(wups_loader_app_started_args_t))((uint32_t*)func_ptr) )(args);
@@ -121,9 +121,9 @@ void CallHookEx(wups_loader_hook_type_t hook_type, int32_t plugin_index_needed) 
                             status = WUPS_APP_STATUS_UNKNOWN;
                         }
                         ((void (*)(wups_loader_app_status_t))((uint32_t*)func_ptr))(status);
-                    } else if(hook_type == WUPS_LOADER_HOOK_INIT_KERNEL){
+                    } else if(hook_type == WUPS_LOADER_HOOK_INIT_KERNEL) {
                         // Only call the hook if kernel is allowed.
-                        if(plugin_data->kernel_allowed){
+                        if(plugin_data->kernel_allowed) {
                             wups_loader_init_kernel_args_t args;
                             args.kern_read_ptr = &kern_read;
                             args.kern_write_ptr = &kern_write;

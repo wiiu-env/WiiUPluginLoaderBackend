@@ -53,12 +53,12 @@ typedef struct _memory_mapping_t {
 #define MEMORY_START_PLUGIN_HEAP_END    MEMORY_START_PLUGIN_HEAP + MEMORY_PLUGIN_HEAP_SIZE
 
 const memory_values_t mem_vals_loader[] = {
-    {0x28000000 + 0x06620000          , 0x28000000 + 0x06E20000},               // 8MB          0x80000000 0x80800000 -> 0x2E700000 0x2EF00000
+    {0x28000000 + 0x06620000, 0x28000000 + 0x06E20000},                         // 8MB          0x80000000 0x80800000 -> 0x2E700000 0x2EF00000
     {0,0}
 };
 
 const memory_values_t mem_vals_plugins[] = {
-    {0x28000000 + 0x06E20000          , 0x28000000 + 0x07E20000},               // 16MB         0x80800000 0x81800000 -> 0x2EF00000 0x2FF00000
+    {0x28000000 + 0x06E20000, 0x28000000 + 0x07E20000},                         // 16MB         0x80800000 0x81800000 -> 0x2EF00000 0x2FF00000
     {0,0}
 };
 
@@ -85,7 +85,7 @@ const memory_values_t mem_vals_video[] = {
     //     size += 0x20000; // value have to be a multiple of 0x20000;
     // }
     //
-    {0x1A020000 , 0x1A020000 +0xE60000}, // size: 14720 kB
+    {0x1A020000, 0x1A020000 +0xE60000},  // size: 14720 kB
     // The following chunk were empty while early tests and are maybe promising. However we can get 15mb from
     // a loader heap. Which should be enough for now.
     //{0x14000000 + 0x02E00000 , 0x14000000 +0x034E0000}, // size: 7040 kB

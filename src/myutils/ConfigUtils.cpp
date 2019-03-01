@@ -166,19 +166,19 @@ void ConfigUtils::configMenuOpenedCallback(wups_overlay_options_type_t screen, v
         }
         if(vpad_data.btns_d & VPAD_BUTTON_RIGHT) {
             pressedButtons |= WUPS_CONFIG_BUTTON_RIGHT;
-        }		
-		if(vpad_data.btns_d & VPAD_BUTTON_L) {
+        }
+        if(vpad_data.btns_d & VPAD_BUTTON_L) {
             pressedButtons |= WUPS_CONFIG_BUTTON_L;
         }
         if(vpad_data.btns_d & VPAD_BUTTON_R) {
             pressedButtons |= WUPS_CONFIG_BUTTON_R;
         }
-		if(vpad_data.btns_d & VPAD_BUTTON_ZL) {
+        if(vpad_data.btns_d & VPAD_BUTTON_ZL) {
             pressedButtons |= WUPS_CONFIG_BUTTON_ZL;
         }
         if(vpad_data.btns_d & VPAD_BUTTON_ZR) {
             pressedButtons |= WUPS_CONFIG_BUTTON_ZR;
-        }			
+        }
 
         if(vpad_data.btns_r & VPAD_BUTTON_DOWN) {
             newSelect++;
@@ -229,9 +229,9 @@ void ConfigUtils::configMenuOpenedCallback(wups_overlay_options_type_t screen, v
                 if(!ignore && curSelect == inSelect) {
                     if(curSelect == 0) {
                         curScreenOffset = 0;
-                    }else if(cur_visible_rows + curScreenOffset >= visible_rows_range) {
+                    } else if(cur_visible_rows + curScreenOffset >= visible_rows_range) {
                         curScreenOffset -= (cur_visible_rows + curScreenOffset) - visible_rows_range;
-                    }else if(cur_visible_rows + curScreenOffset < visible_rows_range/2 && cur_visible_rows >= visible_rows_range/2) {
+                    } else if(cur_visible_rows + curScreenOffset < visible_rows_range/2 && cur_visible_rows >= visible_rows_range/2) {
                         curScreenOffset -= (cur_visible_rows + curScreenOffset) - visible_rows_range/2;
                     }
                     ignore = true;
@@ -343,27 +343,27 @@ void ConfigUtils::deleteConfigInformation(std::vector<ConfigInformation *> confi
 
 void ConfigUtils::loadConfigFromSD() {
     std::vector<ConfigInformation *> configInfos = getConfigInformation();
-    
+
     for (auto & curConfig : configInfos) {
         curConfig->loadValuesFromSD();
     }
-    
+
     deleteConfigInformation(configInfos);
 }
 
 void ConfigUtils::saveConfigToSD() {
     std::vector<ConfigInformation *> configInfos = getConfigInformation();
-    
+
     for (auto & curConfig : configInfos) {
         curConfig->updateAndSaveSettings(true);
     }
-    
+
     deleteConfigInformation(configInfos);
 }
 
 void ConfigUtils::openConfigMenu() {
     std::vector<ConfigInformation *> configInfos = getConfigInformation();
-    
+
     // We rely on the default values here.
     //if(loadFromSD){
     //    for (auto & curConfig : configInfos) {
@@ -386,7 +386,7 @@ void ConfigUtils::openConfigMenu() {
     for (auto & curConfig : configs) {
         DCFlushRange(curConfig, sizeof(WUPSConfig));
     }
-    
+
     for (auto & curConfig : configInfos) {
         curConfig->updateAndSaveSettings(false);
     }

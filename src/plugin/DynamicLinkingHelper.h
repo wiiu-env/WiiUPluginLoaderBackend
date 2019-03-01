@@ -81,14 +81,14 @@ public:
 protected:
 private:
 
-        DynamicLinkingHelper() {
-        }
+    DynamicLinkingHelper() {
+    }
 
-        ~DynamicLinkingHelper() {
+    ~DynamicLinkingHelper() {
 
-        }
+    }
 
-        static DynamicLinkingHelper *instance;
-    };
+    static DynamicLinkingHelper *instance;
+};
 
 #endif // DYNAMICLINKINGHELPER_H

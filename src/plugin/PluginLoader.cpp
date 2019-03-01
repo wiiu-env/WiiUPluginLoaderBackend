@@ -75,7 +75,7 @@ std::vector<PluginInformation *> PluginLoader::getPluginInformation(const char *
             }
         }
     }
-    if(dfd != NULL){
+    if(dfd != NULL) {
         closedir(dfd);
     }
 
@@ -467,7 +467,7 @@ void PluginLoader::copyPluginDataIntoGlobalStruct(std::vector<PluginData *> plug
 
         replacement_data_plugin_t * plugin_data = &gbl_replacement_data.plugin_data[plugin_index];
 
-        #warning TODO: add GUI option to let the user choose
+#warning TODO: add GUI option to let the user choose
         plugin_data->kernel_allowed = true;
         plugin_data->kernel_init_done = false;
 

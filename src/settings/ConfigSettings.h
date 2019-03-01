@@ -202,7 +202,7 @@ public:
 
     int32_t getIdByName(std::string configID);
 
-    bool hasChanged(){
+    bool hasChanged() {
         return bChanged;
     }
 

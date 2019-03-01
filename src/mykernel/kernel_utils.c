@@ -58,22 +58,23 @@ static void KernelWriteSRs(sr_table_t * table) {
     // Writing didn't work for all at once so we only write number 8.
     // TODO: fix this and change it if required.
 
-     /*asm volatile("mtsr 0, %0" : : "r" (table->value[i])); i++;
-     asm volatile("mtsr 1, %0" : : "r" (table->value[i])); i++;
-     asm volatile("mtsr 2, %0" : : "r" (table->value[i])); i++;
-     asm volatile("mtsr 3, %0" : : "r" (table->value[i])); i++;
-     asm volatile("mtsr 4, %0" : : "r" (table->value[i])); i++;
-     asm volatile("mtsr 5, %0" : : "r" (table->value[i])); i++;*/
-     //asm volatile("mtsr 6, %0" : : "r" (table->value[6])); i++;
-     /*asm volatile("mtsr 7, %0" : : "r" (table->value[i])); i++;*/
-     asm volatile("mtsr 8, %0" : : "r" (table->value[8])); i++;
-     /*asm volatile("mtsr 9, %0" : : "r" (table->value[i])); i++;
-     asm volatile("mtsr 10, %0" : : "r" (table->value[i])); i++;
-     asm volatile("mtsr 11, %0" : : "r" (table->value[i])); i++;
-     asm volatile("mtsr 12, %0" : : "r" (table->value[i])); i++;
-     asm volatile("mtsr 13, %0" : : "r" (table->value[i])); i++;
-     asm volatile("mtsr 14, %0" : : "r" (table->value[i])); i++;
-     asm volatile("mtsr 15, %0" : : "r" (table->value[i])); i++;*/
+    /*asm volatile("mtsr 0, %0" : : "r" (table->value[i])); i++;
+    asm volatile("mtsr 1, %0" : : "r" (table->value[i])); i++;
+    asm volatile("mtsr 2, %0" : : "r" (table->value[i])); i++;
+    asm volatile("mtsr 3, %0" : : "r" (table->value[i])); i++;
+    asm volatile("mtsr 4, %0" : : "r" (table->value[i])); i++;
+    asm volatile("mtsr 5, %0" : : "r" (table->value[i])); i++;*/
+    //asm volatile("mtsr 6, %0" : : "r" (table->value[6])); i++;
+    /*asm volatile("mtsr 7, %0" : : "r" (table->value[i])); i++;*/
+    asm volatile("mtsr 8, %0" : : "r" (table->value[8]));
+    i++;
+    /*asm volatile("mtsr 9, %0" : : "r" (table->value[i])); i++;
+    asm volatile("mtsr 10, %0" : : "r" (table->value[i])); i++;
+    asm volatile("mtsr 11, %0" : : "r" (table->value[i])); i++;
+    asm volatile("mtsr 12, %0" : : "r" (table->value[i])); i++;
+    asm volatile("mtsr 13, %0" : : "r" (table->value[i])); i++;
+    asm volatile("mtsr 14, %0" : : "r" (table->value[i])); i++;
+    asm volatile("mtsr 15, %0" : : "r" (table->value[i])); i++;*/
 
 
     asm volatile("isync");
@@ -87,7 +88,7 @@ void KernelReadPTE(uint32_t* dest, uint32_t size) {
     asm volatile("mfmsr %0" : "=r" (msr));
     oldmsr = msr;
     msr &= ~0x10;
-    for(uint32_t i = 0;i<size/0x04;i++){
+    for(uint32_t i = 0; i<size/0x04; i++) {
         uint32_t value_read = 0;
         uint32_t addr = addr_base + (i*4);
         // Disable Data address translation
@@ -107,7 +108,7 @@ void KernelWritePTE(uint32_t * in_addr, uint32_t size) {
     asm volatile("mfmsr %0" : "=r" (msr));
     oldmsr = msr;
     msr &= ~0x10;
-    for(uint32_t i = 0;i<size/0x04;i++){
+    for(uint32_t i = 0; i<size/0x04; i++) {
         uint32_t addr = addr_base + (i*4);
         uint32_t value = in_addr[i];
         // Disable Data address translation
@@ -135,7 +136,7 @@ void KernelWriteWitoutDAT(uint32_t addr, uint32_t value) {
 
 void SC0x0A_KernelWriteWitoutDAT(uint32_t addr,uint32_t value);
 
-void wups_init_kernel_syscalls(){
+void wups_init_kernel_syscalls() {
     //! assign 1 so that this variable gets into the retained .data section
     static uint8_t ucSyscallsSetupRequired = 1;
     if(!ucSyscallsSetupRequired)

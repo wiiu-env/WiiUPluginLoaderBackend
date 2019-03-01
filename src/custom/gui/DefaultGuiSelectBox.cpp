@@ -20,16 +20,15 @@
  */
 
 DefaultGuiSelectBox::DefaultGuiSelectBox(std::string caption, GuiFrame *parent)
- : GuiSelectBox(NULL,caption)
- ,topBackgroundImg_imgdata(Resources::GetImageData("gameSettingsButton.png"))
- ,topBackgroundImg_img(topBackgroundImg_imgdata)
- ,topHighlightedImg_imgdata(Resources::GetImageData("gameSettingsButtonSelected.png"))
- ,topHighlightedImg_img(topHighlightedImg_imgdata)
- ,valueImageData(Resources::GetImageData("gameSettingsButtonEx.png"))
- ,valueSelectedImageData(Resources::GetImageData("gameSettingsButtonExSelected.png"))
- ,valueHighlightedImageData(Resources::GetImageData("gameSettingsButtonExHighlighted.png"))
- ,buttonClickSound(Resources::GetSound("settings_click_2.mp3"))
-{
+    : GuiSelectBox(NULL,caption)
+    ,topBackgroundImg_imgdata(Resources::GetImageData("gameSettingsButton.png"))
+    ,topBackgroundImg_img(topBackgroundImg_imgdata)
+    ,topHighlightedImg_imgdata(Resources::GetImageData("gameSettingsButtonSelected.png"))
+    ,topHighlightedImg_img(topHighlightedImg_imgdata)
+    ,valueImageData(Resources::GetImageData("gameSettingsButtonEx.png"))
+    ,valueSelectedImageData(Resources::GetImageData("gameSettingsButtonExSelected.png"))
+    ,valueHighlightedImageData(Resources::GetImageData("gameSettingsButtonExHighlighted.png"))
+    ,buttonClickSound(Resources::GetSound("settings_click_2.mp3")) {
     setSize(topBackgroundImg_img.getWidth(),topBackgroundImg_img.getHeight());
     this->setImageTopBackground(&topBackgroundImg_img);
     this->setImageTopHighlighted(&topHighlightedImg_img);
@@ -41,8 +40,7 @@ DefaultGuiSelectBox::DefaultGuiSelectBox(std::string caption, GuiFrame *parent)
 /**
  * Destructor for the DefaultGuiSelectBox class.
  */
-DefaultGuiSelectBox::~DefaultGuiSelectBox()
-{
+DefaultGuiSelectBox::~DefaultGuiSelectBox() {
     Resources::RemoveImageData(topBackgroundImg_imgdata);
     Resources::RemoveImageData(topHighlightedImg_imgdata);
     Resources::RemoveImageData(valueImageData);

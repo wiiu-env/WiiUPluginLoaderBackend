@@ -231,7 +231,7 @@ bool ContentHome::linkPlugins() {
 
 void ContentHome::update(GuiController * c) {
     ContentTemplate::update(c);
-    if(updateButtons){
+    if(updateButtons) {
         for (auto const& x : selectionMapping) {
             int index = x.first;
             GuiToggle* toggle = x.second;

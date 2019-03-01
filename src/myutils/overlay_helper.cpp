@@ -18,8 +18,12 @@ uint32_t * getFromGX2Buffer(struct buffer_store store, uint32_t size) {
 }
 
 void overlay_helper(wups_overlay_options_type_t screen, overlay_callback callback, void * args) {
-    if(callback == NULL) return;
-    if(!OSIsHomeButtonMenuEnabled()) return; // This pauses the game. Make sure to only do it when the home button is allowed.
+    if(callback == NULL) {
+        return;
+    }
+    if(!OSIsHomeButtonMenuEnabled()) {
+        return; // This pauses the game. Make sure to only do it when the home button is allowed.
+    }
 
     //TODO: Make sure this actually pauses the game (Hook on GX2VSync?) . Currently only tested from VPADRead which also pauses the game.
 

@@ -187,7 +187,7 @@ void Application::executeThread(void) {
                         bool result = linkPluginsCallback();
                         if(!result) {
                             // On linking errors return to the HBL.
-                            #warning TODO: proper error handling when linking fails.
+#warning TODO: proper error handling when linking fails.
                             exitCode = APPLICATION_CLOSE_MIIMAKER;
                         }
                     }

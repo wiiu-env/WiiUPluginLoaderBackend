@@ -64,6 +64,53 @@ void TextureUtils::drawTexture(GX2Texture * texture, GX2Sampler* sampler, float 
     Texture2DShader::instance()->draw();
 }
 
+
+void TextureUtils::copyToTexture(GX2ColorBuffer* sourceBuffer, GX2Texture * target) {
+    if(sourceBuffer == NULL || target == NULL) {
+        return;
+    }
+    if (sourceBuffer->surface.aa == GX2_AA_MODE_1X) {
+        // If AA is disabled, we can simply use GX2CopySurface.
+        GX2CopySurface(&sourceBuffer->surface,
+                       sourceBuffer->view_mip,
+                       sourceBuffer->view_first_slice,
+                       &target->surface, 0, 0);
+        GX2DrawDone();
+    } else {
+        // If AA is enabled, we need to resolve the AA buffer.
+
+        // Allocate surface to resolve buffer onto
+        GX2Surface tempSurface;
+        tempSurface = sourceBuffer->surface;
+        tempSurface.aa = GX2_AA_MODE_1X;
+        GX2CalcSurfaceSizeAndAlignment(&tempSurface);
+
+        tempSurface.image_data = MemoryUtils::alloc(
+                                     tempSurface.image_size,
+                                     tempSurface.align
+                                 );
+        if(tempSurface.image_data == NULL) {
+            DEBUG_FUNCTION_LINE("VideoSquoosher: failed to allocate AA surface\n");
+            if(target->surface.image_data != NULL) {
+                MemoryUtils::free(target->surface.image_data);
+                target->surface.image_data = NULL;
+            }
+            return;
+        }
+
+        // Resolve, then copy result to target
+        GX2ResolveAAColorBuffer(sourceBuffer,&tempSurface, 0, 0);
+        GX2CopySurface(&tempSurface, 0, 0,&target->surface, 0, 0);
+
+        if(tempSurface.image_data != NULL) {
+            MemoryUtils::free(tempSurface.image_data);
+            tempSurface.image_data = NULL;
+        }
+        GX2DrawDone();
+        GX2Invalidate(GX2_INVALIDATE_CPU, target->surface.image_data, target->surface.image_size);
+    }
+}
+
 bool TextureUtils::convertImageToTexture(const uint8_t *img, int32_t imgSize, void * _texture){
     if(!img || (imgSize < 8) || _texture == NULL){
         return false;

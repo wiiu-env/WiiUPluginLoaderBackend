@@ -60,7 +60,7 @@ void CallHookEx(wups_loader_hook_type_t hook_type, int32_t plugin_index_needed) 
         for(int32_t j=0; j<plugin_data->number_used_hooks; j++) {
             replacement_data_hook_t * hook_data = &plugin_data->hooks[j];
             if(hook_data->type == hook_type) {
-                DEBUG_FUNCTION_LINE("Calling hook of type %d for plugin %s\n",hook_data->type,plugin_data->plugin_name);
+                //DEBUG_FUNCTION_LINE("Calling hook of type %d for plugin %s\n",hook_data->type,plugin_data->plugin_name);
                 void * func_ptr = hook_data->func_pointer;
                 //TODO: Switch cases depending on arguments etc.
                 // Adding arguments!

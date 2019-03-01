@@ -9,6 +9,7 @@ extern "C" {
 #include <wups.h>
 #include <stddef.h>
 
+bool HasHookCallHook(wups_loader_hook_type_t hook_type);
 void CallHook(wups_loader_hook_type_t hook_type);
 
 void CallHookEx(wups_loader_hook_type_t hook_type, int32_t plugin_index_needed);

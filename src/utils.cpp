@@ -32,6 +32,21 @@ extern "C" {
 }
 #endif
 
+
+bool HasHookCallHook(wups_loader_hook_type_t hook_type) {
+    for(int32_t plugin_index=0; plugin_index<gbl_replacement_data.number_used_plugins; plugin_index++) {
+        replacement_data_plugin_t * plugin_data = &gbl_replacement_data.plugin_data[plugin_index];
+
+        for(int32_t j=0; j<plugin_data->number_used_hooks; j++) {
+            replacement_data_hook_t * hook_data = &plugin_data->hooks[j];
+            if(hook_data->type == hook_type) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 void CallHookEx(wups_loader_hook_type_t hook_type, int32_t plugin_index_needed) {
     for(int32_t plugin_index=0; plugin_index<gbl_replacement_data.number_used_plugins; plugin_index++) {
         replacement_data_plugin_t * plugin_data = &gbl_replacement_data.plugin_data[plugin_index];

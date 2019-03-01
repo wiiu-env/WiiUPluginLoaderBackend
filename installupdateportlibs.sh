@@ -1,6 +1,6 @@
 #! /bin/bash
 # 
-7z x -y ./loader/libs/portlibs.zip -o${DEVKITPRO}  
+7z x -y ./libs/portlibs.zip -o${DEVKITPRO}  
 mkdir portlib_repos
 cd portlib_repos
 ((git clone https://github.com/Maschell/dynamic_libs.git -b lib && (7z x -y ./dynamic_libs/libs/portlibs.zip -o${DEVKITPRO})) || (cd dynamic_libs && git pull))

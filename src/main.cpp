@@ -103,6 +103,9 @@ extern "C" int32_t Menu_Main(int32_t argc, char **argv) {
 
     gGameTitleID = OSGetTitleID();
 
+    g_vid_ownContextState = NULL;
+    g_vid_originalContextSave = NULL;
+
     int32_t result = 0;
 
     //Reset everything when were going back to the Mii Maker
@@ -137,6 +140,16 @@ extern "C" int32_t Menu_Main(int32_t argc, char **argv) {
         PluginLoader::destroyInstance();
 
         MemoryUtils::init();
+
+        // Memory on custon heap is reset anyway so we don't need to free the image buffers.
+        memset((void*)&g_vid_main_cbuf,0,sizeof(g_vid_main_cbuf));
+        memset((void*)&g_vid_drcTex,0,sizeof(g_vid_drcTex));
+        memset((void*)&g_vid_tvTex,0,sizeof(g_vid_tvTex));
+        g_vid_originalContextSave = NULL;
+        g_vid_ownContextState = NULL;
+        g_NotInLoader = false;
+    }else{
+        g_NotInLoader = true;
     }
 
     DEBUG_FUNCTION_LINE("Patch own stuff\n");

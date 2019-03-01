@@ -131,11 +131,25 @@ void CallHookEx(wups_loader_hook_type_t hook_type, int32_t plugin_index_needed) 
                             ((void (*)(wups_loader_init_kernel_args_t))((uint32_t*)func_ptr) )(args);
                             plugin_data->kernel_init_done = true;
                         }
-                    } else if(hook_type == WUPS_LOADER_HOOK_INIT_VID_MEM){
+                    } else if(hook_type == WUPS_LOADER_HOOK_INIT_VID_MEM) {
                         wups_loader_init_vid_mem_args_t args;
                         args.vid_mem_alloc_ptr = &MemoryUtils::alloc;
                         args.vid_mem_free_ptr = &MemoryUtils::free;
                         ((void (*)(wups_loader_init_vid_mem_args_t))((uint32_t*)func_ptr) )(args);
+                    } else if(hook_type == WUPS_LOADER_HOOK_VID_DRC_DRAW) {
+                        wups_loader_vid_buffer_t args;
+                        args.color_buffer_ptr = &g_vid_main_cbuf;
+                        args.tv_texture_ptr = &g_vid_tvTex;
+                        args.drc_texture_ptr = &g_vid_drcTex;
+                        args.sampler_ptr = &g_vid_sampler;
+                        ((void (*)(wups_loader_vid_buffer_t))((uint32_t*)func_ptr) )(args);
+                    } else if(hook_type == WUPS_LOADER_HOOK_VID_TV_DRAW) {
+                        wups_loader_vid_buffer_t args;
+                        args.color_buffer_ptr = &g_vid_main_cbuf;
+                        args.tv_texture_ptr = &g_vid_tvTex;
+                        args.drc_texture_ptr = &g_vid_drcTex;
+                        args.sampler_ptr = &g_vid_sampler;
+                        ((void (*)(wups_loader_vid_buffer_t))((uint32_t*)func_ptr) )(args);
                     } else {
                         DEBUG_FUNCTION_LINE("ERROR: HOOK TYPE WAS NOT IMPLEMENTED %08X \n",hook_type);
                     }

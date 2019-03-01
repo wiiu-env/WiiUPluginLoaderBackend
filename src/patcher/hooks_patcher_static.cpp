@@ -95,7 +95,7 @@ float angleX_delta = 0.0f;
 float angleX_last = 0.0f;
 uint8_t angleX_frameCounter = 0;
 
-bool checkMagic(VPADData *buffer) {
+void checkMagic(VPADData *buffer) {
     // buffer->angle stores the rotations per axis since the app started.
     // Each full rotation add/subtracts 1.0f (depending on the direction).
 

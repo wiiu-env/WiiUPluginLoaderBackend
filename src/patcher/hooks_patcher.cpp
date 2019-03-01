@@ -8,6 +8,7 @@
 #include "main.h"
 #include "utils.h"
 #include "mymemory/memory_mapping.h"
+#include <video/shaders/Texture2DShader.h>
 
 DECL(uint32_t, ProcUIProcessMessages, uint32_t u) {
     uint32_t res = real_ProcUIProcessMessages(u);
@@ -20,6 +21,7 @@ DECL(uint32_t, ProcUIProcessMessages, uint32_t u) {
             CallHook(WUPS_LOADER_HOOK_ENDING_APPLICATION);
             ConfigUtils::saveConfigToSD();
             DeInit();
+            Texture2DShader::destroyInstance();
         }
     }
 

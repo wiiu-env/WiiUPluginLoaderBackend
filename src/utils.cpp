@@ -69,6 +69,7 @@ void CallHookEx(wups_loader_hook_type_t hook_type, int32_t plugin_index_needed) 
                         wups_loader_init_overlay_args_t args;
                         args.overlayfunction_ptr = &overlay_helper;
                         args.textureconvertfunction_ptr = &TextureUtils::convertImageToTexture;
+                        args.drawtexturefunction_ptr = (void (*)(void*,void*,float,float,int32_t,int32_t,float)) &TextureUtils::drawTexture;
                         ((void (*)(wups_loader_init_overlay_args_t))((uint32_t*)func_ptr) )(args);
                     } else if(hook_type == WUPS_LOADER_HOOK_INIT_PLUGIN) {
                         ((void (*)(void))((uint32_t*)func_ptr) )();

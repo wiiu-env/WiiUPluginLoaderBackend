@@ -18,11 +18,12 @@
 #define __TEXTURE_UTILS_UTILS_H_
 #include <stdint.h>
 #include <dynamic_libs/gx2_functions.h>
+#include <video/shaders/Texture2DShader.h>
 
 class TextureUtils {
 public:
     static bool convertImageToTexture(const uint8_t *img, int32_t imgSize, void * texture);
-
+    static void drawTexture(GX2Texture * texture, GX2Sampler* sampler, float x, float y, int32_t width, int32_t height, float alpha);
 private:
     TextureUtils() {}
     ~TextureUtils() {}

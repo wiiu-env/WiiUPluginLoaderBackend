@@ -41,6 +41,29 @@ void gdImageToUnormR8G8B8A8(gdImagePtr gdImg, u32 *imgBuffer, u32 width, u32 hei
     }
 }
 
+
+void TextureUtils::drawTexture(GX2Texture * texture, GX2Sampler* sampler, float x, float y, int32_t width, int32_t height, float alpha = 1.0f) {
+    float widthScaleFactor = 1.0f / (float)1280;
+    float heightScaleFactor = 1.0f / (float)720;
+
+    glm::vec3 positionOffsets = glm::vec3(0.0f);
+
+    positionOffsets[0] = (x-((1280)/2)+(width/2)) * widthScaleFactor * 2.0f;
+    positionOffsets[1] = -(y-((720)/2)+(height/2)) * heightScaleFactor * 2.0f;
+
+    glm::vec3 scale(width*widthScaleFactor,height*heightScaleFactor,1.0f);
+
+    Texture2DShader::instance()->setShaders();
+    Texture2DShader::instance()->setAttributeBuffer();
+    Texture2DShader::instance()->setAngle(0.0f);
+    Texture2DShader::instance()->setOffset(positionOffsets);
+    Texture2DShader::instance()->setScale(scale);
+    Texture2DShader::instance()->setColorIntensity(glm::vec4(alpha));
+    Texture2DShader::instance()->setBlurring(glm::vec3(0.0f));
+    Texture2DShader::instance()->setTextureAndSampler(texture, sampler);
+    Texture2DShader::instance()->draw();
+}
+
 bool TextureUtils::convertImageToTexture(const uint8_t *img, int32_t imgSize, void * _texture){
     if(!img || (imgSize < 8) || _texture == NULL){
         return false;

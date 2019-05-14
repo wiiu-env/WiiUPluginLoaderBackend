@@ -33,10 +33,14 @@ This means it's not possible to combine this with other homebrews (yet).
 Information on how to create plugin can be found in the [wiki](https://maschell.github.io/WiiUPluginSystem/dev_plugin_creation_overview.html).
 
 ## Building
+Make sure the toolchain is uptodate `pacman -Syu devkitPPC devkitARM vim general-tools`
 
 For building you need: 
+- [libiosuhax](https://github.com/dimok789/libiosuhax) (Build WITHOUT the WUT flag set.)
+- [libfat](https://github.com/Maschell/libfat/) (Build with `make wiiu-release && make wiiu-install`)
 - [dynamic_libs](https://github.com/Maschell/dynamic_libs/tree/lib) for access to the functions.
-- [libutils](https://github.com/Maschell/libutils) for common functions.
+- [libutils](https://github.com/Maschell/libutils) for common functions.  
+- [libgui](https://github.com/Maschell/libgui) for the gui elements.
 
 Install them (in this order) according to their README's. Don't forget the dependencies of the libs itself.
 

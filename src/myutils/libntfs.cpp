@@ -4,11 +4,11 @@
 #include <utils/logger.h>
 #include "libntfs.h"
 #include <iosuhax.h>
-#include <ntfs.h>
+//#include <ntfs.h>
 #include "common/retain_vars.h"
 
 int32_t mountAllNTFS() {
-    int32_t i;
+    /*int32_t i;
     // Mount all NTFS volumes on all inserted block devices
     ntfs_mount_count = ntfsMountAll((ntfs_md **) &ntfs_mounts, NTFS_DEFAULT | NTFS_RECOVER);
     if (ntfs_mount_count == -1) {
@@ -22,11 +22,12 @@ int32_t mountAllNTFS() {
     for (i = 0; i < ntfs_mount_count; i++) {
         DEBUG_FUNCTION_LINE("%i - %s:/ (%s)\n", i + 1, ((ntfs_md *)ntfs_mounts)[i].name, ntfsGetVolumeName(((ntfs_md *)ntfs_mounts)[i].name));
     }
-    return ntfs_mount_count;
+    return ntfs_mount_count;*/
+    return 0;
 }
 
 int32_t unmountAllNTFS(void) {
-    if (ntfs_mounts) {
+    /*if (ntfs_mounts) {
         int32_t i = 0;
         for (i = 0; i < ntfs_mount_count; i++) {
             ntfsUnmount(((ntfs_md *)ntfs_mounts)[i].name, true);
@@ -34,6 +35,6 @@ int32_t unmountAllNTFS(void) {
         free(ntfs_mounts);
         ntfs_mounts = NULL;
         ntfs_mount_count = 0;
-    }
+    }*/
     return 0;
 }

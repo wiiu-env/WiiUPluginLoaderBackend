@@ -77,7 +77,7 @@ MAKEFLAGS += --no-print-directory
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:= -lgui -lm -lgcc -lfat -liosuhax -lutils -ldynamiclibs -lfreetype -lgd -lpng -ljpeg -lz -lmad -lvorbisidec
+LIBS	:= -lgui -lm -lgcc -lfat -liosuhax -lutils -ldynamiclibs -lfreetype -lgd -lpng -ljpeg -lz -lmad -lvorbisidec -logg -lbz2
 
 #---------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level containing

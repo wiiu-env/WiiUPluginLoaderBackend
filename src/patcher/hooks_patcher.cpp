@@ -1,14 +1,12 @@
 #include <utils/logger.h>
 #include <utils/function_patcher.h>
-#include <dynamic_libs/vpad_functions.h>
 #include "common/retain_vars.h"
 #include "hooks_patcher.h"
-#include "myutils/overlay_helper.h"
-#include "myutils/ConfigUtils.h"
-#include "main.h"
+#include "utils/overlay_helper.h"
+#include "utils/ConfigUtils.h"
 #include "utils.h"
-#include "mymemory/memory_mapping.h"
-#include <video/shaders/Texture2DShader.h>
+#include "fs/sd_fat_devoptab.h"
+//#include <video/shaders/Texture2DShader.h>
 
 DECL(uint32_t, ProcUIProcessMessages, uint32_t u) {
     uint32_t res = real_ProcUIProcessMessages(u);
@@ -20,8 +18,9 @@ DECL(uint32_t, ProcUIProcessMessages, uint32_t u) {
         if(gAppStatus == WUPS_APP_STATUS_CLOSED) {
             CallHook(WUPS_LOADER_HOOK_ENDING_APPLICATION);
             ConfigUtils::saveConfigToSD();
-            DeInit();
-            Texture2DShader::destroyInstance();
+            unmount_sd_fat("sd");
+            //DeInit();
+            //Texture2DShader::destroyInstance();
         }
     }
 

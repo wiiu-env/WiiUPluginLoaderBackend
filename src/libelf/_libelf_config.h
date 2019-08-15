@@ -34,13 +34,13 @@
 
 #endif	/* GEKKO */
 
-#ifdef	__wiiu__
+#ifdef	__WIIU__
 
 #define	LIBELF_ARCH		EM_PPC
 #define	LIBELF_BYTEORDER	ELFDATA2MSB
 #define	LIBELF_CLASS		ELFCLASS32
 
-#endif	/* __wiiu__ */
+#endif	/* __WIIU__ */
 
 #ifdef	__DragonFly__
 

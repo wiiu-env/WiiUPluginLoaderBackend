@@ -25,7 +25,7 @@
 
 #include "PluginInformation.h"
 #include <utils/logger.h>
-#include <dynamic_libs/os_types.h>
+#include <stdint.h>
 #include <libelf.h>
 #include <string.h>
 #include <sys/types.h>
@@ -111,6 +111,7 @@ exit_error:
 }
 
 bool PluginInformation::parseElf( Elf *elf) {
+    DEBUG_FUNCTION_LINE("Parsing.\n");
     bool res = false;
     Elf_Scn *scn;
     Elf32_Ehdr *ehdr;

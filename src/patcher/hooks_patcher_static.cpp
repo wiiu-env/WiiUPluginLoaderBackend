@@ -1,24 +1,22 @@
-#include <utils/logger.h>
-#include <utils/function_patcher.h>
-#include <dynamic_libs/vpad_functions.h>
+#include "utils/logger.h"
+#include "utils/function_patcher.h"
 #include "common/retain_vars.h"
 #include "hooks_patcher.h"
-#include "myutils/overlay_helper.h"
-#include "myutils/ConfigUtils.h"
+#include "utils/overlay_helper.h"
+#include "utils/ConfigUtils.h"
 #include <malloc.h>
-#include "main.h"
 #include "utils.h"
-#include "mymemory/memory_mapping.h"
-#include "myutils/mem_utils.h"
-#include "myutils/texture_utils.h"
+#include "memory/memory_mapping.h"
+#include "utils/mem_utils.h"
+#include "dynamic_libs/vpad_functions.h"
+//#include "utils/texture_utils.h"
 
 DECL(void, __PPCExit, void) {
     // Only continue if we are in the "right" application.
-    //if(OSGetTitleID() == gGameTitleID) {
-    //DEBUG_FUNCTION_LINE("__PPCExit\n");
-    //CallHook(WUPS_LOADER_HOOK_ENDING_APPLICATION);
-    //DeInit();
-    //}
+    if(OSGetTitleID() == gGameTitleID) {
+        DEBUG_FUNCTION_LINE("__PPCExit\n");
+        //CallHook(WUPS_LOADER_HOOK_ENDING_APPLICATION);
+    }
 
     real___PPCExit();
 }
@@ -154,7 +152,7 @@ DECL(int32_t, VPADRead, int32_t chan, VPADData *buffer, uint32_t buffer_size, in
     }
     return result;
 }
-
+/*
 void setupContextState() {
     g_vid_ownContextState = (GX2ContextState*)memalign(
                                 GX2_CONTEXT_STATE_ALIGNMENT,
@@ -316,16 +314,15 @@ DECL_FUNCTION(void, GX2CopyColorBufferToScanBuffer, GX2ColorBuffer* cbuf, int32_
     GX2SetContextState(g_vid_originalContextSave);
 
     return real_GX2CopyColorBufferToScanBuffer(&g_vid_main_cbuf,target);
-}
-
+}*/
 
 hooks_magic_t method_hooks_hooks_static[] __attribute__((section(".data"))) = {
     MAKE_MAGIC(__PPCExit,                       LIB_CORE_INIT,  STATIC_FUNCTION),
     MAKE_MAGIC(GX2SetTVBuffer,                  LIB_GX2,        STATIC_FUNCTION),
     MAKE_MAGIC(GX2SetDRCBuffer,                 LIB_GX2,        STATIC_FUNCTION),
     MAKE_MAGIC(GX2WaitForVsync,                 LIB_GX2,        STATIC_FUNCTION),
-    MAKE_MAGIC(GX2CopyColorBufferToScanBuffer,  LIB_GX2,        STATIC_FUNCTION),
-    MAKE_MAGIC(GX2SetContextState,              LIB_GX2,        STATIC_FUNCTION),
+    //MAKE_MAGIC(GX2CopyColorBufferToScanBuffer,  LIB_GX2,        STATIC_FUNCTION),
+    //MAKE_MAGIC(GX2SetContextState,              LIB_GX2,        STATIC_FUNCTION),
     MAKE_MAGIC(VPADRead,                        LIB_VPAD,       STATIC_FUNCTION),
     MAKE_MAGIC(OSIsAddressValid,                LIB_CORE_INIT,  STATIC_FUNCTION),
     MAKE_MAGIC(__OSPhysicalToEffectiveUncached, LIB_CORE_INIT,  STATIC_FUNCTION),

@@ -31,7 +31,7 @@
 
 #include <sys/types.h>
 
-#include <elfdefinitions.h>
+#include "elfdefinitions.h"
 
 /* Library private data structures */
 typedef struct _Elf Elf;

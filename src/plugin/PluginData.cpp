@@ -33,7 +33,7 @@ ImportRPLInformation * PluginData::getImportRPLInformationBySectionHeaderIndex(i
 uint32_t PluginData::getMemoryForCommonBySymbol(size_t symbol, size_t align, size_t size) {
     std::map<size_t,uint32_t>::iterator it = memoryBySymbol.find(symbol);
     if(it == memoryBySymbol.end()) {
-        memoryBySymbol[symbol] = PluginLoader::getInstance()->getMemoryFromDataSection(align, size);
+        memoryBySymbol[symbol] = PluginLoader::getMemoryFromDataSection(align, size);
         DEBUG_FUNCTION_LINE("Setting value %08X\n",memoryBySymbol.find(symbol)->second);
     } else {
         DEBUG_FUNCTION_LINE("Using cached value %08X\n",memoryBySymbol.find(symbol)->second);

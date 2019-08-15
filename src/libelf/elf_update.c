@@ -29,7 +29,7 @@
 
 #include <assert.h>
 #include <errno.h>
-#include <gelf.h>
+#include "gelf.h"
 #include <libelf.h>
 #include <stdlib.h>
 #include <string.h>

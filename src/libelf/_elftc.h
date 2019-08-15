@@ -212,7 +212,7 @@ struct name {							\
 #define ELFTC_VCSID(ID) /**/
 #endif
 
-#if defined(__wiiu__)
+#if defined(__WIIU__)
 #define ELFTC_VCSID(ID) /**/
 #endif
 
@@ -315,7 +315,7 @@ extern const char *__progname;
 
 #endif
 
-#if defined(__wiiu__)
+#if defined(__WIIU__)
 
 #include <sys/param.h>
 

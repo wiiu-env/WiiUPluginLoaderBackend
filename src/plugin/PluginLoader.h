@@ -29,8 +29,8 @@
 #include <vector>
 #include "PluginData.h"
 #include "PluginInformation.h"
-#include "dynamic_libs/os_types.h"
-#include "dynamic_libs/os_functions.h"
+#include "dynamic_libs/coreinit.h"
+#include "memory/memory_mapping.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,25 +45,22 @@ extern "C" {
 extern char gbl_common_data[0x20000];
 extern char * gbl_common_data_ptr;
 
-#define PLUGIN_LOCATION_END_ADDRESS 0x01000000
+#define PLUGIN_LOCATION_START_ADDRESS   0x00A00000
+#define PLUGIN_LOCATION_END_ADDRESS     0x01000000
 
 class PluginLoader {
 
 public:
-    static PluginLoader *getInstance() {
-        if(!instance) {
-            instance = new PluginLoader((void*)getApplicationEndAddr(),(void *)PLUGIN_LOCATION_END_ADDRESS);
-        }
-        return instance;
+    PluginLoader(void * startAddress, void * endAddress) {
+        // TODO: Check if endAddress > startAddress.
+        this->startAddress = startAddress;
+        this->endAddress = endAddress;
+        this->currentStoreAddress = (void*) ROUNDUP((uint32_t)startAddress, 0x10000);
     }
 
-    static void destroyInstance() {
-        if(instance) {
-            delete instance;
-            instance = NULL;
-        }
-    }
+    ~PluginLoader() {
 
+    }
     /**
         \brief Parses the meta data of all plugins in the given directory.
 
@@ -95,8 +92,8 @@ public:
 
 
     static void flushCache() {
-        uint32_t startAddress = getApplicationEndAddr();
-        uint32_t endAddress = PLUGIN_LOCATION_END_ADDRESS;
+        uint32_t startAddress = (uint32_t) PLUGIN_LOCATION_START_ADDRESS;
+        uint32_t endAddress = (uint32_t) PLUGIN_LOCATION_END_ADDRESS;
 
         DCFlushRange((void*)startAddress,(uint32_t)endAddress - (uint32_t)startAddress);
         ICInvalidateRange((void*)startAddress,(uint32_t)endAddress - (uint32_t)startAddress);
@@ -125,19 +122,10 @@ public:
         this->currentStoreAddress = (void*) ROUNDUP((uint32_t)startAddress, 0x10000);
     }
 
-    uint32_t getMemoryFromDataSection(size_t align, size_t size);
+    static uint32_t getMemoryFromDataSection(size_t align, size_t size);
 
 private:
-    PluginLoader(void * startAddress, void * endAddress) {
-        // TODO: Check if endAddress > startAddress.
-        this->startAddress = startAddress;
-        this->endAddress = endAddress;
-        this->currentStoreAddress = (void*) ROUNDUP((uint32_t)startAddress, 0x10000);
-    }
 
-    ~PluginLoader() {
-
-    }
 
     static PluginLoader *instance;
 

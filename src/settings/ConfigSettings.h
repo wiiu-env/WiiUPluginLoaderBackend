@@ -21,7 +21,7 @@
 
 #include <string>
 #include <stdio.h>
-#include <dynamic_libs/os_types.h>
+#include <stdint.h>
 #include <vector>
 #include <map>
 

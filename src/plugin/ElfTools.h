@@ -30,7 +30,7 @@
 extern "C" {
 #endif
 
-#include <libelf.h>
+#include "libelf/libelf.h"
 
 #ifdef __cplusplus
 }

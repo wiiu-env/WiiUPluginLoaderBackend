@@ -25,8 +25,10 @@
 
 #include "function_patcher.h"
 #include <utils/logger.h>
+#include <utils/utils.h>
 #include <kernel/kernel_defs.h>
-#include <kernel/syscalls.h>
+#include <kernel/kernel_utils.h>
+#include <memory/memory_mapping.h>
 
 #define DEBUG_LOG_DYN                                   0
 
@@ -118,7 +120,7 @@ void new_PatchInvidualMethodHooks(replacement_data_plugin_t * plugin_data) {
 
         DEBUG_FUNCTION_LINE("Patching %s ...\n",function_data->function_name);
         if(function_data->functionType == STATIC_FUNCTION && function_data->alreadyPatched == 1) {
-            if(new_isDynamicFunction((uint32_t)OSEffectiveToPhysical((void*)function_data->realAddr))) {
+            if(new_isDynamicFunction((uint32_t)OSEffectiveToPhysical(function_data->realAddr))) {
                 DEBUG_FUNCTION_LINE("INFO: The function %s is a dynamic function.\n", function_data->function_name);
                 function_data->functionType = DYNAMIC_FUNCTION;
             } else {
@@ -143,7 +145,7 @@ void new_PatchInvidualMethodHooks(replacement_data_plugin_t * plugin_data) {
             DEBUG_FUNCTION_LINE("%s is located at %08X!\n", function_data->function_name,real_addr);
         }
 
-        physical = (uint32_t)OSEffectiveToPhysical((void*)real_addr);
+        physical = (uint32_t)OSEffectiveToPhysical(real_addr);
         if(!physical) {
             log_printf("Error. Something is wrong with the physical address\n");
             continue;
@@ -155,15 +157,25 @@ void new_PatchInvidualMethodHooks(replacement_data_plugin_t * plugin_data) {
 
         *(volatile uint32_t *)(call_addr) = (uint32_t)(space);
 
+        uint32_t targetAddr = (uint32_t)space;
+        if(targetAddr < 0x00800000 || targetAddr >= 0x01000000) {
+            targetAddr = (uint32_t) OSEffectiveToPhysical(targetAddr);
+        }else{
+            targetAddr = targetAddr + 0x30800000 - 0x00800000;
+        }
 
-        SC0x25_KernelCopyData((uint32_t)space, physical, 4);
+        KernelCopyData(targetAddr, physical, 4);
+
+        ICInvalidateRange((void*)(space), 4);
+        DCFlushRange((void*)(space), 4);
+
         space++;
 
         //Only works if skip_instr == 1
         if(skip_instr == 1) {
             // fill the restore instruction section
             function_data->realAddr = real_addr;
-            function_data->restoreInstruction = *(space-1);
+            function_data->restoreInstruction = space[-1];
             if(DEBUG_LOG_DYN) {
                 DEBUG_FUNCTION_LINE("function_data->realAddr = %08X!\n", function_data->realAddr);
             }
@@ -209,15 +221,15 @@ void new_PatchInvidualMethodHooks(replacement_data_plugin_t * plugin_data) {
         space++;
         *space = 0x4E800420; // bctr
         space++;
-        DCFlushRange((void*)(space - instr_len), flush_len);
-        ICInvalidateRange((unsigned char*)(space - instr_len), flush_len);
+        DCFlushRange((void*)(((uint32_t) space) - flush_len),flush_len);
+        ICInvalidateRange((void*)(((uint32_t) space) - flush_len),flush_len);
 
         //setting jump back
         uint32_t replace_instr = 0x48000002 | (repl_addr_test & 0x03fffffc);
         ICInvalidateRange(&replace_instr, 4);
         DCFlushRange(&replace_instr, 4);
 
-        SC0x25_KernelCopyData(physical, (uint32_t)OSEffectiveToPhysical(&replace_instr), 4);
+        KernelCopyData(physical, (uint32_t)OSEffectiveToPhysical((uint32_t)&replace_instr), 4);
         ICInvalidateRange((void*)(real_addr), 4);
         DCFlushRange((void*)(real_addr), 4);
 
@@ -254,7 +266,7 @@ void new_RestoreInvidualInstructions(replacement_data_plugin_t * plugin_data) {
             continue;
         }
 
-        uint32_t physical = (uint32_t)OSEffectiveToPhysical((void*)real_addr);
+        uint32_t physical = (uint32_t)OSEffectiveToPhysical(real_addr);
         if(!physical) {
             log_printf("Something is wrong with the physical address\n");
             continue;
@@ -263,11 +275,20 @@ void new_RestoreInvidualInstructions(replacement_data_plugin_t * plugin_data) {
         if(new_isDynamicFunction(physical)) {
             log_printf("Its a dynamic function. We don't need to restore it!\n",function_data->function_name);
         } else {
-            physical = (uint32_t)OSEffectiveToPhysical((void*)function_data->realAddr); //When its an static function, we need to use the old location
+            physical = (uint32_t)OSEffectiveToPhysical(function_data->realAddr); //When its an static function, we need to use the old location
             if(DEBUG_LOG_DYN) {
                 DEBUG_FUNCTION_LINE("Restoring %08X to %08X\n",(uint32_t)function_data->restoreInstruction,physical);
             }
-            SC0x25_KernelCopyData(physical,(uint32_t)&function_data->restoreInstruction, 4);
+            uint32_t targetAddr = (uint32_t)&(function_data->restoreInstruction);
+            if(targetAddr < 0x00800000 || targetAddr >= 0x01000000) {
+                targetAddr = (uint32_t) OSEffectiveToPhysical(targetAddr);
+            } else {
+                targetAddr = targetAddr + 0x30800000 - 0x00800000;
+            }
+
+            DEBUG_FUNCTION_LINE("Copy %d bytes from %08X to %08x\n", 4,targetAddr, physical);
+
+            KernelCopyData(physical,targetAddr, 4);
             if(DEBUG_LOG_DYN) {
                 DEBUG_FUNCTION_LINE("ICInvalidateRange %08X\n",(void*)function_data->realAddr);
             }
@@ -291,22 +312,6 @@ int32_t new_isDynamicFunction(uint32_t physicalAddress) {
 uint32_t new_GetAddressOfFunction(const char * functionName,wups_loader_library_type_t library) {
     uint32_t real_addr = 0;
 
-    if(strcmp(functionName, "OSDynLoad_Acquire") == 0) {
-        memcpy(&real_addr, &OSDynLoad_Acquire, 4);
-        return real_addr;
-    } else if(strcmp(functionName, "LiWaitOneChunk") == 0) {
-        real_addr = (uint32_t)addr_LiWaitOneChunk;
-        return real_addr;
-    } else if(strcmp(functionName, "LiBounceOneChunk") == 0) {
-        //! not required on firmwares above 3.1.0
-        if(OS_FIRMWARE >= 400)
-            return 0;
-
-        uint32_t addr_LiBounceOneChunk = 0x010003A0;
-        real_addr = (uint32_t)addr_LiBounceOneChunk;
-        return real_addr;
-    }
-
     uint32_t rpl_handle = 0;
 
     int32_t rpl_handles_size = sizeof rpl_handles / sizeof rpl_handles[0];
@@ -315,7 +320,7 @@ uint32_t new_GetAddressOfFunction(const char * functionName,wups_loader_library_
         if(rpl_handles[i].library == library) {
             if(rpl_handles[i].handle == 0) {
                 DEBUG_FUNCTION_LINE("Lets acquire handle for rpl: %s\n",rpl_handles[i].rplname);
-                OSDynLoad_Acquire(rpl_handles[i].rplname, &rpl_handles[i].handle);
+                OSDynLoad_Acquire((char*) rpl_handles[i].rplname, &rpl_handles[i].handle);
             }
             if(rpl_handles[i].handle == 0) {
                 log_printf("%s failed to acquire\n",rpl_handles[i].rplname);

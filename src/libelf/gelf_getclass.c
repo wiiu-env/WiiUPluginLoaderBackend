@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 
-#include <gelf.h>
+#include "gelf.h"
 
 #include "_libelf.h"
 

@@ -335,7 +335,7 @@ _libelf_cvt_ADDR32_tom(char *dst, size_t dsz, char *src, size_t count,
 
 	return (1);
 }
-	 
+
 static int
 _libelf_cvt_ADDR64_tof(char *dst, size_t dsz, char *src, size_t count,
     int byteswap)
@@ -442,7 +442,7 @@ _libelf_cvt_CAP32_tom(char *dst, size_t dsz, char *src, size_t count,
 
 	return (1);
 }
-       
+
 static int
 _libelf_cvt_CAP64_tof(char *dst, size_t dsz, char *src, size_t count,
     int byteswap)
@@ -562,7 +562,7 @@ _libelf_cvt_DYN32_tom(char *dst, size_t dsz, char *src, size_t count,
 
 	return (1);
 }
-       
+
 static int
 _libelf_cvt_DYN64_tof(char *dst, size_t dsz, char *src, size_t count,
     int byteswap)
@@ -730,7 +730,7 @@ _libelf_cvt_EHDR32_tom(char *dst, size_t dsz, char *src, size_t count,
 
 	return (1);
 }
-       
+
 static int
 _libelf_cvt_EHDR64_tof(char *dst, size_t dsz, char *src, size_t count,
     int byteswap)
@@ -1004,7 +1004,7 @@ _libelf_cvt_MOVE32_tom(char *dst, size_t dsz, char *src, size_t count,
 
 	return (1);
 }
-       
+
 static int
 _libelf_cvt_MOVE64_tof(char *dst, size_t dsz, char *src, size_t count,
     int byteswap)
@@ -1123,7 +1123,7 @@ _libelf_cvt_OFF32_tom(char *dst, size_t dsz, char *src, size_t count,
 
 	return (1);
 }
-	 
+
 static int
 _libelf_cvt_OFF64_tof(char *dst, size_t dsz, char *src, size_t count,
     int byteswap)
@@ -1254,7 +1254,7 @@ _libelf_cvt_PHDR32_tom(char *dst, size_t dsz, char *src, size_t count,
 
 	return (1);
 }
-       
+
 static int
 _libelf_cvt_PHDR64_tof(char *dst, size_t dsz, char *src, size_t count,
     int byteswap)
@@ -1398,7 +1398,7 @@ _libelf_cvt_REL32_tom(char *dst, size_t dsz, char *src, size_t count,
 
 	return (1);
 }
-       
+
 static int
 _libelf_cvt_REL64_tof(char *dst, size_t dsz, char *src, size_t count,
     int byteswap)
@@ -1522,7 +1522,7 @@ _libelf_cvt_RELA32_tom(char *dst, size_t dsz, char *src, size_t count,
 
 	return (1);
 }
-       
+
 static int
 _libelf_cvt_RELA64_tof(char *dst, size_t dsz, char *src, size_t count,
     int byteswap)
@@ -1678,7 +1678,7 @@ _libelf_cvt_SHDR32_tom(char *dst, size_t dsz, char *src, size_t count,
 
 	return (1);
 }
-       
+
 static int
 _libelf_cvt_SHDR64_tof(char *dst, size_t dsz, char *src, size_t count,
     int byteswap)
@@ -1924,7 +1924,7 @@ _libelf_cvt_SYMINFO32_tom(char *dst, size_t dsz, char *src, size_t count,
 
 	return (1);
 }
-       
+
 static int
 _libelf_cvt_SYMINFO64_tof(char *dst, size_t dsz, char *src, size_t count,
     int byteswap)
@@ -2060,7 +2060,7 @@ _libelf_cvt_SYM32_tom(char *dst, size_t dsz, char *src, size_t count,
 
 	return (1);
 }
-       
+
 static int
 _libelf_cvt_SYM64_tof(char *dst, size_t dsz, char *src, size_t count,
     int byteswap)
@@ -2404,7 +2404,7 @@ _libelf_cvt_VDEF32_tom(char *dst, size_t dsz, char *src, size_t count,
 
 	return (1);
 }
-   
+
 static int
 _libelf_cvt_VDEF64_tof(char *dst, size_t dsz, char *src, size_t count,
     int byteswap)
@@ -2754,7 +2754,7 @@ _libelf_cvt_VNEED32_tom(char *dst, size_t dsz, char *src, size_t count,
 
 	return (1);
 }
-   
+
 static int
 _libelf_cvt_VNEED64_tof(char *dst, size_t dsz, char *src, size_t count,
     int byteswap)

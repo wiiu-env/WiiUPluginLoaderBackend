@@ -1,40 +1,33 @@
-OUTPUT(wiiupluginloader.elf);
+OUTPUT(loader.elf);
 
-/* Tell linker where our application entry is so the garbage collect can work correct */
-ENTRY(__entry_menu);
+ENTRY(_start);
 
 SECTIONS {
-	. = 0x00802000;
+	. = 0x00800000;
 	.text : {
 		*(.kernel_code*);
 		*(.text*);
 		/* Tell linker to not garbage collect this section as it is not referenced anywhere */
 		KEEP(*(.kernel_code*));
-	}
-	.rodata : {
-		*(.rodata*);
+	}	
+	.sdata : {
+		*(.sdata*)
 	}
 	.data : {
-		*(.data*);
-
-		__sdata_start = .;
-		*(.sdata*);
-		__sdata_end = .;
-
-		__sdata2_start = .;
-		*(.sdata2*);
-		__sdata2_end = .;
+		*(.data*)
+	}
+	.rodata : {
+		*(.rodata*)
+	}
+	.sbss : {
+		*(.sbss*)
 	}
 	.bss : {
-		__bss_start = .;
-		*(.bss*);
-		*(.sbss*);
-		*(COMMON);
-		__bss_end = .;
+		*(.bss*)
 	}
-	__CODE_END = .;
-
 	/DISCARD/ : {
 		*(*);
 	}
 }
+
+ASSERT((SIZEOF(.text) + SIZEOF(.data)) < 0x800000, "Memory overlapping with main elf.");

@@ -10,28 +10,16 @@
 #include <wups.h>
 
 #include "utils.h"
+#include <utils/utils.h>
 #include <utils/logger.h>
-#include "common/common.h"
 #include "common/retain_vars.h"
-#include "myutils/overlay_helper.h"
-#include "myutils/mem_utils.h"
-#include "myutils/texture_utils.h"
-#include "kernel/syscalls.h"
+#include "utils/overlay_helper.h"
+#include "utils/mem_utils.h"
+#include "kernel/kernel_utils.h"
 
 void CallHook(wups_loader_hook_type_t hook_type) {
     CallHookEx(hook_type,-1);
 }
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-// Part of libutils
-extern uint32_t kern_read(const void *addr);
-extern void kern_write(void *addr, uint32_t value);
-#ifdef __cplusplus
-}
-#endif
-
 
 bool HasHookCallHook(wups_loader_hook_type_t hook_type) {
     for(int32_t plugin_index=0; plugin_index<gbl_replacement_data.number_used_plugins; plugin_index++) {
@@ -65,6 +53,7 @@ void CallHookEx(wups_loader_hook_type_t hook_type, int32_t plugin_index_needed) 
                 //TODO: Switch cases depending on arguments etc.
                 // Adding arguments!
                 if(func_ptr != NULL) {
+                    //DEBUG_FUNCTION_LINE("function pointer is %08x\n",func_ptr);
                     if(hook_type == WUPS_LOADER_HOOK_INIT_FS) {
                         wups_loader_init_fs_args_t args;
                         // open is defined as "extern int open (const char *, int, ...);", we are ignoring the varargs part
@@ -81,11 +70,11 @@ void CallHookEx(wups_loader_hook_type_t hook_type, int32_t plugin_index_needed) 
                         args.mkdir_repl = &mkdir;
                         ((void (*)(wups_loader_init_fs_args_t))((uint32_t*)func_ptr) )(args);
                     } else if(hook_type == WUPS_LOADER_HOOK_INIT_OVERLAY) {
-                        wups_loader_init_overlay_args_t args;
+                        /*wups_loader_init_overlay_args_t args;
                         args.overlayfunction_ptr = &overlay_helper;
                         args.textureconvertfunction_ptr = &TextureUtils::convertImageToTexture;
                         args.drawtexturefunction_ptr = (void (*)(void*,void*,float,float,int32_t,int32_t,float)) &TextureUtils::drawTexture;
-                        ((void (*)(wups_loader_init_overlay_args_t))((uint32_t*)func_ptr) )(args);
+                        ((void (*)(wups_loader_init_overlay_args_t))((uint32_t*)func_ptr) )(args);*/
                     } else if(hook_type == WUPS_LOADER_HOOK_INIT_PLUGIN) {
                         ((void (*)(void))((uint32_t*)func_ptr) )();
                     } else if(hook_type == WUPS_LOADER_HOOK_DEINIT_PLUGIN) {
@@ -93,12 +82,12 @@ void CallHookEx(wups_loader_hook_type_t hook_type, int32_t plugin_index_needed) 
                     } else if(hook_type == WUPS_LOADER_HOOK_STARTING_APPLICATION) {
                         wups_loader_app_started_args_t args;
                         memset(&args,0,sizeof(args));
-                        if(gSDInitDone & WUPS_SD_MOUNTED) {
+                        ///*if(gSDInitDone & WUPS_SD_MOUNTED) {
                             args.sd_mounted = true;
-                        }
-                        if(gSDInitDone & WUPS_USB_MOUNTED) {
+                        //}
+                        /*if(gSDInitDone & WUPS_USB_MOUNTED) {
                             args.usb_mounted = true;
-                        }
+                        }*/
                         if(plugin_data->kernel_allowed && plugin_data->kernel_init_done) {
                             args.kernel_access = true;
                         }
@@ -127,7 +116,7 @@ void CallHookEx(wups_loader_hook_type_t hook_type, int32_t plugin_index_needed) 
                             wups_loader_init_kernel_args_t args;
                             args.kern_read_ptr = &kern_read;
                             args.kern_write_ptr = &kern_write;
-                            args.kern_copy_data_ptr = &SC0x25_KernelCopyData;
+                            args.kern_copy_data_ptr = &KernelCopyData;
                             ((void (*)(wups_loader_init_kernel_args_t))((uint32_t*)func_ptr) )(args);
                             plugin_data->kernel_init_done = true;
                         }
@@ -137,19 +126,19 @@ void CallHookEx(wups_loader_hook_type_t hook_type, int32_t plugin_index_needed) 
                         args.vid_mem_free_ptr = &MemoryUtils::free;
                         ((void (*)(wups_loader_init_vid_mem_args_t))((uint32_t*)func_ptr) )(args);
                     } else if(hook_type == WUPS_LOADER_HOOK_VID_DRC_DRAW) {
-                        wups_loader_vid_buffer_t args;
+                        /*wups_loader_vid_buffer_t args;
                         args.color_buffer_ptr = &g_vid_main_cbuf;
                         args.tv_texture_ptr = &g_vid_tvTex;
                         args.drc_texture_ptr = &g_vid_drcTex;
                         args.sampler_ptr = &g_vid_sampler;
-                        ((void (*)(wups_loader_vid_buffer_t))((uint32_t*)func_ptr) )(args);
+                        ((void (*)(wups_loader_vid_buffer_t))((uint32_t*)func_ptr) )(args);*/
                     } else if(hook_type == WUPS_LOADER_HOOK_VID_TV_DRAW) {
-                        wups_loader_vid_buffer_t args;
+                        /*wups_loader_vid_buffer_t args;
                         args.color_buffer_ptr = &g_vid_main_cbuf;
                         args.tv_texture_ptr = &g_vid_tvTex;
                         args.drc_texture_ptr = &g_vid_drcTex;
                         args.sampler_ptr = &g_vid_sampler;
-                        ((void (*)(wups_loader_vid_buffer_t))((uint32_t*)func_ptr) )(args);
+                        ((void (*)(wups_loader_vid_buffer_t))((uint32_t*)func_ptr) )(args);*/
                     } else {
                         DEBUG_FUNCTION_LINE("ERROR: HOOK TYPE WAS NOT IMPLEMENTED %08X \n",hook_type);
                     }

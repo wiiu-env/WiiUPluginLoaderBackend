@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 
-#include <dynamic_libs/os_functions.h>
+#include <dynamic_libs/coreinit.h>
 #include <wups.h>
 
 struct rpl_handling {

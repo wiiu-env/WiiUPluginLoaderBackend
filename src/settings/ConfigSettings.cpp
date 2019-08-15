@@ -19,13 +19,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "common/common.h"
 #include "ConfigSettings.h"
 #include <fs/CFile.hpp>
 #include <fs/FSUtils.h>
 #include <utils/StringTools.h>
 #include <utils/logger.h>
-#include <language/gettext.h>
+//#include <language/gettext.h>
 
 #define VERSION_LINE        "# WiiUPluginSystem - plugin settings file v"
 #define VALID_VERSION       1
@@ -208,7 +207,7 @@ bool ConfigSettings::Save(bool force) {
     std::string filepath = configPath + "/";
     filepath += fileName;
 
-    s32 res = open(filepath.c_str(), O_CREAT | O_TRUNC | O_WRONLY);
+    int32_t res = open(filepath.c_str(), O_CREAT | O_TRUNC | O_WRONLY);
     close(res);
 
     CFile file(filepath, CFile::WriteOnly);

@@ -22,7 +22,7 @@
 extern "C" {
 #endif
 
-#include <dynamic_libs/os_functions.h>
+#include <dynamic_libs/coreinit.h>
 #include <wups.h>
 
 #define DYN_LINK_FUNCTION_NAME_LENGTH           255

@@ -27,7 +27,7 @@
 #include <sys/cdefs.h>
 
 #include <assert.h>
-#include <gelf.h>
+#include "gelf.h"
 #include <libelf.h>
 #include <limits.h>
 #include <string.h>

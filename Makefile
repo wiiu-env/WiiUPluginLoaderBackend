@@ -23,7 +23,7 @@ MACHDEP	= -DESPRESSO -mcpu=750 -meabi -mhard-float
 # DATA is a list of directories containing data files
 # INCLUDES is a list of directories containing header files
 #-------------------------------------------------------------------------------
-TARGET		:=	hook_payload.elf
+TARGET		:=	hook_payload
 BUILD		:=	build
 BUILD_DBG	:=	$(TARGET)_dbg
 SOURCES		:=	src \

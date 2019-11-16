@@ -13,7 +13,7 @@ int ipc_ioctl(ipcmessage *message) {
     case IOCTL_OPEN_PLUGIN_LOADER: {
         DEBUG_FUNCTION_LINE("IOCTL_OPEN_PLUGIN_LOADER\n");
         if(message->ioctl.length_in != 8 || message->ioctl.length_io < 4) {
-            DEBUG_FUNCTION_LINE("IPC_ERROR_INVALID_SIZE\n");
+            //DEBUG_FUNCTION_LINE("IPC_ERROR_INVALID_SIZE\n");
             res = IPC_ERROR_INVALID_SIZE;
         } else {
             uint32_t startAddress = message->ioctl.buffer_in[0];
@@ -22,10 +22,10 @@ int ipc_ioctl(ipcmessage *message) {
 
             PluginLoader * pluginLoader = new PluginLoader((void*)startAddress, (void*)endAddress);
             if(pluginLoader == NULL) {
-                DEBUG_FUNCTION_LINE("Creating plugin loader for %08X %08X failed \n",startAddress, endAddress);
+                //DEBUG_FUNCTION_LINE("Creating plugin loader for %08X %08X failed \n",startAddress, endAddress);
                 res = IPC_ERROR_FAILED_ALLOC;
             } else {
-                DEBUG_FUNCTION_LINE("Creating plugin loader %08X %08X: %08X\n",startAddress, endAddress, pluginLoader);
+                //DEBUG_FUNCTION_LINE("Creating plugin loader %08X %08X: %08X\n",startAddress, endAddress, pluginLoader);
                 message->ioctl.buffer_io[0] = (uint32_t) pluginLoader;
             }
         }
@@ -39,7 +39,7 @@ int ipc_ioctl(ipcmessage *message) {
         } else {
             void * ptr = (void *) message->ioctl.buffer_in[0];
 
-            DEBUG_FUNCTION_LINE("Closing %08X\n", ptr);
+            //DEBUG_FUNCTION_LINE("Closing %08X\n", ptr);
 
             if(ptr != NULL/* && (PluginLoader* pluginLoader = dynamic_cast<PluginLoader*>(ptr))*/) {
                 PluginLoader* pluginLoader = (PluginLoader * )ptr;
@@ -65,14 +65,14 @@ int ipc_ioctl(ipcmessage *message) {
 
             *filledCount = 0;
 
-            DEBUG_FUNCTION_LINE("ptr %08X ptr_value %08X path %08X %s, filledcount_ptr %08X io_handles%08X lengthio%d\n", ptr,*(uint32_t*)ptr, path,path, filledCount,io_handles,lengthIo);
+            //DEBUG_FUNCTION_LINE("path %08X %s, filledcount_ptr %08X io_handles%08X lengthio%d\n", path,path, filledCount,io_handles,lengthIo);
 
             if(ptr != NULL && path != NULL/* && (PluginLoader* pluginLoader = dynamic_cast<PluginLoader*>(ptr))*/) {
                 PluginLoader* pluginLoader = (PluginLoader * )ptr;
                 std::vector<PluginInformation *> pluginList =  pluginLoader->getPluginInformation(path);
                 uint32_t pluginInfoSpace = lengthIo / sizeof(plugin_information_handle);
 
-                DEBUG_FUNCTION_LINE("pluginInfoSpace %d\n", pluginInfoSpace);
+            //DEBUG_FUNCTION_LINE("pluginInfoSpace %d\n", pluginInfoSpace);
 
                 uint32_t cur = 0;
 
@@ -150,7 +150,7 @@ int ipc_ioctl(ipcmessage *message) {
 
             if(plugin_handle != NULL/* && (PluginLoader* pluginLoader = dynamic_cast<PluginLoader*>(ptr))*/) {
                 PluginInformation* curInformation = (PluginInformation *)plugin_handle;
-                DEBUG_FUNCTION_LINE("Deleting %08X\n", curInformation);
+                //DEBUG_FUNCTION_LINE("Deleting %08X\n", curInformation);
                 delete curInformation;
             } else {
                 res = IPC_ERROR_INVALID_ARG;
@@ -168,7 +168,7 @@ int ipc_ioctl(ipcmessage *message) {
             plugin_information_handle * plugin_information_handle_list = (plugin_information_handle *) message->ioctl.buffer_in[0];
             uint32_t plugin_information_handle_list_size = (uint32_t) message->ioctl.buffer_in[1];
 
-            DEBUG_FUNCTION_LINE("plugin_information_handle_list %08X plugin_information_handle_list_size %d\n",plugin_information_handle_list,plugin_information_handle_list_size);
+            //DEBUG_FUNCTION_LINE("plugin_information_handle_list %08X plugin_information_handle_list_size %d\n",plugin_information_handle_list,plugin_information_handle_list_size);
 
             plugin_information * plugin_information_list = (plugin_information *) message->ioctl.buffer_io;
 
@@ -201,9 +201,7 @@ int ipc_ioctl(ipcmessage *message) {
             void * ptr = (void *) message->ioctl.buffer_in[0];
             plugin_information_handle * plugin_handle_list = (plugin_information_handle *) message->ioctl.buffer_in[1];
             uint32_t plugin_handle_list_size = (uint32_t) message->ioctl.buffer_in[2];
-
-            DEBUG_FUNCTION_LINE("ptr %08X plugin_handle_list %08X size %d\n",ptr,plugin_handle_list,plugin_handle_list_size);
-
+            //DEBUG_FUNCTION_LINE("ptr %08X plugin_handle_list %08X size %d\n",ptr,plugin_handle_list,plugin_handle_list_size);
             uint32_t * linkedCount = (uint32_t *)message->ioctl.buffer_io;
             *linkedCount = 0;
 
@@ -213,14 +211,15 @@ int ipc_ioctl(ipcmessage *message) {
                 for(uint32_t i = 0; i  < plugin_handle_list_size; i++ ) {
 
                     plugin_information_handle curHandle = plugin_handle_list[i];
-                    DEBUG_FUNCTION_LINE("Adding handle %08X\n",curHandle);
+                    //DEBUG_FUNCTION_LINE("Adding handle %08X\n",curHandle);
                     if(curHandle != 0/* && (PluginInformation* curInformation = dynamic_cast<PluginInformation*>(curHandle))*/) {
                         PluginInformation* curInformation = (PluginInformation *)curHandle;
                         willBeLoaded.push_back(curInformation);
                     }
                 }
 
-                DEBUG_FUNCTION_LINE("willBeLoaded size is %d\n",willBeLoaded.size());
+                //DEBUG_FUNCTION_LINE("willBeLoaded size is %d\n",willBeLoaded.size());
+
 
                 //if(willBeLoaded.size() > 0){
                     RestoreEverything();

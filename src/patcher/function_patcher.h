@@ -37,7 +37,7 @@ struct rpl_handling {
 #define FUNCTION_PATCHER_METHOD_STORE_SIZE                  13
 #define MAXIMUM_PLUGIN_PATH_NAME_LENGTH                     256
 #define MAXIMUM_PLUGIN_NAME_LENGTH                          51
-#define MAXIMUM_FUNCTION_NAME_LENGTH                        61
+#define MAXIMUM_FUNCTION_NAME_LENGTH                        83
 
 struct replacement_data_function_t {
     uint32_t physicalAddr;                                                  /* [needs to be filled]  */

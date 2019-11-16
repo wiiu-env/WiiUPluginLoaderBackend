@@ -226,6 +226,43 @@ int ipc_ioctl(ipcmessage *message) {
         }
         break;
     }
+    case IOCTL_PLUGIN_LOADER_LINK_VIA_INFORMATION_ON_RESTART: {
+        DEBUG_FUNCTION_LINE("IOCTL_PLUGIN_LOADER_LINK_VIA_INFORMATION_ON_RESTART\n");
+        if(message->ioctl.length_in != 8 || message->ioctl.length_io < 4) {
+            res = IPC_ERROR_INVALID_SIZE;
+        } else {
+            plugin_information_handle * plugin_handle_list = (plugin_information_handle *) message->ioctl.buffer_in[0];
+            uint32_t plugin_handle_list_size = (uint32_t) message->ioctl.buffer_in[1];
+
+            //DEBUG_FUNCTION_LINE("plugin_handle_list %08X size %d\n",plugin_handle_list,plugin_handle_list_size);
+
+            uint32_t * linkedCount = (uint32_t *)message->ioctl.buffer_io;
+            *linkedCount = 0;
+
+            int inGlobal = 0;
+            for(uint32_t i = 0; i  < plugin_handle_list_size; i++ ) {
+                plugin_information_handle curHandle = plugin_handle_list[i];
+                //DEBUG_FUNCTION_LINE("Adding handle %08X\n",curHandle);
+                if(curHandle != 0/* && (PluginInformation* curInformation = dynamic_cast<PluginInformation*>(curHandle))*/) {
+                    PluginInformation* curInformation = (PluginInformation *)curHandle;
+                    if(inGlobal<=31){
+                        strncpy(gbl_to_link_and_load_data[inGlobal].name, curInformation->getPath().c_str(), 256);
+                        inGlobal++;
+                    }
+                }
+            }
+
+            for(int i = 0; gbl_to_link_and_load_data[i].name[0] != 0; i++) {
+                 //DEBUG_FUNCTION_LINE("%s\n",gbl_to_link_and_load_data[i].name);
+            }
+
+            //DEBUG_FUNCTION_LINE("inGlobal size is %d\n",inGlobal);
+            gInBackground = false;
+
+            *linkedCount = inGlobal;
+        }
+        break;
+    }
     default:
         res = IPC_ERROR_INVALID_ARG;
         break;

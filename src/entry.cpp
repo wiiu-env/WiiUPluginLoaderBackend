@@ -126,7 +126,6 @@ void afterLoadAndLink() {
     CallHook(WUPS_LOADER_HOOK_INIT_PLUGIN);
 }
 
-
 extern "C" void doStart(int argc, char **argv);
 // We need to wrap it to make sure the main function is called AFTER our code.
 // The compiler tries to optimize this otherwise and calling the main function earlier
@@ -178,6 +177,7 @@ extern "C" void doStart(int argc, char **argv) {
         //initMemory();
         //SplashScreen(1, "Memory mapping was completed!", 0,0);
 
+        memset(gbl_to_link_and_load_data,0, sizeof(gbl_to_link_and_load_data));
 
         // Init space
         DynamicLinkingHelper::getInstance()->clearAll();
@@ -201,7 +201,6 @@ extern "C" void doStart(int argc, char **argv) {
         pluginLoader->loadAndLinkPlugins(pluginList);
         pluginLoader->clearPluginInformation(pluginList);
         delete pluginLoader;
-
         afterLoadAndLink();
     } else {
         DEBUG_FUNCTION_LINE("Mapping was already done\n");
@@ -212,6 +211,29 @@ extern "C" void doStart(int argc, char **argv) {
         //readAndPrintSegmentRegister(NULL,NULL);
         //MemoryMapping::writeTestValuesToMemory();
         //MemoryMapping::readTestValuesFromMemory();
+    }
+
+    if(gbl_to_link_and_load_data[0].name[0] != 0) {
+        ResolveRelocations();
+        CallHook(WUPS_LOADER_HOOK_DEINIT_PLUGIN);
+
+        // Restore patches as the patched functions could change.
+        RestorePatches();
+        DynamicLinkingHelper::getInstance()->clearAll();
+
+        PluginLoader * pluginLoader = new PluginLoader((void*)PLUGIN_LOCATION_START_ADDRESS, (void*)PLUGIN_LOCATION_END_ADDRESS);
+        std::vector<PluginInformation *> pluginList;
+        for(int i = 0; gbl_to_link_and_load_data[i].name[0] != 0; i++) {
+            PluginInformation * info = PluginInformation::loadPluginInformation(gbl_to_link_and_load_data[i].name);
+            if(info != NULL) {
+                pluginList.push_back(info);
+            }
+        }
+        pluginLoader->loadAndLinkPlugins(pluginList);
+        pluginLoader->clearPluginInformation(pluginList);
+        delete pluginLoader;
+        afterLoadAndLink();
+        memset(gbl_to_link_and_load_data,0, sizeof(gbl_to_link_and_load_data));
     }
 
     ResolveRelocations();

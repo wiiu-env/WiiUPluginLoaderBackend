@@ -6,6 +6,7 @@
 //#include <dynamic_libs/gx2_functions.h>
 
 extern replacement_data_t gbl_replacement_data;
+extern to_link_and_load_data_t gbl_to_link_and_load_data[MAXIMUM_PLUGINS];
 extern dyn_linking_relocation_data_t gbl_dyn_linking_data;
 
 extern bool g_NotInLoader;

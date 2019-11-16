@@ -81,6 +81,10 @@ struct replacement_data_t {
     replacement_data_plugin_t   plugin_data[MAXIMUM_PLUGINS];
 };
 
+struct to_link_and_load_data_t {
+    char                        name[256];
+};
+
 void new_PatchInvidualMethodHooks(replacement_data_plugin_t * data);
 void new_RestoreInvidualInstructions(replacement_data_plugin_t * plugin_data);
 uint32_t new_GetAddressOfFunction(const char * functionName,wups_loader_library_type_t library);

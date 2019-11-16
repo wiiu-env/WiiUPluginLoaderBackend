@@ -1,6 +1,7 @@
 #include "retain_vars.h"
 #include "utils/overlay_helper.h"
 replacement_data_t gbl_replacement_data __attribute__((section(".data")));
+to_link_and_load_data_t gbl_to_link_and_load_data[MAXIMUM_PLUGINS] __attribute__((section(".data")));
 dyn_linking_relocation_data_t gbl_dyn_linking_data __attribute__((section(".data")));
 
 bool gInBackground __attribute__((section(".data"))) = false;

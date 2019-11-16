@@ -35,6 +35,26 @@ bool HasHookCallHook(wups_loader_hook_type_t hook_type) {
     return false;
 }
 
+ static const char** hook_names = (const char *[]){
+                                 "WUPS_LOADER_HOOK_INIT_FS",
+                                 "WUPS_LOADER_HOOK_INIT_OVERLAY",
+                                 "WUPS_LOADER_HOOK_INIT_KERNEL",
+                                 "WUPS_LOADER_HOOK_INIT_VID_MEM",
+                                 "WUPS_LOADER_HOOK_INIT_PLUGIN",
+                                 "WUPS_LOADER_HOOK_DEINIT_PLUGIN",
+                                 "WUPS_LOADER_HOOK_APPLICATION_START",
+                                 "WUPS_LOADER_HOOK_FUNCTIONS_PATCHED",
+                                 "WUPS_LOADER_HOOK_RELEASE_FOREGROUND",
+                                 "WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND",
+                                 "WUPS_LOADER_HOOK_APPLICATION_END",
+                                 "WUPS_LOADER_HOOK_CONFIRM_RELEASE_FOREGROUND",
+                                 "WUPS_LOADER_HOOK_SAVES_DONE_READY_TO_RELEASE",
+                                 "WUPS_LOADER_HOOK_VSYNC",
+                                 "WUPS_LOADER_HOOK_GET_CONFIG",
+                                 "WUPS_LOADER_HOOK_VID_DRC_DRAW",
+                                 "WUPS_LOADER_HOOK_VID_TV_DRAW",
+                                 "WUPS_LOADER_HOOK_APPLET_START"};
+
 void CallHookEx(wups_loader_hook_type_t hook_type, int32_t plugin_index_needed) {
     for(int32_t plugin_index=0; plugin_index<gbl_replacement_data.number_used_plugins; plugin_index++) {
         replacement_data_plugin_t * plugin_data = &gbl_replacement_data.plugin_data[plugin_index];
@@ -42,13 +62,12 @@ void CallHookEx(wups_loader_hook_type_t hook_type, int32_t plugin_index_needed) 
             continue;
         }
 
-#warning TODO: change the order of the wups_loader_hook_type_t enum before an offical release.
         //DEBUG_FUNCTION_LINE("Checking hook functions for %s.\n",plugin_data->plugin_name);
         //DEBUG_FUNCTION_LINE("Found hooks: %d\n",plugin_data->number_used_hooks);
         for(int32_t j=0; j<plugin_data->number_used_hooks; j++) {
             replacement_data_hook_t * hook_data = &plugin_data->hooks[j];
             if(hook_data->type == hook_type) {
-                //DEBUG_FUNCTION_LINE("Calling hook of type %d for plugin %s\n",hook_data->type,plugin_data->plugin_name);
+                DEBUG_FUNCTION_LINE("Calling hook of type %s for plugin %s\n",hook_names[hook_data->type],plugin_data->plugin_name);
                 void * func_ptr = hook_data->func_pointer;
                 //TODO: Switch cases depending on arguments etc.
                 // Adding arguments!
@@ -79,7 +98,7 @@ void CallHookEx(wups_loader_hook_type_t hook_type, int32_t plugin_index_needed) 
                         ((void (*)(void))((uint32_t*)func_ptr) )();
                     } else if(hook_type == WUPS_LOADER_HOOK_DEINIT_PLUGIN) {
                         ((void (*)(void))((uint32_t*)func_ptr) )();
-                    } else if(hook_type == WUPS_LOADER_HOOK_STARTING_APPLICATION) {
+                    } else if(hook_type == WUPS_LOADER_HOOK_APPLICATION_START) {
                         wups_loader_app_started_args_t args;
                         memset(&args,0,sizeof(args));
                         ///*if(gSDInitDone & WUPS_SD_MOUNTED) {
@@ -94,22 +113,16 @@ void CallHookEx(wups_loader_hook_type_t hook_type, int32_t plugin_index_needed) 
                         ((void (*)(wups_loader_app_started_args_t))((uint32_t*)func_ptr) )(args);
                     } else if(hook_type == WUPS_LOADER_HOOK_FUNCTIONS_PATCHED) {
                         ((void (*)(void))((uint32_t*)func_ptr))();
-                    } else if(hook_type == WUPS_LOADER_HOOK_ENDING_APPLICATION) {
+                    } else if(hook_type == WUPS_LOADER_HOOK_APPLICATION_END) {
                         ((void (*)(void))((uint32_t*)func_ptr))();
                     } else if(hook_type == WUPS_LOADER_HOOK_VSYNC) {
                         ((void (*)(void))((uint32_t*)func_ptr))();
-                    } else if(hook_type == WUPS_LOADER_HOOK_APP_STATUS_CHANGED) {
-                        wups_loader_app_status_t status;
-                        if(gAppStatus == 0) {
-                            status = WUPS_APP_STATUS_FOREGROUND;
-                        } else if(gAppStatus == 2) {
-                            status = WUPS_APP_STATUS_BACKGROUND;
-                        } else if(gAppStatus == 3) {
-                            status = WUPS_APP_STATUS_CLOSED;
-                        } else {
-                            status = WUPS_APP_STATUS_UNKNOWN;
-                        }
-                        ((void (*)(wups_loader_app_status_t))((uint32_t*)func_ptr))(status);
+                    } else if(hook_type == WUPS_LOADER_HOOK_RELEASE_FOREGROUND) {
+                        ((void (*)(void))((uint32_t*)func_ptr))();
+                    } else if(hook_type == WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND) {
+                        ((void (*)(void))((uint32_t*)func_ptr))();
+                    } else if(hook_type == WUPS_LOADER_HOOK_APPLET_START) {
+                        ((void (*)(void))((uint32_t*)func_ptr))();
                     } else if(hook_type == WUPS_LOADER_HOOK_INIT_KERNEL) {
                         // Only call the hook if kernel is allowed.
                         if(plugin_data->kernel_allowed) {

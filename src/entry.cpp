@@ -11,6 +11,7 @@
 #include "utils/ConfigUtils.h"
 #include "utils/function_patcher.h"
 #include "utils/logger.h"
+#include "utils/mem_utils.h"
 #include "utils/ipc.h"
 #include "utils.h"
 #include "system/CThread.h"
@@ -79,7 +80,7 @@ void ApplyPatchesAndCallHookStartingApp() {
     PatchInvidualMethodHooks(method_hooks_hooks_static, method_hooks_size_hooks_static, method_calls_hooks_static);
     PatchInvidualMethodHooks(method_hooks_hooks, method_hooks_size_hooks, method_calls_hooks);
     for(int32_t plugin_index=0; plugin_index<gbl_replacement_data.number_used_plugins; plugin_index++) {
-        CallHookEx(WUPS_LOADER_HOOK_STARTING_APPLICATION,plugin_index);
+        CallHookEx(WUPS_LOADER_HOOK_APPLICATION_START,plugin_index);
         new_PatchInvidualMethodHooks(&gbl_replacement_data.plugin_data[plugin_index]);
         CallHookEx(WUPS_LOADER_HOOK_FUNCTIONS_PATCHED,plugin_index);
     }
@@ -87,7 +88,6 @@ void ApplyPatchesAndCallHookStartingApp() {
 
 void RestorePatches() {
     for(int32_t plugin_index=gbl_replacement_data.number_used_plugins-1; plugin_index>=0; plugin_index--) {
-        DEBUG_FUNCTION_LINE("Restoring function for plugin: %d\n",plugin_index);
         new_RestoreInvidualInstructions(&gbl_replacement_data.plugin_data[plugin_index]);
     }
     RestoreInvidualInstructions(method_hooks_hooks, method_hooks_size_hooks);
@@ -95,15 +95,14 @@ void RestorePatches() {
 }
 
 void RestoreEverything() {
+    CallHook(WUPS_LOADER_HOOK_RELEASE_FOREGROUND);
+    CallHook(WUPS_LOADER_HOOK_APPLICATION_END);
     CallHook(WUPS_LOADER_HOOK_DEINIT_PLUGIN);
-    uint32_t old = gAppStatus;
-    gAppStatus = 3;
-    CallHook(WUPS_LOADER_HOOK_APP_STATUS_CHANGED);
-    gAppStatus = old;
-    CallHook(WUPS_LOADER_HOOK_ENDING_APPLICATION);
+
     // Restore patches as the patched functions could change.
     RestorePatches();
     DynamicLinkingHelper::getInstance()->clearAll();
+    gInBackground = false;
 }
 
 
@@ -114,7 +113,6 @@ void ResolveRelocations() {
     if(!DynamicLinkingHelper::getInstance()->fillRelocations(relocations)) {
         OSFatal("fillRelocations failed.");
     }
-
 }
 
 void afterLoadAndLink() {
@@ -129,11 +127,25 @@ void afterLoadAndLink() {
 }
 
 
+extern "C" void doStart(int argc, char **argv);
+// We need to wrap it to make sure the main function is called AFTER our code.
+// The compiler tries to optimize this otherwise and calling the main function earlier
 extern "C" int _start(int argc, char **argv) {
-    if(gAppStatus == 2) {
-        //"No, we don't want to patch stuff again.");
-        return ( (int (*)(int, char **))(*(unsigned int*)0x1005E040) )(argc, argv);
+    doStart(argc,argv);
+    return ( (int (*)(int, char **))(*(unsigned int*)0x1005E040) )(argc, argv);
+}
+
+extern "C" void doStart(int argc, char **argv) {
+    coreinit_handle = 0;
+    InitOSFunctionPointers();
+
+    if(gInBackground) {
+        CallHook(WUPS_LOADER_HOOK_APPLET_START);
+        return;
     }
+
+    gInBackground = true;
+
     coreinit_handle = 0;
     InitOSFunctionPointers();
     InitSocketFunctionPointers();
@@ -149,11 +161,19 @@ extern "C" int _start(int argc, char **argv) {
     memset(&tv_store,0,sizeof(tv_store));
     memset(&drc_store,0,sizeof(drc_store));
 
+    log_init();
 
     if(!MemoryMapping::isMemoryMapped()) {
         MemoryMapping::setupMemoryMapping();
-        // Switch to custom heap
+        memset((void*)&gbl_replacement_data,0,sizeof(gbl_replacement_data));
+        DCFlushRange((void*)&gbl_replacement_data,sizeof(gbl_replacement_data));
+        ICInvalidateRange((void*)&gbl_replacement_data,sizeof(gbl_replacement_data));
 
+        memset((void*)&gbl_dyn_linking_data,0,sizeof(gbl_dyn_linking_data));
+        DCFlushRange((void*)&gbl_dyn_linking_data,sizeof(gbl_dyn_linking_data));
+        ICInvalidateRange((void*)&gbl_dyn_linking_data,sizeof(gbl_dyn_linking_data));
+
+        // Switch to custom heap
         //Does not work =(
         //initMemory();
         //SplashScreen(1, "Memory mapping was completed!", 0,0);
@@ -168,20 +188,15 @@ extern "C" int _start(int argc, char **argv) {
         DCFlushRange(ipcFunction,4);
         ICInvalidateRange(ipcFunction,4);
 
-        log_init();
-
-        DEBUG_FUNCTION_LINE("log init done\n");
-
-        DEBUG_FUNCTION_LINE("Patch own stuff\n");
-
-        // Do patches so memmory mapping works fine with some functions.
+        // Do patches so memory mapping works fine with some functions.
         PatchInvidualMethodHooks(method_hooks_hooks_static, method_hooks_size_hooks_static, method_calls_hooks_static);
 
         // mount sd card.
         mount_sd_fat("sd");
 
-        PluginLoader * pluginLoader = new PluginLoader((void*)PLUGIN_LOCATION_START_ADDRESS, (void*)PLUGIN_LOCATION_END_ADDRESS);
+        DEBUG_FUNCTION_LINE("Mounted SD\n");
 
+        PluginLoader * pluginLoader = new PluginLoader((void*)PLUGIN_LOCATION_START_ADDRESS, (void*)PLUGIN_LOCATION_END_ADDRESS);
         std::vector<PluginInformation *> pluginList = pluginLoader->getPluginInformation("sd:/wiiu/autoboot_plugins/");
         pluginLoader->loadAndLinkPlugins(pluginList);
         pluginLoader->clearPluginInformation(pluginList);
@@ -189,7 +204,6 @@ extern "C" int _start(int argc, char **argv) {
 
         afterLoadAndLink();
     } else {
-        log_init();
         DEBUG_FUNCTION_LINE("Mapping was already done\n");
         //unmount_sd_fat("sd");
         mount_sd_fat("sd");
@@ -200,15 +214,12 @@ extern "C" int _start(int argc, char **argv) {
         //MemoryMapping::readTestValuesFromMemory();
     }
 
-    std::vector<dyn_linking_relocation_entry_t *> relocations = DynamicLinkingHelper::getInstance()->getAllValidDynamicLinkingRelocations();
-    DEBUG_FUNCTION_LINE("Found relocation information for %d functions\n",relocations.size());
+    ResolveRelocations();
 
-    if(!DynamicLinkingHelper::getInstance()->fillRelocations(relocations)) {
-        OSFatal("fillRelocations failed.");
-    }
+    MemoryUtils::init();
 
     DEBUG_FUNCTION_LINE("Apply patches.\n");
     ApplyPatchesAndCallHookStartingApp();
+    DEBUG_FUNCTION_LINE("Patches applied. Running application.\n");
 
-    return ( (int (*)(int, char **))(*(unsigned int*)0x1005E040) )(argc, argv);
 }

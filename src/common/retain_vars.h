@@ -10,7 +10,7 @@ extern dyn_linking_relocation_data_t gbl_dyn_linking_data;
 
 extern bool g_NotInLoader;
 
-extern uint8_t gAppStatus;
+extern bool gInBackground;
 extern uint64_t gGameTitleID;
 extern volatile uint8_t gSDInitDone;
 

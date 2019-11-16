@@ -3,7 +3,7 @@
 replacement_data_t gbl_replacement_data __attribute__((section(".data")));
 dyn_linking_relocation_data_t gbl_dyn_linking_data __attribute__((section(".data")));
 
-uint8_t gAppStatus __attribute__((section(".data"))) = 0;
+bool gInBackground __attribute__((section(".data"))) = false;
 bool g_NotInLoader __attribute__((section(".data"))) = true;
 uint64_t gGameTitleID __attribute__((section(".data"))) = 0;
 volatile uint8_t gSDInitDone __attribute__((section(".data"))) = 0;

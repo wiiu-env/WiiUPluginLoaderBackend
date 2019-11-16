@@ -9,17 +9,9 @@
 #include "memory/memory_mapping.h"
 #include "utils/mem_utils.h"
 #include "dynamic_libs/vpad_functions.h"
+#include "dynamic_libs/coreinit.h"
+#include "fs/sd_fat_devoptab.h"
 //#include "utils/texture_utils.h"
-
-DECL(void, __PPCExit, void) {
-    // Only continue if we are in the "right" application.
-    if(OSGetTitleID() == gGameTitleID) {
-        DEBUG_FUNCTION_LINE("__PPCExit\n");
-        //CallHook(WUPS_LOADER_HOOK_ENDING_APPLICATION);
-    }
-
-    real___PPCExit();
-}
 
 DECL_FUNCTION(uint32_t, __OSPhysicalToEffectiveCached, uint32_t phyiscalAddress) {
     uint32_t result = real___OSPhysicalToEffectiveCached(phyiscalAddress);
@@ -316,8 +308,43 @@ DECL_FUNCTION(void, GX2CopyColorBufferToScanBuffer, GX2ColorBuffer* cbuf, int32_
     return real_GX2CopyColorBufferToScanBuffer(&g_vid_main_cbuf,target);
 }*/
 
+static uint32_t lastData0 = 0;
+
+DECL(uint32_t, OSReceiveMessage, OSMessageQueue *queue, OSMessage *message, uint32_t flags) {
+    if(flags == 0x15154848) {
+        CallHook(WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND);
+        CallHook(WUPS_LOADER_HOOK_APPLICATION_END);
+        gInBackground = false;
+        DCFlushRange(&gInBackground,4);
+        return false;
+    }
+    int32_t res =  real_OSReceiveMessage(queue, message, flags);
+    if(queue == OSGetSystemMessageQueue()) {
+        if(message != NULL) {
+            if(lastData0 != message->data0) {
+                if(message->data0 == 0xFACEF000) {
+                    CallHook(WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND);
+                } else if(message->data0 == 0xD1E0D1E0) {
+                    CallHook(WUPS_LOADER_HOOK_APPLICATION_END);
+                    gInBackground = false;
+                    DCFlushRange(&gInBackground,4);
+                    unmount_sd_fat("sd");
+                }
+            }
+            lastData0 = message->data0;
+        }
+    }
+    return res;
+}
+
+DECL(void, OSReleaseForeground) {
+    if(OSGetCoreId() == 1) {
+        CallHook(WUPS_LOADER_HOOK_RELEASE_FOREGROUND);
+    }
+    real_OSReleaseForeground();
+}
+
 hooks_magic_t method_hooks_hooks_static[] __attribute__((section(".data"))) = {
-    MAKE_MAGIC(__PPCExit,                       LIB_CORE_INIT,  STATIC_FUNCTION),
     MAKE_MAGIC(GX2SetTVBuffer,                  LIB_GX2,        STATIC_FUNCTION),
     MAKE_MAGIC(GX2SetDRCBuffer,                 LIB_GX2,        STATIC_FUNCTION),
     MAKE_MAGIC(GX2WaitForVsync,                 LIB_GX2,        STATIC_FUNCTION),
@@ -328,6 +355,8 @@ hooks_magic_t method_hooks_hooks_static[] __attribute__((section(".data"))) = {
     MAKE_MAGIC(__OSPhysicalToEffectiveUncached, LIB_CORE_INIT,  STATIC_FUNCTION),
     MAKE_MAGIC(__OSPhysicalToEffectiveCached,   LIB_CORE_INIT,  STATIC_FUNCTION),
     MAKE_MAGIC(OSEffectiveToPhysical,           LIB_CORE_INIT,  STATIC_FUNCTION),
+    MAKE_MAGIC(OSReceiveMessage,                  LIB_CORE_INIT,  STATIC_FUNCTION),
+    MAKE_MAGIC(OSReleaseForeground,               LIB_CORE_INIT,  STATIC_FUNCTION)
 };
 
 uint32_t method_hooks_size_hooks_static __attribute__((section(".data"))) = sizeof(method_hooks_hooks_static) / sizeof(hooks_magic_t);

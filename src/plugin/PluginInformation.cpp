@@ -381,7 +381,7 @@ bool PluginInformation::metadataRead(Elf *elf, Elf32_Sym *symtab, size_t symtab_
         description = "";
     }
 
-    if (wups == NULL || strcmp(wups, "0.1") != 0) {
+    if (wups == NULL || strcmp(wups, "0.2") != 0) {
         DEBUG_FUNCTION_LINE("Warning: Ignoring '%s' - Unrecognised WUPS version.\n", path);
         goto exit_error;
     }

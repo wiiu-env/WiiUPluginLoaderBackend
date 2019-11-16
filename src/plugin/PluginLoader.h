@@ -68,7 +68,7 @@ public:
 
         \return a list of PluginInformation objects, one for each valid plugin.
     **/
-    std::vector<PluginInformation *> getPluginInformation(const char * path);
+    static std::vector<PluginInformation *> getPluginInformation(const char * path);
 
     /**
         \brief Gets plugin information from the global struct.
@@ -76,7 +76,7 @@ public:
         \return a list of MetaInformation objects for all plugins currently loaded and linked (relocated). Will only contain
                 plugin which are still on the sd card.
     **/
-    std::vector<PluginInformation *> getPluginsLoadedInMemory();
+    static std::vector<PluginInformation *> getPluginsLoadedInMemory();
 
     /**
         \brief  Takes a list of plugins that should be linked (relocated) loaded into the memory.

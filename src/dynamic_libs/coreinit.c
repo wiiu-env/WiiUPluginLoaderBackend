@@ -24,10 +24,15 @@ EXPORT_DECL(uint32_t,OSGetThreadAffinity,OSThread * thread);
 EXPORT_DECL(int32_t,OSGetThreadPriority,OSThread * thread);
 EXPORT_DECL(void,OSSetThreadName,OSThread * thread, const char *name);
 EXPORT_DECL(int32_t, OSGetCoreId, void);
+
+EXPORT_DECL(int32_t, OSEnableInterrupts, void);
+EXPORT_DECL(void, OSRestoreInterrupts, int32_t);
+
 EXPORT_DECL(int32_t, MEMCreateExpHeapEx, void *heap, uint32_t size, uint16_t flags);
 EXPORT_DECL(void*, MEMAllocFromExpHeapEx, int32_t heap, uint32_t size, int alignment);
 EXPORT_DECL(void, MEMFreeToExpHeap, int32_t heap, void * block);
 
+EXPORT_DECL(OSMessageQueue *, OSGetSystemMessageQueue, void);
 EXPORT_DECL(void, OSEnableHomeButtonMenu, int32_t);
 
 EXPORT_VAR(uint32_t *, pMEMAllocFromDefaultHeapEx);
@@ -49,6 +54,14 @@ EXPORT_DECL(void, OSInitMutex, void* mutex);
 EXPORT_DECL(void, OSLockMutex, void* mutex);
 EXPORT_DECL(void, OSUnlockMutex, void* mutex);
 EXPORT_DECL(int32_t, OSTryLockMutex, void* mutex);
+
+EXPORT_DECL(void, OSInitEvent, OSEvent *event, int32_t value, OSEventMode mode);
+EXPORT_DECL(void, OSSignalEvent, OSEvent *event);
+EXPORT_DECL(void, OSWaitEvent, OSEvent *event);
+EXPORT_DECL(void, OSResetEvent, OSEvent *event);
+
+EXPORT_DECL(int32_t, OSReceiveMessage, OSMessageQueue *, OSMessage * , int32_t);
+EXPORT_DECL(int32_t, OSSendMessage, OSMessageQueue *, OSMessage * , int32_t);
 
 void _os_find_export(uint32_t handle, const char *funcName, void *funcPointer) {
     OSDynLoad_FindExport(handle, 0, funcName, funcPointer);
@@ -108,6 +121,7 @@ void InitOSFunctionPointers(void) {
     OS_FIND_EXPORT(coreinit_handle, OSScreenClearBufferEx);
     OS_FIND_EXPORT(coreinit_handle, OSEnableHomeButtonMenu);
 
+    OS_FIND_EXPORT(coreinit_handle, OSGetSystemMessageQueue);
     OS_FIND_EXPORT(coreinit_handle, OSIsHomeButtonMenuEnabled);
     OS_FIND_EXPORT(coreinit_handle, DCInvalidateRange);
     OS_FIND_EXPORT(coreinit_handle, DCFlushRange);
@@ -135,6 +149,16 @@ void InitOSFunctionPointers(void) {
     OS_FIND_EXPORT(coreinit_handle, OSGetThreadPriority);
     OS_FIND_EXPORT(coreinit_handle, OSSetThreadName);
     OS_FIND_EXPORT(coreinit_handle, OSGetCoreId);
+
+    OS_FIND_EXPORT(coreinit_handle, OSEnableInterrupts);
+    OS_FIND_EXPORT(coreinit_handle, OSRestoreInterrupts);
+
+    OS_FIND_EXPORT(coreinit_handle, OSInitEvent);
+    OS_FIND_EXPORT(coreinit_handle, OSSignalEvent);
+    OS_FIND_EXPORT(coreinit_handle, OSWaitEvent);
+    OS_FIND_EXPORT(coreinit_handle, OSResetEvent);
+    OS_FIND_EXPORT(coreinit_handle, OSSendMessage);
+    OS_FIND_EXPORT(coreinit_handle, OSReceiveMessage);
 
     OSDynLoad_FindExport(coreinit_handle, 1, "MEMAllocFromDefaultHeapEx", &pMEMAllocFromDefaultHeapEx);
     OSDynLoad_FindExport(coreinit_handle, 1, "MEMAllocFromDefaultHeap", &pMEMAllocFromDefaultHeap);

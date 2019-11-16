@@ -141,6 +141,43 @@ typedef struct OSMessageQueue_ {
     int usedCount;
 } OSMessageQueue;
 
+
+typedef struct OSEvent OSEvent;
+
+typedef enum OSEventMode
+{
+   //! A manual event will only reset when OSResetEvent is called.
+   OS_EVENT_MODE_MANUAL    = 0,
+
+   //! An auto event will reset everytime a thread is woken.
+   OS_EVENT_MODE_AUTO      = 1,
+} OSEventMode;
+
+#define OS_EVENT_TAG 0x65566E54u
+
+struct OSEvent
+{
+   //! Should always be set to the value OS_EVENT_TAG.
+   uint32_t tag;
+
+   //! Name set by OSInitEventEx.
+   const char *name;
+
+   char unknwn[4];
+
+   //! The current value of the event object.
+   int32_t value;
+
+   //! The threads currently waiting on this event object with OSWaitEvent.
+   OSThreadQueue queue;
+
+   //! The mode of the event object, set by OSInitEvent.
+   OSEventMode mode;
+};
+
+extern OSMessageQueue * (*OSGetSystemMessageQueue)(void);
+extern int32_t (*OSReceiveMessage)(OSMessageQueue *, OSMessage * , int32_t);
+extern int32_t (*OSSendMessage)(OSMessageQueue *, OSMessage * , int32_t);
 extern void (*DCInvalidateRange)(void *buffer, uint32_t length);
 extern void (* DCFlushRange)(const void *addr, uint32_t length);
 extern void (* DCStoreRange)(const void *addr, uint32_t length);
@@ -148,6 +185,11 @@ extern void (* ICInvalidateRange)(const void *addr, uint32_t length);
 extern void* (* OSEffectiveToPhysical)(uint32_t);
 extern void* (* OSSleepTicks)(uint64_t ticks);
 extern void (* OSEnableHomeButtonMenu)(int32_t);
+
+extern void (* OSInitEvent)(OSEvent *event, int32_t value, OSEventMode mode);
+extern void (* OSSignalEvent)(OSEvent *event);
+extern void (* OSWaitEvent)(OSEvent *event);
+extern void (* OSResetEvent)(OSEvent *event);
 
 
 extern int32_t (* OSCreateThread)(OSThread *thread, int32_t (*callback)(int32_t, void*), int32_t argc, void *args, uint32_t stack, uint32_t stack_size, int32_t priority, uint32_t attr);
@@ -165,6 +207,10 @@ extern void (* OSGetActiveThreadLink)(OSThread * thread, void* link);
 extern uint32_t (* OSGetThreadAffinity)(OSThread * thread);
 extern int32_t (* OSGetThreadPriority)(OSThread * thread);
 extern void (* OSSetThreadName)(OSThread * thread, const char *name);
+
+extern int32_t (* OSEnableInterrupts)(void);
+extern void (* OSRestoreInterrupts)(int32_t);
+
 extern int32_t (* OSGetCoreId)(void);
 extern uint64_t (* OSGetTitleID)(void);
 
@@ -194,6 +240,8 @@ extern uint32_t coreinit_handle;
 extern uint32_t *pMEMAllocFromDefaultHeapEx;
 extern uint32_t *pMEMAllocFromDefaultHeap;
 extern uint32_t *pMEMFreeToDefaultHeap;
+
+
 
 void InitAcquireOS();
 void InitOSFunctionPointers(void);

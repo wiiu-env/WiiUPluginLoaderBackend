@@ -419,7 +419,7 @@ bool ElfTools::elfLinkOne(char type, size_t offset, int32_t addend, void *destin
         break;
     }
     default:
-        DEBUG_FUNCTION_LINE("Unknown relocation type: %02X\n",type);
+        DEBUG_FUNCTION_LINE("Unknown relocation type: %02X for offset %08X\n",type,offset);
         goto exit_error;
     }
 

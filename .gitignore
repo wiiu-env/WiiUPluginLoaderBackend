@@ -4,3 +4,4 @@
 hook.h
 build/
 *.cbp
+WiiUPluginLoaderBackend.layout

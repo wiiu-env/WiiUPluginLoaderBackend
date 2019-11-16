@@ -40,6 +40,8 @@ struct rpl_handling {
 #define MAXIMUM_FUNCTION_NAME_LENGTH                        61
 
 struct replacement_data_function_t {
+    uint32_t physicalAddr;                                                  /* [needs to be filled]  */
+    uint32_t virtualAddr;                                                   /* [needs to be filled]  */
     uint32_t replaceAddr;                                                   /* [needs to be filled] Address of our replacement function */
     uint32_t replaceCall;                                                   /* [needs to be filled] Address to access the real_function */
     wups_loader_library_type_t library;                                     /* [needs to be filled] rpl where the function we want to replace is. */

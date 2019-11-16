@@ -119,21 +119,33 @@ void new_PatchInvidualMethodHooks(replacement_data_plugin_t * plugin_data) {
         volatile uint32_t *space = function_data->replace_data;
 
         DEBUG_FUNCTION_LINE("Patching %s ...\n",function_data->function_name);
-        if(function_data->functionType == STATIC_FUNCTION && function_data->alreadyPatched == 1) {
-            if(new_isDynamicFunction((uint32_t)OSEffectiveToPhysical(function_data->realAddr))) {
-                DEBUG_FUNCTION_LINE("INFO: The function %s is a dynamic function.\n", function_data->function_name);
-                function_data->functionType = DYNAMIC_FUNCTION;
-            } else {
+
+        if(function_data->library == WUPS_LOADER_LIBRARY_OTHER) {
+            DEBUG_FUNCTION_LINE("Oh, using straight PA/VA\n");
+            if(function_data->alreadyPatched == 1) {
                 DEBUG_FUNCTION_LINE("Skipping %s, its already patched\n", function_data->function_name);
                 continue;
             }
+        } else {
+            if(function_data->functionType == STATIC_FUNCTION && function_data->alreadyPatched == 1) {
+                if(new_isDynamicFunction((uint32_t)OSEffectiveToPhysical(function_data->realAddr))) {
+                    DEBUG_FUNCTION_LINE("INFO: The function %s is a dynamic function.\n", function_data->function_name);
+                    function_data->functionType = DYNAMIC_FUNCTION;
+                } else {
+                    DEBUG_FUNCTION_LINE("Skipping %s, its already patched\n", function_data->function_name);
+                    continue;
+                }
+            }
         }
 
-        uint32_t physical = 0;
+        uint32_t physical = function_data->physicalAddr;
         uint32_t repl_addr = (uint32_t)function_data->replaceAddr;
         uint32_t call_addr = (uint32_t)function_data->replaceCall;
 
-        uint32_t real_addr = new_GetAddressOfFunction(function_data->function_name,function_data->library);
+        uint32_t real_addr = function_data->virtualAddr;
+        if(function_data->library != WUPS_LOADER_LIBRARY_OTHER) {
+            real_addr = new_GetAddressOfFunction(function_data->function_name,function_data->library);
+        }
 
         if(!real_addr) {
             log_printf("\n");
@@ -145,7 +157,10 @@ void new_PatchInvidualMethodHooks(replacement_data_plugin_t * plugin_data) {
             DEBUG_FUNCTION_LINE("%s is located at %08X!\n", function_data->function_name,real_addr);
         }
 
-        physical = (uint32_t)OSEffectiveToPhysical(real_addr);
+        if(function_data->library != WUPS_LOADER_LIBRARY_OTHER) {
+            physical = (uint32_t)OSEffectiveToPhysical(real_addr);
+        }
+
         if(!physical) {
             log_printf("Error. Something is wrong with the physical address\n");
             continue;
@@ -259,26 +274,32 @@ void new_RestoreInvidualInstructions(replacement_data_plugin_t * plugin_data) {
             continue;
         }
 
-        uint32_t real_addr = new_GetAddressOfFunction(function_data->function_name,function_data->library);
-
+        uint32_t real_addr = function_data->virtualAddr;
+        if(function_data->library != WUPS_LOADER_LIBRARY_OTHER) {
+            real_addr = new_GetAddressOfFunction(function_data->function_name,function_data->library);
+        }
         if(!real_addr) {
             log_printf("OSDynLoad_FindExport failed for %s\n", function_data->function_name);
             continue;
         }
-
-        uint32_t physical = (uint32_t)OSEffectiveToPhysical(real_addr);
+        uint32_t physical = function_data->physicalAddr;
+        if(function_data->library != WUPS_LOADER_LIBRARY_OTHER) {
+            physical = (uint32_t)OSEffectiveToPhysical(real_addr);
+        }
         if(!physical) {
             log_printf("Something is wrong with the physical address\n");
             continue;
         }
-
-        if(new_isDynamicFunction(physical)) {
+        if((function_data->library != WUPS_LOADER_LIBRARY_OTHER) && new_isDynamicFunction(physical)) {
             log_printf("Its a dynamic function. We don't need to restore it!\n",function_data->function_name);
         } else {
-            physical = (uint32_t)OSEffectiveToPhysical(function_data->realAddr); //When its an static function, we need to use the old location
+            if(function_data->library != WUPS_LOADER_LIBRARY_OTHER) {
+                physical = (uint32_t)OSEffectiveToPhysical(function_data->realAddr); //When its an static function, we need to use the old location
+            }
+            
             if(DEBUG_LOG_DYN) {
                 DEBUG_FUNCTION_LINE("Restoring %08X to %08X\n",(uint32_t)function_data->restoreInstruction,physical);
-            }
+            }            
             uint32_t targetAddr = (uint32_t)&(function_data->restoreInstruction);
             if(targetAddr < 0x00800000 || targetAddr >= 0x01000000) {
                 targetAddr = (uint32_t) OSEffectiveToPhysical(targetAddr);
@@ -292,8 +313,11 @@ void new_RestoreInvidualInstructions(replacement_data_plugin_t * plugin_data) {
             if(DEBUG_LOG_DYN) {
                 DEBUG_FUNCTION_LINE("ICInvalidateRange %08X\n",(void*)function_data->realAddr);
             }
-            ICInvalidateRange((void*)function_data->realAddr, 4);
-            DCFlushRange((void*)function_data->realAddr, 4);
+
+            if(function_data->library != WUPS_LOADER_LIBRARY_OTHER) {
+                ICInvalidateRange((void*)function_data->realAddr, 4);
+                DCFlushRange((void*)function_data->realAddr, 4);
+            }
             log_printf("done\n");
         }
         function_data->alreadyPatched = 0; // In case a

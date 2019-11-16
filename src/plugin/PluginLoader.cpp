@@ -399,8 +399,8 @@ bool PluginLoader::loadAndLinkElf(PluginData * pluginData, Elf *elf, void * star
 
     for(size_t j=0; j<entry_t_list.size(); j++) {
         wups_loader_entry_t * cur_function = entry_t_list[j];
-        DEBUG_FUNCTION_LINE("Saving function \"%s\" of plugin \"%s\". Library: %08X, target: %08X, call_addr: %08X\n",cur_function->_function.name,pluginData->getPluginInformation()->getName().c_str(),cur_function->_function.library,cur_function->_function.target, (void *) cur_function->_function.call_addr);
-        FunctionData * function_data = new FunctionData(cur_function->_function.name,cur_function->_function.library, (void *) cur_function->_function.target, (void *) cur_function->_function.call_addr);
+        DEBUG_FUNCTION_LINE("Saving function \"%s\" of plugin \"%s\". PA:%08X VA:%08X Library: %08X, target: %08X, call_addr: %08X\n",cur_function->_function.name,pluginData->getPluginInformation()->getName().c_str(),cur_function->_function.physical_address,cur_function->_function.virtual_address, cur_function->_function.library,cur_function->_function.target, (void *) cur_function->_function.call_addr);
+        FunctionData * function_data = new FunctionData((void *) cur_function->_function.physical_address,(void *) cur_function->_function.virtual_address, cur_function->_function.name, cur_function->_function.library, (void *) cur_function->_function.target, (void *) cur_function->_function.call_addr);
         pluginData->addFunctionData(function_data);
     }
 
@@ -492,6 +492,8 @@ void PluginLoader::copyPluginDataIntoGlobalStruct(std::vector<PluginData *> plug
             function_data->library = cur_function->getLibrary();
             function_data->replaceAddr = (uint32_t) cur_function->getReplaceAddress();
             function_data->replaceCall = (uint32_t) cur_function->getReplaceCall();
+            function_data->physicalAddr = (uint32_t) cur_function->getPhysicalAddress();
+            function_data->virtualAddr = (uint32_t) cur_function->getVirtualAddress();
 
             plugin_data->number_used_functions++;
         }

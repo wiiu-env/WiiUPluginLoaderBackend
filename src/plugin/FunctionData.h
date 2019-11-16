@@ -24,7 +24,9 @@
 class FunctionData {
 
 public:
-    FunctionData(const char * name, wups_loader_library_type_t library, void * target, void * call_addr) {
+    FunctionData(void * paddress, void * vaddress, const char * name, wups_loader_library_type_t library, void * target, void * call_addr) {
+        this->paddress = paddress;
+        this->vaddress = vaddress;
         this->name = name;
         this->library = library;
         this->replaceAddr = target;
@@ -43,6 +45,13 @@ public:
         return this->library;
     }
 
+    void * getPhysicalAddress() {
+        return paddress;
+    }
+    void * getVirtualAddress() {
+        return vaddress;
+    }
+
     void * getReplaceAddress() {
         return replaceAddr;
     }
@@ -52,6 +61,8 @@ public:
     }
 
 private:
+    void * paddress = NULL;
+    void * vaddress = NULL;
     std::string name;
     wups_loader_library_type_t library;
     void * replaceAddr = NULL;

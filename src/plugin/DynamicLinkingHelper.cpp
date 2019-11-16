@@ -138,7 +138,17 @@ bool DynamicLinkingHelper::fillRelocations(std::vector<dyn_linking_relocation_en
                 isData = 1;
                 //DEBUG_FUNCTION_LINE("isData\n");
             }
-            OSDynLoad_FindExport(importEntry->handle, isData, functionEntry->functionName, &functionEntry->address);
+            
+            std::string wrap_str = "__rplwrap_";
+            std::string functionNameStr = functionEntry->functionName;
+
+            OSDynLoad_FindExport(importEntry->handle, isData, functionEntry->functionName, &functionEntry->address);            
+            
+            if(functionNameStr.size() < wrap_str.size()) {
+                
+            } else if (std::equal(wrap_str.begin(), wrap_str.end(), functionNameStr.begin())) {
+                 OSDynLoad_FindExport(importEntry->handle, isData, functionNameStr.substr(wrap_str.size()).c_str(), &functionEntry->address);
+            }
 
             if(!functionEntry->address) {
                 DEBUG_FUNCTION_LINE("OSDynLoad_FindExport failed for %s on import %s\n", functionEntry->functionName,importEntry->importName);

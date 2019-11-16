@@ -263,6 +263,25 @@ int ipc_ioctl(ipcmessage *message) {
         }
         break;
     }
+    case IOCTL_PLUGIN_INFORMATION_GET_INFORMATION_FOR_FILEPATH: {
+        DEBUG_FUNCTION_LINE("IOCTL_PLUGIN_INFORMATION_GET_INFORMATION_FOR_FILEPATH\n");
+        if(message->ioctl.length_in != 4 || message->ioctl.length_io != 4) {
+            DEBUG_FUNCTION_LINE("IPC_ERROR_INVALID_SIZE\n");
+            res = IPC_ERROR_INVALID_SIZE;
+        } else {
+            char * path = (char *) message->ioctl.buffer_in[0];
+            plugin_information_handle * io_handle  = (plugin_information_handle *) &(message->ioctl.buffer_io[0]);
+
+            //DEBUG_FUNCTION_LINE("filepath %08X %s\n", path,path);
+
+            PluginInformation * plugin=  PluginInformation::loadPluginInformation(path);
+            *io_handle = (plugin_information_handle) plugin;
+
+            DCFlushRange(message->ioctl.buffer_io,message->ioctl.length_io);
+            ICInvalidateRange(message->ioctl.buffer_io,message->ioctl.length_io);
+        }
+        break;
+    }
     default:
         res = IPC_ERROR_INVALID_ARG;
         break;

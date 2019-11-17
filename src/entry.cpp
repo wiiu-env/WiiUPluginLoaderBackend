@@ -80,6 +80,8 @@ void ApplyPatchesAndCallHookStartingApp() {
     PatchInvidualMethodHooks(method_hooks_hooks_static, method_hooks_size_hooks_static, method_calls_hooks_static);
     PatchInvidualMethodHooks(method_hooks_hooks, method_hooks_size_hooks, method_calls_hooks);
     for(int32_t plugin_index=0; plugin_index<gbl_replacement_data.number_used_plugins; plugin_index++) {
+
+        CallHookEx(WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB,plugin_index);
         CallHookEx(WUPS_LOADER_HOOK_APPLICATION_START,plugin_index);
         new_PatchInvidualMethodHooks(&gbl_replacement_data.plugin_data[plugin_index]);
         CallHookEx(WUPS_LOADER_HOOK_FUNCTIONS_PATCHED,plugin_index);
@@ -98,6 +100,11 @@ void RestoreEverything() {
     CallHook(WUPS_LOADER_HOOK_RELEASE_FOREGROUND);
     CallHook(WUPS_LOADER_HOOK_APPLICATION_END);
     CallHook(WUPS_LOADER_HOOK_DEINIT_PLUGIN);
+
+    CallHook(WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB);
+    CallHook(WUPS_LOADER_HOOK_FINI_WUT_STDCPP);
+    CallHook(WUPS_LOADER_HOOK_FINI_WUT_NEWLIB);
+    CallHook(WUPS_LOADER_HOOK_FINI_WUT_MALLOC);
 
     // Restore patches as the patched functions could change.
     RestorePatches();
@@ -118,9 +125,12 @@ void ResolveRelocations() {
 void afterLoadAndLink() {
     ResolveRelocations();
 
+    CallHook(WUPS_LOADER_HOOK_INIT_WUT_MALLOC);
+    CallHook(WUPS_LOADER_HOOK_INIT_WUT_NEWLIB);
+    CallHook(WUPS_LOADER_HOOK_INIT_WUT_STDCPP);
+
     CallHook(WUPS_LOADER_HOOK_INIT_VID_MEM);
     CallHook(WUPS_LOADER_HOOK_INIT_KERNEL);
-    CallHook(WUPS_LOADER_HOOK_INIT_FS);
     CallHook(WUPS_LOADER_HOOK_INIT_OVERLAY);
     ConfigUtils::loadConfigFromSD();
     CallHook(WUPS_LOADER_HOOK_INIT_PLUGIN);

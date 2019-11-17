@@ -314,6 +314,7 @@ DECL(uint32_t, OSReceiveMessage, OSMessageQueue *queue, OSMessage *message, uint
     if(flags == 0x15154848) {
         CallHook(WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND);
         CallHook(WUPS_LOADER_HOOK_APPLICATION_END);
+        CallHook(WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB);
         gInBackground = false;
         DCFlushRange(&gInBackground,4);
         return false;
@@ -326,6 +327,7 @@ DECL(uint32_t, OSReceiveMessage, OSMessageQueue *queue, OSMessage *message, uint
                     CallHook(WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND);
                 } else if(message->data0 == 0xD1E0D1E0) {
                     CallHook(WUPS_LOADER_HOOK_APPLICATION_END);
+                    CallHook(WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB);
                     gInBackground = false;
                     DCFlushRange(&gInBackground,4);
                     unmount_sd_fat("sd");

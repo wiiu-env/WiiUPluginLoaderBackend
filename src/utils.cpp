@@ -36,10 +36,17 @@ bool HasHookCallHook(wups_loader_hook_type_t hook_type) {
 }
 
  static const char** hook_names = (const char *[]){
-                                 "WUPS_LOADER_HOOK_INIT_FS",
                                  "WUPS_LOADER_HOOK_INIT_OVERLAY",
                                  "WUPS_LOADER_HOOK_INIT_KERNEL",
                                  "WUPS_LOADER_HOOK_INIT_VID_MEM",
+                                 "WUPS_LOADER_HOOK_INIT_WUT_MALLOC",
+                                 "WUPS_LOADER_HOOK_FINI_WUT_MALLOC",
+                                 "WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB",
+                                 "WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB",
+                                 "WUPS_LOADER_HOOK_INIT_WUT_NEWLIB",
+                                 "WUPS_LOADER_HOOK_FINI_WUT_NEWLIB",
+                                 "WUPS_LOADER_HOOK_INIT_WUT_STDCPP",
+                                 "WUPS_LOADER_HOOK_FINI_WUT_STDCPP",
                                  "WUPS_LOADER_HOOK_INIT_PLUGIN",
                                  "WUPS_LOADER_HOOK_DEINIT_PLUGIN",
                                  "WUPS_LOADER_HOOK_APPLICATION_START",
@@ -73,22 +80,7 @@ void CallHookEx(wups_loader_hook_type_t hook_type, int32_t plugin_index_needed) 
                 // Adding arguments!
                 if(func_ptr != NULL) {
                     //DEBUG_FUNCTION_LINE("function pointer is %08x\n",func_ptr);
-                    if(hook_type == WUPS_LOADER_HOOK_INIT_FS) {
-                        wups_loader_init_fs_args_t args;
-                        // open is defined as "extern int open (const char *, int, ...);", we are ignoring the varargs part
-                        args.open_repl = (OpenFunction) &open;
-                        args.close_repl = &close;
-                        args.write_repl = &write;
-                        args.read_repl = &read;
-                        args.lseek_repl = &lseek;
-                        args.stat_repl = &stat;
-                        args.fstat_repl = &fstat;
-                        args.opendir_repl = &opendir;
-                        args.closedir_repl = &closedir;
-                        args.readdir_repl = &readdir;
-                        args.mkdir_repl = &mkdir;
-                        ((void (*)(wups_loader_init_fs_args_t))((uint32_t*)func_ptr) )(args);
-                    } else if(hook_type == WUPS_LOADER_HOOK_INIT_OVERLAY) {
+                   if(hook_type == WUPS_LOADER_HOOK_INIT_OVERLAY) {
                         /*wups_loader_init_overlay_args_t args;
                         args.overlayfunction_ptr = &overlay_helper;
                         args.textureconvertfunction_ptr = &TextureUtils::convertImageToTexture;
@@ -101,12 +93,6 @@ void CallHookEx(wups_loader_hook_type_t hook_type, int32_t plugin_index_needed) 
                     } else if(hook_type == WUPS_LOADER_HOOK_APPLICATION_START) {
                         wups_loader_app_started_args_t args;
                         memset(&args,0,sizeof(args));
-                        ///*if(gSDInitDone & WUPS_SD_MOUNTED) {
-                            args.sd_mounted = true;
-                        //}
-                        /*if(gSDInitDone & WUPS_USB_MOUNTED) {
-                            args.usb_mounted = true;
-                        }*/
                         if(plugin_data->kernel_allowed && plugin_data->kernel_init_done) {
                             args.kernel_access = true;
                         }
@@ -122,6 +108,22 @@ void CallHookEx(wups_loader_hook_type_t hook_type, int32_t plugin_index_needed) 
                     } else if(hook_type == WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND) {
                         ((void (*)(void))((uint32_t*)func_ptr))();
                     } else if(hook_type == WUPS_LOADER_HOOK_APPLET_START) {
+                        ((void (*)(void))((uint32_t*)func_ptr))();
+                    } else if(hook_type == WUPS_LOADER_HOOK_INIT_WUT_MALLOC) {
+                        ((void (*)(void))((uint32_t*)func_ptr))();
+                    } else if(hook_type == WUPS_LOADER_HOOK_FINI_WUT_MALLOC) {
+                        ((void (*)(void))((uint32_t*)func_ptr))();
+                    } else if(hook_type == WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB) {
+                        ((void (*)(void))((uint32_t*)func_ptr))();
+                    } else if(hook_type == WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB) {
+                        ((void (*)(void))((uint32_t*)func_ptr))();
+                    } else if(hook_type == WUPS_LOADER_HOOK_INIT_WUT_NEWLIB) {
+                        ((void (*)(void))((uint32_t*)func_ptr))();
+                    } else if(hook_type == WUPS_LOADER_HOOK_FINI_WUT_NEWLIB) {
+                        ((void (*)(void))((uint32_t*)func_ptr))();
+                    } else if(hook_type == WUPS_LOADER_HOOK_INIT_WUT_STDCPP) {
+                        ((void (*)(void))((uint32_t*)func_ptr))();
+                    } else if(hook_type == WUPS_LOADER_HOOK_FINI_WUT_STDCPP) {
                         ((void (*)(void))((uint32_t*)func_ptr))();
                     } else if(hook_type == WUPS_LOADER_HOOK_INIT_KERNEL) {
                         // Only call the hook if kernel is allowed.

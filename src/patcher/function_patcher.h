@@ -58,7 +58,7 @@ struct replacement_data_hook_t {
     wups_loader_hook_type_t type;                                   /* [will be filled] */
 };
 
-#define MAXIMUM_HOOKS_PER_PLUGIN                        10
+#define MAXIMUM_HOOKS_PER_PLUGIN                        25
 #define MAXIMUM_FUNCTION_PER_PLUGIN                     100
 
 struct replacement_data_plugin_t {

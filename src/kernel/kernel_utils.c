@@ -153,11 +153,11 @@ uint32_t __attribute__ ((noinline)) kern_read(const void *addr)
 
 void PatchSyscall(int index, uint32_t addr) {
     //DEBUG_FUNCTION_LINE("Patching Syscall 0x%02X\n",index);
-    kern_write(KERN_SYSCALL_TBL1 + index * 4, addr);
-    kern_write(KERN_SYSCALL_TBL2 + index * 4, addr);
-    kern_write(KERN_SYSCALL_TBL3 + index * 4, addr);
-    kern_write(KERN_SYSCALL_TBL4 + index * 4, addr);
-    kern_write(KERN_SYSCALL_TBL5 + index * 4, addr);
+    kern_write((void *) (KERN_SYSCALL_TBL1 + index * 4), addr);
+    kern_write((void *) (KERN_SYSCALL_TBL2 + index * 4), addr);
+    kern_write((void *) (KERN_SYSCALL_TBL3 + index * 4), addr);
+    kern_write((void *) (KERN_SYSCALL_TBL4 + index * 4), addr);
+    kern_write((void *) (KERN_SYSCALL_TBL5 + index * 4), addr);
 }
 
 void KernelReadPTE(uint32_t outputAddr, int32_t length) {

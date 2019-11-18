@@ -140,8 +140,8 @@ $(OUTPUT).elf: $(OFILES)
 #---------------------------------------------------------------------------------
 %.elf: link.ld $(OFILES)
 	@echo "linking ... $(TARGET).elf"
-	$(Q)$(LD) -n -T $^ $(LDFLAGS) -o ../$(BUILD_DBG).elf  $(LIBPATHS) $(LIBS)
-	$(Q)$(OBJCOPY) -S -R .comment -R .gnu.attributes ../$(BUILD_DBG).elf $@
+	@$(LD) -n -T $^ $(LDFLAGS) -o ../$(BUILD_DBG).elf  $(LIBPATHS) $(LIBS)
+	@$(OBJCOPY) -S -R .comment -R .gnu.attributes ../$(BUILD_DBG).elf $@
 
 #---------------------------------------------------------------------------------
 %.a:

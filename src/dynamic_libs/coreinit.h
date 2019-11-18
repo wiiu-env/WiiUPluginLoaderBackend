@@ -18,7 +18,7 @@ extern "C" {
 #define os_usleep(usecs)                OSSleepTicks(OSMicrosecondsToTicks(usecs))
 #define os_sleep(secs)                  OSSleepTicks(OSSecondsToTicks(secs))
 
-#define OSDynLoad_Acquire ((void (*)(char* rpl, unsigned int *handle))0x0102A3B4)
+#define OSDynLoad_Acquire ((void (*)(const char* rpl, unsigned int *handle))0x0102A3B4)
 #define OSDynLoad_FindExport ((void (*)(unsigned int handle, int isdata, const char *symbol, void *address))0x0102B828)
 #define OSFatal ((void (*)(char* msg))0x01031618)
 

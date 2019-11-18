@@ -72,6 +72,10 @@ struct replacement_data_plugin_t {
     replacement_data_hook_t     hooks[MAXIMUM_HOOKS_PER_PLUGIN];                // Replacement information for each function.
     bool                        kernel_allowed;                                 // Allow kernel access for the plugin!?!.
     bool                        kernel_init_done;                               // KernelInit was done
+    uint32_t                    bssAddr;
+    uint32_t                    bssSize;
+    uint32_t                    sbssAddr;
+    uint32_t                    sbssSize;
 };
 
 #define MAXIMUM_PLUGINS                                 32

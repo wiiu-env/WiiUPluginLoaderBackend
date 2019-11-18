@@ -82,6 +82,16 @@ public:
         hook_data_list.push_back(hook_data);
     }
 
+    void setBSSLocation(uint32_t addr, uint32_t size) {
+        this->bssAddr = addr;
+        this->bssSize = size;
+    }
+
+    void setSBSSLocation(uint32_t addr, uint32_t size) {
+        this->sbssAddr = addr;
+        this->sbssSize = size;
+    }
+
     std::vector<HookData *> getHookDataList() {
         return hook_data_list;
     }
@@ -118,6 +128,22 @@ public:
 
     uint32_t getMemoryForCommonBySymbol(size_t symbol, size_t align, size_t size);
 
+    uint32_t getBSSAddr(){
+        return bssAddr;
+    }
+
+    uint32_t getBSSSize(){
+        return bssSize;
+    }
+
+    uint32_t getSBSSAddr(){
+        return sbssAddr;
+    }
+
+    uint32_t getSBSSSize(){
+        return sbssSize;
+    }
+
 private:
 
     PluginInformation * pluginInformation;
@@ -126,6 +152,11 @@ private:
     std::vector<HookData *> hook_data_list;
     std::vector<RelocationData *> relocation_data_list;
     std::vector<ImportRPLInformation *> importRPLInformation_list;
+
+    uint32_t bssAddr = 0;
+    uint32_t bssSize = 0;
+    uint32_t sbssAddr = 0;
+    uint32_t sbssSize = 0;
 
     std::map<size_t, uint32_t> memoryBySymbol;
 };

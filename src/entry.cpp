@@ -80,7 +80,6 @@ void ApplyPatchesAndCallHookStartingApp() {
     PatchInvidualMethodHooks(method_hooks_hooks_static, method_hooks_size_hooks_static, method_calls_hooks_static);
     PatchInvidualMethodHooks(method_hooks_hooks, method_hooks_size_hooks, method_calls_hooks);
     for(int32_t plugin_index=0; plugin_index<gbl_replacement_data.number_used_plugins; plugin_index++) {
-
         CallHookEx(WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB,plugin_index);
         CallHookEx(WUPS_LOADER_HOOK_APPLICATION_START,plugin_index);
         new_PatchInvidualMethodHooks(&gbl_replacement_data.plugin_data[plugin_index]);
@@ -119,6 +118,20 @@ void ResolveRelocations() {
 
     if(!DynamicLinkingHelper::getInstance()->fillRelocations(relocations)) {
         OSFatal("fillRelocations failed.");
+    }
+}
+
+void clearBSS(){
+    for(int32_t plugin_index=0; plugin_index<gbl_replacement_data.number_used_plugins; plugin_index++) {
+        replacement_data_plugin_t * curData = &gbl_replacement_data.plugin_data[plugin_index];
+        if(curData->bssAddr != 0){
+            DEBUG_FUNCTION_LINE("Clearing .bss section for %s. Addr: %08X size: %08X\n", curData->plugin_name, curData->bssAddr, curData->bssSize);
+            memset((void*)curData->bssAddr, 0, curData->bssSize);
+        }
+        if(curData->bssAddr != 0){
+            DEBUG_FUNCTION_LINE("Clearin .sbss section for %s. Addr: %08X size: %08X\n", curData->plugin_name, curData->sbssAddr, curData->sbssSize);
+            memset((void*)curData->sbssAddr, 0, curData->sbssSize);
+        }
     }
 }
 
@@ -211,6 +224,7 @@ extern "C" void doStart(int argc, char **argv) {
         pluginLoader->loadAndLinkPlugins(pluginList);
         pluginLoader->clearPluginInformation(pluginList);
         delete pluginLoader;
+        clearBSS();
         afterLoadAndLink();
     } else {
         DEBUG_FUNCTION_LINE("Mapping was already done\n");
@@ -222,6 +236,8 @@ extern "C" void doStart(int argc, char **argv) {
         //MemoryMapping::writeTestValuesToMemory();
         //MemoryMapping::readTestValuesFromMemory();
     }
+
+    clearBSS();
 
     if(gbl_to_link_and_load_data[0].name[0] != 0) {
         ResolveRelocations();
@@ -242,9 +258,12 @@ extern "C" void doStart(int argc, char **argv) {
         pluginLoader->loadAndLinkPlugins(pluginList);
         pluginLoader->clearPluginInformation(pluginList);
         delete pluginLoader;
+        clearBSS();
         afterLoadAndLink();
         memset(gbl_to_link_and_load_data,0, sizeof(gbl_to_link_and_load_data));
     }
+
+
 
     ResolveRelocations();
 

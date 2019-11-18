@@ -332,6 +332,11 @@ bool PluginLoader::loadAndLinkElf(PluginData * pluginData, Elf *elf, void * star
                 }
                 ElfTools::elfLoadSymbols(elf_ndxscn(scn), (void*) firstCurAddress, symtab, symtab_count);
 
+                if(strcmp(name, ".bss") == 0){
+                    pluginData->setBSSLocation(destination, shdr->sh_size);
+                    DEBUG_FUNCTION_LINE("Saved .bss section info. Location: %08X size: %08X\n", destination, shdr->sh_size);
+                }
+
                 curAddress = ROUNDUP(destination + shdr->sh_size,0x100);
             }
         }
@@ -448,8 +453,6 @@ void PluginLoader::copyPluginDataIntoGlobalStruct(std::vector<PluginData *> plug
         }
 
         // Other
-
-
         std::vector<FunctionData *> function_data_list = cur_plugin->getFunctionDataList();
         std::vector<HookData *> hook_data_list = cur_plugin->getHookDataList();
         if(plugin_index >= MAXIMUM_PLUGINS ) {
@@ -470,6 +473,11 @@ void PluginLoader::copyPluginDataIntoGlobalStruct(std::vector<PluginData *> plug
 #warning TODO: add GUI option to let the user choose
         plugin_data->kernel_allowed = true;
         plugin_data->kernel_init_done = false;
+
+        plugin_data->bssAddr = cur_plugin->getBSSAddr();
+        plugin_data->bssSize = cur_plugin->getBSSSize();
+        plugin_data->sbssAddr = cur_plugin->getSBSSAddr();
+        plugin_data->sbssSize = cur_plugin->getSBSSSize();
 
         strncpy(plugin_data->plugin_name,cur_pluginInformation->getName().c_str(),MAXIMUM_PLUGIN_NAME_LENGTH-1);
         strncpy(plugin_data->path,cur_pluginInformation->getPath().c_str(),MAXIMUM_PLUGIN_PATH_NAME_LENGTH-1);

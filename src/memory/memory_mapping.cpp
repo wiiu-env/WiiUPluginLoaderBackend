@@ -698,7 +698,7 @@ bool MemoryMapping::mapMemory(uint32_t pa_start_address,uint32_t pa_end_address,
 }
 
 uint32_t MemoryMapping::PhysicalToEffective(uint32_t phyiscalAddress) {
-    if(phyiscalAddress >= 0x30800000 || phyiscalAddress < 0x31000000) {
+    if(phyiscalAddress >= 0x30800000 && phyiscalAddress < 0x31000000) {
         return phyiscalAddress - (0x30800000 - 0x00800000);
     }
 
@@ -731,7 +731,7 @@ uint32_t MemoryMapping::PhysicalToEffective(uint32_t phyiscalAddress) {
 }
 
 uint32_t MemoryMapping::EffectiveToPhysical(uint32_t effectiveAddress) {
-    if(effectiveAddress >= 0x00800000 || effectiveAddress < 0x01000000) {
+    if(effectiveAddress >= 0x00800000 && effectiveAddress < 0x01000000) {
         return effectiveAddress + (0x30800000 - 0x00800000);
     }
 

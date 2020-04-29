@@ -2,7 +2,7 @@
 This is the Backend for the [WiiUPluginSystem](https://github.com/Maschell/WiiUPluginSystem). Check out the readme for more information about the Plugin System.
 
 ## Usage
-Put the `hook_payload.elf` in the `sd:/wiiu` folder of your sd card and load it via the [SystemMenuHook](https://github.com/wiiu-env/SystemMenuHook).
+Put the `PluginBackend.rpx` in the `sd:/wiiu/modules` folder of your sd card and load it via the [SetupPayload](https://github.com/wiiu-env/SetupPayload).
 
 Plugins needs to be placed into the following folder:
 
@@ -35,5 +35,6 @@ DEVKITPPC=/opt/devkitpro/devkitPPC
 
 
 # Credits
-Maschell
-orboditilt
+- Maschell
+- orboditilt
+- https://github.com/serge1/ELFIO

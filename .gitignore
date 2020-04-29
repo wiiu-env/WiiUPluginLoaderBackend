@@ -1,7 +1,6 @@
-*.elf
-*.rpx
-*.bin
-hook.h
-build/
 *.cbp
-WiiUPluginLoaderBackend.layout
+*.elf
+*.layout
+*.rpx
+build/
+*.save-failed

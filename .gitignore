@@ -4,3 +4,6 @@
 *.rpx
 build/
 *.save-failed
+.idea/
+cmake-build-debug/
+CMakeLists.txt

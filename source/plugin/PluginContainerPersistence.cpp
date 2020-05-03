@@ -70,7 +70,8 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t * pluginInforma
     // Relocation
     std::vector<RelocationData> relocationData = pluginInfo.getRelocationDataList();
     for (auto & reloc : relocationData) {
-        if(!DynamicLinkingHelper::addReloationEntry(&(pluginInformation->linking_data), plugin_data->info.linking_entries, DYN_LINK_RELOCATION_LIST_LENGTH, reloc)) {
+        if(!DynamicLinkingHelper::addReloationEntry(&(pluginInformation->linking_data), plugin_data->info.linking_entries, PLUGIN_DYN_LINK_RELOCATION_LIST_LENGTH, reloc)) {
+            DEBUG_FUNCTION_LINE("Failed to add a relocation entry");
             return false;
         }
     }
@@ -257,7 +258,7 @@ std::vector<PluginContainer> PluginContainerPersistence::loadPlugins(plugin_info
         }
 
         /* load relocation data */
-        for(uint32_t j = 0; j < DYN_LINK_RELOCATION_LIST_LENGTH; j++) {
+        for(uint32_t j = 0; j < PLUGIN_DYN_LINK_RELOCATION_LIST_LENGTH; j++) {
             dyn_linking_relocation_entry_t * linking_entry = &(plugin_data->info.linking_entries[j]);
             if(linking_entry->destination == NULL) {
                 break;

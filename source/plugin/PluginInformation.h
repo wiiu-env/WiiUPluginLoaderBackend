@@ -81,6 +81,7 @@ public:
     uint8_t getTrampolinId() const {
         return trampolinId;
     }
+
 private:
 
     std::vector<HookData> hook_data_list;
@@ -90,6 +91,9 @@ private:
 
     uint8_t trampolinId = 0;
 
+    void* allocatedTextMemoryAddress = 0;
+    void* allocatedDataMemoryAddress = 0;
+
     friend class PluginInformationFactory;
-    friend class PluginInformationPersistence;
+    friend class PluginContainerPersistence;
 };

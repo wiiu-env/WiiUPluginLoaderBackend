@@ -68,10 +68,6 @@ void PluginManagement::memsetBSS(std::vector<PluginContainer> plugins) {
 }
 
 void PluginManagement::callInitHooks(plugin_information_t *pluginInformation) {
-    CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_WUT_MALLOC);
-    CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_WUT_NEWLIB);
-    CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_WUT_STDCPP);
-
     CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_VID_MEM);
     CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_KERNEL);
     CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_OVERLAY);
@@ -85,6 +81,9 @@ void PluginManagement::PatchFunctionsAndCallHooks(plugin_information_t* gPluginI
     PatchInvidualMethodHooks(method_hooks_hooks, method_hooks_size_hooks, method_calls_hooks);
 
     for(int32_t plugin_index=0; plugin_index<gPluginInformation->number_used_plugins; plugin_index++) {
+        CallHookEx(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_MALLOC,plugin_index);
+        CallHookEx(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_NEWLIB,plugin_index);
+        CallHookEx(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_STDCPP,plugin_index);
         CallHookEx(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB,plugin_index);
         CallHookEx(gPluginInformation, WUPS_LOADER_HOOK_APPLICATION_START,plugin_index);
         new_PatchInvidualMethodHooks(&(gPluginInformation->plugin_data[plugin_index].info));

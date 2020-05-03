@@ -30,6 +30,8 @@ plugin_information_t *gPluginInformation __attribute__((section(".data"))) = NUL
 
 int test();
 
+std::vector<PluginContainer> loadPlugins(const std::vector<PluginData> &pluginList);
+
 #define gModuleData ((module_information_t *) (0x00880000))
 
 int main(int argc, char **argv) {
@@ -73,32 +75,12 @@ int test() {
             }
             DEBUG_FUNCTION_LINE("MEMGetAllocatableSizeForExpHeapEx %d kb", MEMGetAllocatableSizeForExpHeapEx(pluginDataHeap, 4) / 1024);
             std::vector<PluginData> pluginList = PluginDataFactory::loadDir("fs:/vol/external01/wiiu/plugins/", pluginDataHeap);
-            std::vector<PluginContainer> plugins;
             DEBUG_FUNCTION_LINE("Loaded %d plugin data", pluginList.size());
 
-            for (auto &pluginData : pluginList) {
-                DEBUG_FUNCTION_LINE("Load meta information");
-                auto metaInfo = PluginMetaInformationFactory::loadPlugin(pluginData);
-                if (metaInfo) {
-                    PluginContainer container;
-                    container.setMetaInformation(metaInfo.value());
-                    container.setPluginData(pluginData);
-                    plugins.push_back(container);
-                } else {
-                    DEBUG_FUNCTION_LINE("Failed to get meta information");
-                }
-            }
+            std::vector<PluginContainer> plugins = loadPlugins(pluginList);
+
             for (auto &pluginContainer : plugins) {
-                uint32_t trampolineId = pluginContainer.getPluginInformation().getTrampolinId();
-                std::optional<PluginInformation> data = PluginInformationFactory::load(pluginContainer.getPluginData(), pluginDataHeap, gPluginInformation->trampolines, DYN_LINK_TRAMPOLIN_LIST_LENGTH, trampolineId);
-
-                if (!data) {
-                    DEBUG_FUNCTION_LINE("Failed to load Plugin %s", pluginContainer.getMetaInformation().getName().c_str());
-                    break;
-                }
-                pluginContainer.setPluginInformation(data.value());
-
-                for (const auto &kv : data->getSectionInfoList()) {
+                for (const auto &kv : pluginContainer.getPluginInformation().getSectionInfoList()) {
                     DEBUG_FUNCTION_LINE("%s = %s %08X %d", kv.first.c_str(), kv.second.getName().c_str(), kv.second.getAddress(), kv.second.getSize());
                 }
                 if (!PluginContainerPersistence::savePlugin(gPluginInformation, pluginContainer)) {
@@ -126,4 +108,32 @@ int test() {
     }
 
     return 0;
+}
+
+std::vector<PluginContainer> loadPlugins(const std::vector<PluginData> &pluginList) {
+    std::vector<PluginContainer> plugins;
+
+    for (auto &pluginData : pluginList) {
+        DEBUG_FUNCTION_LINE("Load meta information");
+        auto metaInfo = PluginMetaInformationFactory::loadPlugin(pluginData);
+        if (metaInfo) {
+            PluginContainer container;
+            container.setMetaInformation(metaInfo.value());
+            container.setPluginData(const_cast<PluginData &>(pluginData));
+            plugins.push_back(container);
+        } else {
+            DEBUG_FUNCTION_LINE("Failed to get meta information");
+        }
+    }
+    for (auto &pluginContainer : plugins) {
+        uint32_t trampolineId = pluginContainer.getPluginInformation().getTrampolinId();
+        std::optional<PluginInformation> info = PluginInformationFactory::load(pluginContainer.getPluginData(), pluginDataHeap, gPluginInformation->trampolines, DYN_LINK_TRAMPOLIN_LIST_LENGTH, trampolineId);
+
+        if (!info) {
+            DEBUG_FUNCTION_LINE("Failed to load Plugin %s", pluginContainer.getMetaInformation().getName().c_str());
+            continue;
+        }
+        pluginContainer.setPluginInformation(info.value());
+    }
+    return plugins;
 }

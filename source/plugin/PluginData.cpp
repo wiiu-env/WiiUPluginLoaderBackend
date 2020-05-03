@@ -50,6 +50,7 @@ PluginData::PluginData(std::vector<uint8_t> input, MEMHeapHandle heapHandle, eMe
         default:
         case eMemTypeExpHeap:
             data_copy = MEMAllocFromExpHeapEx(heapHandle, length, 4);
+            DEBUG_FUNCTION_LINE("Allocated %d kb from ExpHeap", length / 1024);
             if (data_copy == NULL) {
                 DEBUG_FUNCTION_LINE("Failed to allocate space on exp heap");
             } else {

@@ -30,7 +30,7 @@ plugin_information_t *gPluginInformation __attribute__((section(".data"))) = NUL
 
 int test();
 
-std::vector<PluginContainer> loadPlugins(const std::vector<PluginData> &pluginList);
+std::vector<PluginContainer> loadPlugins(const std::vector<PluginData> &pluginList, MEMHeapHandle heapHandle);
 
 #define gModuleData ((module_information_t *) (0x00880000))
 
@@ -77,7 +77,7 @@ int test() {
             std::vector<PluginData> pluginList = PluginDataFactory::loadDir("fs:/vol/external01/wiiu/plugins/", pluginDataHeap);
             DEBUG_FUNCTION_LINE("Loaded %d plugin data", pluginList.size());
 
-            std::vector<PluginContainer> plugins = loadPlugins(pluginList);
+            std::vector<PluginContainer> plugins = loadPlugins(pluginList, pluginDataHeap);
 
             for (auto &pluginContainer : plugins) {
                 for (const auto &kv : pluginContainer.getPluginInformation().getSectionInfoList()) {
@@ -110,7 +110,7 @@ int test() {
     return 0;
 }
 
-std::vector<PluginContainer> loadPlugins(const std::vector<PluginData> &pluginList) {
+std::vector<PluginContainer> loadPlugins(const std::vector<PluginData> &pluginList, MEMHeapHandle heapHandle) {
     std::vector<PluginContainer> plugins;
 
     for (auto &pluginData : pluginList) {
@@ -127,7 +127,7 @@ std::vector<PluginContainer> loadPlugins(const std::vector<PluginData> &pluginLi
     }
     for (auto &pluginContainer : plugins) {
         uint32_t trampolineId = pluginContainer.getPluginInformation().getTrampolinId();
-        std::optional<PluginInformation> info = PluginInformationFactory::load(pluginContainer.getPluginData(), pluginDataHeap, gPluginInformation->trampolines, DYN_LINK_TRAMPOLIN_LIST_LENGTH, trampolineId);
+        std::optional<PluginInformation> info = PluginInformationFactory::load(pluginContainer.getPluginData(), heapHandle, gPluginInformation->trampolines, DYN_LINK_TRAMPOLIN_LIST_LENGTH, trampolineId);
 
         if (!info) {
             DEBUG_FUNCTION_LINE("Failed to load Plugin %s", pluginContainer.getMetaInformation().getName().c_str());

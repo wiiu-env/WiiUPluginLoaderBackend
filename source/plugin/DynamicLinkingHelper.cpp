@@ -97,8 +97,8 @@ bool DynamicLinkingHelper::addReloationEntry(dyn_linking_relocation_entry_t * li
         curEntry->destination = (void*) destination;
         curEntry->functionEntry = functionName;
         curEntry->importEntry = importInfo;
-
         return true;
     }
+    DEBUG_FUNCTION_LINE("Failed to find empty slot for saving relocations entry. We ned more than %d slots.", linking_entry_length);
     return false;
 }

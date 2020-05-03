@@ -35,7 +35,7 @@ extern "C" {
 #define MAXIMUM_PLUGIN_DESCRIPTION_LENGTH                   255
 #define MAXIMUM_PLUGIN_META_FIELD_LENGTH                    51
 
-#define DYN_LINK_RELOCATION_LIST_LENGTH                     500
+#define PLUGIN_DYN_LINK_RELOCATION_LIST_LENGTH              1000
 
 #define MAXIMUM_HOOKS_PER_PLUGIN                        25
 #define MAXIMUM_FUNCTION_PER_PLUGIN                     100
@@ -57,7 +57,7 @@ struct plugin_meta_info_t {
 };
 
 struct plugin_info_t {
-    dyn_linking_relocation_entry_t  linking_entries[DYN_LINK_RELOCATION_LIST_LENGTH];
+    dyn_linking_relocation_entry_t  linking_entries[PLUGIN_DYN_LINK_RELOCATION_LIST_LENGTH];
     plugin_section_info_t           sectionInfos[MAXIMUM_PLUGIN_SECTION_LENGTH];
     uint32_t                        number_used_functions;                          // Number of used function. Maximum is MAXIMUM_FUNCTION_PER_PLUGIN
     replacement_data_function_t     functions[MAXIMUM_FUNCTION_PER_PLUGIN];         // Replacement information for each function.

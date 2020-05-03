@@ -1,6 +1,7 @@
 #include <plugin/PluginContainer.h>
 #include <utils/ElfUtils.h>
 #include <coreinit/cache.h>
+#include <patcher/function_patcher.h>
 #include "patcher/hooks_patcher_static.h"
 #include "patcher/hooks_patcher.h"
 #include "PluginManagement.h"
@@ -75,16 +76,18 @@ void PluginManagement::callInitHooks(plugin_information_t *pluginInformation) {
     CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_KERNEL);
     CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_OVERLAY);
     CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_PLUGIN);
+    DEBUG_FUNCTION_LINE("Done calling init hooks");
 }
 
 void PluginManagement::PatchFunctionsAndCallHooks(plugin_information_t* gPluginInformation) {
+    DEBUG_FUNCTION_LINE("Patching functions");
     PatchInvidualMethodHooks(method_hooks_hooks_static, method_hooks_size_hooks_static, method_calls_hooks_static);
     PatchInvidualMethodHooks(method_hooks_hooks, method_hooks_size_hooks, method_calls_hooks);
 
     for(int32_t plugin_index=0; plugin_index<gPluginInformation->number_used_plugins; plugin_index++) {
         CallHookEx(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB,plugin_index);
         CallHookEx(gPluginInformation, WUPS_LOADER_HOOK_APPLICATION_START,plugin_index);
-        //new_PatchInvidualMethodHooks(&gbl_replacement_data.plugin_data[plugin_index]);
+        new_PatchInvidualMethodHooks(&(gPluginInformation->plugin_data[plugin_index].info));
         CallHookEx(gPluginInformation, WUPS_LOADER_HOOK_FUNCTIONS_PATCHED,plugin_index);
     }
 }

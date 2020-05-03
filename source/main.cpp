@@ -69,11 +69,13 @@ int test() {
                     return 0;
                 }
                 memset((void *) gPluginInformation, 0, sizeof(plugin_information_t));
+
             }
             DEBUG_FUNCTION_LINE("MEMGetAllocatableSizeForExpHeapEx %d kb", MEMGetAllocatableSizeForExpHeapEx(pluginDataHeap, 4) / 1024);
             std::vector<PluginData> pluginList = PluginDataFactory::loadDir("fs:/vol/external01/wiiu/plugins/", pluginDataHeap);
             std::vector<PluginContainer> plugins;
             DEBUG_FUNCTION_LINE("Loaded %d plugin data", pluginList.size());
+
             for (auto &pluginData : pluginList) {
                 DEBUG_FUNCTION_LINE("Load meta information");
                 auto metaInfo = PluginMetaInformationFactory::loadPlugin(pluginData);
@@ -82,6 +84,8 @@ int test() {
                     container.setMetaInformation(metaInfo.value());
                     container.setPluginData(pluginData);
                     plugins.push_back(container);
+                }else{
+                    DEBUG_FUNCTION_LINE("Failed to get meta information");
                 }
             }
             for (auto &pluginContainer : plugins) {

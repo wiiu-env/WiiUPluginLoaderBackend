@@ -2,6 +2,8 @@
 #include <utils/ElfUtils.h>
 #include <coreinit/cache.h>
 #include <patcher/function_patcher.h>
+#include <plugin/PluginMetaInformationFactory.h>
+#include <plugin/PluginInformationFactory.h>
 #include "patcher/hooks_patcher_static.h"
 #include "patcher/hooks_patcher.h"
 #include "PluginManagement.h"
@@ -91,11 +93,11 @@ void PluginManagement::unloadPlugins(plugin_information_t *gPluginInformation, M
 
         if (plugin->info.allocatedTextMemoryAddress != nullptr) {
             MEMFreeToExpHeap((MEMHeapHandle) pluginHeap, plugin->info.allocatedTextMemoryAddress);
-            DEBUG_FUNCTION_LINE("Freed %08X",plugin->info.allocatedTextMemoryAddress);
+            DEBUG_FUNCTION_LINE("Freed %08X", plugin->info.allocatedTextMemoryAddress);
         }
         if (plugin->info.allocatedDataMemoryAddress != nullptr) {
             MEMFreeToExpHeap((MEMHeapHandle) pluginHeap, plugin->info.allocatedDataMemoryAddress);
-            DEBUG_FUNCTION_LINE("Freed %08X",plugin->info.allocatedDataMemoryAddress);
+            DEBUG_FUNCTION_LINE("Freed %08X", plugin->info.allocatedDataMemoryAddress);
         }
     }
     memset((void *) gPluginInformation, 0, sizeof(plugin_information_t));
@@ -125,3 +127,32 @@ void PluginManagement::PatchFunctionsAndCallHooks(plugin_information_t *gPluginI
         CallHookEx(gPluginInformation, WUPS_LOADER_HOOK_FUNCTIONS_PATCHED, plugin_index);
     }
 }
+
+std::vector<PluginContainer> PluginManagement::loadPlugins(const std::vector<PluginData> &pluginList, MEMHeapHandle heapHandle, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length) {
+    std::vector<PluginContainer> plugins;
+
+    for (auto &pluginData : pluginList) {
+        DEBUG_FUNCTION_LINE("Load meta information");
+        auto metaInfo = PluginMetaInformationFactory::loadPlugin(pluginData);
+        if (metaInfo) {
+            PluginContainer container;
+            container.setMetaInformation(metaInfo.value());
+            container.setPluginData(const_cast<PluginData &>(pluginData));
+            plugins.push_back(container);
+        } else {
+            DEBUG_FUNCTION_LINE("Failed to get meta information");
+        }
+    }
+    for (auto &pluginContainer : plugins) {
+        uint32_t trampolineId = pluginContainer.getPluginInformation().getTrampolinId();
+        std::optional<PluginInformation> info = PluginInformationFactory::load(pluginContainer.getPluginData(), heapHandle, trampolin_data, trampolin_data_length, trampolineId);
+
+        if (!info) {
+            DEBUG_FUNCTION_LINE("Failed to load Plugin %s", pluginContainer.getMetaInformation().getName().c_str());
+            continue;
+        }
+        pluginContainer.setPluginInformation(info.value());
+    }
+    return plugins;
+}
+

@@ -18,4 +18,6 @@ public:
     static bool doRelocation(const std::vector<RelocationData> &relocData, relocation_trampolin_entry_t *tramp_data, uint32_t tramp_length, uint32_t trampolinID);
 
     static void unloadPlugins(plugin_information_t * pluginInformation, MEMHeapHandle pluginHeap);
+
+    static std::vector<PluginContainer> loadPlugins(const std::vector<PluginData> &pluginList, MEMHeapHandle pHeader, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length);
 };

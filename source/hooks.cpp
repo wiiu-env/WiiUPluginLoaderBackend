@@ -59,7 +59,7 @@ void CallHookEx(plugin_information_t *pluginInformation, wups_loader_hook_type_t
         for (uint32_t j = 0; j < plugin_data->info.number_used_hooks; j++) {
             replacement_data_hook_t *hook_data = &plugin_data->info.hooks[j];
             if (hook_data->type == hook_type) {
-                DEBUG_FUNCTION_LINE("Calling hook of type %s for plugin %s", hook_names[hook_data->type], plugin_data->meta.name);
+                DEBUG_FUNCTION_LINE("Calling hook of type %s for plugin %s [%d]", hook_names[hook_data->type], plugin_data->meta.name, hook_type);
                 void *func_ptr = hook_data->func_pointer;
                 if (func_ptr != NULL) {
                     //DEBUG_FUNCTION_LINE("function pointer is %08x\n",func_ptr);
@@ -74,8 +74,7 @@ void CallHookEx(plugin_information_t *pluginInformation, wups_loader_hook_type_t
                         ((void (*)(void)) ((uint32_t *) func_ptr))();
                     } else if (hook_type == WUPS_LOADER_HOOK_APPLICATION_END) {
                         ((void (*)(void)) ((uint32_t *) func_ptr))();
-                    }
-                    if (hook_type == WUPS_LOADER_HOOK_INIT_WUT_MALLOC) {
+                    }else if (hook_type == WUPS_LOADER_HOOK_INIT_WUT_MALLOC) {
                         ((void (*)(void)) ((uint32_t *) func_ptr))();
                     } else if (hook_type == WUPS_LOADER_HOOK_FINI_WUT_MALLOC) {
                         ((void (*)(void)) ((uint32_t *) func_ptr))();
@@ -92,7 +91,9 @@ void CallHookEx(plugin_information_t *pluginInformation, wups_loader_hook_type_t
                     } else if (hook_type == WUPS_LOADER_HOOK_FINI_WUT_STDCPP) {
                         ((void (*)(void)) ((uint32_t *) func_ptr))();
                     } else {
-                        DEBUG_FUNCTION_LINE("Hook is not implemented %s", hook_names[hook_data->type]);
+                        DEBUG_FUNCTION_LINE("######################################");
+                        DEBUG_FUNCTION_LINE("Hook is not implemented %s [%d]", hook_names[hook_type], hook_type);
+                        DEBUG_FUNCTION_LINE("######################################");
                     }
                 } else {
                     DEBUG_FUNCTION_LINE("Failed to call hook. It was not defined\n");

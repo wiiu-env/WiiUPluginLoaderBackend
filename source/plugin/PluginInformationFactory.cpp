@@ -64,6 +64,9 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
             } else if ((address >= 0x10000000) && address < 0xC0000000) {
                 data_size += sectionSize;
             }
+            if (psec->get_name().rfind(".wups.", 0) == 0) {
+                data_size += sectionSize;
+            }
         }
     }
 

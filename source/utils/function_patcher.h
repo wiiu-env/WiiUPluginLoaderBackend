@@ -70,15 +70,15 @@ typedef struct {
     uint8_t alreadyPatched;
 } hooks_magic_t;
 
-void PatchInvidualMethodHooks(hooks_magic_t hook_information[],int32_t hook_information_size, volatile uint32_t dynamic_method_calls[]);
-void RestoreInvidualInstructions(hooks_magic_t hook_information[],int32_t hook_information_size);
-uint32_t GetAddressOfFunction(const char * functionName,uint32_t library);
+void PatchInvidualMethodHooks(hooks_magic_t hook_information[], int32_t hook_information_size, volatile uint32_t dynamic_method_calls[]);
+void RestoreInvidualInstructions(hooks_magic_t hook_information[], int32_t hook_information_size);
+uint32_t GetAddressOfFunction(const char *functionName, uint32_t library);
 int32_t isDynamicFunction(uint32_t physicalAddress);
 void resetLibs();
 
 //Orignal code by Chadderz.
-#define MAKE_MAGIC(x, lib,functionType) { (uint32_t) my_ ## x, (uint32_t) &real_ ## x, lib, # x,0,0,functionType,0}
-#define MAKE_MAGIC_NAME(x,y, lib,functionType) { (uint32_t) my_ ## x, (uint32_t) &real_ ## x, lib, # y,0,0,functionType,0}
+#define MAKE_MAGIC(x, lib, functionType) { (uint32_t) my_ ## x, (uint32_t) &real_ ## x, lib, # x,0,0,functionType,0}
+#define MAKE_MAGIC_NAME(x, y, lib, functionType) { (uint32_t) my_ ## x, (uint32_t) &real_ ## x, lib, # y,0,0,functionType,0}
 
 #ifdef __cplusplus
 }

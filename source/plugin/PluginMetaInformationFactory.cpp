@@ -26,7 +26,7 @@
 
 using namespace ELFIO;
 
-std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(const PluginData& pluginData) {
+std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(const PluginData &pluginData) {
     auto readerOpt = pluginData.getReader();
 
     // Load ELF data
@@ -45,53 +45,53 @@ std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(co
 
     DEBUG_FUNCTION_LINE("%d number of sections", sec_num);
 
-    for(uint32_t i = 0; i < sec_num; ++i ) {
-        section* psec = reader->sections[i];
+    for (uint32_t i = 0; i < sec_num; ++i) {
+        section *psec = reader->sections[i];
 
         // Calculate total size:
         if ((psec->get_type() == SHT_PROGBITS || psec->get_type() == SHT_NOBITS) && (psec->get_flags() & SHF_ALLOC)) {
             uint32_t sectionSize = psec->get_size();
             uint32_t address = (uint32_t) psec->get_address();
-            if((address >= 0x02000000) && address < 0x10000000) {
+            if ((address >= 0x02000000) && address < 0x10000000) {
                 pluginSize += sectionSize;
-            } else if((address >= 0x10000000) && address < 0xC0000000) {
+            } else if ((address >= 0x10000000) && address < 0xC0000000) {
                 pluginSize += sectionSize;
             }
         }
 
         // Get meta information and check WUPS version:
         if (psec->get_name().compare(".wups.meta") == 0) {
-            const void * sectionData = psec->get_data();
+            const void *sectionData = psec->get_data();
             uint32_t sectionSize = psec->get_size();
 
-            char * curEntry = (char *) sectionData;
-            while((uint32_t) curEntry < (uint32_t) sectionData + sectionSize) {
+            char *curEntry = (char *) sectionData;
+            while ((uint32_t) curEntry < (uint32_t) sectionData + sectionSize) {
                 if (*curEntry == '\0') {
                     curEntry++;
                     continue;
                 }
 
                 auto firstFound = std::string(curEntry).find_first_of("=");
-                if(firstFound != std::string::npos) {
+                if (firstFound != std::string::npos) {
                     curEntry[firstFound] = '\0';
                     std::string key(curEntry);
                     std::string value(curEntry + firstFound + 1);
 
-                    if(key.compare("name") == 0) {
+                    if (key.compare("name") == 0) {
                         DEBUG_FUNCTION_LINE("Name = %s", value.c_str());
                         pluginInfo.setName(value);
-                    } else if(key.compare("author") == 0) {
+                    } else if (key.compare("author") == 0) {
                         pluginInfo.setAuthor(value);
-                    } else if(key.compare("version") == 0) {
+                    } else if (key.compare("version") == 0) {
                         pluginInfo.setVersion(value);
-                    } else if(key.compare("license") == 0) {
+                    } else if (key.compare("license") == 0) {
                         pluginInfo.setLicense(value);
-                    } else if(key.compare("buildtimestamp") == 0) {
+                    } else if (key.compare("buildtimestamp") == 0) {
                         pluginInfo.setBuildTimestamp(value);
-                    } else if(key.compare("description") == 0) {
+                    } else if (key.compare("description") == 0) {
                         pluginInfo.setDescription(value);
-                    } else if(key.compare("wups") == 0) {
-                        if(value.compare("0.2") != 0) {
+                    } else if (key.compare("wups") == 0) {
+                        if (value.compare("0.2") != 0) {
                             DEBUG_FUNCTION_LINE("Warning: Ignoring plugin - Unsupported WUPS version: %s.\n", value);
                             return std::nullopt;
                         }

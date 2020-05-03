@@ -16,6 +16,7 @@
  ****************************************************************************/
 
 #pragma once
+
 #include <optional>
 #include <vector>
 #include <malloc.h>
@@ -32,11 +33,12 @@ enum eMemoryTypes {
 
 class PluginData {
 public:
-    const std::optional<elfio*>& getReader() const {
+    const std::optional<elfio *> &getReader() const {
         return reader;
     }
+
     ~PluginData() {
-        if(nReader != NULL) {
+        if (nReader != NULL) {
             delete nReader;
             nReader = NULL;
         }
@@ -44,25 +46,30 @@ public:
 
 
     void freeMemory();
+
 private:
     PluginData() {
     }
 
     PluginData(std::vector<uint8_t> buffer);
+
     PluginData(std::vector<uint8_t> input, MEMHeapHandle heapHandle, eMemoryTypes memoryType);
 
 
     void loadReader();
 
-    static std::optional<PluginData> createFromExistingData(const void* buffer, MEMHeapHandle heapHandle, eMemoryTypes memoryType, const size_t length);
+    static std::optional<PluginData> createFromExistingData(const void *buffer, MEMHeapHandle heapHandle, eMemoryTypes memoryType, const size_t length);
 
-    std::optional<elfio*> reader;
-    elfio* nReader = NULL;
-    void* buffer;
+    std::optional<elfio *> reader;
+    elfio *nReader = NULL;
+    void *buffer;
     MEMHeapHandle heapHandle;
     eMemoryTypes memoryType;
     size_t length;
+
     friend class PluginDataFactory;
+
     friend class PluginContainer;
+
     friend class PluginContainerPersistence;
 };

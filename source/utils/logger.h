@@ -8,9 +8,12 @@ extern "C" {
 #include <string.h>
 
 void log_init_();
+
 //void log_deinit_(void);
 void log_print_(const char *str);
+
 void log_printf_(const char *format, ...);
+
 void OSFatal_printf(const char *format, ...);
 
 #define __FILENAME_X__ (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
@@ -19,7 +22,6 @@ void OSFatal_printf(const char *format, ...);
 #define OSFATAL_FUNCTION_LINE(FMT, ARGS...)do { \
     OSFatal_printf("[%s]%s@L%04d: " FMT "",__FILENAME__,__FUNCTION__, __LINE__, ## ARGS); \
     } while (0)
-
 
 
 #define log_init() log_init_()

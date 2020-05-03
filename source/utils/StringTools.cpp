@@ -36,13 +36,13 @@
 #include <utils/StringTools.h>
 
 
-BOOL StringTools::EndsWith(const std::string& a, const std::string& b) {
+BOOL StringTools::EndsWith(const std::string &a, const std::string &b) {
     if (b.size() > a.size())
         return false;
     return std::equal(a.begin() + a.size() - b.size(), a.end(), b.begin());
 }
 
-const char * StringTools::byte_to_binary(int32_t x) {
+const char *StringTools::byte_to_binary(int32_t x) {
     static char b[9];
     b[0] = '\0';
 
@@ -54,25 +54,25 @@ const char * StringTools::byte_to_binary(int32_t x) {
     return b;
 }
 
-std::string StringTools::removeCharFromString(std::string& input,char toBeRemoved) {
+std::string StringTools::removeCharFromString(std::string &input, char toBeRemoved) {
     std::string output = input;
     size_t position;
-    while(1) {
+    while (1) {
         position = output.find(toBeRemoved);
-        if(position == std::string::npos)
+        if (position == std::string::npos)
             break;
         output.erase(position, 1);
     }
     return output;
 }
 
-const char * StringTools::fmt(const char * format, ...) {
+const char *StringTools::fmt(const char *format, ...) {
     static char strChar[512];
     strChar[0] = 0;
 
     va_list va;
     va_start(va, format);
-    if((vsprintf(strChar, format, va) >= 0)) {
+    if ((vsprintf(strChar, format, va) >= 0)) {
         va_end(va);
         return (const char *) strChar;
     }
@@ -81,26 +81,26 @@ const char * StringTools::fmt(const char * format, ...) {
     return NULL;
 }
 
-const wchar_t * StringTools::wfmt(const char * format, ...) {
+const wchar_t *StringTools::wfmt(const char *format, ...) {
     static char tmp[512];
     static wchar_t strWChar[512];
     strWChar[0] = 0;
     tmp[0] = 0;
 
-    if(!format)
+    if (!format)
         return (const wchar_t *) strWChar;
 
-    if(strcmp(format, "") == 0)
+    if (strcmp(format, "") == 0)
         return (const wchar_t *) strWChar;
 
     va_list va;
     va_start(va, format);
-    if((vsprintf(tmp, format, va) >= 0)) {
-        int	bt;
+    if ((vsprintf(tmp, format, va) >= 0)) {
+        int bt;
         int32_t strlength = strlen(tmp);
-        bt = mbstowcs(strWChar, tmp, (strlength < 512) ? strlength : 512 );
+        bt = mbstowcs(strWChar, tmp, (strlength < 512) ? strlength : 512);
 
-        if(bt > 0) {
+        if (bt > 0) {
             strWChar[bt] = 0;
             return (const wchar_t *) strWChar;
         }
@@ -110,14 +110,14 @@ const wchar_t * StringTools::wfmt(const char * format, ...) {
     return NULL;
 }
 
-int32_t StringTools::strprintf(std::string &str, const char * format, ...) {
+int32_t StringTools::strprintf(std::string &str, const char *format, ...) {
     static char tmp[512];
     tmp[0] = 0;
     int32_t result = 0;
 
     va_list va;
     va_start(va, format);
-    if((vsprintf(tmp, format, va) >= 0)) {
+    if ((vsprintf(tmp, format, va) >= 0)) {
         str = tmp;
         result = str.size();
     }
@@ -126,14 +126,14 @@ int32_t StringTools::strprintf(std::string &str, const char * format, ...) {
     return result;
 }
 
-std::string StringTools::strfmt(const char * format, ...) {
+std::string StringTools::strfmt(const char *format, ...) {
     std::string str;
     static char tmp[512];
     tmp[0] = 0;
 
     va_list va;
     va_start(va, format);
-    if((vsprintf(tmp, format, va) >= 0)) {
+    if ((vsprintf(tmp, format, va) >= 0)) {
         str = tmp;
     }
     va_end(va);
@@ -141,11 +141,11 @@ std::string StringTools::strfmt(const char * format, ...) {
     return str;
 }
 
-BOOL StringTools::char2wchar_t(const char * strChar, wchar_t * dest) {
-    if(!strChar || !dest)
+BOOL StringTools::char2wchar_t(const char *strChar, wchar_t *dest) {
+    if (!strChar || !dest)
         return false;
 
-    int	bt;
+    int bt;
     bt = mbstowcs(dest, strChar, strlen(strChar));
     if (bt > 0) {
         dest[bt] = 0;
@@ -155,39 +155,39 @@ BOOL StringTools::char2wchar_t(const char * strChar, wchar_t * dest) {
     return false;
 }
 
-int32_t StringTools::strtokcmp(const char * string, const char * compare, const char * separator) {
-    if(!string || !compare)
+int32_t StringTools::strtokcmp(const char *string, const char *compare, const char *separator) {
+    if (!string || !compare)
         return -1;
 
     char TokCopy[512];
     strncpy(TokCopy, compare, sizeof(TokCopy));
     TokCopy[511] = '\0';
 
-    char * strTok = strtok(TokCopy, separator);
+    char *strTok = strtok(TokCopy, separator);
 
     while (strTok != NULL) {
         if (strcasecmp(string, strTok) == 0) {
             return 0;
         }
-        strTok = strtok(NULL,separator);
+        strTok = strtok(NULL, separator);
     }
 
     return -1;
 }
 
-int32_t StringTools::strextcmp(const char * string, const char * extension, char seperator) {
-    if(!string || !extension)
+int32_t StringTools::strextcmp(const char *string, const char *extension, char seperator) {
+    if (!string || !extension)
         return -1;
 
     char *ptr = strrchr(string, seperator);
-    if(!ptr)
+    if (!ptr)
         return -1;
 
     return strcasecmp(ptr + 1, extension);
 }
 
 
-std::vector<std::string> StringTools::stringSplit(const std::string & inValue, const std::string & splitter) {
+std::vector<std::string> StringTools::stringSplit(const std::string &inValue, const std::string &splitter) {
     std::string value = inValue;
     std::vector<std::string> result;
     while (true) {
@@ -202,7 +202,7 @@ std::vector<std::string> StringTools::stringSplit(const std::string & inValue, c
             result.push_back("");
             break;
         }
-        if(index + splitter.size() > value.length()) {
+        if (index + splitter.size() > value.length()) {
             break;
         }
         value = value.substr(index + splitter.size(), value.length());

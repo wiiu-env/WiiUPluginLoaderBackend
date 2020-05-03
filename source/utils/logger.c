@@ -10,7 +10,7 @@
 #include <coreinit/systeminfo.h>
 #include <coreinit/thread.h>
 
-static int log_socket __attribute__((section(".data")))= -1;
+static int log_socket __attribute__((section(".data"))) = -1;
 static struct sockaddr_in connect_addr __attribute__((section(".data")));
 static volatile int log_lock __attribute__((section(".data"))) = 0;
 
@@ -30,11 +30,11 @@ void log_init_() {
 
 void log_print_(const char *str) {
     // socket is always 0 initially as it is in the BSS
-    if(log_socket < 0) {
+    if (log_socket < 0) {
         return;
     }
 
-    while(log_lock)
+    while (log_lock)
         OSSleepTicks(OSMicrosecondsToTicks(1000));
     log_lock = 1;
 
@@ -42,8 +42,8 @@ void log_print_(const char *str) {
     int ret;
     while (len > 0) {
         int block = len < 1400 ? len : 1400; // take max 1400 bytes per UDP packet
-        ret = sendto(log_socket, str, block, 0, (struct sockaddr *)&connect_addr, sizeof(struct sockaddr_in));
-        if(ret < 0)
+        ret = sendto(log_socket, str, block, 0, (struct sockaddr *) &connect_addr, sizeof(struct sockaddr_in));
+        if (ret < 0)
             break;
 
         len -= ret;
@@ -58,14 +58,14 @@ void OSFatal_printf(const char *format, ...) {
     tmp[0] = 0;
     va_list va;
     va_start(va, format);
-    if((vsprintf(tmp, format, va) >= 0)) {
+    if ((vsprintf(tmp, format, va) >= 0)) {
         OSFatal(tmp);
     }
     va_end(va);
 }
 
 void log_printf_(const char *format, ...) {
-    if(log_socket < 0) {
+    if (log_socket < 0) {
         return;
     }
 
@@ -74,7 +74,7 @@ void log_printf_(const char *format, ...) {
 
     va_list va;
     va_start(va, format);
-    if((vsprintf(tmp, format, va) >= 0)) {
+    if ((vsprintf(tmp, format, va) >= 0)) {
         log_print_(tmp);
     }
     va_end(va);

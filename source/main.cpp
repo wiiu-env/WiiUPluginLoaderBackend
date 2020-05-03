@@ -84,7 +84,7 @@ int test() {
                     container.setMetaInformation(metaInfo.value());
                     container.setPluginData(pluginData);
                     plugins.push_back(container);
-                }else{
+                } else {
                     DEBUG_FUNCTION_LINE("Failed to get meta information");
                 }
             }

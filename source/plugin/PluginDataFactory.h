@@ -25,7 +25,9 @@
 
 class PluginDataFactory {
 public:
-    static std::vector<PluginData> loadDir(const std::string & path, MEMHeapHandle heapHandle);
-    static std::optional<PluginData> load(const std::string & path, MEMHeapHandle heapHandle);
-    static std::optional<PluginData> load(std::vector<uint8_t>& buffer, MEMHeapHandle heapHandle);
+    static std::vector<PluginData> loadDir(const std::string &path, MEMHeapHandle heapHandle);
+
+    static std::optional<PluginData> load(const std::string &path, MEMHeapHandle heapHandle);
+
+    static std::optional<PluginData> load(std::vector<uint8_t> &buffer, MEMHeapHandle heapHandle);
 };

@@ -7,9 +7,9 @@
 extern "C" {
 #endif
 
-int32_t LoadFileToMem(const char *relativefilepath, char **fileOut, uint32_t * sizeOut);
-uint32_t load_loader_elf_from_sd(unsigned char* baseAddress, const char* relativePath);
-uint32_t load_loader_elf(unsigned char* baseAddress, char * elf_data, uint32_t fileSize);
+int32_t LoadFileToMem(const char *relativefilepath, char **fileOut, uint32_t *sizeOut);
+uint32_t load_loader_elf_from_sd(unsigned char *baseAddress, const char *relativePath);
+uint32_t load_loader_elf(unsigned char *baseAddress, char *elf_data, uint32_t fileSize);
 
 #define R_PPC_NONE              0
 #define R_PPC_ADDR32            1
@@ -46,5 +46,5 @@ uint32_t load_loader_elf(unsigned char* baseAddress, char * elf_data, uint32_t f
 class ElfUtils {
 
 public:
-    static bool elfLinkOne(char type, size_t offset, int32_t addend, uint32_t destination, uint32_t symbol_addr, relocation_trampolin_entry_t * trampolin_data, uint32_t trampolin_data_length, RelocationType reloc_type, uint8_t trampolinId);
+    static bool elfLinkOne(char type, size_t offset, int32_t addend, uint32_t destination, uint32_t symbol_addr, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length, RelocationType reloc_type, uint8_t trampolinId);
 };

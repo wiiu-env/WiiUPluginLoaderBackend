@@ -25,5 +25,5 @@
 
 class PluginMetaInformationFactory {
 public:
-    static std::optional<PluginMetaInformation> loadPlugin(const PluginData& pluginData);
+    static std::optional<PluginMetaInformation> loadPlugin(const PluginData &pluginData);
 };

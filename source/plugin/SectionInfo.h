@@ -22,19 +22,19 @@
 class SectionInfo {
 
 public:
-    SectionInfo(std::string name, uint32_t address, uint32_t sectionSize):
-        name(name),
-        address(address),
-        sectionSize(sectionSize) {
+    SectionInfo(std::string name, uint32_t address, uint32_t sectionSize) :
+            name(name),
+            address(address),
+            sectionSize(sectionSize) {
     }
 
-    SectionInfo(){
+    SectionInfo() {
     }
 
-    SectionInfo(const SectionInfo &o2):
-        name(o2.name),
-        address(o2.address),
-        sectionSize(o2.sectionSize) {
+    SectionInfo(const SectionInfo &o2) :
+            name(o2.name),
+            address(o2.address),
+            sectionSize(o2.sectionSize) {
     }
 
 
@@ -42,7 +42,7 @@ public:
 
     }
 
-    const std::string& getName() const {
+    const std::string &getName() const {
         return name;
     }
 

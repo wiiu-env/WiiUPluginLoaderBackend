@@ -22,7 +22,7 @@
 class FunctionData {
 
 public:
-    FunctionData(void * paddress, void * vaddress, const std::string& name, wups_loader_library_type_t library, void * replaceAddr, void * replaceCall) {
+    FunctionData(void *paddress, void *vaddress, const std::string &name, wups_loader_library_type_t library, void *replaceAddr, void *replaceCall) {
         this->paddress = paddress;
         this->vaddress = vaddress;
         this->name = name;
@@ -35,35 +35,36 @@ public:
 
     }
 
-    const std::string& getName() const{
+    const std::string &getName() const {
         return this->name;
     }
 
-    wups_loader_library_type_t getLibrary() const{
+    wups_loader_library_type_t getLibrary() const {
         return this->library;
     }
 
-    const void * getPhysicalAddress() const{
+    const void *getPhysicalAddress() const {
         return paddress;
     }
-    const void * getVirtualAddress() const{
+
+    const void *getVirtualAddress() const {
         return vaddress;
     }
 
-    const void * getReplaceAddress() const{
+    const void *getReplaceAddress() const {
         return replaceAddr;
     }
 
-    const void * getReplaceCall() const{
+    const void *getReplaceCall() const {
         return replaceCall;
     }
 
 private:
-    void * paddress = NULL;
-    void * vaddress = NULL;
+    void *paddress = NULL;
+    void *vaddress = NULL;
     std::string name;
     wups_loader_library_type_t library;
-    void * replaceAddr = NULL;
-    void * replaceCall = NULL;
+    void *replaceAddr = NULL;
+    void *replaceCall = NULL;
 };
 

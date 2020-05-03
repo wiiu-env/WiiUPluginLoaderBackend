@@ -159,6 +159,9 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t * pluginInforma
         }
     }
     plugin_data->info.trampolinId = pluginInfo.getTrampolinId();
+    plugin_data->info.allocatedTextMemoryAddress = pluginInfo.allocatedTextMemoryAddress;
+    plugin_data->info.allocatedDataMemoryAddress = pluginInfo.allocatedDataMemoryAddress;
+
 
     /* Copy plugin data */
     auto pluginData = plugin.getPluginData();
@@ -219,6 +222,8 @@ std::vector<PluginContainer> PluginContainerPersistence::loadPlugins(plugin_info
         PluginInformation pluginInformation;
 
         pluginInformation.setTrampolinId(plugin_data->info.trampolinId);
+        pluginInformation.allocatedTextMemoryAddress = plugin_data->info.allocatedTextMemoryAddress;
+        pluginInformation.allocatedDataMemoryAddress = plugin_data->info.allocatedDataMemoryAddress;
 
         for(uint32_t i = 0; i < MAXIMUM_PLUGIN_SECTION_LENGTH; i++) {
             plugin_section_info_t * sectionInfo = &(plugin_data->info.sectionInfos[i]);

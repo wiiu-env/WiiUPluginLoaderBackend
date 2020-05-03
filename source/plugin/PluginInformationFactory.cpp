@@ -197,6 +197,10 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
         }
     }
 
+    // Save the addresses for the allocated. This way we can free it again :)
+    pluginInfo.allocatedDataMemoryAddress = data_data;
+    pluginInfo.allocatedTextMemoryAddress = text_data;
+
     return pluginInfo;
 }
 

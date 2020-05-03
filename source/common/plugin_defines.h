@@ -64,6 +64,8 @@ struct plugin_info_t {
     uint32_t                        number_used_hooks;                              // Number of used hooks. Maximum is MAXIMUM_HOOKS_PER_PLUGIN
     replacement_data_hook_t         hooks[MAXIMUM_HOOKS_PER_PLUGIN];                // Replacement information for each function.
     uint8_t                         trampolinId;
+    void *                          allocatedTextMemoryAddress = nullptr;
+    void *                          allocatedDataMemoryAddress = nullptr;
 };
 
 struct plugin_data_t {

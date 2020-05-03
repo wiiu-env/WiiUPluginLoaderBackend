@@ -67,6 +67,41 @@ void PluginManagement::memsetBSS(const std::vector<PluginContainer> &plugins) {
     }
 }
 
+
+void PluginManagement::unloadPlugins(plugin_information_t *gPluginInformation, MEMHeapHandle pluginHeap) {
+    for (int32_t plugin_index = 0; plugin_index < gPluginInformation->number_used_plugins; plugin_index++) {
+        DEBUG_FUNCTION_LINE();
+        plugin_information_single_t *plugin = &(gPluginInformation->plugin_data[plugin_index]);
+        if (plugin->data.buffer != nullptr) {
+            if (plugin->data.memoryType == eMemTypeMEM2) {
+                DEBUG_FUNCTION_LINE("free %08X", plugin->data.buffer);
+                free(plugin->data.buffer);
+            } else if (plugin->data.memoryType == eMemTypeExpHeap) {
+                DEBUG_FUNCTION_LINE("free %08X on EXP heap %08X", plugin->data.buffer, plugin->data.heapHandle);
+                MEMFreeToExpHeap((MEMHeapHandle) plugin->data.heapHandle, plugin->data.buffer);
+            } else {
+                DEBUG_FUNCTION_LINE("########################");
+                DEBUG_FUNCTION_LINE("Failed to free memory from plugin");
+                DEBUG_FUNCTION_LINE("########################");
+            }
+            plugin->data.bufferLength = 0;
+        } else {
+            DEBUG_FUNCTION_LINE("Plugin has no copy of elf save in memory, can't free it");
+        }
+
+        if (plugin->info.allocatedTextMemoryAddress != nullptr) {
+            MEMFreeToExpHeap((MEMHeapHandle) pluginHeap, plugin->info.allocatedTextMemoryAddress);
+            DEBUG_FUNCTION_LINE("Freed %08X",plugin->info.allocatedTextMemoryAddress);
+        }
+        if (plugin->info.allocatedDataMemoryAddress != nullptr) {
+            MEMFreeToExpHeap((MEMHeapHandle) pluginHeap, plugin->info.allocatedDataMemoryAddress);
+            DEBUG_FUNCTION_LINE("Freed %08X",plugin->info.allocatedDataMemoryAddress);
+        }
+    }
+    memset((void *) gPluginInformation, 0, sizeof(plugin_information_t));
+}
+
+
 void PluginManagement::callInitHooks(plugin_information_t *pluginInformation) {
     CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_VID_MEM);
     CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_KERNEL);

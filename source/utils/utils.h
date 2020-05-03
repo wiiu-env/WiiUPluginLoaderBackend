@@ -7,12 +7,12 @@
 extern "C" {
 #endif
 
-#define LIMIT(x, min, max)																	\
-	({																						\
-		typeof( x ) _x = x;																	\
-		typeof( min ) _min = min;															\
-		typeof( max ) _max = max;															\
-		( ( ( _x ) < ( _min ) ) ? ( _min ) : ( ( _x ) > ( _max ) ) ? ( _max) : ( _x ) );	\
+#define LIMIT(x, min, max)                                                                    \
+    ({                                                                                        \
+        typeof( x ) _x = x;                                                                    \
+        typeof( min ) _min = min;                                                            \
+        typeof( max ) _max = max;                                                            \
+        ( ( ( _x ) < ( _min ) ) ? ( _min ) : ( ( _x ) > ( _max ) ) ? ( _max) : ( _x ) );    \
 })
 
 #define DegToRad(a)   ( (a) *  0.01745329252f )
@@ -31,7 +31,7 @@ extern "C" {
 #define le64(i) ((((uint64_t)le32((i) & 0xFFFFFFFFLL)) << 32) | ((uint64_t)le32(((i) & 0xFFFFFFFF00000000LL) >> 32)))
 
 //Needs to have log_init() called beforehand.
-void dumpHex(const void* data, size_t size);
+void dumpHex(const void *data, size_t size);
 
 #ifdef __cplusplus
 }

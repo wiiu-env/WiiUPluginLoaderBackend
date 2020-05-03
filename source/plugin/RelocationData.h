@@ -23,48 +23,48 @@
 class RelocationData {
 
 public:
-    RelocationData(const char type, size_t offset, int32_t addend, void *destination, std::string name, ImportRPLInformation rplInfo):
-        type(type),
-        offset(offset),
-        addend(addend),
-        destination(destination),
-        name(name),
-        rplInfo(rplInfo) {
+    RelocationData(const char type, size_t offset, int32_t addend, void *destination, std::string name, ImportRPLInformation rplInfo) :
+            type(type),
+            offset(offset),
+            addend(addend),
+            destination(destination),
+            name(name),
+            rplInfo(rplInfo) {
     }
 
-    RelocationData(const RelocationData &o2):
-        type(o2.type),
-        offset(o2.offset),
-        addend(o2.addend),
-        destination(o2.destination),
-        name(o2.name),
-        rplInfo(o2.rplInfo) {
+    RelocationData(const RelocationData &o2) :
+            type(o2.type),
+            offset(o2.offset),
+            addend(o2.addend),
+            destination(o2.destination),
+            name(o2.name),
+            rplInfo(o2.rplInfo) {
     }
 
     virtual ~RelocationData() {
     }
 
-    const char getType() const{
+    const char getType() const {
         return type;
     }
 
-    const size_t getOffset() const{
+    const size_t getOffset() const {
         return offset;
     }
 
-    const int32_t getAddend() const{
+    const int32_t getAddend() const {
         return addend;
     }
 
-    const void * getDestination() const{
+    const void *getDestination() const {
         return destination;
     }
 
-    const std::string& getName() const{
+    const std::string &getName() const {
         return name;
     }
 
-    const ImportRPLInformation& getImportRPLInformation() const{
+    const ImportRPLInformation &getImportRPLInformation() const {
         return rplInfo;
     }
 

@@ -29,17 +29,17 @@
 
 class PluginInformation {
 public:
-    PluginInformation(){
+    PluginInformation() {
     }
 
     virtual ~PluginInformation() {
     }
 
-    void addHookData(const HookData& hook_data) {
+    void addHookData(const HookData &hook_data) {
         hook_data_list.push_back(hook_data);
     }
 
-    const std::vector<HookData>& getHookDataList() const {
+    const std::vector<HookData> &getHookDataList() const {
         return hook_data_list;
     }
 
@@ -47,7 +47,7 @@ public:
         function_data_list.push_back(function_data);
     }
 
-    const std::vector<FunctionData>& getFunctionDataList() const {
+    const std::vector<FunctionData> &getFunctionDataList() const {
         return function_data_list;
     }
 
@@ -55,20 +55,20 @@ public:
         relocation_data_list.push_back(relocation_data);
     }
 
-    const std::vector<RelocationData>& getRelocationDataList() const {
+    const std::vector<RelocationData> &getRelocationDataList() const {
         return relocation_data_list;
     }
 
-    void addSectionInfo(const SectionInfo& sectionInfo) {
+    void addSectionInfo(const SectionInfo &sectionInfo) {
         section_info_list[sectionInfo.getName()] = sectionInfo;
     }
 
-    const std::map<std::string, SectionInfo>& getSectionInfoList() const {
+    const std::map<std::string, SectionInfo> &getSectionInfoList() const {
         return section_info_list;
     }
 
-    std::optional<SectionInfo> getSectionInfo(const std::string& sectionName) const {
-        if(getSectionInfoList().count(sectionName) > 0) {
+    std::optional<SectionInfo> getSectionInfo(const std::string &sectionName) const {
+        if (getSectionInfoList().count(sectionName) > 0) {
             return section_info_list.at(sectionName);
         }
         return std::nullopt;
@@ -91,9 +91,10 @@ private:
 
     uint8_t trampolinId = 0;
 
-    void* allocatedTextMemoryAddress = 0;
-    void* allocatedDataMemoryAddress = 0;
+    void *allocatedTextMemoryAddress = 0;
+    void *allocatedDataMemoryAddress = 0;
 
     friend class PluginInformationFactory;
+
     friend class PluginContainerPersistence;
 };

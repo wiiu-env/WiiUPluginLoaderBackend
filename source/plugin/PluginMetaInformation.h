@@ -54,27 +54,27 @@ private:
     PluginMetaInformation() {
     }
 
-    void setName(const std::string& name) {
+    void setName(const std::string &name) {
         this->name = name;
     }
 
-    void setAuthor(const std::string& author) {
+    void setAuthor(const std::string &author) {
         this->author = author;
     }
 
-    void setVersion(const std::string& version) {
+    void setVersion(const std::string &version) {
         this->version = version;
     }
 
-    void setLicense(const std::string& license) {
+    void setLicense(const std::string &license) {
         this->license = license;
     }
 
-    void setBuildTimestamp(const std::string& buildtimestamp) {
+    void setBuildTimestamp(const std::string &buildtimestamp) {
         this->buildtimestamp = buildtimestamp;
     }
 
-    void setDescription(const std::string& description) {
+    void setDescription(const std::string &description) {
         this->description = description;
     }
 
@@ -91,6 +91,8 @@ private:
     size_t size;
 
     friend class PluginMetaInformationFactory;
+
     friend class PluginContainerPersistence;
+
     friend class PluginContainer;
 };

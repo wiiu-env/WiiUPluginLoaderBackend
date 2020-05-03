@@ -33,19 +33,19 @@ extern "C" {
 #define DYN_LINK_TRAMPOLIN_LIST_LENGTH          DYN_LINK_FUNCTION_LIST_LENGTH
 
 typedef struct _dyn_linking_function_t {
-    char functionName[DYN_LINK_FUNCTION_NAME_LENGTH+1];
-    void * address;
+    char functionName[DYN_LINK_FUNCTION_NAME_LENGTH + 1];
+    void *address;
 } dyn_linking_function_t;
 
 typedef struct _dyn_linking_import_t {
-    char importName[DYN_LINK_IMPORT_NAME_LENGTH+1];
+    char importName[DYN_LINK_IMPORT_NAME_LENGTH + 1];
     bool isData = false;
 } dyn_linking_import_t;
 
 typedef struct _dyn_linking_relocation_entry_t {
-    dyn_linking_function_t* functionEntry = NULL;
-    dyn_linking_import_t* importEntry = NULL;
-    void * destination = NULL;
+    dyn_linking_function_t *functionEntry = NULL;
+    dyn_linking_import_t *importEntry = NULL;
+    void *destination = NULL;
     char type;
     size_t offset;
     int32_t addend;

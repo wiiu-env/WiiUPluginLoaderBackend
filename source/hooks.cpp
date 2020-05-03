@@ -74,7 +74,7 @@ void CallHookEx(plugin_information_t *pluginInformation, wups_loader_hook_type_t
                         ((void (*)(void)) ((uint32_t *) func_ptr))();
                     } else if (hook_type == WUPS_LOADER_HOOK_APPLICATION_END) {
                         ((void (*)(void)) ((uint32_t *) func_ptr))();
-                    }else if (hook_type == WUPS_LOADER_HOOK_INIT_WUT_MALLOC) {
+                    } else if (hook_type == WUPS_LOADER_HOOK_INIT_WUT_MALLOC) {
                         ((void (*)(void)) ((uint32_t *) func_ptr))();
                     } else if (hook_type == WUPS_LOADER_HOOK_FINI_WUT_MALLOC) {
                         ((void (*)(void)) ((uint32_t *) func_ptr))();

@@ -39,9 +39,9 @@ struct rpl_handling {
 };
 
 
-void new_PatchInvidualMethodHooks(plugin_info_t * plugin_data);
-void new_RestoreInvidualInstructions(plugin_info_t * plugin_data);
-uint32_t new_GetAddressOfFunction(const char * functionName,wups_loader_library_type_t library);
+void new_PatchInvidualMethodHooks(plugin_info_t *plugin_data);
+void new_RestoreInvidualInstructions(plugin_info_t *plugin_data);
+uint32_t new_GetAddressOfFunction(const char *functionName, wups_loader_library_type_t library);
 int32_t new_isDynamicFunction(uint32_t physicalAddress);
 void new_resetLibs();
 

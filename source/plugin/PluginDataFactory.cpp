@@ -24,53 +24,53 @@
 #include "utils/StringTools.h"
 
 
-std::vector<PluginData> PluginDataFactory::loadDir(const std::string & path, MEMHeapHandle heapHandle) {
+std::vector<PluginData> PluginDataFactory::loadDir(const std::string &path, MEMHeapHandle heapHandle) {
     std::vector<PluginData> result;
     struct dirent *dp;
     DIR *dfd = NULL;
 
-    if(path.empty()) {
+    if (path.empty()) {
         DEBUG_FUNCTION_LINE("Path was empty\n");
         return result;
     }
 
     if ((dfd = opendir(path.c_str())) == NULL) {
-        DEBUG_FUNCTION_LINE("Couldn't open dir %s\n",path.c_str());
+        DEBUG_FUNCTION_LINE("Couldn't open dir %s\n", path.c_str());
         return result;
     }
 
     while ((dp = readdir(dfd)) != NULL) {
-        struct stat stbuf ;
-        std::string full_file_path = StringTools::strfmt("%s/%s",path.c_str(),dp->d_name);
+        struct stat stbuf;
+        std::string full_file_path = StringTools::strfmt("%s/%s", path.c_str(), dp->d_name);
         StringTools::RemoveDoubleSlashs(full_file_path);
-        if( stat(full_file_path.c_str(),&stbuf ) == -1 ) {
-            DEBUG_FUNCTION_LINE("Unable to stat file: %s\n",full_file_path.c_str()) ;
+        if (stat(full_file_path.c_str(), &stbuf) == -1) {
+            DEBUG_FUNCTION_LINE("Unable to stat file: %s\n", full_file_path.c_str());
             continue;
         }
 
-        if ( ( stbuf.st_mode & S_IFMT ) == S_IFDIR ) { // Skip directories
+        if ((stbuf.st_mode & S_IFMT) == S_IFDIR) { // Skip directories
             continue;
         } else {
-            DEBUG_FUNCTION_LINE("Found file: %s\n",full_file_path.c_str()) ;
+            DEBUG_FUNCTION_LINE("Found file: %s\n", full_file_path.c_str());
             auto pluginData = load(full_file_path, heapHandle);
-            if(pluginData) {
+            if (pluginData) {
                 result.push_back(pluginData.value());
             }
         }
     }
-    if(dfd != NULL) {
+    if (dfd != NULL) {
         closedir(dfd);
     }
 
     return result;
 }
 
-std::optional<PluginData> PluginDataFactory::load(const std::string & filename, MEMHeapHandle heapHandle) {
+std::optional<PluginData> PluginDataFactory::load(const std::string &filename, MEMHeapHandle heapHandle) {
     // open the file:
     DEBUG_FUNCTION_LINE();
     std::ifstream file(filename, std::ios::binary);
     DEBUG_FUNCTION_LINE();
-    if(!file.is_open()){
+    if (!file.is_open()) {
         DEBUG_FUNCTION_LINE("Failed to open %s", filename.c_str());
         return std::nullopt;
     }
@@ -102,8 +102,8 @@ std::optional<PluginData> PluginDataFactory::load(const std::string & filename, 
     return load(vBuffer, heapHandle);
 }
 
-std::optional<PluginData> PluginDataFactory::load(std::vector<uint8_t>& buffer, MEMHeapHandle heapHandle) {
-    if(buffer.empty()){
+std::optional<PluginData> PluginDataFactory::load(std::vector<uint8_t> &buffer, MEMHeapHandle heapHandle) {
+    if (buffer.empty()) {
         return std::nullopt;
     }
 

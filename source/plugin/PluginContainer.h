@@ -23,30 +23,31 @@
 
 class PluginContainer {
 public:
-    PluginContainer(){
+    PluginContainer() {
 
     }
-    const PluginMetaInformation& getMetaInformation() const{
+
+    const PluginMetaInformation &getMetaInformation() const {
         return this->metaInformation;
     }
 
-    void setMetaInformation(PluginMetaInformation& metaInfo){
+    void setMetaInformation(PluginMetaInformation &metaInfo) {
         this->metaInformation = metaInfo;
     }
 
-    const PluginInformation& getPluginInformation() const{
+    const PluginInformation &getPluginInformation() const {
         return pluginInformation;
     }
 
-    void setPluginInformation(PluginInformation& pluginInformation){
+    void setPluginInformation(PluginInformation &pluginInformation) {
         this->pluginInformation = pluginInformation;
     }
 
-    const PluginData& getPluginData() const{
+    const PluginData &getPluginData() const {
         return pluginData;
     }
 
-    void setPluginData(PluginData& pluginData){
+    void setPluginData(PluginData &pluginData) {
         this->pluginData = pluginData;
     }
 

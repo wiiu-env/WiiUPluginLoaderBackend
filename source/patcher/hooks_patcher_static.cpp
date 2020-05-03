@@ -8,7 +8,7 @@
 #include <coreinit/core.h>
 #include "hooks.h"
 
-extern plugin_information_t * gPluginInformation;
+extern plugin_information_t *gPluginInformation;
 
 DECL(void, GX2WaitForVsync, void) {
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_VSYNC);
@@ -28,18 +28,18 @@ void checkMagic(VPADStatus *buffer) {
 
     // Check for rotation every only 5 frames.
     angleX_frameCounter++;
-    if(angleX_frameCounter >= 5) {
+    if (angleX_frameCounter >= 5) {
         // Get how much the gamepad rotated within the last 5 frames.
         float diff_angle = -(buffer->angle.x - angleX_last);
         // We want the gamepad to make (on average) at least 0.16% (1/6) of a full rotation per 5 frames (for 6 times in a row).
         float target_diff = (0.16f);
         // Calculate if rotated enough in this step (including the delta from the last step).
         float total_diff = (diff_angle + angleX_delta) - target_diff;
-        if(total_diff > 0.0f) {
+        if (total_diff > 0.0f) {
             // The rotation in this step was enough.
             angleX_counter++;
             // When the gamepad rotated ~0.16% for 6 times in a row we made a full rotation!
-            if(angleX_counter > 5) {
+            if (angleX_counter > 5) {
                 //ConfigUtils::openConfigMenu();
                 // reset stuff.
                 angleX_counter = 0;
@@ -60,27 +60,28 @@ void checkMagic(VPADStatus *buffer) {
 DECL(int32_t, VPADRead, int32_t chan, VPADStatus *buffer, uint32_t buffer_size, int32_t *error) {
     int32_t result = real_VPADRead(chan, buffer, buffer_size, error);
 
-    if(result > 0 && (buffer[0].hold == (VPAD_BUTTON_PLUS | VPAD_BUTTON_R | VPAD_BUTTON_L)) && vpadPressCooldown == 0 && OSIsHomeButtonMenuEnabled()) {
+    if (result > 0 && (buffer[0].hold == (VPAD_BUTTON_PLUS | VPAD_BUTTON_R | VPAD_BUTTON_L)) && vpadPressCooldown == 0 && OSIsHomeButtonMenuEnabled()) {
         //if(MemoryMapping::isMemoryMapped()) {
-            //MemoryMapping::readTestValuesFromMemory();
+        //MemoryMapping::readTestValuesFromMemory();
         //} else {
         //    DEBUG_FUNCTION_LINE("Memory was not mapped. To test the memory please exit the plugin loader by pressing MINUS\n");
         //}
         vpadPressCooldown = 0x3C;
     }
 
-    if(result > 0 && (buffer[0].hold == (VPAD_BUTTON_L | VPAD_BUTTON_DOWN | VPAD_BUTTON_MINUS)) && vpadPressCooldown == 0 && OSIsHomeButtonMenuEnabled()) {
+    if (result > 0 && (buffer[0].hold == (VPAD_BUTTON_L | VPAD_BUTTON_DOWN | VPAD_BUTTON_MINUS)) && vpadPressCooldown == 0 && OSIsHomeButtonMenuEnabled()) {
         //ConfigUtils::openConfigMenu();
         vpadPressCooldown = 0x3C;
-    } else if(result > 0 && OSIsHomeButtonMenuEnabled()) {
+    } else if (result > 0 && OSIsHomeButtonMenuEnabled()) {
         checkMagic(buffer);
     }
 
-    if(vpadPressCooldown > 0) {
+    if (vpadPressCooldown > 0) {
         vpadPressCooldown--;
     }
     return result;
 }
+
 /*
 void setupContextState() {
     g_vid_ownContextState = (GX2ContextState*)memalign(
@@ -248,7 +249,7 @@ DECL_FUNCTION(void, GX2CopyColorBufferToScanBuffer, GX2ColorBuffer* cbuf, int32_
 static uint32_t lastData0 = 0;
 
 DECL(uint32_t, OSReceiveMessage, OSMessageQueue *queue, OSMessage *message, uint32_t flags) {
-    if(flags == 0x15154848) {
+    if (flags == 0x15154848) {
         CallHook(gPluginInformation, WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND);
         CallHook(gPluginInformation, WUPS_LOADER_HOOK_APPLICATION_END);
         CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB);
@@ -256,13 +257,13 @@ DECL(uint32_t, OSReceiveMessage, OSMessageQueue *queue, OSMessage *message, uint
         //DCFlushRange(&gInBackground,4);
         return false;
     }
-    int32_t res =  real_OSReceiveMessage(queue, message, flags);
-    if(queue == OSGetSystemMessageQueue()) {
-        if(message != NULL) {
-            if(lastData0 != message->args[0]) {
-                if(message->args[0] == 0xFACEF000) {
+    int32_t res = real_OSReceiveMessage(queue, message, flags);
+    if (queue == OSGetSystemMessageQueue()) {
+        if (message != NULL) {
+            if (lastData0 != message->args[0]) {
+                if (message->args[0] == 0xFACEF000) {
                     CallHook(gPluginInformation, WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND);
-                } else if(message->args[0] == 0xD1E0D1E0) {
+                } else if (message->args[0] == 0xD1E0D1E0) {
                     CallHook(gPluginInformation, WUPS_LOADER_HOOK_APPLICATION_END);
                     //CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB);
                     //gInBackground = false;
@@ -277,25 +278,25 @@ DECL(uint32_t, OSReceiveMessage, OSMessageQueue *queue, OSMessage *message, uint
 }
 
 DECL(void, OSReleaseForeground) {
-    if(OSGetCoreId() == 1) {
+    if (OSGetCoreId() == 1) {
         CallHook(gPluginInformation, WUPS_LOADER_HOOK_RELEASE_FOREGROUND);
     }
     real_OSReleaseForeground();
 }
 
 hooks_magic_t method_hooks_hooks_static[] __attribute__((section(".data"))) = {
-    //MAKE_MAGIC(GX2SetTVBuffer,                  LIB_GX2,        STATIC_FUNCTION),
-    //MAKE_MAGIC(GX2SetDRCBuffer,                 LIB_GX2,        STATIC_FUNCTION),
-    //MAKE_MAGIC(GX2WaitForVsync,                 LIB_GX2,        STATIC_FUNCTION),
-    //MAKE_MAGIC(GX2CopyColorBufferToScanBuffer,  LIB_GX2,        STATIC_FUNCTION),
-    //MAKE_MAGIC(GX2SetContextState,              LIB_GX2,        STATIC_FUNCTION),
-    MAKE_MAGIC(VPADRead,                        LIB_VPAD,       STATIC_FUNCTION),
-    //MAKE_MAGIC(OSIsAddressValid,                LIB_CORE_INIT,  STATIC_FUNCTION),
-    //MAKE_MAGIC(__OSPhysicalToEffectiveUncached, LIB_CORE_INIT,  STATIC_FUNCTION),
-    //MAKE_MAGIC(__OSPhysicalToEffectiveCached,   LIB_CORE_INIT,  STATIC_FUNCTION),
-    //MAKE_MAGIC(OSEffectiveToPhysical,           LIB_CORE_INIT,  STATIC_FUNCTION),
-    MAKE_MAGIC(OSReceiveMessage,                  LIB_CORE_INIT,  STATIC_FUNCTION),
-    MAKE_MAGIC(OSReleaseForeground,               LIB_CORE_INIT,  STATIC_FUNCTION)
+        //MAKE_MAGIC(GX2SetTVBuffer,                  LIB_GX2,        STATIC_FUNCTION),
+        //MAKE_MAGIC(GX2SetDRCBuffer,                 LIB_GX2,        STATIC_FUNCTION),
+        //MAKE_MAGIC(GX2WaitForVsync,                 LIB_GX2,        STATIC_FUNCTION),
+        //MAKE_MAGIC(GX2CopyColorBufferToScanBuffer,  LIB_GX2,        STATIC_FUNCTION),
+        //MAKE_MAGIC(GX2SetContextState,              LIB_GX2,        STATIC_FUNCTION),
+        MAKE_MAGIC(VPADRead, LIB_VPAD, STATIC_FUNCTION),
+        //MAKE_MAGIC(OSIsAddressValid,                LIB_CORE_INIT,  STATIC_FUNCTION),
+        //MAKE_MAGIC(__OSPhysicalToEffectiveUncached, LIB_CORE_INIT,  STATIC_FUNCTION),
+        //MAKE_MAGIC(__OSPhysicalToEffectiveCached,   LIB_CORE_INIT,  STATIC_FUNCTION),
+        //MAKE_MAGIC(OSEffectiveToPhysical,           LIB_CORE_INIT,  STATIC_FUNCTION),
+        MAKE_MAGIC(OSReceiveMessage, LIB_CORE_INIT, STATIC_FUNCTION),
+        MAKE_MAGIC(OSReleaseForeground, LIB_CORE_INIT, STATIC_FUNCTION)
 };
 
 uint32_t method_hooks_size_hooks_static __attribute__((section(".data"))) = sizeof(method_hooks_hooks_static) / sizeof(hooks_magic_t);

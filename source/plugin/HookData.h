@@ -23,7 +23,7 @@
 class HookData {
 
 public:
-    HookData(void * function_pointer, wups_loader_hook_type_t type) {
+    HookData(void *function_pointer, wups_loader_hook_type_t type) {
         this->function_pointer = function_pointer;
         this->type = type;
     }
@@ -32,14 +32,15 @@ public:
 
     }
 
-    void * getFunctionPointer() const{
+    void *getFunctionPointer() const {
         return function_pointer;
     }
 
-    wups_loader_hook_type_t getType() const{
+    wups_loader_hook_type_t getType() const {
         return this->type;
     }
+
 private:
-    void * function_pointer;
+    void *function_pointer;
     wups_loader_hook_type_t type;
 };

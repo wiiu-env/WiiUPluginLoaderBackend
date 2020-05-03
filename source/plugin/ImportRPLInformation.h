@@ -35,7 +35,7 @@ public:
         return name;
     }
 
-    bool isData() const{
+    bool isData() const {
         return _isData;
     }
 

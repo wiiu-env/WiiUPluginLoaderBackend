@@ -71,13 +71,13 @@ void PatchInvidualMethodHooks(hooks_magic_t method_hooks[], int32_t hook_informa
     uint32_t instr_len = my_instr_len + skip_instr;
     uint32_t flush_len = 4 * instr_len;
     for (int32_t i = 0; i < method_hooks_count; i++) {
-        log_printf("Patching %s ...", method_hooks[i].functionName);
+        DEBUG_FUNCTION_LINE_WRITE("Patching %s ...", method_hooks[i].functionName);
         if (method_hooks[i].functionType == STATIC_FUNCTION && method_hooks[i].alreadyPatched == 1) {
             if (isDynamicFunction((uint32_t) OSEffectiveToPhysical(method_hooks[i].realAddr))) {
-                log_printf("The function %s is a dynamic function. Please fix that <3", method_hooks[i].functionName);
+                WHBLogWritef("The function %s is a dynamic function. Please fix that <3", method_hooks[i].functionName);
                 method_hooks[i].functionType = DYNAMIC_FUNCTION;
             } else {
-                log_printf("Skipping %s, its already patched", method_hooks[i].functionName);
+                WHBLogWritef("Skipping %s, its already patched", method_hooks[i].functionName);
                 space += instr_len;
                 continue;
             }
@@ -90,7 +90,7 @@ void PatchInvidualMethodHooks(hooks_magic_t method_hooks[], int32_t hook_informa
         uint32_t real_addr = GetAddressOfFunction(method_hooks[i].functionName, method_hooks[i].library);
 
         if (!real_addr) {
-            log_printf("");
+            WHBLogWritef("\n");
             DEBUG_FUNCTION_LINE("OSDynLoad_FindExport failed for %s", method_hooks[i].functionName);
             space += instr_len;
             continue;
@@ -102,7 +102,7 @@ void PatchInvidualMethodHooks(hooks_magic_t method_hooks[], int32_t hook_informa
 
         physical = (uint32_t) OSEffectiveToPhysical(real_addr);
         if (!physical) {
-            log_printf("Error. Something is wrong with the physical address");
+            WHBLogWritef("Error. Something is wrong with the physical address\n");
             space += instr_len;
             continue;
         }
@@ -139,7 +139,7 @@ void PatchInvidualMethodHooks(hooks_magic_t method_hooks[], int32_t hook_informa
                 DEBUG_FUNCTION_LINE("method_hooks[i].restoreInstruction = %08X!", method_hooks[i].restoreInstruction);
             }
         } else {
-            log_printf("Error. Can't save %s for restoring!", method_hooks[i].functionName);
+            WHBLogWritef("Error. Can't save %s for restoring!\n", method_hooks[i].functionName);
         }
 
         //adding jump to real function thx @ dimok for the assembler code
@@ -173,7 +173,7 @@ void PatchInvidualMethodHooks(hooks_magic_t method_hooks[], int32_t hook_informa
         ICInvalidateRange((void *) (real_addr), 4);
 
         method_hooks[i].alreadyPatched = 1;
-        log_printf("done!\n");
+        WHBLogWritef("done!\n");
 
     }
     DEBUG_FUNCTION_LINE("Done with patching given functions!");
@@ -189,25 +189,25 @@ void RestoreInvidualInstructions(hooks_magic_t method_hooks[], int32_t hook_info
     for (int32_t i = 0; i < method_hooks_count; i++) {
         DEBUG_FUNCTION_LINE("Restoring %s... ", method_hooks[i].functionName);
         if (method_hooks[i].restoreInstruction == 0 || method_hooks[i].realAddr == 0) {
-            log_printf("I dont have the information for the restore =( skip");
+            WHBLogWritef("I dont have the information for the restore =( skip\n");
             continue;
         }
 
         uint32_t real_addr = GetAddressOfFunction(method_hooks[i].functionName, method_hooks[i].library);
 
         if (!real_addr) {
-            log_printf("OSDynLoad_FindExport failed for %s", method_hooks[i].functionName);
+            WHBLogWritef("OSDynLoad_FindExport failed for %s", method_hooks[i].functionName);
             continue;
         }
 
         uint32_t physical = (uint32_t) OSEffectiveToPhysical(real_addr);
         if (!physical) {
-            log_printf("Something is wrong with the physical address");
+            WHBLogWritef("Something is wrong with the physical address\n");
             continue;
         }
 
         if (isDynamicFunction(physical)) {
-            log_printf("Its a dynamic function. We don't need to restore it!", method_hooks[i].functionName);
+            WHBLogWritef("Its a dynamic function. We don't need to restore it!\n", method_hooks[i].functionName);
         } else {
             physical = (uint32_t) OSEffectiveToPhysical(method_hooks[i].realAddr); //When its an static function, we need to use the old location
             if (DEBUG_LOG_DYN) {
@@ -225,7 +225,7 @@ void RestoreInvidualInstructions(hooks_magic_t method_hooks[], int32_t hook_info
                 DEBUG_FUNCTION_LINE("ICInvalidateRange %08X", (void *) method_hooks[i].realAddr);
             }
             ICInvalidateRange((void *) method_hooks[i].realAddr, 4);
-            log_printf("done");
+            WHBLogWritef("done\n");
         }
         method_hooks[i].alreadyPatched = 0; // In case a
     }
@@ -456,61 +456,61 @@ uint32_t GetAddressOfFunction(const char *functionName, uint32_t library) {
         rpl_handle = proc_ui_handle_internal;
     } else if (library == LIB_NTAG) {
         if (DEBUG_LOG_DYN) {
-            log_printf("FindExport of %s! From LIB_NTAG", functionName);
+            DEBUG_FUNCTION_LINE("FindExport of %s! From LIB_NTAG", functionName);
         }
         if (ntag_handle_internal == 0) {
             OSDynLoad_Acquire("ntag.rpl", &ntag_handle_internal);
         }
         if (ntag_handle_internal == 0) {
-            log_print("LIB_NTAG failed to acquire");
+            DEBUG_FUNCTION_LINE("LIB_NTAG failed to acquire");
             return 0;
         }
         rpl_handle = ntag_handle_internal;
     } else if (library == LIB_NFP) {
         if (DEBUG_LOG_DYN) {
-            log_printf("FindExport of %s! From LIB_NFP", functionName);
+            DEBUG_FUNCTION_LINE("FindExport of %s! From LIB_NFP", functionName);
         }
         if (nfp_handle_internal == 0) {
             OSDynLoad_Acquire("nn_nfp.rpl", &nfp_handle_internal);
         }
         if (nfp_handle_internal == 0) {
-            log_print("LIB_NFP failed to acquire");
+            DEBUG_FUNCTION_LINE("LIB_NFP failed to acquire");
             return 0;
         }
         rpl_handle = nfp_handle_internal;
     } else if (library == LIB_SAVE) {
         if (DEBUG_LOG_DYN) {
-            log_printf("FindExport of %s! From LIB_SAVE", functionName);
+            DEBUG_FUNCTION_LINE("FindExport of %s! From LIB_SAVE", functionName);
         }
         if (nn_save_handle_internal == 0) {
             OSDynLoad_Acquire("nn_save.rpl", &nn_save_handle_internal);
         }
         if (nn_save_handle_internal == 0) {
-            log_print("LIB_SAVE failed to acquire");
+            DEBUG_FUNCTION_LINE("LIB_SAVE failed to acquire");
             return 0;
         }
         rpl_handle = nn_save_handle_internal;
     } else if (library == LIB_ACT) {
         if (DEBUG_LOG_DYN) {
-            log_printf("FindExport of %s! From LIB_ACT", functionName);
+            DEBUG_FUNCTION_LINE("FindExport of %s! From LIB_ACT", functionName);
         }
         if (nn_act_handle_internal == 0) {
             OSDynLoad_Acquire("nn_act.rpl", &nn_act_handle_internal);
         }
         if (nn_act_handle_internal == 0) {
-            log_print("LIB_ACT failed to acquire");
+            DEBUG_FUNCTION_LINE("LIB_ACT failed to acquire");
             return 0;
         }
         rpl_handle = nn_act_handle_internal;
     } else if (library == LIB_NIM) {
         if (DEBUG_LOG_DYN) {
-            log_printf("FindExport of %s! From LIB_NIM", functionName);
+            DEBUG_FUNCTION_LINE("FindExport of %s! From LIB_NIM", functionName);
         }
         if (nn_nim_handle_internal == 0) {
             OSDynLoad_Acquire("nn_nim.rpl", &nn_nim_handle_internal);
         }
         if (nn_nim_handle_internal == 0) {
-            log_print("LIB_NIM failed to acquire");
+            DEBUG_FUNCTION_LINE("LIB_NIM failed to acquire");
             return 0;
         }
         rpl_handle = nn_nim_handle_internal;

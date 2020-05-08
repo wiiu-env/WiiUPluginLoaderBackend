@@ -40,7 +40,6 @@ int main(int argc, char **argv) {
 
 int test() {
     WHBLogUdpInit();
-    log_init();
     bool initNeeded = false;
     if (pluginDataHeap == NULL) {
         kernelInitialize();

@@ -120,10 +120,10 @@ void new_PatchInvidualMethodHooks(plugin_info_t *plugin_data) {
         /* Patch branches to it.  */
         volatile uint32_t *space = function_data->replace_data;
 
-        DEBUG_FUNCTION_LINE("Patching %s ...", function_data->function_name);
+        DEBUG_FUNCTION_LINE_WRITE("Patching %s ...", function_data->function_name);
 
         if (function_data->library == WUPS_LOADER_LIBRARY_OTHER) {
-            DEBUG_FUNCTION_LINE("Oh, using straight PA/VA");
+            WHBLogWritef("Oh, using straight PA/VA");
             if (function_data->alreadyPatched == 1) {
                 DEBUG_FUNCTION_LINE("Skipping %s, its already patched", function_data->function_name);
                 continue;
@@ -134,7 +134,7 @@ void new_PatchInvidualMethodHooks(plugin_info_t *plugin_data) {
                     DEBUG_FUNCTION_LINE("INFO: The function %s is a dynamic function.", function_data->function_name);
                     function_data->functionType = DYNAMIC_FUNCTION;
                 } else {
-                    DEBUG_FUNCTION_LINE("Skipping %s, its already patched\n", function_data->function_name);
+                    WHBLogWritef("Skipping %s, its already patched\n", function_data->function_name);
                     continue;
                 }
             }
@@ -150,7 +150,7 @@ void new_PatchInvidualMethodHooks(plugin_info_t *plugin_data) {
         }
 
         if (!real_addr) {
-            log_printf("\n");
+            WHBLogWritef("\n");
             DEBUG_FUNCTION_LINE("OSDynLoad_FindExport failed for %s\n", function_data->function_name);
             continue;
         }
@@ -164,7 +164,7 @@ void new_PatchInvidualMethodHooks(plugin_info_t *plugin_data) {
         }
 
         if (!physical) {
-            log_printf("Error. Something is wrong with the physical address\n");
+            WHBLogWritef("Error. Something is wrong with the physical address\n");
             continue;
         }
 
@@ -200,7 +200,7 @@ void new_PatchInvidualMethodHooks(plugin_info_t *plugin_data) {
                 DEBUG_FUNCTION_LINE("function_data->restoreInstruction = %08X!\n", function_data->restoreInstruction);
             }
         } else {
-            log_printf("Error. Can't save %s for restoring!\n", function_data->function_name);
+            WHBLogWritef("Error. Can't save %s for restoring!\n", function_data->function_name);
         }
 
         //adding jump to real function thx @ dimok for the assembler code
@@ -348,7 +348,7 @@ uint32_t new_GetAddressOfFunction(const char *functionName, wups_loader_library_
                 OSDynLoad_Acquire((char *) rpl_handles[i].rplname, &rpl_handles[i].handle);
             }
             if (rpl_handles[i].handle == 0) {
-                log_printf("%s failed to acquire\n", rpl_handles[i].rplname);
+                WHBLogWritef("%s failed to acquire\n", rpl_handles[i].rplname);
                 return 0;
             }
             rpl_handle = rpl_handles[i].handle;

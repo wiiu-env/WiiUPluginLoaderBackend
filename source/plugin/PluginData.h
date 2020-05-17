@@ -44,30 +44,34 @@ public:
         }
     }
 
-
     void freeMemory();
 
-private:
+    void *getBuffer() const {
+        return this->buffer;
+    }
+
     PluginData(const PluginData &obj);
 
     PluginData() {
     }
 
+    void *buffer;
+    MEMHeapHandle heapHandle;
+    eMemoryTypes memoryType;
+    size_t length;
+
+private:
     PluginData(std::vector<uint8_t> buffer);
 
     PluginData(std::vector<uint8_t> input, MEMHeapHandle heapHandle, eMemoryTypes memoryType);
-
 
     void loadReader();
 
     static std::optional<PluginData> createFromExistingData(const void *buffer, MEMHeapHandle heapHandle, eMemoryTypes memoryType, const size_t length);
 
     std::optional<elfio *> reader;
+
     elfio *nReader = NULL;
-    void *buffer;
-    MEMHeapHandle heapHandle;
-    eMemoryTypes memoryType;
-    size_t length;
 
     friend class PluginDataFactory;
 

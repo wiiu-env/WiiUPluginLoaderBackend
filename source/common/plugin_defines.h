@@ -80,7 +80,6 @@ struct plugin_information_single_t {
     plugin_info_t                   info;
     plugin_data_t                   data;
     int32_t                         priority;                                       // Priority of this plugin
-
 };
 
 #define MAXIMUM_PLUGINS                                     32

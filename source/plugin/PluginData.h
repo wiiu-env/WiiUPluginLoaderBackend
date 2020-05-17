@@ -73,5 +73,5 @@ private:
 
     friend class PluginContainer;
 
-    friend class PluginContainerPersistence;
+    friend class PluginDataPersistence;
 };

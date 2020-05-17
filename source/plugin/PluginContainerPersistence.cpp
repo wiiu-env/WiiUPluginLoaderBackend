@@ -4,18 +4,17 @@
 #include "PluginInformationFactory.h"
 #include "PluginMetaInformationFactory.h"
 #include "PluginContainerPersistence.h"
+#include "PluginDataPersistence.h"
 #include "DynamicLinkingHelper.h"
 #include "common/plugin_defines.h"
 #include "PluginInformation.h"
 #include "RelocationData.h"
 
 bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformation, PluginContainer &plugin) {
-
     int32_t plugin_count = pluginInformation->number_used_plugins;
 
     auto pluginName = plugin.getMetaInformation().getName();
     //auto pluginPath = plugin.getMetaInformation().getPath();
-
 
     if (plugin_count >= MAXIMUM_PLUGINS - 1) {
         DEBUG_FUNCTION_LINE("Maximum of %d plugins reached. %s won't be loaded!\n", MAXIMUM_PLUGINS, pluginName.c_str());
@@ -167,10 +166,7 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
     auto pluginData = plugin.getPluginData();
     auto plugin_data_data = &plugin_data->data;
 
-    plugin_data_data->buffer = (char *) pluginData.buffer;
-    plugin_data_data->bufferLength = pluginData.length;
-    plugin_data_data->memoryType = pluginData.memoryType;
-    plugin_data_data->heapHandle = (int) pluginData.heapHandle;
+    PluginDataPersistence::save(plugin_data_data, pluginData);
 
     pluginInformation->number_used_plugins++;
 
@@ -209,15 +205,9 @@ std::vector<PluginContainer> PluginContainerPersistence::loadPlugins(plugin_info
         metaInformation.setSize(meta->size);
         metaInformation.setName(meta->name);
 
-        PluginData pluginData;
-
         plugin_data_t *data = &(plugin_data->data);
 
-        pluginData.buffer = data->buffer;
-        pluginData.length = data->bufferLength;
-        pluginData.memoryType = (eMemoryTypes) data->memoryType;
-        pluginData.heapHandle = (MEMHeapHandle) data->heapHandle;
-        pluginData.loadReader();
+        PluginData pluginData = PluginDataPersistence::load(data);
 
         PluginInformation pluginInformation;
 

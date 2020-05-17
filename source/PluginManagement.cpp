@@ -94,8 +94,8 @@ void PluginManagement::RestorePatches(plugin_information_t *pluginInformation, B
 }
 
 void PluginManagement::unloadPlugins(plugin_information_t *gPluginInformation, MEMHeapHandle pluginHeap) {
+    RestorePatches(gPluginInformation, true);
     for (int32_t plugin_index = 0; plugin_index < gPluginInformation->number_used_plugins; plugin_index++) {
-        DEBUG_FUNCTION_LINE();
         plugin_information_single_t *plugin = &(gPluginInformation->plugin_data[plugin_index]);
         if (plugin->data.buffer != nullptr) {
             if (plugin->data.memoryType == eMemTypeMEM2) {

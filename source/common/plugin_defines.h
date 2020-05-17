@@ -92,6 +92,12 @@ struct plugin_information_t {
     dyn_linking_relocation_data_t   linking_data;                                   // RPL and function name list
 };
 
+struct plugin_information_on_reload_t {
+    int32_t                         number_used_plugins = 0;                        // Number of used plugins. Maximum is MAXIMUM_PLUGINS
+    plugin_data_t                   plugin_data[MAXIMUM_PLUGINS];
+    bool                            loadOnReload = false;
+};
+
 #ifdef __cplusplus
 }
 #endif

@@ -25,6 +25,7 @@
 #include "PluginManagement.h"
 #include "globals.h"
 #include <whb/sdcard.h>
+#include <plugin/PluginDataPersistence.h>
 
 
 int test();
@@ -53,6 +54,9 @@ int test() {
                 endAddress = curEndAddr;
             }
         }
+
+        memset((void *) &gLinkOnReload, 0, sizeof(gLinkOnReload));
+
         // If this address is 0, make sure the header common match the one
         // in the SetupPayload repo. (I know that's a bad idea)
         endAddress = (endAddress + 0x100) & 0xFFFFFF00;
@@ -87,6 +91,60 @@ int test() {
             }
             initNeeded = true;
         }
+    }
+    if (gLinkOnReload.loadOnReload) {
+        DEBUG_FUNCTION_LINE("We would now swap the plugins");
+        std::vector<PluginData> pluginDataList;
+        for (int32_t i = 0; i < gLinkOnReload.number_used_plugins; i++) {
+            auto pluginData = PluginDataPersistence::load(&gLinkOnReload.plugin_data[i]);
+            pluginDataList.push_back(pluginData);
+        }
+
+        for (int32_t plugin_index = 0; plugin_index < gPluginInformation->number_used_plugins; plugin_index++) {
+            plugin_information_single_t *plugin = &(gPluginInformation->plugin_data[plugin_index]);
+            BOOL doDelete = true;
+            DEBUG_FUNCTION_LINE("Check if we can delete %08X", plugin->data.buffer);
+            for (auto &pluginData: pluginDataList) {
+                if (pluginData.getBuffer() == plugin->data.buffer) {
+                    DEBUG_FUNCTION_LINE("We can keep buffer %08X", plugin->data.buffer);
+                    doDelete = false;
+                    break;
+                }
+            }
+            if (doDelete) {
+                if (plugin->data.buffer != nullptr) {
+                    if (plugin->data.memoryType == eMemTypeMEM2) {
+                        DEBUG_FUNCTION_LINE("free %08X", plugin->data.buffer);
+                        free(plugin->data.buffer);
+                    } else if (plugin->data.memoryType == eMemTypeExpHeap) {
+                        DEBUG_FUNCTION_LINE("free %08X on EXP heap %08X", plugin->data.buffer, plugin->data.heapHandle);
+                        MEMFreeToExpHeap((MEMHeapHandle) plugin->data.heapHandle, plugin->data.buffer);
+                    } else {
+                        DEBUG_FUNCTION_LINE("########################");
+                        DEBUG_FUNCTION_LINE("Failed to free memory from plugin");
+                        DEBUG_FUNCTION_LINE("########################");
+                    }
+                    plugin->data.buffer = NULL;
+                    plugin->data.bufferLength = 0;
+                } else {
+                    DEBUG_FUNCTION_LINE("Plugin has no copy of elf save in memory, can't free it");
+                }
+            }
+        }
+
+        DEBUG_FUNCTION_LINE("unloadPlugins");
+        PluginManagement::unloadPlugins(gPluginInformation, pluginDataHeap, false);
+
+        std::vector<PluginContainer> plugins = PluginManagement::loadPlugins(pluginDataList, pluginDataHeap, gPluginInformation->trampolines, DYN_LINK_TRAMPOLIN_LIST_LENGTH);
+
+        for (auto &pluginContainer : plugins) {
+            DEBUG_FUNCTION_LINE("Saving %s from %s", pluginContainer.getMetaInformation().getName().c_str(), pluginContainer.getMetaInformation().getAuthor().c_str());
+            if (!PluginContainerPersistence::savePlugin(gPluginInformation, pluginContainer)) {
+                DEBUG_FUNCTION_LINE("Failed to save plugin");
+            }
+        }
+        gLinkOnReload.loadOnReload = false;
+        initNeeded = true;
     }
 
     if (pluginDataHeap != NULL) {

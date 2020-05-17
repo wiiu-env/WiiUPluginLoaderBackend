@@ -1,6 +1,7 @@
 #include "kernel_utils.h"
 #include "kernel_defs.h"
 #include <coreinit/cache.h>
+#include <coreinit/memorymap.h>
 
 
 extern void SCKernelCopyData(uint32_t dst, uint32_t src, uint32_t len);

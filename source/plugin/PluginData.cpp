@@ -1,5 +1,14 @@
 #include "PluginData.h"
 
+
+PluginData::PluginData(const PluginData &obj) {
+    this->buffer = obj.buffer;
+    this->heapHandle = obj.heapHandle;
+    this->memoryType = obj.memoryType;
+    this->length = obj.length;
+    loadReader();
+}
+
 void PluginData::freeMemory() {
     if (buffer == NULL) {
         return;

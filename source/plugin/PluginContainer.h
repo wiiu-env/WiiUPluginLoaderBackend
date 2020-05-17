@@ -23,6 +23,12 @@
 
 class PluginContainer {
 public:
+    PluginContainer(const PluginContainer& other) {
+        this->pluginData = other.pluginData;
+        this->pluginInformation = other.pluginInformation;
+        this->metaInformation = other.metaInformation;
+    }
+
     PluginContainer() {
 
     }

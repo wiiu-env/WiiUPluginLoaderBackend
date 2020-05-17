@@ -29,6 +29,8 @@
 
 class PluginInformation {
 public:
+    PluginInformation(const PluginInformation& other);
+
     PluginInformation() {
     }
 

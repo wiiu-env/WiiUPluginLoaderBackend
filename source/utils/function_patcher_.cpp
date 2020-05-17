@@ -77,7 +77,7 @@ void PatchInvidualMethodHooks(hooks_magic_t method_hooks[], int32_t hook_informa
                 WHBLogWritef("The function %s is a dynamic function. Please fix that <3", method_hooks[i].functionName);
                 method_hooks[i].functionType = DYNAMIC_FUNCTION;
             } else {
-                WHBLogWritef("Skipping %s, its already patched", method_hooks[i].functionName);
+                WHBLogPrintf("Skipping %s, its already patched", method_hooks[i].functionName);
                 space += instr_len;
                 continue;
             }

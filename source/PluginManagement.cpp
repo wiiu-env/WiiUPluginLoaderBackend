@@ -99,6 +99,13 @@ void PluginManagement::unloadPlugins(plugin_information_t *gPluginInformation, M
             MEMFreeToExpHeap((MEMHeapHandle) pluginHeap, plugin->info.allocatedDataMemoryAddress);
             DEBUG_FUNCTION_LINE("Freed %08X", plugin->info.allocatedDataMemoryAddress);
         }
+
+        for (uint32_t i = 0; i < DYN_LINK_TRAMPOLIN_LIST_LENGTH; i++) {
+            if (gPluginInformation->trampolines[i].id == plugin->info.trampolinId) {
+                gPluginInformation->trampolines[i].id = 0;
+                gPluginInformation->trampolines[i].status = RELOC_TRAMP_FREE;
+            }
+        }
     }
     memset((void *) gPluginInformation, 0, sizeof(plugin_information_t));
 }

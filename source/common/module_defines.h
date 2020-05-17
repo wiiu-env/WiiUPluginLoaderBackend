@@ -21,19 +21,23 @@
 #include <stddef.h>
 #include "dynamic_linking_defines.h"
 #include "relocation_defines.h"
+#include "export_defines.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 #define MAXIMUM_MODULE_PATH_NAME_LENGTH                     256
-#define MAXIMUM_MODULE_NAME_LENGTH                          51
+#define MAXIMUM_EXPORT_MODULE_NAME_LENGTH                   51
 
 #define DYN_LINK_RELOCATION_LIST_LENGTH                     500
+#define EXPORT_ENTRY_LIST_LENGTH                            100
 
 struct module_information_single_t {
     char                            path[MAXIMUM_MODULE_PATH_NAME_LENGTH] = "";     // Path where the module is stored
     dyn_linking_relocation_entry_t  linking_entries[DYN_LINK_RELOCATION_LIST_LENGTH];
+    char                            module_export_name[MAXIMUM_EXPORT_MODULE_NAME_LENGTH];
+    export_data_t                   export_entries[EXPORT_ENTRY_LIST_LENGTH];
     int32_t                         priority;                                       // Priority of this module
     uint32_t                        bssAddr;
     uint32_t                        bssSize;

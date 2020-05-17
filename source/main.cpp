@@ -25,8 +25,11 @@
 #include "PluginManagement.h"
 #include "globals.h"
 #include <whb/sdcard.h>
+#include <utils/exports.h>
+#include <wums.h>
 #include <plugin/PluginDataPersistence.h>
 
+WUMS_MODULE_EXPORT_NAME("homebrew_wupsbackend");
 
 int test();
 

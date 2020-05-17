@@ -93,27 +93,28 @@ void PluginManagement::RestorePatches(plugin_information_t *pluginInformation, B
     }
 }
 
-void PluginManagement::unloadPlugins(plugin_information_t *gPluginInformation, MEMHeapHandle pluginHeap) {
+void PluginManagement::unloadPlugins(plugin_information_t *gPluginInformation, MEMHeapHandle pluginHeap, BOOL freePluginData) {
     RestorePatches(gPluginInformation, true);
     for (int32_t plugin_index = 0; plugin_index < gPluginInformation->number_used_plugins; plugin_index++) {
         plugin_information_single_t *plugin = &(gPluginInformation->plugin_data[plugin_index]);
-        if (plugin->data.buffer != nullptr) {
-            if (plugin->data.memoryType == eMemTypeMEM2) {
-                DEBUG_FUNCTION_LINE("free %08X", plugin->data.buffer);
-                free(plugin->data.buffer);
-            } else if (plugin->data.memoryType == eMemTypeExpHeap) {
-                DEBUG_FUNCTION_LINE("free %08X on EXP heap %08X", plugin->data.buffer, plugin->data.heapHandle);
-                MEMFreeToExpHeap((MEMHeapHandle) plugin->data.heapHandle, plugin->data.buffer);
+        if (freePluginData) {
+            if (plugin->data.buffer != nullptr) {
+                if (plugin->data.memoryType == eMemTypeMEM2) {
+                    DEBUG_FUNCTION_LINE("free %08X", plugin->data.buffer);
+                    free(plugin->data.buffer);
+                } else if (plugin->data.memoryType == eMemTypeExpHeap) {
+                    DEBUG_FUNCTION_LINE("free %08X on EXP heap %08X", plugin->data.buffer, plugin->data.heapHandle);
+                    MEMFreeToExpHeap((MEMHeapHandle) plugin->data.heapHandle, plugin->data.buffer);
+                } else {
+                    DEBUG_FUNCTION_LINE("########################");
+                    DEBUG_FUNCTION_LINE("Failed to free memory from plugin");
+                    DEBUG_FUNCTION_LINE("########################");
+                }
+                plugin->data.bufferLength = 0;
             } else {
-                DEBUG_FUNCTION_LINE("########################");
-                DEBUG_FUNCTION_LINE("Failed to free memory from plugin");
-                DEBUG_FUNCTION_LINE("########################");
+                DEBUG_FUNCTION_LINE("Plugin has no copy of elf save in memory, can't free it");
             }
-            plugin->data.bufferLength = 0;
-        } else {
-            DEBUG_FUNCTION_LINE("Plugin has no copy of elf save in memory, can't free it");
         }
-
         if (plugin->info.allocatedTextMemoryAddress != nullptr) {
             MEMFreeToExpHeap((MEMHeapHandle) pluginHeap, plugin->info.allocatedTextMemoryAddress);
             DEBUG_FUNCTION_LINE("Freed %08X", plugin->info.allocatedTextMemoryAddress);
@@ -130,6 +131,7 @@ void PluginManagement::unloadPlugins(plugin_information_t *gPluginInformation, M
             }
         }
     }
+
     memset((void *) gPluginInformation, 0, sizeof(plugin_information_t));
 }
 

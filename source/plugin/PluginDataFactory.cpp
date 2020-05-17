@@ -67,31 +67,23 @@ std::vector<PluginData> PluginDataFactory::loadDir(const std::string &path, MEMH
 
 std::optional<PluginData> PluginDataFactory::load(const std::string &filename, MEMHeapHandle heapHandle) {
     // open the file:
-    DEBUG_FUNCTION_LINE();
     std::ifstream file(filename, std::ios::binary);
-    DEBUG_FUNCTION_LINE();
     if (!file.is_open()) {
         DEBUG_FUNCTION_LINE("Failed to open %s", filename.c_str());
         return std::nullopt;
     }
     // Stop eating new lines in binary mode!!!
     file.unsetf(std::ios::skipws);
-    DEBUG_FUNCTION_LINE();
     // get its size:
     std::streampos fileSize;
-    DEBUG_FUNCTION_LINE();
 
     file.seekg(0, std::ios::end);
     fileSize = file.tellg();
     file.seekg(0, std::ios::beg);
 
-    DEBUG_FUNCTION_LINE();
-
     std::vector<uint8_t> vBuffer;
     vBuffer.reserve(fileSize);
 
-
-    DEBUG_FUNCTION_LINE();
     // read the data:
     vBuffer.insert(vBuffer.begin(),
                    std::istream_iterator<uint8_t>(file),

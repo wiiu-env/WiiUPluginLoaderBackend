@@ -34,13 +34,36 @@ std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(co
         DEBUG_FUNCTION_LINE("Can't find or process ELF file");
         return std::nullopt;
     }
-    auto reader = readerOpt.value();
+    return loadPlugin(readerOpt.value());
+}
+std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(const std::string filePath) {
+    auto reader = new elfio;
+    if (reader == NULL || !reader->load(filePath)) {
+        DEBUG_FUNCTION_LINE("Can't find or process ELF file\n");
+        delete reader;
+        return std::nullopt;
+    }
+    return loadPlugin(reader);
+}
 
+std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(char *buffer, size_t size) {
+    auto reader = new elfio;
+    if (reader == NULL || !reader->load(buffer, size)) {
+        DEBUG_FUNCTION_LINE("Can't find or process ELF file\n");
+        delete reader;
+        return std::nullopt;
+    }
+
+    return loadPlugin(reader);
+}
+
+std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(elfio *reader) {
     DEBUG_FUNCTION_LINE("Found elfio reader");
 
     size_t pluginSize = 0;
 
     PluginMetaInformation pluginInfo;
+
     uint32_t sec_num = reader->sections.size();
 
     DEBUG_FUNCTION_LINE("%d number of sections", sec_num);

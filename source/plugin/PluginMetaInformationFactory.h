@@ -26,4 +26,10 @@
 class PluginMetaInformationFactory {
 public:
     static std::optional<PluginMetaInformation> loadPlugin(const PluginData &pluginData);
+
+    static std::optional<PluginMetaInformation> loadPlugin(const std::string filePath);
+
+    static std::optional<PluginMetaInformation> loadPlugin(char *buffer, size_t size);
+
+    static std::optional<PluginMetaInformation> loadPlugin(elfio *reader);
 };

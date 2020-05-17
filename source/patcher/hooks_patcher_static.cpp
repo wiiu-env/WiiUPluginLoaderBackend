@@ -6,6 +6,7 @@
 #include <vpad/input.h>
 #include <coreinit/messagequeue.h>
 #include <coreinit/core.h>
+#include <globals.h>
 #include "hooks.h"
 
 extern plugin_information_t *gPluginInformation;

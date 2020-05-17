@@ -23,10 +23,9 @@
 #include "common/module_defines.h"
 #include "hooks.h"
 #include "PluginManagement.h"
+#include "globals.h"
 #include <whb/sdcard.h>
 
-MEMHeapHandle pluginDataHeap __attribute__((section(".data"))) = 0;
-plugin_information_t *gPluginInformation __attribute__((section(".data"))) = NULL;
 
 int test();
 

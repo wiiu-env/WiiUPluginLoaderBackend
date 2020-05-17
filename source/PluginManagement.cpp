@@ -69,6 +69,29 @@ void PluginManagement::memsetBSS(const std::vector<PluginContainer> &plugins) {
     }
 }
 
+void PluginManagement::callDeinitHooks(plugin_information_t *pluginInformation) {
+    CallHook(pluginInformation, WUPS_LOADER_HOOK_RELEASE_FOREGROUND);
+    CallHook(pluginInformation, WUPS_LOADER_HOOK_APPLICATION_END);
+    CallHook(pluginInformation, WUPS_LOADER_HOOK_DEINIT_PLUGIN);
+
+    CallHook(pluginInformation, WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB);
+    CallHook(pluginInformation, WUPS_LOADER_HOOK_FINI_WUT_STDCPP);
+    CallHook(pluginInformation, WUPS_LOADER_HOOK_FINI_WUT_NEWLIB);
+    CallHook(pluginInformation, WUPS_LOADER_HOOK_FINI_WUT_MALLOC);
+
+    DEBUG_FUNCTION_LINE("Done calling deinit hooks");
+}
+
+
+void PluginManagement::RestorePatches(plugin_information_t *pluginInformation, BOOL pluginOnly) {
+    for (int32_t plugin_index = pluginInformation->number_used_plugins - 1; plugin_index >= 0; plugin_index--) {
+        new_RestoreInvidualInstructions(&(pluginInformation->plugin_data[plugin_index].info));
+    }
+    if (!pluginOnly) {
+        RestoreInvidualInstructions(method_hooks_hooks, method_hooks_size_hooks);
+        RestoreInvidualInstructions(method_hooks_hooks_static, method_hooks_size_hooks_static);
+    }
+}
 
 void PluginManagement::unloadPlugins(plugin_information_t *gPluginInformation, MEMHeapHandle pluginHeap) {
     for (int32_t plugin_index = 0; plugin_index < gPluginInformation->number_used_plugins; plugin_index++) {

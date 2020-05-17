@@ -48,6 +48,8 @@ public:
     void freeMemory();
 
 private:
+    PluginData(const PluginData &obj);
+
     PluginData() {
     }
 

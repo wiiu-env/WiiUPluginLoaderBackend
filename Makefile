@@ -8,9 +8,11 @@ endif
 
 TOPDIR ?= $(CURDIR)
 
-include $(DEVKITPRO)/wut/share/wut_rules
+include $(DEVKITPRO)/wums/share/wums_rules
 
 WUPS_ROOT := $(DEVKITPRO)/wups
+WUMS_ROOT := $(DEVKITPRO)/wums
+WUT_ROOT := $(DEVKITPRO)/wut
 #-------------------------------------------------------------------------------
 # TARGET is the name of the output
 # BUILD is the directory where object files & intermediate files will be placed
@@ -40,15 +42,15 @@ CFLAGS	+=	$(INCLUDE) -D__WIIU__ -D__WUT__
 CXXFLAGS	:= $(CFLAGS) -std=c++17 
 
 ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-g $(ARCH) $(RPXSPECS) --entry=_start -Wl,-Map,$(notdir $*.map)
+LDFLAGS	=	-g $(ARCH) $(WUMSSPECS) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= -lwut -lwups
+LIBS	:= -lwums -lwut -lwups
 
 #-------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level
 # containing include and lib
 #-------------------------------------------------------------------------------
-LIBDIRS	:= $(PORTLIBS) $(WUT_ROOT) $(WUPS_ROOT)
+LIBDIRS	:= $(PORTLIBS) $(WUT_ROOT) $(WUPS_ROOT)  $(WUMS_ROOT)
 
 
 #-------------------------------------------------------------------------------
@@ -119,9 +121,9 @@ DEPENDS	:=	$(OFILES:.o=.d)
 #-------------------------------------------------------------------------------
 # main targets
 #-------------------------------------------------------------------------------
-all	:	 $(OUTPUT).rpx
+all	:	 $(OUTPUT).wms
 
-$(OUTPUT).rpx	:	$(OUTPUT).elf
+$(OUTPUT).wms	:	$(OUTPUT).elf
 $(OUTPUT).elf	:   $(OFILES)
 
 $(OFILES_SRC)	: $(HFILES_BIN)

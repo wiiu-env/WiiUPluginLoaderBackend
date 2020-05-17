@@ -92,7 +92,7 @@ std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(co
                         pluginInfo.setDescription(value);
                     } else if (key.compare("wups") == 0) {
                         if (value.compare("0.2") != 0) {
-                            DEBUG_FUNCTION_LINE("Warning: Ignoring plugin - Unsupported WUPS version: %s.\n", value);
+                            DEBUG_FUNCTION_LINE("Warning: Ignoring plugin - Unsupported WUPS version: %s.\n", value.c_str());
                             return std::nullopt;
                         }
                     }

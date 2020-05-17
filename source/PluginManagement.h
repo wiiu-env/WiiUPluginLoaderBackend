@@ -20,4 +20,8 @@ public:
     static void unloadPlugins(plugin_information_t * pluginInformation, MEMHeapHandle pluginHeap);
 
     static std::vector<PluginContainer> loadPlugins(const std::vector<PluginData> &pluginList, MEMHeapHandle pHeader, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length);
+
+    static void RestorePatches(plugin_information_t *pluginInformation, BOOL pluginOnly);
+
+    static void callDeinitHooks(plugin_information_t *pluginInformation);
 };

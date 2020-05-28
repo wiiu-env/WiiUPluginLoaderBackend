@@ -26,7 +26,7 @@
 #include <coreinit/dynload.h>
 #include <coreinit/debug.h>
 
-#include "kernel/kernel_utils.h"
+#include <kernel/kernel.h>
 #include "function_patcher.h"
 #include "logger.h"
 

@@ -24,7 +24,6 @@ TARGET		:=	PluginBackend
 BUILD		:=	build
 SOURCES		:=	source \
                 source/elfio \
-                source/kernel \
                 source/patcher \
                 source/plugin \
                 source/utils
@@ -44,13 +43,13 @@ CXXFLAGS	:= $(CFLAGS) -std=c++17
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-g $(ARCH) $(WUMSSPECS) -Wl,-Map,$(notdir $*.map)
 
-LIBS	:= -lwums -lwut -lwups
+LIBS	:= -lwums -lwut -lwups -lkernel
 
 #-------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level
 # containing include and lib
 #-------------------------------------------------------------------------------
-LIBDIRS	:= $(PORTLIBS) $(WUT_ROOT) $(WUPS_ROOT)  $(WUMS_ROOT)
+LIBDIRS	:= $(PORTLIBS) $(WUT_ROOT) $(WUPS_ROOT) $(WUMS_ROOT)
 
 
 #-------------------------------------------------------------------------------

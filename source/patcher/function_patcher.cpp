@@ -27,10 +27,9 @@
 #include "function_patcher.h"
 #include <utils/logger.h>
 #include <utils/utils.h>
-#include <kernel/kernel_defs.h>
-#include <kernel/kernel_utils.h>
 #include <coreinit/memorymap.h>
 #include <coreinit/cache.h>
+#include <kernel/kernel.h>
 #include <whb/log.h>
 #include <coreinit/dynload.h>
 

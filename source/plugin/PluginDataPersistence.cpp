@@ -3,7 +3,7 @@
 #include "PluginData.h"
 
 bool PluginDataPersistence::save(plugin_data_t *pluginDataStruct, PluginData &plugin) {
-    if(pluginDataStruct == NULL){
+    if (pluginDataStruct == NULL) {
         return false;
     }
     pluginDataStruct->buffer = (char *) plugin.buffer;

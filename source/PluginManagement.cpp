@@ -9,7 +9,6 @@
 #include "PluginManagement.h"
 #include "hooks.h"
 
-
 bool PluginManagement::doRelocation(const std::vector<RelocationData> &relocData, relocation_trampolin_entry_t *tramp_data, uint32_t tramp_length, uint32_t trampolinID) {
     std::map<std::string, OSDynLoad_Module> moduleHandleCache;
     for (auto const &cur : relocData) {

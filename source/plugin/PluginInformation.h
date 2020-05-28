@@ -29,7 +29,7 @@
 
 class PluginInformation {
 public:
-    PluginInformation(const PluginInformation& other);
+    PluginInformation(const PluginInformation &other);
 
     PluginInformation() {
     }

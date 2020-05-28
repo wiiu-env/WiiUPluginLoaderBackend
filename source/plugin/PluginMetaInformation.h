@@ -22,7 +22,7 @@
 
 class PluginMetaInformation {
 public:
-    PluginMetaInformation(const PluginMetaInformation& other);
+    PluginMetaInformation(const PluginMetaInformation &other);
 
     const std::string getName() const {
         return name;

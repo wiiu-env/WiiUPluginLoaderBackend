@@ -1,6 +1,6 @@
 #include "PluginMetaInformation.h"
 
-PluginMetaInformation::PluginMetaInformation(const PluginMetaInformation& other) {
+PluginMetaInformation::PluginMetaInformation(const PluginMetaInformation &other) {
     this->name = other.name;
     this->author = other.author;
     this->version = other.version;

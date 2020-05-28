@@ -36,6 +36,7 @@ std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(co
     }
     return loadPlugin(readerOpt.value());
 }
+
 std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(const std::string filePath) {
     auto reader = new elfio;
     if (reader == NULL || !reader->load(filePath)) {

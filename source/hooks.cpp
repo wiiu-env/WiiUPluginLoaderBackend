@@ -48,6 +48,7 @@ static const char **hook_names = (const char *[]) {
         "WUPS_LOADER_HOOK_APPLET_START"};
 
 void CallHookEx(plugin_information_t *pluginInformation, wups_loader_hook_type_t hook_type, int32_t plugin_index_needed) {
+    DEBUG_FUNCTION_LINE("Calling hook of type %s [%d]", hook_names[hook_type], hook_type);
     for (int32_t plugin_index = 0; plugin_index < pluginInformation->number_used_plugins; plugin_index++) {
         plugin_information_single_t *plugin_data = &pluginInformation->plugin_data[plugin_index];
         if (plugin_index_needed != -1 && plugin_index_needed != plugin_index) {

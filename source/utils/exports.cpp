@@ -64,7 +64,7 @@ int32_t WUPSDeletePluginData(const plugin_data_handle *plugin_data_handle_list, 
     return ERROR_NONE;
 }
 
-int32_t WUPSLoadPluginAsData(GetPluginInformationInputType inputType, const char* path, char* buffer, size_t size, plugin_data_handle * out) {
+int32_t WUPSLoadPluginAsData(GetPluginInformationInputType inputType, const char *path, char *buffer, size_t size, plugin_data_handle *out) {
     std::optional<PluginData> pluginData;
     if (inputType == PLUGIN_INFORMATION_INPUT_TYPE_PATH) {
         pluginData = PluginDataFactory::load(path, pluginDataHeap);
@@ -93,15 +93,15 @@ int32_t WUPSLoadPluginAsData(GetPluginInformationInputType inputType, const char
     return ERROR_NONE;
 }
 
-int32_t WUPSLoadPluginAsDataByPath(plugin_data_handle * output, const char* path){
+int32_t WUPSLoadPluginAsDataByPath(plugin_data_handle *output, const char *path) {
     return WUPSLoadPluginAsData(PLUGIN_INFORMATION_INPUT_TYPE_PATH, path, NULL, 0, output);
 }
 
-int32_t WUPSLoadPluginAsDataByBuffer(plugin_data_handle * output, char* buffer, size_t size){
+int32_t WUPSLoadPluginAsDataByBuffer(plugin_data_handle *output, char *buffer, size_t size) {
     return WUPSLoadPluginAsData(PLUGIN_INFORMATION_INPUT_TYPE_BUFFER, NULL, buffer, size, output);
 }
 
-int32_t WUPSGetPluginMetaInformation(GetPluginInformationInputType inputType, const char* path, char* buffer, size_t size, plugin_information * output) {
+int32_t WUPSGetPluginMetaInformation(GetPluginInformationInputType inputType, const char *path, char *buffer, size_t size, plugin_information *output) {
     std::optional<PluginMetaInformation> pluginInfo;
     if (inputType == PLUGIN_INFORMATION_INPUT_TYPE_PATH && path != NULL) {
         DEBUG_FUNCTION_LINE("PLUGIN_INFORMATION_INPUT_TYPE_PATH %s", path);
@@ -128,15 +128,15 @@ int32_t WUPSGetPluginMetaInformation(GetPluginInformationInputType inputType, co
     return ERROR_NONE;
 }
 
-int32_t WUPSGetPluginMetaInformationByPath(plugin_information * output, const char* path) {
+int32_t WUPSGetPluginMetaInformationByPath(plugin_information *output, const char *path) {
     return WUPSGetPluginMetaInformation(PLUGIN_INFORMATION_INPUT_TYPE_PATH, path, NULL, 0, output);
 }
 
-int32_t WUPSGetPluginMetaInformationByBuffer(plugin_information * output, char* buffer, size_t size) {
+int32_t WUPSGetPluginMetaInformationByBuffer(plugin_information *output, char *buffer, size_t size) {
     return WUPSGetPluginMetaInformation(PLUGIN_INFORMATION_INPUT_TYPE_BUFFER, NULL, buffer, size, output);
 }
 
-int32_t WUPSGetPluginDataForContainerHandles(const plugin_container_handle *plugin_container_handle_list, plugin_data_handle *plugin_data_list , uint32_t buffer_size) {
+int32_t WUPSGetPluginDataForContainerHandles(const plugin_container_handle *plugin_container_handle_list, plugin_data_handle *plugin_data_list, uint32_t buffer_size) {
     int res;
     if (plugin_container_handle_list != NULL && buffer_size != 0) {
         for (uint32_t i = 0; i < buffer_size; i++) {
@@ -152,7 +152,7 @@ int32_t WUPSGetPluginDataForContainerHandles(const plugin_container_handle *plug
     return res;
 }
 
-int32_t WUPSGetMetaInformation(plugin_container_handle * plugin_container_handle_list, plugin_information * plugin_information_list, uint32_t buffer_size) {
+int32_t WUPSGetMetaInformation(plugin_container_handle *plugin_container_handle_list, plugin_information *plugin_information_list, uint32_t buffer_size) {
     int res = ERROR_NONE;
     if (plugin_container_handle_list != NULL && buffer_size != 0) {
         for (uint32_t i = 0; i < buffer_size; i++) {
@@ -173,7 +173,7 @@ int32_t WUPSGetMetaInformation(plugin_container_handle * plugin_container_handle
     return res;
 }
 
-int32_t WUPSGetLoadedPlugins(plugin_container_handle *io_handles, uint32_t buffer_size, uint32_t * outSize) {
+int32_t WUPSGetLoadedPlugins(plugin_container_handle *io_handles, uint32_t buffer_size, uint32_t *outSize) {
     auto plugins = PluginContainerPersistence::loadPlugins(gPluginInformation);
     uint32_t counter = 0;
     for (auto &plugin: plugins) {
@@ -186,7 +186,7 @@ int32_t WUPSGetLoadedPlugins(plugin_container_handle *io_handles, uint32_t buffe
             break;
         }
     }
-    if(*outSize){
+    if (*outSize) {
         *outSize = counter;
     }
     return 0;

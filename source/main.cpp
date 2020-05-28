@@ -3,6 +3,7 @@
 #include <whb/log_udp.h>
 #include <exception>
 #include <sysapp/launch.h>
+#include <coreinit/debug.h>
 #include <coreinit/memexpheap.h>
 #include <coreinit/dynload.h>
 #include <coreinit/cache.h>
@@ -43,10 +44,12 @@ int main(int argc, char **argv) {
 
 int test() {
     WHBLogUdpInit();
+    uint32_t upid = OSGetUPID();
+    if (upid != 2 && upid != 15) {
+        return 0;
+    }
     bool initNeeded = false;
     if (pluginDataHeap == NULL) {
-        kernelInitialize();
-        DEBUG_FUNCTION_LINE("Kernel init done");
         DCFlushRange((void *) 0x00880000, sizeof(module_information_t));
         uint32_t endAddress = 0;
         DEBUG_FUNCTION_LINE("Using %d modules", gModuleData->number_used_modules);

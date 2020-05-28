@@ -3,7 +3,7 @@
 #include <stdint.h>
 #include <wups.h>
 
-#define FUNCTION_PATCHER_METHOD_STORE_SIZE                  13
+#define FUNCTION_PATCHER_METHOD_STORE_SIZE                  20
 #define MAXIMUM_FUNCTION_NAME_LENGTH                        83
 
 struct replacement_data_function_t {

@@ -57,7 +57,7 @@ extern "C" {
         res (* real_ ## name)(__VA_ARGS__) __attribute__((section(".data"))); \
         res my_ ## name(__VA_ARGS__)
 
-#define FUNCTION_PATCHER_METHOD_STORE_SIZE  7
+#define FUNCTION_PATCHER_METHOD_STORE_SIZE  20
 
 typedef struct {
     const uint32_t replaceAddr;

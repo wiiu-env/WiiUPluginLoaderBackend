@@ -260,7 +260,7 @@ DECL(uint32_t, OSReceiveMessage, OSMessageQueue *queue, OSMessage *message, uint
     }
     int32_t res = real_OSReceiveMessage(queue, message, flags);
     if (queue == OSGetSystemMessageQueue()) {
-        if (message != NULL) {
+        if (message != NULL && res) {
             if (lastData0 != message->args[0]) {
                 if (message->args[0] == 0xFACEF000) {
                     CallHook(gPluginInformation, WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND);

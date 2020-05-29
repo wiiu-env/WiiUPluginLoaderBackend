@@ -148,6 +148,9 @@ void PluginManagement::PatchFunctionsAndCallHooks(plugin_information_t *gPluginI
     PatchInvidualMethodHooks(method_hooks_hooks_static, method_hooks_size_hooks_static, method_calls_hooks_static);
     PatchInvidualMethodHooks(method_hooks_hooks, method_hooks_size_hooks, method_calls_hooks);
 
+    DCFlushRange((void *) 0x00800000, 0x00800000);
+    ICInvalidateRange((void *) 0x00800000, 0x00800000);
+
     for (int32_t plugin_index = 0; plugin_index < gPluginInformation->number_used_plugins; plugin_index++) {
         CallHookEx(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_MALLOC, plugin_index);
         CallHookEx(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_NEWLIB, plugin_index);

@@ -37,7 +37,7 @@ public:
         return this->metaInformation;
     }
 
-    void setMetaInformation(PluginMetaInformation &metaInfo) {
+    void setMetaInformation(const PluginMetaInformation &metaInfo) {
         this->metaInformation = metaInfo;
     }
 
@@ -45,7 +45,7 @@ public:
         return pluginInformation;
     }
 
-    void setPluginInformation(PluginInformation &pluginInformation) {
+    void setPluginInformation(const PluginInformation &pluginInformation) {
         this->pluginInformation = pluginInformation;
     }
 
@@ -53,7 +53,7 @@ public:
         return pluginData;
     }
 
-    void setPluginData(PluginData &pluginData) {
+    void setPluginData(const PluginData &pluginData) {
         this->pluginData = pluginData;
     }
 

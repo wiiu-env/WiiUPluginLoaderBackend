@@ -34,15 +34,19 @@
 using namespace ELFIO;
 
 std::optional<PluginInformation> PluginInformationFactory::load(const PluginData &pluginData, MEMHeapHandle heapHandle, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length, uint8_t trampolinId) {
-    auto readerOpt = pluginData.getReader();
-    if (!readerOpt) {
-        DEBUG_FUNCTION_LINE("Can't find or process ELF file");
+    if(pluginData.buffer == NULL){
+        DEBUG_FUNCTION_LINE("Buffer was NULL");
         return std::nullopt;
     }
-    auto reader = readerOpt.value();
+    elfio reader;
+    if (! reader.load((char*) pluginData.buffer, pluginData.length)) {
+        DEBUG_FUNCTION_LINE("Can't process PluginData in elfio");
+        return std::nullopt;
+    }
+
     PluginInformation pluginInfo;
 
-    uint32_t sec_num = reader->sections.size();
+    uint32_t sec_num = reader.sections.size();
     uint8_t **destinations = (uint8_t **) malloc(sizeof(uint8_t *) * sec_num);
 
     uint32_t totalSize = 0;
@@ -51,7 +55,7 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
     uint32_t data_size = 0;
 
     for (uint32_t i = 0; i < sec_num; ++i) {
-        section *psec = reader->sections[i];
+        section *psec = reader.sections[i];
         if (psec->get_type() == 0x80000002) {
             continue;
         }
@@ -69,9 +73,7 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
             }
         }
     }
-
     void *text_data = MEMAllocFromExpHeapEx(heapHandle, text_size, 0x1000);
-
     if (text_data == NULL) {
         DEBUG_FUNCTION_LINE("Failed to alloc memory for the .text section (%d bytes)\n", text_size);
 
@@ -87,10 +89,10 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
     }
     DEBUG_FUNCTION_LINE("Allocated %d kb from ExpHeap", data_size / 1024);
 
-    uint32_t entrypoint = (uint32_t) text_data + (uint32_t) reader->get_entry() - 0x02000000;
+    uint32_t entrypoint = (uint32_t) text_data + (uint32_t) reader.get_entry() - 0x02000000;
 
     for (uint32_t i = 0; i < sec_num; ++i) {
-        section *psec = reader->sections[i];
+        section *psec = reader.sections[i];
         if (psec->get_type() == 0x80000002) {
             continue;
         }
@@ -142,11 +144,11 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
     }
 
     for (uint32_t i = 0; i < sec_num; ++i) {
-        section *psec = reader->sections[i];
+        section *psec = reader.sections[i];
         if ((psec->get_type() == SHT_PROGBITS || psec->get_type() == SHT_NOBITS) && (psec->get_flags() & SHF_ALLOC)) {
             DEBUG_FUNCTION_LINE("Linking (%d)... %s at %08X", i, psec->get_name().c_str(), destinations[psec->get_index()]);
 
-            if (!linkSection(pluginData, psec->get_index(), (uint32_t) destinations[psec->get_index()], (uint32_t) text_data, (uint32_t) data_data, trampolin_data, trampolin_data_length, trampolinId)) {
+            if (!linkSection(reader, psec->get_index(), (uint32_t) destinations[psec->get_index()], (uint32_t) text_data, (uint32_t) data_data, trampolin_data, trampolin_data_length, trampolinId)) {
                 DEBUG_FUNCTION_LINE("elfLink failed");
                 free(destinations);
                 MEMFreeToExpHeap(heapHandle, text_data);
@@ -155,7 +157,7 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
             }
         }
     }
-    std::vector<RelocationData> relocationData = getImportRelocationData(pluginData, destinations);
+    std::vector<RelocationData> relocationData = getImportRelocationData(reader, destinations);
 
     for (auto const &reloc : relocationData) {
         pluginInfo.addRelocationData(reloc);
@@ -209,30 +211,25 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
     return pluginInfo;
 }
 
-std::vector<RelocationData> PluginInformationFactory::getImportRelocationData(const PluginData &pluginData, uint8_t **destinations) {
-    auto readerOpt = pluginData.getReader();
-
+std::vector<RelocationData> PluginInformationFactory::getImportRelocationData(const elfio & reader, uint8_t **destinations) {
     std::vector<RelocationData> result;
-    if (!readerOpt) {
-        return result;
-    }
-    auto reader = readerOpt.value();
+
     std::map<uint32_t, std::string> infoMap;
 
-    uint32_t sec_num = reader->sections.size();
+    uint32_t sec_num = reader.sections.size();
 
     for (uint32_t i = 0; i < sec_num; ++i) {
-        section *psec = reader->sections[i];
+        section *psec = reader.sections[i];
         if (psec->get_type() == 0x80000002) {
             infoMap[i] = psec->get_name();
         }
     }
 
     for (uint32_t i = 0; i < sec_num; ++i) {
-        section *psec = reader->sections[i];
+        section *psec = reader.sections[i];
         if (psec->get_type() == SHT_RELA || psec->get_type() == SHT_REL) {
             DEBUG_FUNCTION_LINE("Found relocation section %s", psec->get_name().c_str());
-            relocation_section_accessor rel(*reader, psec);
+            relocation_section_accessor rel(reader, psec);
             for (uint32_t j = 0; j < (uint32_t) rel.get_entries_num(); ++j) {
                 Elf64_Addr offset;
                 Elf_Word type;
@@ -283,20 +280,15 @@ std::vector<RelocationData> PluginInformationFactory::getImportRelocationData(co
     return result;
 }
 
-bool PluginInformationFactory::linkSection(const PluginData &pluginData, uint32_t section_index, uint32_t destination, uint32_t base_text, uint32_t base_data, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length,
+bool PluginInformationFactory::linkSection(const elfio &reader, uint32_t section_index, uint32_t destination, uint32_t base_text, uint32_t base_data, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length,
                                            uint8_t trampolinId) {
-    auto readerOpt = pluginData.getReader();
-    if (!readerOpt) {
-        return false;
-    }
-    auto reader = readerOpt.value();
-    uint32_t sec_num = reader->sections.size();
+    uint32_t sec_num = reader.sections.size();
 
     for (uint32_t i = 0; i < sec_num; ++i) {
-        section *psec = reader->sections[i];
+        section *psec = reader.sections[i];
         if (psec->get_info() == section_index) {
             DEBUG_FUNCTION_LINE("Found relocation section %s", psec->get_name().c_str());
-            relocation_section_accessor rel(*reader, psec);
+            relocation_section_accessor rel(reader, psec);
             for (uint32_t j = 0; j < (uint32_t) rel.get_entries_num(); ++j) {
                 Elf64_Addr offset;
                 Elf_Word type;

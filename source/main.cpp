@@ -95,7 +95,7 @@ WUMS_APPLICATION_STARTS() {
             BOOL doDelete = true;
             DEBUG_FUNCTION_LINE("Check if we can delete %08X", plugin->data.buffer);
             for (auto &pluginData: pluginDataList) {
-                if (pluginData.getBuffer() == plugin->data.buffer) {
+                if (pluginData.buffer == plugin->data.buffer) {
                     DEBUG_FUNCTION_LINE("We can keep buffer %08X", plugin->data.buffer);
                     doDelete = false;
                     break;

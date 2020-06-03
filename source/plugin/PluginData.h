@@ -33,45 +33,28 @@ enum eMemoryTypes {
 
 class PluginData {
 public:
-    const std::optional<elfio *> &getReader() const {
-        return reader;
-    }
-
     ~PluginData() {
-        if (nReader != NULL) {
-            delete nReader;
-            nReader = NULL;
-        }
     }
 
     void freeMemory();
-
-    void *getBuffer() const {
-        return this->buffer;
-    }
 
     PluginData(const PluginData &obj);
 
     PluginData() {
     }
 
-    void *buffer;
+    void *buffer = NULL;
     MEMHeapHandle heapHandle;
     eMemoryTypes memoryType;
-    size_t length;
+    size_t length = 0;
 
 private:
     PluginData(std::vector<uint8_t> buffer);
 
     PluginData(std::vector<uint8_t> input, MEMHeapHandle heapHandle, eMemoryTypes memoryType);
 
-    void loadReader();
-
     static std::optional<PluginData> createFromExistingData(const void *buffer, MEMHeapHandle heapHandle, eMemoryTypes memoryType, const size_t length);
 
-    std::optional<elfio *> reader;
-
-    elfio *nReader = NULL;
 
     friend class PluginDataFactory;
 

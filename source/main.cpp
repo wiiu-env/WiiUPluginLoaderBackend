@@ -140,7 +140,7 @@ WUMS_APPLICATION_STARTS() {
     if (pluginDataHeap != NULL) {
         std::vector<PluginContainer> plugins = PluginContainerPersistence::loadPlugins(gPluginInformation);
         PluginManagement::doRelocations(plugins, gPluginInformation->trampolines, DYN_LINK_TRAMPOLIN_LIST_LENGTH);
-        PluginManagement::memsetBSS(plugins);
+        // PluginManagement::memsetBSS(plugins);
 
         DCFlushRange((void *) 0x00800000, 0x00800000);
         ICInvalidateRange((void *) 0x00800000, 0x00800000);

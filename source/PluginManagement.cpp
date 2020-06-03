@@ -157,6 +157,9 @@ void PluginManagement::callInitHooks(plugin_information_t *pluginInformation) {
     CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_KERNEL);
     CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_OVERLAY);
     CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_PLUGIN);
+    CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_WUT_MALLOC);
+    CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_WUT_NEWLIB);
+    CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_WUT_STDCPP);
     DEBUG_FUNCTION_LINE("Done calling init hooks");
 }
 
@@ -168,11 +171,8 @@ void PluginManagement::PatchFunctionsAndCallHooks(plugin_information_t *gPluginI
     DCFlushRange((void *) 0x00800000, 0x00800000);
     ICInvalidateRange((void *) 0x00800000, 0x00800000);
 
+    CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB);
     for (int32_t plugin_index = 0; plugin_index < gPluginInformation->number_used_plugins; plugin_index++) {
-        CallHookEx(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_MALLOC, plugin_index);
-        CallHookEx(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_NEWLIB, plugin_index);
-        CallHookEx(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_STDCPP, plugin_index);
-        CallHookEx(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB, plugin_index);
         CallHookEx(gPluginInformation, WUPS_LOADER_HOOK_APPLICATION_START, plugin_index);
         new_PatchInvidualMethodHooks(&(gPluginInformation->plugin_data[plugin_index].info));
         CallHookEx(gPluginInformation, WUPS_LOADER_HOOK_FUNCTIONS_PATCHED, plugin_index);

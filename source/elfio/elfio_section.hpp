@@ -288,7 +288,7 @@ class section_impl : public section
 
                     inflateEnd(&s);
 
-                    free(data);
+                    delete [] data;
                     data = uncompressedData;
                     data_size = uncompressed_size;
                     set_size(uncompressed_size);

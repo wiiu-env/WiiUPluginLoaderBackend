@@ -188,7 +188,7 @@ std::vector<PluginContainer> PluginManagement::loadPlugins(const std::vector<Plu
         if (metaInfo) {
             PluginContainer container;
             container.setMetaInformation(metaInfo.value());
-            container.setPluginData(const_cast<PluginData &>(pluginData));
+            container.setPluginData(pluginData);
             plugins.push_back(container);
         } else {
             DEBUG_FUNCTION_LINE("Failed to get meta information");

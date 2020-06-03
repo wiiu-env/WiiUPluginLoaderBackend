@@ -194,10 +194,9 @@ std::vector<PluginContainer> PluginManagement::loadPlugins(const std::vector<Plu
             DEBUG_FUNCTION_LINE("Failed to get meta information");
         }
     }
+    uint32_t trampolineID = 0;
     for (auto &pluginContainer : plugins) {
-        uint32_t trampolineId = pluginContainer.getPluginInformation().getTrampolinId();
-        std::optional<PluginInformation> info = PluginInformationFactory::load(pluginContainer.getPluginData(), heapHandle, trampolin_data, trampolin_data_length, trampolineId);
-
+        std::optional<PluginInformation> info = PluginInformationFactory::load(pluginContainer.getPluginData(), heapHandle, trampolin_data, trampolin_data_length, trampolineID++);
         if (!info) {
             DEBUG_FUNCTION_LINE("Failed to load Plugin %s", pluginContainer.getMetaInformation().getName().c_str());
             continue;

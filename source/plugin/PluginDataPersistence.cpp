@@ -20,6 +20,5 @@ PluginData PluginDataPersistence::load(plugin_data_t *pluginDataStruct) {
     pluginData.length = pluginDataStruct->bufferLength;
     pluginData.memoryType = (eMemoryTypes) pluginDataStruct->memoryType;
     pluginData.heapHandle = (MEMHeapHandle) pluginDataStruct->heapHandle;
-    pluginData.loadReader();
     return pluginData;
 }

@@ -27,50 +27,48 @@
 using namespace ELFIO;
 
 std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(const PluginData &pluginData) {
-    auto readerOpt = pluginData.getReader();
-
-    // Load ELF data
-    if (!readerOpt) {
-        DEBUG_FUNCTION_LINE("Can't find or process ELF file");
+    if(pluginData.buffer == NULL){
+        DEBUG_FUNCTION_LINE("Buffer was NULL");
         return std::nullopt;
     }
-    return loadPlugin(readerOpt.value());
+    elfio reader;
+    if (! reader.load((char*) pluginData.buffer, pluginData.length)) {
+        DEBUG_FUNCTION_LINE("Can't process PluginData in elfio");
+        return std::nullopt;
+    }
+    return loadPlugin(reader);
 }
 
 std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(const std::string filePath) {
-    auto reader = new elfio;
-    if (reader == NULL || !reader->load(filePath)) {
+    elfio reader;
+    if (!reader.load(filePath)) {
         DEBUG_FUNCTION_LINE("Can't find or process ELF file\n");
-        delete reader;
         return std::nullopt;
     }
     return loadPlugin(reader);
 }
 
 std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(char *buffer, size_t size) {
-    auto reader = new elfio;
-    if (reader == NULL || !reader->load(buffer, size)) {
+    elfio reader;
+    if (!reader.load(buffer, size)) {
         DEBUG_FUNCTION_LINE("Can't find or process ELF file\n");
-        delete reader;
         return std::nullopt;
     }
 
     return loadPlugin(reader);
 }
 
-std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(elfio *reader) {
-    DEBUG_FUNCTION_LINE("Found elfio reader");
-
+std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(const elfio& reader) {
     size_t pluginSize = 0;
 
     PluginMetaInformation pluginInfo;
 
-    uint32_t sec_num = reader->sections.size();
+    uint32_t sec_num = reader.sections.size();
 
     DEBUG_FUNCTION_LINE("%d number of sections", sec_num);
 
     for (uint32_t i = 0; i < sec_num; ++i) {
-        section *psec = reader->sections[i];
+        section *psec = reader.sections[i];
 
         // Calculate total size:
         if ((psec->get_type() == SHT_PROGBITS || psec->get_type() == SHT_NOBITS) && (psec->get_flags() & SHF_ALLOC)) {

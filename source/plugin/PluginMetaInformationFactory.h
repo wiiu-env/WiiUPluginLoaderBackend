@@ -31,5 +31,5 @@ public:
 
     static std::optional<PluginMetaInformation> loadPlugin(char *buffer, size_t size);
 
-    static std::optional<PluginMetaInformation> loadPlugin(elfio *reader);
+    static std::optional<PluginMetaInformation> loadPlugin(const elfio& reader);
 };

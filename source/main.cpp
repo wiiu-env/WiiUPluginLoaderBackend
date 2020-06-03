@@ -19,21 +19,18 @@
 
 WUMS_MODULE_EXPORT_NAME("homebrew_wupsbackend");
 
-int test();
-
 std::vector<PluginContainer> loadPlugins(const std::vector<PluginData> &pluginList, MEMHeapHandle heapHandle);
 
 #define gModuleData ((module_information_t *) (0x00880000))
 
-int main(int argc, char **argv) {
-    test();
+WUMS_INITIALIZE(){
 }
 
-int test() {
+WUMS_APPLICATION_STARTS() {
     WHBLogUdpInit();
     uint32_t upid = OSGetUPID();
     if (upid != 2 && upid != 15) {
-        return 0;
+        return;
     }
     bool initNeeded = false;
     if (pluginDataHeap == NULL) {
@@ -63,7 +60,7 @@ int test() {
                 gPluginInformation = (plugin_information_t *) MEMAllocFromExpHeapEx(pluginDataHeap, sizeof(plugin_information_t), 4);
                 if (gPluginInformation == NULL) {
                     DEBUG_FUNCTION_LINE("Failed to allocate global plugin information");
-                    return 0;
+                    return;
                 }
                 memset((void *) gPluginInformation, 0, sizeof(plugin_information_t));
 
@@ -156,5 +153,5 @@ int test() {
         PluginManagement::PatchFunctionsAndCallHooks(gPluginInformation);
     }
 
-    return 0;
+    return;
 }

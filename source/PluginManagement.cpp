@@ -12,19 +12,36 @@
 bool PluginManagement::doRelocation(const std::vector<RelocationData> &relocData, relocation_trampolin_entry_t *tramp_data, uint32_t tramp_length, uint32_t trampolinID) {
     std::map<std::string, OSDynLoad_Module> moduleHandleCache;
     for (auto const &cur : relocData) {
+        uint32_t functionAddress = 0;
         std::string functionName = cur.getName();
-        std::string rplName = cur.getImportRPLInformation().getName();
-        int32_t isData = cur.getImportRPLInformation().isData();
-        OSDynLoad_Module rplHandle = 0;
-        if (moduleHandleCache.count(rplName) > 0) {
-            rplHandle = moduleHandleCache[rplName];
-        } else {
-            OSDynLoad_Acquire(rplName.c_str(), &rplHandle);
-            moduleHandleCache[rplName] = rplHandle;
+
+        if (functionName.compare("MEMAllocFromDefaultHeap") == 0) {
+            OSDynLoad_Module rplHandle;
+            OSDynLoad_Acquire("homebrew_memorymapping", &rplHandle);
+            OSDynLoad_FindExport(rplHandle, 1, "MEMAllocFromMappedMemory", (void **) &functionAddress);
+        } else if (functionName.compare("MEMAllocFromDefaultHeapEx") == 0) {
+            OSDynLoad_Module rplHandle;
+            OSDynLoad_Acquire("homebrew_memorymapping", &rplHandle);
+            OSDynLoad_FindExport(rplHandle, 1, "MEMAllocFromMappedMemoryEx", (void **) &functionAddress);
+        } else if (functionName.compare("MEMFreeToDefaultHeap") == 0) {
+            OSDynLoad_Module rplHandle;
+            OSDynLoad_Acquire("homebrew_memorymapping", &rplHandle);
+            OSDynLoad_FindExport(rplHandle, 1, "MEMFreeToMappedMemory", (void **) &functionAddress);
         }
 
-        uint32_t functionAddress = 0;
-        OSDynLoad_FindExport(rplHandle, isData, functionName.c_str(), (void **) &functionAddress);
+        if (functionAddress == 0) {
+            std::string rplName = cur.getImportRPLInformation().getName();
+            int32_t isData = cur.getImportRPLInformation().isData();
+            OSDynLoad_Module rplHandle = 0;
+            if (moduleHandleCache.count(rplName) > 0) {
+                rplHandle = moduleHandleCache[rplName];
+            } else {
+                OSDynLoad_Acquire(rplName.c_str(), &rplHandle);
+                moduleHandleCache[rplName] = rplHandle;
+            }
+            OSDynLoad_FindExport(rplHandle, isData, functionName.c_str(), (void **) &functionAddress);
+        }
+
         if (functionAddress == 0) {
             DEBUG_FUNCTION_LINE("Failed to find export for %s", functionName.c_str());
             return false;

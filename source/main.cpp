@@ -9,12 +9,11 @@
 #include "plugin/PluginMetaInformationFactory.h"
 #include "utils/utils.h"
 
-#include "common/module_defines.h"
 #include "PluginManagement.h"
 #include "globals.h"
 #include <whb/sdcard.h>
 #include <utils/exports.h>
-#include <wums.h>
+#include <wums/defines/module_defines.h>
 #include <plugin/PluginDataPersistence.h>
 
 WUMS_MODULE_EXPORT_NAME("homebrew_wupsbackend");
@@ -46,7 +45,6 @@ WUMS_APPLICATION_STARTS() {
         }
 
         memset((void *) &gLinkOnReload, 0, sizeof(gLinkOnReload));
-
         // If this address is 0, make sure the header common match the one
         // in the SetupPayload repo. (I know that's a bad idea)
         endAddress = (endAddress + 0x100) & 0xFFFFFF00;

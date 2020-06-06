@@ -22,7 +22,7 @@
 #include <vector>
 #include <map>
 #include <coreinit/memheap.h>
-#include "common/relocation_defines.h"
+#include <wums/defines/relocation_defines.h>
 #include "PluginInformation.h"
 #include "PluginContainer.h"
 #include "elfio/elfio.hpp"

@@ -19,9 +19,10 @@
 
 #include <stdint.h>
 #include <stddef.h>
-#include "dynamic_linking_defines.h"
-#include "relocation_defines.h"
+#include <wums/defines/dynamic_linking_defines.h>
 #include "replacement_defines.h"
+#include <wums/defines/export_defines.h>
+#include <wums/defines/relocation_defines.h>
 
 #ifdef __cplusplus
 extern "C" {

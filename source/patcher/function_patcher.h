@@ -20,8 +20,8 @@
 #define _FUNCTION_PATCHER_HOOKS_H_
 
 #include <coreinit/dynload.h>
-#include <common/replacement_defines.h>
 #include <common/plugin_defines.h>
+#include <common/replacement_defines.h>
 
 #ifdef __cplusplus
 extern "C" {

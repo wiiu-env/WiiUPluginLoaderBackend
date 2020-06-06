@@ -20,9 +20,9 @@ WUMS_MODULE_EXPORT_NAME("homebrew_wupsbackend");
 
 std::vector<PluginContainer> loadPlugins(const std::vector<PluginData> &pluginList, MEMHeapHandle heapHandle);
 
-#define gModuleData ((module_information_t *) (0x00880000))
-
-WUMS_INITIALIZE(){
+module_information_t *gModuleData = NULL;
+WUMS_INITIALIZE(args) {
+    gModuleData = args.module_information;
 }
 
 WUMS_APPLICATION_STARTS() {
@@ -33,7 +33,9 @@ WUMS_APPLICATION_STARTS() {
     }
     bool initNeeded = false;
     if (pluginDataHeap == NULL) {
-        DCFlushRange((void *) 0x00880000, sizeof(module_information_t));
+
+        DEBUG_FUNCTION_LINE("gModuleData = %08X", gModuleData);
+        DCFlushRange((void *) gModuleData, sizeof(module_information_t));
         uint32_t endAddress = 0;
         DEBUG_FUNCTION_LINE("Using %d modules", gModuleData->number_used_modules);
         for (int i = 0; i < gModuleData->number_used_modules; i++) {

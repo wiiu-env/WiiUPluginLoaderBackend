@@ -23,6 +23,12 @@ std::vector<PluginContainer> loadPlugins(const std::vector<PluginData> &pluginLi
 module_information_t *gModuleData = NULL;
 WUMS_INITIALIZE(args) {
     gModuleData = args.module_information;
+    if(gModuleData == NULL){
+        OSFatal("WUPS-Backend: Failed to get gModuleData pointer.");
+    }
+    if(gModuleData->version != MODULE_INFORMATION_VERSION){
+        OSFatal("WUPS-Backend: The module information struct version does not match.");
+    }
 }
 
 WUMS_APPLICATION_STARTS() {

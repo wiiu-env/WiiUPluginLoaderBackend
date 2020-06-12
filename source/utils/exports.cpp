@@ -186,7 +186,7 @@ int32_t WUPSGetLoadedPlugins(plugin_container_handle *io_handles, uint32_t buffe
             break;
         }
     }
-    if (*outSize) {
+    if (outSize != NULL) {
         *outSize = counter;
     }
     return 0;

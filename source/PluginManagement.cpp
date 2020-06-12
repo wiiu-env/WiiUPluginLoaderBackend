@@ -5,7 +5,6 @@
 #include <plugin/PluginMetaInformationFactory.h>
 #include <plugin/PluginInformationFactory.h>
 #include "patcher/hooks_patcher_static.h"
-#include "patcher/hooks_patcher.h"
 #include "PluginManagement.h"
 #include "hooks.h"
 
@@ -104,8 +103,7 @@ void PluginManagement::RestorePatches(plugin_information_t *pluginInformation, B
         new_RestoreInvidualInstructions(&(pluginInformation->plugin_data[plugin_index].info));
     }
     if (!pluginOnly) {
-        RestoreInvidualInstructions(method_hooks_hooks, method_hooks_size_hooks);
-        RestoreInvidualInstructions(method_hooks_hooks_static, method_hooks_size_hooks_static);
+        FunctionPatcherRestoreFunctions(method_hooks_hooks_static, method_hooks_size_hooks_static);
     }
 }
 
@@ -165,8 +163,7 @@ void PluginManagement::callInitHooks(plugin_information_t *pluginInformation) {
 
 void PluginManagement::PatchFunctionsAndCallHooks(plugin_information_t *gPluginInformation) {
     DEBUG_FUNCTION_LINE("Patching functions");
-    PatchInvidualMethodHooks(method_hooks_hooks_static, method_hooks_size_hooks_static, method_calls_hooks_static);
-    PatchInvidualMethodHooks(method_hooks_hooks, method_hooks_size_hooks, method_calls_hooks);
+    FunctionPatcherPatchFunction(method_hooks_hooks_static, method_hooks_size_hooks_static);
 
     DCFlushRange((void *) 0x00800000, 0x00800000);
     ICInvalidateRange((void *) 0x00800000, 0x00800000);

@@ -1,6 +1,5 @@
 #include "utils/logger.h"
-#include "utils/function_patcher.h"
-#include "hooks_patcher.h"
+#include "hooks_patcher_static.h"
 #include <malloc.h>
 #include <wups.h>
 #include <vpad/input.h>
@@ -11,7 +10,7 @@
 
 extern plugin_information_t *gPluginInformation;
 
-DECL(void, GX2WaitForVsync, void) {
+DECL_FUNCTION(void, GX2WaitForVsync, void) {
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_VSYNC);
     real_GX2WaitForVsync();
 }
@@ -58,7 +57,7 @@ void checkMagic(VPADStatus *buffer) {
     }
 }
 
-DECL(int32_t, VPADRead, int32_t chan, VPADStatus *buffer, uint32_t buffer_size, int32_t *error) {
+DECL_FUNCTION(int32_t, VPADRead, int32_t chan, VPADStatus *buffer, uint32_t buffer_size, int32_t *error) {
     int32_t result = real_VPADRead(chan, buffer, buffer_size, error);
 
     if (result > 0 && (buffer[0].hold == (VPAD_BUTTON_PLUS | VPAD_BUTTON_R | VPAD_BUTTON_L)) && vpadPressCooldown == 0 && OSIsHomeButtonMenuEnabled()) {
@@ -249,15 +248,7 @@ DECL_FUNCTION(void, GX2CopyColorBufferToScanBuffer, GX2ColorBuffer* cbuf, int32_
 
 static uint32_t lastData0 = 0;
 
-DECL(uint32_t, OSReceiveMessage, OSMessageQueue *queue, OSMessage *message, uint32_t flags) {
-    if (flags == 0x15154848) {
-        CallHook(gPluginInformation, WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND);
-        CallHook(gPluginInformation, WUPS_LOADER_HOOK_APPLICATION_END);
-        CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB);
-        //gInBackground = false;
-        //DCFlushRange(&gInBackground,4);
-        return false;
-    }
+DECL_FUNCTION(uint32_t, OSReceiveMessage, OSMessageQueue *queue, OSMessage *message, uint32_t flags) {
     int32_t res = real_OSReceiveMessage(queue, message, flags);
     if (queue == OSGetSystemMessageQueue()) {
         if (message != NULL && res) {
@@ -278,30 +269,26 @@ DECL(uint32_t, OSReceiveMessage, OSMessageQueue *queue, OSMessage *message, uint
     return res;
 }
 
-DECL(void, OSReleaseForeground) {
+DECL_FUNCTION(void, OSReleaseForeground) {
     if (OSGetCoreId() == 1) {
         CallHook(gPluginInformation, WUPS_LOADER_HOOK_RELEASE_FOREGROUND);
     }
     real_OSReleaseForeground();
 }
 
-hooks_magic_t method_hooks_hooks_static[] __attribute__((section(".data"))) = {
+function_replacement_data_t method_hooks_hooks_static[] __attribute__((section(".data"))) = {
         //MAKE_MAGIC(GX2SetTVBuffer,                  LIB_GX2,        STATIC_FUNCTION),
         //MAKE_MAGIC(GX2SetDRCBuffer,                 LIB_GX2,        STATIC_FUNCTION),
         //MAKE_MAGIC(GX2WaitForVsync,                 LIB_GX2,        STATIC_FUNCTION),
         //MAKE_MAGIC(GX2CopyColorBufferToScanBuffer,  LIB_GX2,        STATIC_FUNCTION),
         //MAKE_MAGIC(GX2SetContextState,              LIB_GX2,        STATIC_FUNCTION),
-        MAKE_MAGIC(VPADRead, LIB_VPAD, STATIC_FUNCTION),
+        REPLACE_FUNCTION(VPADRead, LIBRARY_VPAD, VPADRead),
         //MAKE_MAGIC(OSIsAddressValid,                LIB_CORE_INIT,  STATIC_FUNCTION),
         //MAKE_MAGIC(__OSPhysicalToEffectiveUncached, LIB_CORE_INIT,  STATIC_FUNCTION),
         //MAKE_MAGIC(__OSPhysicalToEffectiveCached,   LIB_CORE_INIT,  STATIC_FUNCTION),
         //MAKE_MAGIC(OSEffectiveToPhysical,           LIB_CORE_INIT,  STATIC_FUNCTION),
-        MAKE_MAGIC(OSReceiveMessage, LIB_CORE_INIT, STATIC_FUNCTION),
-        MAKE_MAGIC(OSReleaseForeground, LIB_CORE_INIT, STATIC_FUNCTION)
+        REPLACE_FUNCTION(OSReceiveMessage, LIBRARY_COREINIT, OSReceiveMessage),
+        REPLACE_FUNCTION(OSReleaseForeground, LIBRARY_COREINIT, OSReleaseForeground)
 };
 
-uint32_t method_hooks_size_hooks_static __attribute__((section(".data"))) = sizeof(method_hooks_hooks_static) / sizeof(hooks_magic_t);
-
-//! buffer to store our instructions needed for our replacements
-volatile uint32_t method_calls_hooks_static[sizeof(method_hooks_hooks_static) / sizeof(hooks_magic_t) * FUNCTION_PATCHER_METHOD_STORE_SIZE] __attribute__((section(".data")));
-
+uint32_t method_hooks_size_hooks_static __attribute__((section(".data"))) = sizeof(method_hooks_hooks_static) / sizeof(function_replacement_data_t);

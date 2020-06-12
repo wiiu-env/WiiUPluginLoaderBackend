@@ -137,7 +137,7 @@ int32_t WUPSGetPluginMetaInformationByBuffer(plugin_information *output, char *b
 }
 
 int32_t WUPSGetPluginDataForContainerHandles(const plugin_container_handle *plugin_container_handle_list, plugin_data_handle *plugin_data_list, uint32_t buffer_size) {
-    int res;
+    int res = ERROR_NONE;
     if (plugin_container_handle_list != NULL && buffer_size != 0) {
         for (uint32_t i = 0; i < buffer_size; i++) {
             auto handle = plugin_container_handle_list[i];

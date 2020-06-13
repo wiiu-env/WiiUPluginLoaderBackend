@@ -197,7 +197,7 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
                 wups_loader_entry_t *cur_function = &entries[j];
                 DEBUG_FUNCTION_LINE("Saving function \"%s\" of plugin . PA:%08X VA:%08X Library: %08X, target: %08X, call_addr: %08X", cur_function->_function.name/*,pluginData.getPluginInformation()->getName().c_str()*/,
                                     cur_function->_function.physical_address, cur_function->_function.virtual_address, cur_function->_function.library, cur_function->_function.target, (void *) cur_function->_function.call_addr);
-                FunctionData function_data((void *) cur_function->_function.physical_address, (void *) cur_function->_function.virtual_address, cur_function->_function.name, cur_function->_function.library,
+                FunctionData function_data((void *) cur_function->_function.physical_address, (void *) cur_function->_function.virtual_address, cur_function->_function.name, (function_replacement_library_type_t) cur_function->_function.library,
                                            (void *) cur_function->_function.target, (void *) cur_function->_function.call_addr);
                 pluginInfo.addFunctionData(function_data);
             }

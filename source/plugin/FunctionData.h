@@ -18,11 +18,12 @@
 
 #include <wups.h>
 #include <string>
+#include <function_patcher/fpatching_defines.h>
 
 class FunctionData {
 
 public:
-    FunctionData(void *paddress, void *vaddress, const std::string &name, wups_loader_library_type_t library, void *replaceAddr, void *replaceCall) {
+    FunctionData(void *paddress, void *vaddress, const std::string &name, function_replacement_library_type_t library, void *replaceAddr, void *replaceCall) {
         this->paddress = paddress;
         this->vaddress = vaddress;
         this->name = name;
@@ -39,7 +40,7 @@ public:
         return this->name;
     }
 
-    wups_loader_library_type_t getLibrary() const {
+    function_replacement_library_type_t getLibrary() const {
         return this->library;
     }
 
@@ -63,7 +64,7 @@ private:
     void *paddress = NULL;
     void *vaddress = NULL;
     std::string name;
-    wups_loader_library_type_t library;
+    function_replacement_library_type_t library;
     void *replaceAddr = NULL;
     void *replaceCall = NULL;
 };

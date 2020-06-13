@@ -20,9 +20,11 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <wums/defines/dynamic_linking_defines.h>
-#include "replacement_defines.h"
 #include <wums/defines/export_defines.h>
 #include <wums/defines/relocation_defines.h>
+
+#include <function_patcher/function_patching.h>
+#include <wups.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,11 +59,16 @@ struct plugin_meta_info_t {
     uint32_t                        size;
 };
 
+struct replacement_data_hook_t {
+    void * func_pointer = NULL;                                     /* [will be filled] */
+    wups_loader_hook_type_t type;                                   /* [will be filled] */
+};
+
 struct plugin_info_t {
     dyn_linking_relocation_entry_t  linking_entries[PLUGIN_DYN_LINK_RELOCATION_LIST_LENGTH];
     plugin_section_info_t           sectionInfos[MAXIMUM_PLUGIN_SECTION_LENGTH];
     uint32_t                        number_used_functions;                          // Number of used function. Maximum is MAXIMUM_FUNCTION_PER_PLUGIN
-    replacement_data_function_t     functions[MAXIMUM_FUNCTION_PER_PLUGIN];         // Replacement information for each function.
+    function_replacement_data_t     functions[MAXIMUM_FUNCTION_PER_PLUGIN];         // Replacement information for each function.
     uint32_t                        number_used_hooks;                              // Number of used hooks. Maximum is MAXIMUM_HOOKS_PER_PLUGIN
     replacement_data_hook_t         hooks[MAXIMUM_HOOKS_PER_PLUGIN];                // Replacement information for each function.
     uint8_t                         trampolinId;

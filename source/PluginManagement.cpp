@@ -1,9 +1,9 @@
 #include <plugin/PluginContainer.h>
 #include <utils/ElfUtils.h>
 #include <coreinit/cache.h>
-#include <patcher/function_patcher.h>
 #include <plugin/PluginMetaInformationFactory.h>
 #include <plugin/PluginInformationFactory.h>
+#include <coreinit/dynload.h>
 #include "patcher/hooks_patcher_static.h"
 #include "PluginManagement.h"
 #include "hooks.h"
@@ -100,7 +100,7 @@ void PluginManagement::callDeinitHooks(plugin_information_t *pluginInformation) 
 
 void PluginManagement::RestorePatches(plugin_information_t *pluginInformation, BOOL pluginOnly) {
     for (int32_t plugin_index = pluginInformation->number_used_plugins - 1; plugin_index >= 0; plugin_index--) {
-        new_RestoreInvidualInstructions(&(pluginInformation->plugin_data[plugin_index].info));
+        FunctionPatcherRestoreFunctions(pluginInformation->plugin_data[plugin_index].info.functions, pluginInformation->plugin_data[plugin_index].info.number_used_functions);
     }
     if (!pluginOnly) {
         FunctionPatcherRestoreFunctions(method_hooks_hooks_static, method_hooks_size_hooks_static);
@@ -149,7 +149,6 @@ void PluginManagement::unloadPlugins(plugin_information_t *gPluginInformation, M
     memset((void *) gPluginInformation, 0, sizeof(plugin_information_t));
 }
 
-
 void PluginManagement::callInitHooks(plugin_information_t *pluginInformation) {
     CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_VID_MEM);
     CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_KERNEL);
@@ -171,7 +170,7 @@ void PluginManagement::PatchFunctionsAndCallHooks(plugin_information_t *gPluginI
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB);
     for (int32_t plugin_index = 0; plugin_index < gPluginInformation->number_used_plugins; plugin_index++) {
         CallHookEx(gPluginInformation, WUPS_LOADER_HOOK_APPLICATION_START, plugin_index);
-        new_PatchInvidualMethodHooks(&(gPluginInformation->plugin_data[plugin_index].info));
+        FunctionPatcherPatchFunction(gPluginInformation->plugin_data[plugin_index].info.functions, gPluginInformation->plugin_data[plugin_index].info.number_used_functions);
         CallHookEx(gPluginInformation, WUPS_LOADER_HOOK_FUNCTIONS_PATCHED, plugin_index);
     }
 }

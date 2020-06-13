@@ -97,7 +97,7 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
     /* Store function replacement information */
     uint32_t i = 0;
     for (auto &curFunction : pluginInfo.getFunctionDataList()) {
-        replacement_data_function_t *function_data = &plugin_data->info.functions[i];
+        function_replacement_data_t *function_data = &plugin_data->info.functions[i];
         if (strlen(curFunction.getName().c_str()) > MAXIMUM_FUNCTION_NAME_LENGTH - 1) {
             DEBUG_FUNCTION_LINE("Could not add function \"%s\" for plugin \"%s\" function name is too long.", curFunction.getName().c_str(), pluginName.c_str());
             continue;
@@ -107,11 +107,13 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
 
         strncpy(function_data->function_name, curFunction.getName().c_str(), MAXIMUM_FUNCTION_NAME_LENGTH - 1);
 
-        function_data->library = curFunction.getLibrary();
+        function_data->VERSION = FUNCTION_REPLACEMENT_DATA_STRUCT_VERSION;
+        function_data->library = (function_replacement_library_type_t) curFunction.getLibrary();
         function_data->replaceAddr = (uint32_t) curFunction.getReplaceAddress();
         function_data->replaceCall = (uint32_t) curFunction.getReplaceCall();
         function_data->physicalAddr = (uint32_t) curFunction.getPhysicalAddress();
         function_data->virtualAddr = (uint32_t) curFunction.getVirtualAddress();
+        function_data->targetProcess = FP_TARGET_PROCESS_GAME_AND_MENU;
 
         plugin_data->info.number_used_functions++;
         i++;
@@ -247,8 +249,8 @@ std::vector<PluginContainer> PluginContainerPersistence::loadPlugins(plugin_info
         }
 
         for (uint32_t j = 0; j < functionReplaceCount; j++) {
-            replacement_data_function_t *entry = &(plugin_data->info.functions[j]);
-            FunctionData func((void *) entry->physicalAddr, (void *) entry->virtualAddr, entry->function_name, entry->library, (void *) entry->replaceAddr, (void *) entry->replaceCall);
+            function_replacement_data_t *entry = &(plugin_data->info.functions[j]);
+            FunctionData func((void *) entry->physicalAddr, (void *) entry->virtualAddr, entry->function_name, (function_replacement_library_type_t) entry->library, (void *) entry->replaceAddr, (void *) entry->replaceCall);
             pluginInformation.addFunctionData(func);
         }
 

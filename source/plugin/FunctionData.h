@@ -23,11 +23,12 @@
 class FunctionData {
 
 public:
-    FunctionData(void *paddress, void *vaddress, const std::string &name, function_replacement_library_type_t library, void *replaceAddr, void *replaceCall) {
+    FunctionData(void *paddress, void *vaddress, const std::string &name, function_replacement_library_type_t library, void *replaceAddr, void *replaceCall, FunctionPatcherTargetProcess targetProcess) {
         this->paddress = paddress;
         this->vaddress = vaddress;
         this->name = name;
         this->library = library;
+        this->targetProcess = targetProcess;
         this->replaceAddr = replaceAddr;
         this->replaceCall = replaceCall;
     }
@@ -60,11 +61,16 @@ public:
         return replaceCall;
     }
 
+    const FunctionPatcherTargetProcess getTargetProcess() const {
+        return targetProcess;
+    }
+
 private:
     void *paddress = NULL;
     void *vaddress = NULL;
     std::string name;
     function_replacement_library_type_t library;
+    FunctionPatcherTargetProcess targetProcess;
     void *replaceAddr = NULL;
     void *replaceCall = NULL;
 };

@@ -113,7 +113,7 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
         function_data->replaceCall = (uint32_t) curFunction.getReplaceCall();
         function_data->physicalAddr = (uint32_t) curFunction.getPhysicalAddress();
         function_data->virtualAddr = (uint32_t) curFunction.getVirtualAddress();
-        function_data->targetProcess = FP_TARGET_PROCESS_GAME_AND_MENU;
+        function_data->targetProcess = curFunction.getTargetProcess();
 
         plugin_data->info.number_used_functions++;
         i++;
@@ -250,7 +250,7 @@ std::vector<PluginContainer> PluginContainerPersistence::loadPlugins(plugin_info
 
         for (uint32_t j = 0; j < functionReplaceCount; j++) {
             function_replacement_data_t *entry = &(plugin_data->info.functions[j]);
-            FunctionData func((void *) entry->physicalAddr, (void *) entry->virtualAddr, entry->function_name, (function_replacement_library_type_t) entry->library, (void *) entry->replaceAddr, (void *) entry->replaceCall);
+            FunctionData func((void *) entry->physicalAddr, (void *) entry->virtualAddr, entry->function_name, (function_replacement_library_type_t) entry->library, (void *) entry->replaceAddr, (void *) entry->replaceCall, entry->targetProcess);
             pluginInformation.addFunctionData(func);
         }
 

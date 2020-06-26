@@ -29,7 +29,7 @@ DEVKITPPC=/opt/devkitpro/devkitPPC
 ```
 
 Also make sure to install [wut](https://github.com/decaf-emu/wut), [WiiUPluginSystem](https://github.com/wiiu-env/WiiUPluginSystem) and the [WiiUModuleSystem](https://github.com/wiiu-env/WiiUModuleSystem).
-It requires the [KernelModule](https://github.com/wiiu-env/KernelModule) to be running at the same time and it's linking aginst [libkernel](https://github.com/wiiu-env/libkernel).
+It requires the [FunctionPatcherModule](https://github.com/wiiu-env/FunctionPatcherModule) to be running at the same time and it's linking aginst [libfunctionpatcher](https://github.com/wiiu-env/libfunctionpatcher).
 
 # Credits
 - Maschell

@@ -31,6 +31,21 @@ DEVKITPPC=/opt/devkitpro/devkitPPC
 Also make sure to install [wut](https://github.com/decaf-emu/wut), [WiiUPluginSystem](https://github.com/wiiu-env/WiiUPluginSystem) and the [WiiUModuleSystem](https://github.com/wiiu-env/WiiUModuleSystem).
 It requires the [FunctionPatcherModule](https://github.com/wiiu-env/FunctionPatcherModule) to be running at the same time and it's linking aginst [libfunctionpatcher](https://github.com/wiiu-env/libfunctionpatcher).
 
+## Building using the Dockerfile
+
+It's possible to use a docker image for building. This way you don't need anything installed on your host system.
+
+```
+# Build docker image (only needed once)
+docker build . -t wiiupluginloaderbackend-builder
+
+# make 
+docker run -it --rm -v ${PWD}:/project wiiupluginloaderbackend-builder make
+
+# make clean
+docker run -it --rm -v ${PWD}:/project wiiupluginloaderbackend-builder make clean
+```
+
 # Credits
 - Maschell
 - orboditilt

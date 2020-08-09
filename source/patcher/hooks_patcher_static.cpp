@@ -279,7 +279,7 @@ DECL_FUNCTION(void, OSReleaseForeground) {
 function_replacement_data_t method_hooks_hooks_static[] __attribute__((section(".data"))) = {
         //MAKE_MAGIC(GX2SetTVBuffer,                  LIB_GX2,        STATIC_FUNCTION),
         //MAKE_MAGIC(GX2SetDRCBuffer,                 LIB_GX2,        STATIC_FUNCTION),
-        //MAKE_MAGIC(GX2WaitForVsync,                 LIB_GX2,        STATIC_FUNCTION),
+        REPLACE_FUNCTION(GX2WaitForVsync,             LIBRARY_GX2,        GX2WaitForVsync),
         //MAKE_MAGIC(GX2CopyColorBufferToScanBuffer,  LIB_GX2,        STATIC_FUNCTION),
         //MAKE_MAGIC(GX2SetContextState,              LIB_GX2,        STATIC_FUNCTION),
         REPLACE_FUNCTION(VPADRead, LIBRARY_VPAD, VPADRead),

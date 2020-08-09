@@ -48,7 +48,9 @@ static const char **hook_names = (const char *[]) {
         "WUPS_LOADER_HOOK_APPLET_START"};
 
 void CallHookEx(plugin_information_t *pluginInformation, wups_loader_hook_type_t hook_type, int32_t plugin_index_needed) {
-    DEBUG_FUNCTION_LINE("Calling hook of type %s [%d]", hook_names[hook_type], hook_type);
+    if(hook_type != WUPS_LOADER_HOOK_VSYNC) {
+        DEBUG_FUNCTION_LINE("Calling hook of type %s [%d]", hook_names[hook_type], hook_type);
+    }
     for (int32_t plugin_index = 0; plugin_index < pluginInformation->number_used_plugins; plugin_index++) {
         plugin_information_single_t *plugin_data = &pluginInformation->plugin_data[plugin_index];
         if (plugin_index_needed != -1 && plugin_index_needed != plugin_index) {
@@ -60,7 +62,9 @@ void CallHookEx(plugin_information_t *pluginInformation, wups_loader_hook_type_t
         for (uint32_t j = 0; j < plugin_data->info.number_used_hooks; j++) {
             replacement_data_hook_t *hook_data = &plugin_data->info.hooks[j];
             if (hook_data->type == hook_type) {
-                DEBUG_FUNCTION_LINE("Calling hook of type %s for plugin %s [%d]", hook_names[hook_data->type], plugin_data->meta.name, hook_type);
+                if(hook_data->type != WUPS_LOADER_HOOK_VSYNC){
+                    DEBUG_FUNCTION_LINE("Calling hook of type %s for plugin %s [%d]", hook_names[hook_data->type], plugin_data->meta.name, hook_type);
+                }
                 void *func_ptr = hook_data->func_pointer;
                 if (func_ptr != NULL) {
                     //DEBUG_FUNCTION_LINE("function pointer is %08x\n",func_ptr);
@@ -94,6 +98,8 @@ void CallHookEx(plugin_information_t *pluginInformation, wups_loader_hook_type_t
                     } else if (hook_type == WUPS_LOADER_HOOK_RELEASE_FOREGROUND) {
                         ((void (*)(void)) ((uint32_t *) func_ptr))();
                     } else if (hook_type == WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND) {
+                        ((void (*)(void)) ((uint32_t *) func_ptr))();
+                    } else if (hook_type == WUPS_LOADER_HOOK_VSYNC) {
                         ((void (*)(void)) ((uint32_t *) func_ptr))();
                     } else {
                         DEBUG_FUNCTION_LINE("######################################");

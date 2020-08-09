@@ -91,6 +91,10 @@ void CallHookEx(plugin_information_t *pluginInformation, wups_loader_hook_type_t
                         ((void (*)(void)) ((uint32_t *) func_ptr))();
                     } else if (hook_type == WUPS_LOADER_HOOK_FINI_WUT_STDCPP) {
                         ((void (*)(void)) ((uint32_t *) func_ptr))();
+                    } else if (hook_type == WUPS_LOADER_HOOK_RELEASE_FOREGROUND) {
+                        ((void (*)(void)) ((uint32_t *) func_ptr))();
+                    } else if (hook_type == WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND) {
+                        ((void (*)(void)) ((uint32_t *) func_ptr))();
                     } else {
                         DEBUG_FUNCTION_LINE("######################################");
                         DEBUG_FUNCTION_LINE("Hook is not implemented %s [%d]", hook_names[hook_type], hook_type);

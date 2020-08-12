@@ -1,7 +1,7 @@
-FROM wiiuenv/devkitppc:20200625
+FROM wiiuenv/devkitppc:20200810
 
-COPY --from=wiiuenv/wiiumodulesystem:20200626 /artifacts $DEVKITPRO
-COPY --from=wiiuenv/wiiupluginsystem:20200626 /artifacts $DEVKITPRO
-COPY --from=wiiuenv/libfunctionpatcher:20200626 /artifacts $DEVKITPRO
+COPY --from=wiiuenv/wiiumodulesystem:20200812 /artifacts $DEVKITPRO
+COPY --from=wiiuenv/wiiupluginsystem:20200812 /artifacts $DEVKITPRO
+COPY --from=wiiuenv/libfunctionpatcher:20200812 /artifacts $DEVKITPRO
 
 WORKDIR project

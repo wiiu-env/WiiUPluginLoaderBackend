@@ -1,0 +1,16 @@
+name: Build binary
+
+on:
+  push:
+    branches-ignore:
+      - master
+    
+jobs:
+  build-binary:
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: build binary
+      run: |
+        docker build . -t builder
+        docker run --rm -v ${PWD}:/project builder make

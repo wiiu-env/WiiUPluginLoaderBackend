@@ -164,6 +164,18 @@ void PluginManagement::callInitHooks(plugin_information_t *pluginInformation) {
     DEBUG_FUNCTION_LINE("Done calling init hooks");
 }
 
+void module_callback(OSDynLoad_Module module,
+                     void *userContext,
+                     OSDynLoad_NotifyReason reason,
+                     OSDynLoad_NotifyData *infos) {
+    if (reason == OS_DYNLOAD_NOTIFY_LOADED) {
+        auto *gPluginInformation = (plugin_information_t *) userContext;
+        for (int32_t plugin_index = 0; plugin_index < gPluginInformation->number_used_plugins; plugin_index++) {
+            FunctionPatcherPatchFunction(gPluginInformation->plugin_data[plugin_index].info.functions, gPluginInformation->plugin_data[plugin_index].info.number_used_functions);
+        }
+    }
+}
+
 void PluginManagement::PatchFunctionsAndCallHooks(plugin_information_t *gPluginInformation) {
     DEBUG_FUNCTION_LINE("Patching functions");
     FunctionPatcherPatchFunction(method_hooks_hooks_static, method_hooks_size_hooks_static);
@@ -177,6 +189,7 @@ void PluginManagement::PatchFunctionsAndCallHooks(plugin_information_t *gPluginI
         FunctionPatcherPatchFunction(gPluginInformation->plugin_data[plugin_index].info.functions, gPluginInformation->plugin_data[plugin_index].info.number_used_functions);
         CallHookEx(gPluginInformation, WUPS_LOADER_HOOK_FUNCTIONS_PATCHED, plugin_index);
     }
+    OSDynLoad_AddNotifyCallback(module_callback, gPluginInformation);
 }
 
 std::vector<PluginContainer> PluginManagement::loadPlugins(const std::vector<PluginData> &pluginList, MEMHeapHandle heapHandle, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length) {

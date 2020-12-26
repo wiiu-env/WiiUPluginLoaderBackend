@@ -258,6 +258,7 @@ DECL_FUNCTION(uint32_t, OSReceiveMessage, OSMessageQueue *queue, OSMessage *mess
                 } else if (message->args[0] == 0xD1E0D1E0) {
                     CallHook(gPluginInformation, WUPS_LOADER_HOOK_APPLICATION_END);
                     CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB);
+                    __fini_wut();
                     //gInBackground = false;
                     //DCFlushRange(&gInBackground,4);
                     //unmount_sd_fat("sd");

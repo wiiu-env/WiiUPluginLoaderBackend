@@ -24,64 +24,63 @@ class PluginMetaInformation {
 public:
     PluginMetaInformation(const PluginMetaInformation &other);
 
-    const std::string getName() const {
+    [[nodiscard]] std::string getName() const {
         return name;
     }
 
-    const std::string getAuthor() const {
+    [[nodiscard]] std::string getAuthor() const {
         return this->author;
     }
 
-    const std::string getVersion() const {
+    [[nodiscard]] std::string getVersion() const {
         return this->version;
     }
 
-    const std::string getLicense() const {
+    [[nodiscard]] std::string getLicense() const {
         return this->license;
     }
 
-    const std::string getBuildTimestamp() const {
+    [[nodiscard]] std::string getBuildTimestamp() const {
         return this->buildtimestamp;
     }
 
-    const std::string getDescription() const {
+    [[nodiscard]] std::string getDescription() const {
         return this->description;
     }
 
-    const size_t getSize() const {
+    [[nodiscard]] size_t getSize() const {
         return this->size;
     }
 
 private:
-    PluginMetaInformation() {
+    PluginMetaInformation() = default;
+
+    void setName(const std::string &_name) {
+        this->name = _name;
     }
 
-    void setName(const std::string &name) {
-        this->name = name;
+    void setAuthor(const std::string &_author) {
+        this->author = _author;
     }
 
-    void setAuthor(const std::string &author) {
-        this->author = author;
+    void setVersion(const std::string &_version) {
+        this->version = _version;
     }
 
-    void setVersion(const std::string &version) {
-        this->version = version;
+    void setLicense(const std::string &_license) {
+        this->license = _license;
     }
 
-    void setLicense(const std::string &license) {
-        this->license = license;
+    void setBuildTimestamp(const std::string &_buildtimestamp) {
+        this->buildtimestamp = _buildtimestamp;
     }
 
-    void setBuildTimestamp(const std::string &buildtimestamp) {
-        this->buildtimestamp = buildtimestamp;
+    void setDescription(const std::string &_description) {
+        this->description = _description;
     }
 
-    void setDescription(const std::string &description) {
-        this->description = description;
-    }
-
-    void setSize(size_t size) {
-        this->size = size;
+    void setSize(size_t _size) {
+        this->size = _size;
     }
 
     std::string name;
@@ -90,7 +89,7 @@ private:
     std::string license;
     std::string buildtimestamp;
     std::string description;
-    size_t size;
+    size_t size{};
 
     friend class PluginMetaInformationFactory;
 

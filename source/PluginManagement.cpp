@@ -1,10 +1,14 @@
-#include <plugin/PluginContainer.h>
-#include <utils/ElfUtils.h>
 #include <coreinit/cache.h>
-#include <plugin/PluginMetaInformationFactory.h>
-#include <plugin/PluginInformationFactory.h>
 #include <coreinit/dynload.h>
+#include <coreinit/memdefaultheap.h>
+
 #include "patcher/hooks_patcher_static.h"
+#include "plugin/PluginContainer.h"
+#include "plugin/PluginMetaInformationFactory.h"
+#include "plugin/PluginInformationFactory.h"
+
+#include "utils/logger.h"
+#include "utils/ElfUtils.h"
 #include "PluginManagement.h"
 #include "hooks.h"
 
@@ -12,17 +16,17 @@ bool PluginManagement::doRelocation(const std::vector<RelocationData> &relocData
     std::map<std::string, OSDynLoad_Module> moduleHandleCache;
     for (auto const &cur : relocData) {
         uint32_t functionAddress = 0;
-        std::string functionName = cur.getName();
+        const std::string &functionName = cur.getName();
 
-        if (functionName.compare("MEMAllocFromDefaultHeap") == 0) {
+        if (functionName == "MEMAllocFromDefaultHeap") {
             OSDynLoad_Module rplHandle;
             OSDynLoad_Acquire("homebrew_memorymapping", &rplHandle);
             OSDynLoad_FindExport(rplHandle, 1, "MEMAllocFromMappedMemory", (void **) &functionAddress);
-        } else if (functionName.compare("MEMAllocFromDefaultHeapEx") == 0) {
+        } else if (functionName == "MEMAllocFromDefaultHeapEx") {
             OSDynLoad_Module rplHandle;
             OSDynLoad_Acquire("homebrew_memorymapping", &rplHandle);
             OSDynLoad_FindExport(rplHandle, 1, "MEMAllocFromMappedMemoryEx", (void **) &functionAddress);
-        } else if (functionName.compare("MEMFreeToDefaultHeap") == 0) {
+        } else if (functionName == "MEMFreeToDefaultHeap") {
             OSDynLoad_Module rplHandle;
             OSDynLoad_Acquire("homebrew_memorymapping", &rplHandle);
             OSDynLoad_FindExport(rplHandle, 1, "MEMFreeToMappedMemory", (void **) &functionAddress);
@@ -31,7 +35,7 @@ bool PluginManagement::doRelocation(const std::vector<RelocationData> &relocData
         if (functionAddress == 0) {
             std::string rplName = cur.getImportRPLInformation().getName();
             int32_t isData = cur.getImportRPLInformation().isData();
-            OSDynLoad_Module rplHandle = 0;
+            OSDynLoad_Module rplHandle = nullptr;
             if (moduleHandleCache.count(rplName) > 0) {
                 rplHandle = moduleHandleCache[rplName];
             } else {
@@ -138,10 +142,10 @@ void PluginManagement::unloadPlugins(plugin_information_t *gPluginInformation, M
             DEBUG_FUNCTION_LINE("Freed %08X", plugin->info.allocatedDataMemoryAddress);
         }
 
-        for (uint32_t i = 0; i < DYN_LINK_TRAMPOLIN_LIST_LENGTH; i++) {
-            if (gPluginInformation->trampolines[i].id == plugin->info.trampolinId) {
-                gPluginInformation->trampolines[i].id = 0;
-                gPluginInformation->trampolines[i].status = RELOC_TRAMP_FREE;
+        for (auto &trampoline : gPluginInformation->trampolines) {
+            if (trampoline.id == plugin->info.trampolinId) {
+                trampoline.id = 0;
+                trampoline.status = RELOC_TRAMP_FREE;
             }
         }
     }

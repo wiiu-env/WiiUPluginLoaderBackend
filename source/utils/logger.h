@@ -1,6 +1,4 @@
-#ifndef __LOGGER_H_
-#define __LOGGER_H_
-
+#pragma once
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -25,6 +23,4 @@ extern "C" {
 
 #ifdef __cplusplus
 }
-#endif
-
 #endif

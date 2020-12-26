@@ -18,24 +18,23 @@
 #pragma once
 
 #include <string>
-#include "utils/logger.h"
+#include "../utils/logger.h"
 
 class ImportRPLInformation {
 
 public:
-    ImportRPLInformation(std::string name, bool isData = false) {
+    explicit ImportRPLInformation(std::string name, bool isData = false) {
         this->name = name;
         this->_isData = isData;
     }
 
-    ~ImportRPLInformation() {
-    }
+    ~ImportRPLInformation() = default;
 
-    std::string getName() const {
+    [[nodiscard]] std::string getName() const {
         return name;
     }
 
-    bool isData() const {
+    [[nodiscard]] bool isData() const {
         return _isData;
     }
 

@@ -22,7 +22,7 @@
 #include <malloc.h>
 #include <coreinit/memexpheap.h>
 
-#include "elfio/elfio.hpp"
+#include "../elfio/elfio.hpp"
 
 using namespace ELFIO;
 
@@ -33,28 +33,23 @@ enum eMemoryTypes {
 
 class PluginData {
 public:
-    ~PluginData() {
-    }
+    ~PluginData() = default;
 
     void freeMemory();
 
     PluginData(const PluginData &obj);
 
-    PluginData() {
-    }
+    PluginData() = default;
 
-    void *buffer = NULL;
-    MEMHeapHandle heapHandle;
+    void *buffer = nullptr;
+    MEMHeapHandle heapHandle{};
     eMemoryTypes memoryType;
     size_t length = 0;
 
 private:
-    PluginData(std::vector<uint8_t> buffer);
+    explicit PluginData(const std::vector<uint8_t> &buffer);
 
-    PluginData(std::vector<uint8_t> input, MEMHeapHandle heapHandle, eMemoryTypes memoryType);
-
-    static std::optional<PluginData> createFromExistingData(const void *buffer, MEMHeapHandle heapHandle, eMemoryTypes memoryType, const size_t length);
-
+    PluginData(const std::vector<uint8_t>& input, MEMHeapHandle heapHandle, eMemoryTypes memoryType);
 
     friend class PluginDataFactory;
 

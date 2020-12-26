@@ -6,7 +6,7 @@
 #include "PluginContainerPersistence.h"
 #include "PluginDataPersistence.h"
 #include "DynamicLinkingHelper.h"
-#include "common/plugin_defines.h"
+#include "../common/plugin_defines.h"
 #include "PluginInformation.h"
 #include "RelocationData.h"
 
@@ -28,7 +28,7 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
     //plugin_data = {};
     memset((void *) plugin_data, 0, sizeof(plugin_information_single_t));
 
-    auto pluginMetaInfo = plugin.getMetaInformation();
+    const auto &pluginMetaInfo = plugin.getMetaInformation();
     auto plugin_meta_data = &plugin_data->meta;
 
     if (pluginMetaInfo.getName().size() >= MAXIMUM_PLUGIN_META_FIELD_LENGTH) {
@@ -180,7 +180,7 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
 
 std::vector<PluginContainer> PluginContainerPersistence::loadPlugins(plugin_information_t *pluginInformation) {
     std::vector<PluginContainer> result;
-    if (pluginInformation == NULL) {
+    if (pluginInformation == nullptr) {
         DEBUG_FUNCTION_LINE("pluginInformation == NULL");
         return result;
     }
@@ -211,19 +211,20 @@ std::vector<PluginContainer> PluginContainerPersistence::loadPlugins(plugin_info
 
         PluginData pluginData = PluginDataPersistence::load(data);
 
-        PluginInformation pluginInformation;
+        PluginInformation curPluginInformation;
 
-        pluginInformation.setTrampolinId(plugin_data->info.trampolinId);
-        pluginInformation.allocatedTextMemoryAddress = plugin_data->info.allocatedTextMemoryAddress;
-        pluginInformation.allocatedDataMemoryAddress = plugin_data->info.allocatedDataMemoryAddress;
+        curPluginInformation.setTrampolinId(plugin_data->info.trampolinId);
+        curPluginInformation.allocatedTextMemoryAddress = plugin_data->info.allocatedTextMemoryAddress;
+        curPluginInformation.allocatedDataMemoryAddress = plugin_data->info.allocatedDataMemoryAddress;
 
-        for (uint32_t i = 0; i < MAXIMUM_PLUGIN_SECTION_LENGTH; i++) {
-            plugin_section_info_t *sectionInfo = &(plugin_data->info.sectionInfos[i]);
+        for (auto & curItem : plugin_data->info.sectionInfos) {
+            plugin_section_info_t *sectionInfo = &curItem;
             if (sectionInfo->addr == 0 && sectionInfo->size == 0) {
                 continue;
             }
             DEBUG_FUNCTION_LINE("Add SectionInfo %s", sectionInfo->name);
-            pluginInformation.addSectionInfo(SectionInfo(sectionInfo->name, sectionInfo->addr, sectionInfo->size));
+            std::string name(sectionInfo->name);
+            curPluginInformation.addSectionInfo(SectionInfo(name, sectionInfo->addr, sectionInfo->size));
         }
 
         /* load hook data */
@@ -237,7 +238,7 @@ std::vector<PluginContainer> PluginContainerPersistence::loadPlugins(plugin_info
         for (uint32_t j = 0; j < hookCount; j++) {
             replacement_data_hook_t *hook_entry = &(plugin_data->info.hooks[j]);
             HookData curHook(hook_entry->func_pointer, hook_entry->type);
-            pluginInformation.addHookData(curHook);
+            curPluginInformation.addHookData(curHook);
         }
 
         /* load function replacement data */
@@ -251,43 +252,44 @@ std::vector<PluginContainer> PluginContainerPersistence::loadPlugins(plugin_info
         for (uint32_t j = 0; j < functionReplaceCount; j++) {
             function_replacement_data_t *entry = &(plugin_data->info.functions[j]);
             FunctionData func((void *) entry->physicalAddr, (void *) entry->virtualAddr, entry->function_name, (function_replacement_library_type_t) entry->library, (void *) entry->replaceAddr, (void *) entry->replaceCall, entry->targetProcess);
-            pluginInformation.addFunctionData(func);
+            curPluginInformation.addFunctionData(func);
         }
 
         /* load relocation data */
-        for (uint32_t j = 0; j < PLUGIN_DYN_LINK_RELOCATION_LIST_LENGTH; j++) {
-            dyn_linking_relocation_entry_t *linking_entry = &(plugin_data->info.linking_entries[j]);
-            if (linking_entry->destination == NULL) {
+        for (auto & linking_entrie : plugin_data->info.linking_entries) {
+            dyn_linking_relocation_entry_t *linking_entry = &linking_entrie;
+            if (linking_entry->destination == nullptr) {
                 break;
             }
             dyn_linking_import_t *importEntry = linking_entry->importEntry;
-            if (importEntry == NULL) {
+            if (importEntry == nullptr) {
                 DEBUG_FUNCTION_LINE("importEntry was NULL, skipping relocation entry");
                 continue;
             }
-            if (importEntry->importName == NULL) {
+            if (importEntry->importName == nullptr) {
                 DEBUG_FUNCTION_LINE("importEntry->importName was NULL, skipping relocation entry");
                 continue;
             }
             dyn_linking_function_t *functionEntry = linking_entry->functionEntry;
 
-            if (functionEntry == NULL) {
+            if (functionEntry == nullptr) {
                 DEBUG_FUNCTION_LINE("functionEntry was NULL, skipping relocation entry");
                 continue;
             }
-            if (functionEntry->functionName == NULL) {
+            if (functionEntry->functionName == nullptr) {
                 DEBUG_FUNCTION_LINE("functionEntry->functionName was NULL, skipping relocation entry");
                 continue;
             }
             ImportRPLInformation rplInfo(importEntry->importName, importEntry->isData);
-            RelocationData reloc(linking_entry->type, linking_entry->offset, linking_entry->addend, linking_entry->destination, functionEntry->functionName, rplInfo);
-            pluginInformation.addRelocationData(reloc);
+            std::string functionName(functionEntry->functionName);
+            RelocationData reloc(linking_entry->type, linking_entry->offset, linking_entry->addend, linking_entry->destination, functionName, rplInfo);
+            curPluginInformation.addRelocationData(reloc);
         }
 
         PluginContainer container;
         container.setMetaInformation(metaInformation);
         container.setPluginData(pluginData);
-        container.setPluginInformation(pluginInformation);
+        container.setPluginInformation(curPluginInformation);
         result.push_back(container);
     }
     return result;

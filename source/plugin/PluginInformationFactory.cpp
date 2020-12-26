@@ -1,5 +1,5 @@
 /****************************************************************************
- * Copyright (C) 2018 Maschell
+ * Copyright (C) 2018-2020 Maschell
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -26,20 +26,20 @@
 #include "PluginInformationFactory.h"
 #include "HookData.h"
 #include "SectionInfo.h"
-#include "elfio/elfio.hpp"
-#include "utils/utils.h"
-#include "utils/ElfUtils.h"
-#include "utils/StringTools.h"
+#include "../elfio/elfio.hpp"
+#include "../utils/utils.h"
+#include "../utils/ElfUtils.h"
+#include "../utils/StringTools.h"
 
 using namespace ELFIO;
 
 std::optional<PluginInformation> PluginInformationFactory::load(const PluginData &pluginData, MEMHeapHandle heapHandle, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length, uint8_t trampolinId) {
-    if(pluginData.buffer == NULL){
+    if (pluginData.buffer == nullptr) {
         DEBUG_FUNCTION_LINE("Buffer was NULL");
         return std::nullopt;
     }
     elfio reader;
-    if (! reader.load((char*) pluginData.buffer, pluginData.length)) {
+    if (!reader.load((char *) pluginData.buffer, pluginData.length)) {
         DEBUG_FUNCTION_LINE("Can't process PluginData in elfio");
         return std::nullopt;
     }
@@ -47,7 +47,7 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
     PluginInformation pluginInfo;
 
     uint32_t sec_num = reader.sections.size();
-    uint8_t **destinations = (uint8_t **) malloc(sizeof(uint8_t *) * sec_num);
+    auto **destinations = (uint8_t **) malloc(sizeof(uint8_t *) * sec_num);
 
     uint32_t totalSize = 0;
 
@@ -74,14 +74,14 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
         }
     }
     void *text_data = MEMAllocFromExpHeapEx(heapHandle, text_size, 0x1000);
-    if (text_data == NULL) {
+    if (text_data == nullptr) {
         DEBUG_FUNCTION_LINE("Failed to alloc memory for the .text section (%d bytes)\n", text_size);
 
         return std::nullopt;
     }
     DEBUG_FUNCTION_LINE("Allocated %d kb from ExpHeap", text_size / 1024);
     void *data_data = MEMAllocFromExpHeapEx(heapHandle, data_size, 0x1000);
-    if (data_data == NULL) {
+    if (data_data == nullptr) {
         DEBUG_FUNCTION_LINE("Failed to alloc memory for the .data section (%d bytes)\n", data_size);
 
         MEMFreeToExpHeap(heapHandle, text_data);
@@ -133,7 +133,8 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
                 memcpy((void *) destination, p, sectionSize);
             }
 
-            pluginInfo.addSectionInfo(SectionInfo(psec->get_name(), destination, sectionSize));
+            std::string sectionName(psec->get_name());
+            pluginInfo.addSectionInfo(SectionInfo(sectionName, destination, sectionSize));
             DEBUG_FUNCTION_LINE("Saved %s section info. Location: %08X size: %08X", psec->get_name().c_str(), destination, sectionSize);
 
             totalSize += sectionSize;
@@ -177,8 +178,8 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
     std::optional<SectionInfo> secInfo = pluginInfo.getSectionInfo(".wups.hooks");
     if (secInfo && secInfo->getSize() > 0) {
         size_t entries_count = secInfo->getSize() / sizeof(wups_loader_hook_t);
-        wups_loader_hook_t *entries = (wups_loader_hook_t *) secInfo->getAddress();
-        if (entries != NULL) {
+        auto *entries = (wups_loader_hook_t *) secInfo->getAddress();
+        if (entries != nullptr) {
             for (size_t j = 0; j < entries_count; j++) {
                 wups_loader_hook_t *hook = &entries[j];
                 DEBUG_FUNCTION_LINE("Saving hook of plugin Type: %08X, target: %08X"/*,pluginData.getPluginInformation()->getName().c_str()*/, hook->type, (void *) hook->target);
@@ -191,7 +192,7 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
     secInfo = pluginInfo.getSectionInfo(".wups.load");
     if (secInfo && secInfo->getSize() > 0) {
         size_t entries_count = secInfo->getSize() / sizeof(wups_loader_entry_t);
-        wups_loader_entry_t *entries = (wups_loader_entry_t *) secInfo->getAddress();
+        auto *entries = (wups_loader_entry_t *) secInfo->getAddress();
         if (entries != NULL) {
             for (size_t j = 0; j < entries_count; j++) {
                 wups_loader_entry_t *cur_function = &entries[j];

@@ -31,17 +31,15 @@ class PluginInformation {
 public:
     PluginInformation(const PluginInformation &other);
 
-    PluginInformation() {
-    }
+    PluginInformation() = default;
 
-    virtual ~PluginInformation() {
-    }
+    virtual ~PluginInformation() = default;
 
     void addHookData(const HookData &hook_data) {
         hook_data_list.push_back(hook_data);
     }
 
-    const std::vector<HookData> &getHookDataList() const {
+    [[nodiscard]] const std::vector<HookData> &getHookDataList() const {
         return hook_data_list;
     }
 
@@ -49,7 +47,7 @@ public:
         function_data_list.push_back(function_data);
     }
 
-    const std::vector<FunctionData> &getFunctionDataList() const {
+    [[nodiscard]] const std::vector<FunctionData> &getFunctionDataList() const {
         return function_data_list;
     }
 
@@ -57,7 +55,7 @@ public:
         relocation_data_list.push_back(relocation_data);
     }
 
-    const std::vector<RelocationData> &getRelocationDataList() const {
+    [[nodiscard]] const std::vector<RelocationData> &getRelocationDataList() const {
         return relocation_data_list;
     }
 
@@ -65,27 +63,26 @@ public:
         section_info_list[sectionInfo.getName()] = sectionInfo;
     }
 
-    const std::map<std::string, SectionInfo> &getSectionInfoList() const {
+    [[nodiscard]] const std::map<std::string, SectionInfo> &getSectionInfoList() const {
         return section_info_list;
     }
 
-    std::optional<SectionInfo> getSectionInfo(const std::string &sectionName) const {
+    [[nodiscard]] std::optional<SectionInfo> getSectionInfo(const std::string &sectionName) const {
         if (getSectionInfoList().count(sectionName) > 0) {
             return section_info_list.at(sectionName);
         }
         return std::nullopt;
     }
 
-    void setTrampolinId(uint8_t trampolinId) {
-        this->trampolinId = trampolinId;
+    void setTrampolinId(uint8_t _trampolinId) {
+        this->trampolinId = _trampolinId;
     }
 
-    uint8_t getTrampolinId() const {
+    [[nodiscard]] uint8_t getTrampolinId() const {
         return trampolinId;
     }
 
 private:
-
     std::vector<HookData> hook_data_list;
     std::vector<FunctionData> function_data_list;
     std::vector<RelocationData> relocation_data_list;
@@ -93,8 +90,8 @@ private:
 
     uint8_t trampolinId = 0;
 
-    void *allocatedTextMemoryAddress = 0;
-    void *allocatedDataMemoryAddress = 0;
+    void *allocatedTextMemoryAddress = nullptr;
+    void *allocatedDataMemoryAddress = nullptr;
 
     friend class PluginInformationFactory;
 

@@ -19,27 +19,28 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <whb/file.h>
-#include "utils/StringTools.h"
+#include "../utils/StringTools.h"
 #include "PluginMetaInformationFactory.h"
 #include "PluginMetaInformation.h"
-#include "elfio/elfio.hpp"
+#include "../elfio/elfio.hpp"
+#include "../utils/logger.h"
 
 using namespace ELFIO;
 
 std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(const PluginData &pluginData) {
-    if(pluginData.buffer == NULL){
+    if (pluginData.buffer == NULL) {
         DEBUG_FUNCTION_LINE("Buffer was NULL");
         return std::nullopt;
     }
     elfio reader;
-    if (! reader.load((char*) pluginData.buffer, pluginData.length)) {
+    if (!reader.load((char *) pluginData.buffer, pluginData.length)) {
         DEBUG_FUNCTION_LINE("Can't process PluginData in elfio");
         return std::nullopt;
     }
     return loadPlugin(reader);
 }
 
-std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(const std::string filePath) {
+std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(std::string &filePath) {
     elfio reader;
     if (!reader.load(filePath)) {
         DEBUG_FUNCTION_LINE("Can't find or process ELF file\n");

@@ -1,7 +1,6 @@
 #pragma once
 
 #include <wums/defines/dynamic_linking_defines.h>
-#include "utils/logger.h"
 #include <string>
 #include <vector>
 #include "RelocationData.h"
@@ -57,9 +56,7 @@ public:
                                   dyn_linking_import_t *importInfo);
 
 private:
-    DynamicLinkingHelper() {
-    }
+    DynamicLinkingHelper() = default;
 
-    ~DynamicLinkingHelper() {
-    }
+    ~DynamicLinkingHelper() = default;
 };

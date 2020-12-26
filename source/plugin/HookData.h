@@ -28,15 +28,13 @@ public:
         this->type = type;
     }
 
-    ~HookData() {
+    ~HookData() = default;
 
-    }
-
-    void *getFunctionPointer() const {
+    [[nodiscard]] void *getFunctionPointer() const {
         return function_pointer;
     }
 
-    wups_loader_hook_type_t getType() const {
+    [[nodiscard]] wups_loader_hook_type_t getType() const {
         return this->type;
     }
 

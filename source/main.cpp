@@ -1,34 +1,28 @@
-#include <whb/log.h>
 #include <whb/log_udp.h>
+#include <wums.h>
 #include <coreinit/debug.h>
-#include <coreinit/memexpheap.h>
 #include <coreinit/cache.h>
-#include "plugin/PluginDataFactory.h"
-#include "plugin/PluginContainerPersistence.h"
-#include "plugin/PluginInformationFactory.h"
-#include "plugin/PluginMetaInformationFactory.h"
-#include "utils/utils.h"
-
-#include "PluginManagement.h"
+#include "plugin/PluginContainer.h"
 #include "globals.h"
-#include <whb/sdcard.h>
-#include <utils/exports.h>
-#include <wums/defines/module_defines.h>
-#include <plugin/PluginDataPersistence.h>
+#include "plugin/PluginDataFactory.h"
+#include "plugin/PluginDataPersistence.h"
+#include "plugin/PluginContainerPersistence.h"
+#include "PluginManagement.h"
+#include "utils/logger.h"
 
 WUMS_MODULE_EXPORT_NAME("homebrew_wupsbackend");
 
 std::vector<PluginContainer> loadPlugins(const std::vector<PluginData> &pluginList, MEMHeapHandle heapHandle);
 
-module_information_t *gModuleData = NULL;
 WUMS_INITIALIZE(args) {
     __init_wut();
     WHBLogUdpInit();
+
     gModuleData = args.module_information;
-    if(gModuleData == NULL){
+    if (gModuleData == nullptr) {
         OSFatal("WUPS-Backend: Failed to get gModuleData pointer.");
     }
-    if(gModuleData->version != MODULE_INFORMATION_VERSION){
+    if (gModuleData->version != MODULE_INFORMATION_VERSION) {
         OSFatal("WUPS-Backend: The module information struct version does not match.");
     }
     WHBLogPrintf("Init successful");
@@ -43,8 +37,7 @@ WUMS_APPLICATION_STARTS() {
         return;
     }
     bool initNeeded = false;
-    if (pluginDataHeap == NULL) {
-
+    if (pluginDataHeap == nullptr) {
         DEBUG_FUNCTION_LINE("gModuleData = %08X", gModuleData);
         DCFlushRange((void *) gModuleData, sizeof(module_information_t));
         uint32_t endAddress = 0;

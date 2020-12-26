@@ -1,14 +1,13 @@
-#include "utils/logger.h"
 #include "hooks_patcher_static.h"
 #include <malloc.h>
 #include <wups.h>
 #include <vpad/input.h>
 #include <coreinit/messagequeue.h>
 #include <coreinit/core.h>
-#include <globals.h>
-#include "hooks.h"
 
-extern plugin_information_t *gPluginInformation;
+#include "../utils/logger.h"
+#include "../globals.h"
+#include "../hooks.h"
 
 DECL_FUNCTION(void, GX2WaitForVsync, void) {
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_VSYNC);
@@ -251,7 +250,7 @@ static uint32_t lastData0 = 0;
 DECL_FUNCTION(uint32_t, OSReceiveMessage, OSMessageQueue *queue, OSMessage *message, uint32_t flags) {
     int32_t res = real_OSReceiveMessage(queue, message, flags);
     if (queue == OSGetSystemMessageQueue()) {
-        if (message != NULL && res) {
+        if (message != nullptr && res) {
             if (lastData0 != message->args[0]) {
                 if (message->args[0] == 0xFACEF000) {
                     CallHook(gPluginInformation, WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND);

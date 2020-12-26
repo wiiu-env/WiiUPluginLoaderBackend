@@ -1,25 +1,21 @@
 #include "DynamicLinkingHelper.h"
-#include <stdio.h>
-#include <string.h>
-#include <vector>
-#include <coreinit/dynload.h>
-#include "utils/logger.h"
-#include "common/plugin_defines.h"
+#include <cstring>
+#include "../utils/logger.h"
 
 dyn_linking_function_t *DynamicLinkingHelper::getOrAddFunctionEntryByName(dyn_linking_relocation_data_t *data, const char *functionName) {
-    if (data == NULL) {
-        return NULL;
+    if (data == nullptr) {
+        return nullptr;
     }
-    if (functionName == NULL) {
-        return NULL;
+    if (functionName == nullptr) {
+        return nullptr;
     }
-    dyn_linking_function_t *result = NULL;
+    dyn_linking_function_t *result = nullptr;
     for (int32_t i = 0; i < DYN_LINK_FUNCTION_LIST_LENGTH; i++) {
         dyn_linking_function_t *curEntry = &(data->functions[i]);
         if (strlen(curEntry->functionName) == 0) {
             if (strlen(functionName) > DYN_LINK_FUNCTION_NAME_LENGTH) {
                 DEBUG_FUNCTION_LINE("Failed to add function name, it's too long.\n");
-                return NULL;
+                return nullptr;
             }
             strncpy(curEntry->functionName, functionName, DYN_LINK_FUNCTION_NAME_LENGTH);
             result = curEntry;
@@ -42,16 +38,16 @@ dyn_linking_import_t *DynamicLinkingHelper::getOrAddDataImportByName(dyn_linking
 }
 
 dyn_linking_import_t *DynamicLinkingHelper::getOrAddImport(dyn_linking_relocation_data_t *data, const char *importName, bool isData) {
-    if (importName == NULL || data == NULL) {
-        return NULL;
+    if (importName == nullptr || data == nullptr) {
+        return nullptr;
     }
-    dyn_linking_import_t *result = NULL;
+    dyn_linking_import_t *result = nullptr;
     for (int32_t i = 0; i < DYN_LINK_IMPORT_LIST_LENGTH; i++) {
         dyn_linking_import_t *curEntry = &(data->imports[i]);
         if (strlen(curEntry->importName) == 0) {
             if (strlen(importName) > DYN_LINK_IMPORT_NAME_LENGTH) {
                 DEBUG_FUNCTION_LINE("Failed to add Import, it's too long.\n");
-                return NULL;
+                return nullptr;
             }
             strncpy(curEntry->importName, importName, DYN_LINK_IMPORT_NAME_LENGTH);
             curEntry->isData = isData;
@@ -73,13 +69,13 @@ bool DynamicLinkingHelper::addReloationEntry(dyn_linking_relocation_data_t *link
 bool DynamicLinkingHelper::addReloationEntry(dyn_linking_relocation_data_t *linking_data, dyn_linking_relocation_entry_t *linking_entries, uint32_t linking_entry_length, char type, size_t offset, int32_t addend, const void *destination,
                                              const std::string &name, const ImportRPLInformation &rplInfo) {
     dyn_linking_import_t *importInfoGbl = DynamicLinkingHelper::getOrAddImport(linking_data, rplInfo.getName().c_str(), rplInfo.isData());
-    if (importInfoGbl == NULL) {
+    if (importInfoGbl == nullptr) {
         DEBUG_FUNCTION_LINE("Getting import info failed. Probably maximum of %d rpl files to import reached.\n", DYN_LINK_IMPORT_LIST_LENGTH);
         return false;
     }
 
     dyn_linking_function_t *functionInfo = DynamicLinkingHelper::getOrAddFunctionEntryByName(linking_data, name.c_str());
-    if (functionInfo == NULL) {
+    if (functionInfo == nullptr) {
         DEBUG_FUNCTION_LINE("Getting import info failed. Probably maximum of %d function to be relocated reached.\n", DYN_LINK_FUNCTION_LIST_LENGTH);
         return false;
     }
@@ -91,7 +87,7 @@ bool DynamicLinkingHelper::addReloationEntry(dyn_linking_relocation_entry_t *lin
                                              dyn_linking_import_t *importInfo) {
     for (uint32_t i = 0; i < linking_entry_length; i++) {
         dyn_linking_relocation_entry_t *curEntry = &(linking_entries[i]);
-        if (curEntry->functionEntry != NULL) {
+        if (curEntry->functionEntry != nullptr) {
             continue;
         }
         curEntry->type = type;

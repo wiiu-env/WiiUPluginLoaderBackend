@@ -53,7 +53,7 @@ int32_t WUPSGetPluginMetaInformationByBuffer(plugin_information *output, char *b
 
 int32_t WUPSGetPluginDataForContainerHandles(const plugin_container_handle *plugin_container_handle_list, plugin_data_handle *plugin_data_list, uint32_t buffer_size);
 
-int32_t WUPSGetMetaInformation(plugin_container_handle *plugin_container_handle_list, plugin_information *plugin_information_list, uint32_t buffer_size);
+int32_t WUPSGetMetaInformation(const plugin_container_handle *plugin_container_handle_list, plugin_information *plugin_information_list, uint32_t buffer_size);
 
 int32_t WUPSGetLoadedPlugins(plugin_container_handle *io_handles, uint32_t buffer_size, uint32_t *outSize);
 

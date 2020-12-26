@@ -33,45 +33,43 @@ public:
         this->replaceCall = replaceCall;
     }
 
-    ~FunctionData() {
+    ~FunctionData() = default;
 
-    }
-
-    const std::string &getName() const {
+    [[nodiscard]] const std::string &getName() const {
         return this->name;
     }
 
-    function_replacement_library_type_t getLibrary() const {
+    [[nodiscard]] function_replacement_library_type_t getLibrary() const {
         return this->library;
     }
 
-    const void *getPhysicalAddress() const {
+    [[nodiscard]] const void *getPhysicalAddress() const {
         return paddress;
     }
 
-    const void *getVirtualAddress() const {
+    [[nodiscard]] const void *getVirtualAddress() const {
         return vaddress;
     }
 
-    const void *getReplaceAddress() const {
+    [[nodiscard]] const void *getReplaceAddress() const {
         return replaceAddr;
     }
 
-    const void *getReplaceCall() const {
+    [[nodiscard]] const void *getReplaceCall() const {
         return replaceCall;
     }
 
-    const FunctionPatcherTargetProcess getTargetProcess() const {
+    [[nodiscard]] FunctionPatcherTargetProcess getTargetProcess() const {
         return targetProcess;
     }
 
 private:
-    void *paddress = NULL;
-    void *vaddress = NULL;
+    void *paddress = nullptr;
+    void *vaddress = nullptr;
     std::string name;
     function_replacement_library_type_t library;
     FunctionPatcherTargetProcess targetProcess;
-    void *replaceAddr = NULL;
-    void *replaceCall = NULL;
+    void *replaceAddr = nullptr;
+    void *replaceCall = nullptr;
 };
 

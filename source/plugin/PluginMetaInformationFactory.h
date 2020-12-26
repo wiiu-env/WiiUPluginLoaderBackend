@@ -27,7 +27,7 @@ class PluginMetaInformationFactory {
 public:
     static std::optional<PluginMetaInformation> loadPlugin(const PluginData &pluginData);
 
-    static std::optional<PluginMetaInformation> loadPlugin(const std::string filePath);
+    static std::optional<PluginMetaInformation> loadPlugin(std::string &filePath);
 
     static std::optional<PluginMetaInformation> loadPlugin(char *buffer, size_t size);
 

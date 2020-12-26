@@ -29,11 +29,9 @@ public:
         this->metaInformation = other.metaInformation;
     }
 
-    PluginContainer() {
+    PluginContainer() = default;
 
-    }
-
-    const PluginMetaInformation &getMetaInformation() const {
+    [[nodiscard]] const PluginMetaInformation &getMetaInformation() const {
         return this->metaInformation;
     }
 
@@ -41,20 +39,20 @@ public:
         this->metaInformation = metaInfo;
     }
 
-    const PluginInformation &getPluginInformation() const {
+    [[nodiscard]] const PluginInformation &getPluginInformation() const {
         return pluginInformation;
     }
 
-    void setPluginInformation(const PluginInformation &pluginInformation) {
-        this->pluginInformation = pluginInformation;
+    void setPluginInformation(const PluginInformation &_pluginInformation) {
+        this->pluginInformation = _pluginInformation;
     }
 
-    const PluginData &getPluginData() const {
+    [[nodiscard]] const PluginData &getPluginData() const {
         return pluginData;
     }
 
-    void setPluginData(const PluginData &pluginData) {
-        this->pluginData = pluginData;
+    void setPluginData(const PluginData &_pluginData) {
+        this->pluginData = _pluginData;
     }
 
     PluginData pluginData;

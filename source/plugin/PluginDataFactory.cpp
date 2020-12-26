@@ -15,32 +15,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
 #include <fcntl.h>
-#include <unistd.h>
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include "PluginDataFactory.h"
-#include "utils/logger.h"
-#include "utils/StringTools.h"
+#include "../utils/logger.h"
+#include "../utils/StringTools.h"
 
 
 std::vector<PluginData> PluginDataFactory::loadDir(const std::string &path, MEMHeapHandle heapHandle) {
     std::vector<PluginData> result;
     struct dirent *dp;
-    DIR *dfd = NULL;
+    DIR *dfd = nullptr;
 
     if (path.empty()) {
         DEBUG_FUNCTION_LINE("Path was empty\n");
         return result;
     }
 
-    if ((dfd = opendir(path.c_str())) == NULL) {
+    if ((dfd = opendir(path.c_str())) == nullptr) {
         DEBUG_FUNCTION_LINE("Couldn't open dir %s\n", path.c_str());
         return result;
     }
 
-    while ((dp = readdir(dfd)) != NULL) {
-        struct stat stbuf;
+    while ((dp = readdir(dfd)) != nullptr) {
+        struct stat stbuf{};
         std::string full_file_path = StringTools::strfmt("%s/%s", path.c_str(), dp->d_name);
         StringTools::RemoveDoubleSlashs(full_file_path);
         if (stat(full_file_path.c_str(), &stbuf) == -1) {
@@ -58,7 +56,7 @@ std::vector<PluginData> PluginDataFactory::loadDir(const std::string &path, MEMH
             }
         }
     }
-    if (dfd != NULL) {
+    if (dfd != nullptr) {
         closedir(dfd);
     }
 

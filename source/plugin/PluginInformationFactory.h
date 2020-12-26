@@ -25,7 +25,7 @@
 #include <wums/defines/relocation_defines.h>
 #include "PluginInformation.h"
 #include "PluginContainer.h"
-#include "elfio/elfio.hpp"
+#include "../elfio/elfio.hpp"
 
 class PluginInformationFactory {
 public:

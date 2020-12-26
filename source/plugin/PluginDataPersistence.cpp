@@ -1,9 +1,9 @@
-#include <common/plugin_defines.h>
+#include "../common/plugin_defines.h"
 #include "PluginDataPersistence.h"
 #include "PluginData.h"
 
 bool PluginDataPersistence::save(plugin_data_t *pluginDataStruct, PluginData &plugin) {
-    if (pluginDataStruct == NULL) {
+    if (pluginDataStruct == nullptr) {
         return false;
     }
     pluginDataStruct->buffer = (char *) plugin.buffer;

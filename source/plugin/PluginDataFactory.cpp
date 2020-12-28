@@ -17,6 +17,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <memory>
 #include "PluginDataFactory.h"
 #include "../utils/logger.h"
 #include "../utils/StringTools.h"
@@ -64,32 +65,30 @@ std::vector<PluginData> PluginDataFactory::loadDir(const std::string &path, MEMH
 }
 
 std::optional<PluginData> PluginDataFactory::load(const std::string &filename, MEMHeapHandle heapHandle) {
-    // open the file:
-    std::ifstream file(filename, std::ios::binary);
-    if (!file.is_open()) {
-        DEBUG_FUNCTION_LINE("Failed to open %s", filename.c_str());
-        return std::nullopt;
+    // Not going to explicitly check these.
+    // The use of gcount() below will compensate for a failure here.
+    std::ifstream is(filename, std::ios::binary);
+
+    is.seekg(0, std::ios::end);
+    std::streampos length = is.tellg();
+    is.seekg(0, std::ios::beg);
+
+    // reading into a 0x40 aligned buffer increases reading speed.
+    char *data = (char *) memalign(0x40, length);
+    if (!data) {
+        DEBUG_FUNCTION_LINE("Failed to alloc memory for holding the plugin");
+        return {};
     }
-    // Stop eating new lines in binary mode!!!
-    file.unsetf(std::ios::skipws);
-    // get its size:
-    std::streampos fileSize;
+    is.read(data, length);
 
-    file.seekg(0, std::ios::end);
-    fileSize = file.tellg();
-    file.seekg(0, std::ios::beg);
+    std::vector<uint8_t> result;
+    result.resize(length);
+    memcpy(&result[0], data, length);
+    free(data);
 
-    std::vector<uint8_t> vBuffer;
-    vBuffer.reserve(fileSize);
+    DEBUG_FUNCTION_LINE("Loaded file!");
 
-    // read the data:
-    vBuffer.insert(vBuffer.begin(),
-                   std::istream_iterator<uint8_t>(file),
-                   std::istream_iterator<uint8_t>());
-
-    DEBUG_FUNCTION_LINE("Loaded file");
-
-    return load(vBuffer, heapHandle);
+    return load(result, heapHandle);
 }
 
 std::optional<PluginData> PluginDataFactory::load(std::vector<uint8_t> &buffer, MEMHeapHandle heapHandle) {

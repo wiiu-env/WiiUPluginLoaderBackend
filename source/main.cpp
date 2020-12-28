@@ -10,6 +10,7 @@
 #include "PluginManagement.h"
 #include "utils/logger.h"
 #include "hooks.h"
+#include "patcher/hooks_patcher_static.h"
 
 WUMS_MODULE_EXPORT_NAME("homebrew_wupsbackend");
 
@@ -29,6 +30,12 @@ WUMS_INITIALIZE(args) {
 }
 
 WUMS_APPLICATION_ENDS() {
+    DEBUG_FUNCTION_LINE("Reset alreadyPatched flags for dynamic functions");
+    auto pluginInformation = gPluginInformation;
+    for (int32_t plugin_index = pluginInformation->number_used_plugins - 1; plugin_index >= 0; plugin_index--) {
+        FunctionPatcherRestoreDynamicFunctions(pluginInformation->plugin_data[plugin_index].info.functions, pluginInformation->plugin_data[plugin_index].info.number_used_functions);
+    }
+    FunctionPatcherRestoreDynamicFunctions(method_hooks_hooks_static, method_hooks_size_hooks_static);
     DEBUG_FUNCTION_LINE("Call hooks");
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_APPLICATION_END);
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB);

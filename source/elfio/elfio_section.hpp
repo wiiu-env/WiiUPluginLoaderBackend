@@ -283,7 +283,7 @@ class section_impl : public section
 
                     ret = inflate(&s, Z_FINISH);
                     if (ret != Z_OK && ret != Z_STREAM_END){
-                        DEBUG_FUNCTION_LINE("NOOOO\n");
+                        DEBUG_FUNCTION_LINE("NOOOO");
                     }
 
                     inflateEnd(&s);
@@ -301,7 +301,7 @@ class section_impl : public section
                 }
             }else{
                 set_size(0);
-                DEBUG_FUNCTION_LINE("Failed to allocate memory.\n");
+                DEBUG_FUNCTION_LINE("Failed to allocate memory.");
             }
         }
     }

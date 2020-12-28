@@ -17,7 +17,7 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
     //auto pluginPath = plugin.getMetaInformation().getPath();
 
     if (plugin_count >= MAXIMUM_PLUGINS - 1) {
-        DEBUG_FUNCTION_LINE("Maximum of %d plugins reached. %s won't be loaded!\n", MAXIMUM_PLUGINS, pluginName.c_str());
+        DEBUG_FUNCTION_LINE("Maximum of %d plugins reached. %s won't be loaded!", MAXIMUM_PLUGINS, pluginName.c_str());
         return false;
     }
     // Copy data to global struct.

@@ -52,7 +52,7 @@ bool PluginManagement::doRelocation(const std::vector<RelocationData> &relocData
             //DEBUG_FUNCTION_LINE("Found export for %s %s", rplName.c_str(), functionName.c_str());
         }
         if (!ElfUtils::elfLinkOne(cur.getType(), cur.getOffset(), cur.getAddend(), (uint32_t) cur.getDestination(), functionAddress, tramp_data, tramp_length, RELOC_TYPE_IMPORT, trampolinID)) {
-            DEBUG_FUNCTION_LINE("Relocation failed\n");
+            DEBUG_FUNCTION_LINE("Relocation failed");
             return false;
         }
     }

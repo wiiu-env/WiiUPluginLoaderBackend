@@ -56,8 +56,8 @@ void CallHookEx(plugin_information_t *pluginInformation, wups_loader_hook_type_t
             continue;
         }
 
-        //DEBUG_FUNCTION_LINE("Checking hook functions for %s.\n",plugin_data->plugin_name);
-        //DEBUG_FUNCTION_LINE("Found hooks: %d\n",plugin_data->number_used_hooks);
+        //DEBUG_FUNCTION_LINE("Checking hook functions for %s.",plugin_data->plugin_name);
+        //DEBUG_FUNCTION_LINE("Found hooks: %d",plugin_data->number_used_hooks);
         for (uint32_t j = 0; j < plugin_data->info.number_used_hooks; j++) {
             replacement_data_hook_t *hook_data = &plugin_data->info.hooks[j];
             if (hook_data->type == hook_type) {
@@ -66,7 +66,7 @@ void CallHookEx(plugin_information_t *pluginInformation, wups_loader_hook_type_t
                 }
                 void *func_ptr = hook_data->func_pointer;
                 if (func_ptr != nullptr) {
-                    //DEBUG_FUNCTION_LINE("function pointer is %08x\n",func_ptr);
+                    //DEBUG_FUNCTION_LINE("function pointer is %08x",func_ptr);
                     if (hook_type == WUPS_LOADER_HOOK_INIT_PLUGIN) {
                         ((void (*)()) ((uint32_t *) func_ptr))();
                     } else if (hook_type == WUPS_LOADER_HOOK_DEINIT_PLUGIN) {
@@ -106,7 +106,7 @@ void CallHookEx(plugin_information_t *pluginInformation, wups_loader_hook_type_t
                         DEBUG_FUNCTION_LINE("######################################");
                     }
                 } else {
-                    DEBUG_FUNCTION_LINE("Failed to call hook. It was not defined\n");
+                    DEBUG_FUNCTION_LINE("Failed to call hook. It was not defined");
                 }
             }
         }

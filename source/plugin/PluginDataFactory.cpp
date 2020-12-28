@@ -28,12 +28,12 @@ std::vector<PluginData> PluginDataFactory::loadDir(const std::string &path, MEMH
     DIR *dfd = nullptr;
 
     if (path.empty()) {
-        DEBUG_FUNCTION_LINE("Path was empty\n");
+        DEBUG_FUNCTION_LINE("Path was empty");
         return result;
     }
 
     if ((dfd = opendir(path.c_str())) == nullptr) {
-        DEBUG_FUNCTION_LINE("Couldn't open dir %s\n", path.c_str());
+        DEBUG_FUNCTION_LINE("Couldn't open dir %s", path.c_str());
         return result;
     }
 
@@ -42,14 +42,14 @@ std::vector<PluginData> PluginDataFactory::loadDir(const std::string &path, MEMH
         std::string full_file_path = StringTools::strfmt("%s/%s", path.c_str(), dp->d_name);
         StringTools::RemoveDoubleSlashs(full_file_path);
         if (stat(full_file_path.c_str(), &stbuf) == -1) {
-            DEBUG_FUNCTION_LINE("Unable to stat file: %s\n", full_file_path.c_str());
+            DEBUG_FUNCTION_LINE("Unable to stat file: %s", full_file_path.c_str());
             continue;
         }
 
         if ((stbuf.st_mode & S_IFMT) == S_IFDIR) { // Skip directories
             continue;
         } else {
-            DEBUG_FUNCTION_LINE("Found file: %s\n", full_file_path.c_str());
+            DEBUG_FUNCTION_LINE("Found file: %s", full_file_path.c_str());
             auto pluginData = load(full_file_path, heapHandle);
             if (pluginData) {
                 result.push_back(pluginData.value());

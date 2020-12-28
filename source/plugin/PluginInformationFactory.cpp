@@ -75,14 +75,14 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
     }
     void *text_data = MEMAllocFromExpHeapEx(heapHandle, text_size, 0x1000);
     if (text_data == nullptr) {
-        DEBUG_FUNCTION_LINE("Failed to alloc memory for the .text section (%d bytes)\n", text_size);
+        DEBUG_FUNCTION_LINE("Failed to alloc memory for the .text section (%d bytes)", text_size);
 
         return std::nullopt;
     }
     DEBUG_FUNCTION_LINE("Allocated %d kb from ExpHeap", text_size / 1024);
     void *data_data = MEMAllocFromExpHeapEx(heapHandle, data_size, 0x1000);
     if (data_data == nullptr) {
-        DEBUG_FUNCTION_LINE("Failed to alloc memory for the .data section (%d bytes)\n", data_size);
+        DEBUG_FUNCTION_LINE("Failed to alloc memory for the .data section (%d bytes)", data_size);
 
         MEMFreeToExpHeap(heapHandle, text_data);
         return std::nullopt;
@@ -266,7 +266,7 @@ std::vector<RelocationData> PluginInformationFactory::getImportRelocationData(co
                     rplName = rawSectionName.substr(dimport.size());
                     isData = true;
                 } else {
-                    DEBUG_FUNCTION_LINE("invalid section name\n");
+                    DEBUG_FUNCTION_LINE("invalid section name");
                     continue;
                 }
 

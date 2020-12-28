@@ -43,7 +43,7 @@ std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(co
 std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(std::string &filePath) {
     elfio reader;
     if (!reader.load(filePath)) {
-        DEBUG_FUNCTION_LINE("Can't find or process ELF file\n");
+        DEBUG_FUNCTION_LINE("Can't find or process ELF file");
         return std::nullopt;
     }
     return loadPlugin(reader);
@@ -52,7 +52,7 @@ std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(st
 std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(char *buffer, size_t size) {
     elfio reader;
     if (!reader.load(buffer, size)) {
-        DEBUG_FUNCTION_LINE("Can't find or process ELF file\n");
+        DEBUG_FUNCTION_LINE("Can't find or process ELF file");
         return std::nullopt;
     }
 
@@ -115,7 +115,7 @@ std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(co
                         pluginInfo.setDescription(value);
                     } else if (key.compare("wups") == 0) {
                         if (value.compare("0.2") != 0) {
-                            DEBUG_FUNCTION_LINE("Warning: Ignoring plugin - Unsupported WUPS version: %s.\n", value.c_str());
+                            DEBUG_FUNCTION_LINE("Warning: Ignoring plugin - Unsupported WUPS version: %s.", value.c_str());
                             return std::nullopt;
                         }
                     }

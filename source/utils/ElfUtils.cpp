@@ -34,7 +34,7 @@ bool ElfUtils::elfLinkOne(char type, size_t offset, int32_t addend, uint32_t des
             *((uint16_t *) (target)) = static_cast<uint16_t>((value + 0x8000) >> 16);
             break;
         case R_PPC_DTPMOD32:
-            DEBUG_FUNCTION_LINE("################IMPLEMENT ME\n");
+            DEBUG_FUNCTION_LINE("################IMPLEMENT ME");
             //*((int32_t *)(target)) = tlsModuleIndex;
             break;
         case R_PPC_DTPREL32:
@@ -78,8 +78,8 @@ bool ElfUtils::elfLinkOne(char type, size_t offset, int32_t addend, uint32_t des
             auto distance = static_cast<int32_t>(value) - static_cast<int32_t>(target);
             if (distance > 0x1FFFFFC || distance < -0x1FFFFFC) {
                 if (trampolin_data == NULL) {
-                    DEBUG_FUNCTION_LINE("***24-bit relative branch cannot hit target. Trampolin isn't provided\n");
-                    DEBUG_FUNCTION_LINE("***value %08X - target %08X = distance %08X\n", value, target, distance);
+                    DEBUG_FUNCTION_LINE("***24-bit relative branch cannot hit target. Trampolin isn't provided");
+                    DEBUG_FUNCTION_LINE("***value %08X - target %08X = distance %08X", value, target, distance);
                     return false;
                 } else {
                     relocation_trampolin_entry_t *freeSlot = NULL;
@@ -97,13 +97,13 @@ bool ElfUtils::elfLinkOne(char type, size_t offset, int32_t addend, uint32_t des
                         }
                     }
                     if (freeSlot != NULL) {
-                        DEBUG_FUNCTION_LINE("***24-bit relative branch cannot hit target. Trampolin data list is full\n");
-                        DEBUG_FUNCTION_LINE("***value %08X - target %08X = distance %08X\n", value, target, distance);
+                        DEBUG_FUNCTION_LINE("***24-bit relative branch cannot hit target. Trampolin data list is full");
+                        DEBUG_FUNCTION_LINE("***value %08X - target %08X = distance %08X", value, target, distance);
                         return false;
                     }
                     if (target - (uint32_t) &(freeSlot->trampolin[0]) > 0x1FFFFFC) {
                         DEBUG_FUNCTION_LINE("**Cannot link 24-bit jump (too far to tramp buffer).");
-                        DEBUG_FUNCTION_LINE("***value %08X - target %08X = distance %08X\n", value, target, distance);
+                        DEBUG_FUNCTION_LINE("***value %08X - target %08X = distance %08X", value, target, distance);
                         return false;
                     }
 
@@ -129,7 +129,7 @@ bool ElfUtils::elfLinkOne(char type, size_t offset, int32_t addend, uint32_t des
                     uint32_t symbolValue = (uint32_t) &(freeSlot->trampolin[0]);
                     value = symbolValue + addend;
                     distance = static_cast<int32_t>(value) - static_cast<int32_t>(target);
-                    DEBUG_FUNCTION_LINE("Created tramp\n");
+                    DEBUG_FUNCTION_LINE("Created tramp");
                 }
             }
 

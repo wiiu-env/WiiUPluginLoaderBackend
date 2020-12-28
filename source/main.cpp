@@ -9,13 +9,13 @@
 #include "plugin/PluginContainerPersistence.h"
 #include "PluginManagement.h"
 #include "utils/logger.h"
+#include "hooks.h"
 
 WUMS_MODULE_EXPORT_NAME("homebrew_wupsbackend");
 
 std::vector<PluginContainer> loadPlugins(const std::vector<PluginData> &pluginList, MEMHeapHandle heapHandle);
 
 WUMS_INITIALIZE(args) {
-    __init_wut();
     WHBLogUdpInit();
 
     gModuleData = args.module_information;
@@ -26,11 +26,15 @@ WUMS_INITIALIZE(args) {
         OSFatal("WUPS-Backend: The module information struct version does not match.");
     }
     WHBLogPrintf("Init successful");
-    __fini_wut();
+}
+
+WUMS_APPLICATION_ENDS() {
+    DEBUG_FUNCTION_LINE("Call hooks");
+    CallHook(gPluginInformation, WUPS_LOADER_HOOK_APPLICATION_END);
+    CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB);
 }
 
 WUMS_APPLICATION_STARTS() {
-    __init_wut();
     WHBLogUdpInit();
     uint32_t upid = OSGetUPID();
     if (upid != 2 && upid != 15) {

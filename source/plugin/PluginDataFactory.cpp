@@ -98,6 +98,6 @@ std::optional<PluginData> PluginDataFactory::load(std::vector<uint8_t> &buffer, 
         return std::nullopt;
     }
 
-    PluginData pluginData(buffer, heapHandle, eMemoryTypes::eMemTypeExpHeap);
+    PluginData pluginData(buffer, heapHandle, eMemoryTypes::eMemTypeMEM2);
     return pluginData;
 }

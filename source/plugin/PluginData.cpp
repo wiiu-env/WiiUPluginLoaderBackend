@@ -41,7 +41,7 @@ PluginData::PluginData(const std::vector<uint8_t>& input, MEMHeapHandle heapHand
         default:
         case eMemTypeExpHeap:
             data_copy = MEMAllocFromExpHeapEx(heapHandle, length, 4);
-            DEBUG_FUNCTION_LINE("Allocated %d kb from ExpHeap", length / 1024);
+            DEBUG_FUNCTION_LINE("Allocated %d kb on ExpHeap", length / 1024);
             if (data_copy == nullptr) {
                 DEBUG_FUNCTION_LINE("Failed to allocate space on exp heap");
             } else {
@@ -51,7 +51,8 @@ PluginData::PluginData(const std::vector<uint8_t>& input, MEMHeapHandle heapHand
             DEBUG_FUNCTION_LINE("copied data to exp heap");
             break;
         case eMemTypeMEM2:
-            data_copy = memalign(length, 4);
+            data_copy = memalign(4, length);
+            DEBUG_FUNCTION_LINE("Allocated %d kb on default heap", length / 1024);
             if (data_copy == nullptr) {
                 DEBUG_FUNCTION_LINE("Failed to allocate space on default heap");
             } else {

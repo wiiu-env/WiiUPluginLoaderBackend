@@ -128,7 +128,9 @@ public:
             return false;
         }
 
-        return load(stream);
+        auto res = load(stream);
+        stream.close();
+        return res;
     }
 
 //------------------------------------------------------------------------------

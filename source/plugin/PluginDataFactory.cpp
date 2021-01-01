@@ -76,6 +76,7 @@ std::optional<PluginData> PluginDataFactory::load(const std::string &filename, M
     // reading into a 0x40 aligned buffer increases reading speed.
     char *data = (char *) memalign(0x40, length);
     if (!data) {
+        is.close();
         DEBUG_FUNCTION_LINE("Failed to alloc memory for holding the plugin");
         return {};
     }
@@ -85,6 +86,7 @@ std::optional<PluginData> PluginDataFactory::load(const std::string &filename, M
     result.resize(length);
     memcpy(&result[0], data, length);
     free(data);
+    is.close();
 
     DEBUG_FUNCTION_LINE("Loaded file!");
 

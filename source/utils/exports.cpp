@@ -21,9 +21,9 @@ void fillPluginInformation(plugin_information *out, PluginMetaInformation *metaI
 
 extern "C" int32_t WUPSLoadAndLinkByDataHandle(const plugin_data_handle *plugin_data_handle_list, uint32_t plugin_data_handle_list_size) {
     gLinkOnReload.number_used_plugins = 0;
-    if (plugin_data_handle_list != NULL && plugin_data_handle_list_size != 0) {
+    if (plugin_data_handle_list != nullptr && plugin_data_handle_list_size != 0) {
         for (uint32_t i = 0; i < plugin_data_handle_list_size; i++) {
-            auto handle = plugin_data_handle_list[i];
+            plugin_data_handle handle = plugin_data_handle_list[i];
             PluginData *pluginData = (PluginData *) handle;
             DEBUG_FUNCTION_LINE("Saving plugin data %08X", pluginData);
             PluginDataPersistence::save(&gLinkOnReload.plugin_data[gLinkOnReload.number_used_plugins], *pluginData);
@@ -41,7 +41,7 @@ extern "C" int32_t WUPSLoadAndLinkByDataHandle(const plugin_data_handle *plugin_
 }
 
 extern "C" int32_t WUPSDeletePluginContainer(const plugin_container_handle *handle_list, uint32_t handle_list_size) {
-    if (handle_list != NULL && handle_list_size != 0) {
+    if (handle_list != nullptr && handle_list_size != 0) {
         for (uint32_t i = 0; i < handle_list_size; i++) {
             auto handle = handle_list[i];
             PluginContainer *pluginContainer = (PluginContainer *) handle;
@@ -57,7 +57,7 @@ extern "C" int32_t WUPSDeletePluginData(const plugin_data_handle *plugin_data_ha
         for (uint32_t i = 0; i < plugin_data_handle_list_size; i++) {
             auto handle = plugin_data_handle_list[i];
             auto *pluginData = (PluginData *) handle;
-            DEBUG_FUNCTION_LINE("delete plugin data %08X", pluginData);
+            DEBUG_FUNCTION_LINE("Delete plugin data: %08X", pluginData);
             delete pluginData;
         }
     }
@@ -66,9 +66,9 @@ extern "C" int32_t WUPSDeletePluginData(const plugin_data_handle *plugin_data_ha
 
 extern "C" int32_t WUPSLoadPluginAsData(GetPluginInformationInputType inputType, const char *path, char *buffer, size_t size, plugin_data_handle *out) {
     std::optional<PluginData> pluginData;
-    if (inputType == PLUGIN_INFORMATION_INPUT_TYPE_PATH) {
+    if (inputType == PLUGIN_INFORMATION_INPUT_TYPE_PATH && path != nullptr) {
         pluginData = PluginDataFactory::load(path, pluginDataHeap);
-    } else if (inputType == PLUGIN_INFORMATION_INPUT_TYPE_BUFFER) {
+    } else if (inputType == PLUGIN_INFORMATION_INPUT_TYPE_BUFFER && buffer != nullptr && size > 0) {
         std::vector<uint8_t> data(size);
         memcpy(&data[0], buffer, size);
         pluginData = PluginDataFactory::load(data, pluginDataHeap);
@@ -86,7 +86,7 @@ extern "C" int32_t WUPSLoadPluginAsData(GetPluginInformationInputType inputType,
         return ERROR_INVALID_ARG;
     } else {
         auto *pluginDataHandle = new PluginData(pluginData.value());
-        DEBUG_FUNCTION_LINE("Saving handle %08X", pluginDataHandle);
+        DEBUG_FUNCTION_LINE("Saving plugin data handle: %08X", pluginDataHandle);
         *out = (uint32_t) pluginDataHandle;
     }
 
@@ -115,11 +115,11 @@ extern "C" int32_t WUPSGetPluginMetaInformation(GetPluginInformationInputType in
     }
 
     if (!pluginInfo) {
-        DEBUG_FUNCTION_LINE("Failed to load plugin");
+        DEBUG_FUNCTION_LINE("Failed to load plugin meta information");
         return ERROR_FILE_NOT_FOUND;
     }
 
-    DEBUG_FUNCTION_LINE("loaded plugin");
+    DEBUG_FUNCTION_LINE("Loaded plugin meta information");
 
     if (output == nullptr) {
         return ERROR_INVALID_ARG;

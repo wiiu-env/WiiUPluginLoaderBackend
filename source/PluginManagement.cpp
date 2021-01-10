@@ -118,28 +118,29 @@ void PluginManagement::unloadPlugins(plugin_information_t *gPluginInformation, M
         if (freePluginData) {
             if (plugin->data.buffer != nullptr) {
                 if (plugin->data.memoryType == eMemTypeMEM2) {
-                    DEBUG_FUNCTION_LINE("free %08X", plugin->data.buffer);
+                    DEBUG_FUNCTION_LINE("Free plugin data buffer for %s [%08X]", plugin->meta.name, plugin->data.buffer);
                     free(plugin->data.buffer);
                 } else if (plugin->data.memoryType == eMemTypeExpHeap) {
-                    DEBUG_FUNCTION_LINE("free %08X on EXP heap %08X", plugin->data.buffer, plugin->data.heapHandle);
+                    DEBUG_FUNCTION_LINE("Free plugin data buffer for %s [%08X on heap %08X]", plugin->meta.name, plugin->data.buffer, plugin->data.heapHandle);
                     MEMFreeToExpHeap((MEMHeapHandle) plugin->data.heapHandle, plugin->data.buffer);
                 } else {
                     DEBUG_FUNCTION_LINE("########################");
                     DEBUG_FUNCTION_LINE("Failed to free memory from plugin");
                     DEBUG_FUNCTION_LINE("########################");
                 }
+                plugin->data.buffer = nullptr;
                 plugin->data.bufferLength = 0;
             } else {
-                DEBUG_FUNCTION_LINE("Plugin has no copy of elf save in memory, can't free it");
+                DEBUG_FUNCTION_LINE("Plugin has no copy of elf saved in memory, can't free it");
             }
         }
         if (plugin->info.allocatedTextMemoryAddress != nullptr) {
             MEMFreeToExpHeap((MEMHeapHandle) pluginHeap, plugin->info.allocatedTextMemoryAddress);
-            DEBUG_FUNCTION_LINE("Freed %08X", plugin->info.allocatedTextMemoryAddress);
+            DEBUG_FUNCTION_LINE("Deleted allocated .text section for plugin %s [%08X]", plugin->meta.name, plugin->info.allocatedTextMemoryAddress);
         }
         if (plugin->info.allocatedDataMemoryAddress != nullptr) {
             MEMFreeToExpHeap((MEMHeapHandle) pluginHeap, plugin->info.allocatedDataMemoryAddress);
-            DEBUG_FUNCTION_LINE("Freed %08X", plugin->info.allocatedDataMemoryAddress);
+            DEBUG_FUNCTION_LINE("Deleted allocated .data section for plugin %s [%08X]", plugin->meta.name, plugin->info.allocatedDataMemoryAddress);
         }
 
         for (auto &trampoline : gPluginInformation->trampolines) {

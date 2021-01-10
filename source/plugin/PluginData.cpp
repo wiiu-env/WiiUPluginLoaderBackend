@@ -19,10 +19,12 @@ void PluginData::freeMemory() {
     switch (memoryType) {
         default:
         case eMemTypeExpHeap:
+            DEBUG_FUNCTION_LINE("Free PluginData buffer %08X on heap %08X", buffer, this->heapHandle);
             MEMFreeToExpHeap(this->heapHandle, buffer);
             this->buffer = nullptr;
             break;
         case eMemTypeMEM2:
+            DEBUG_FUNCTION_LINE("Free PluginData buffer %08X on default heap", buffer);
             free(this->buffer);
             this->buffer = nullptr;
             break;

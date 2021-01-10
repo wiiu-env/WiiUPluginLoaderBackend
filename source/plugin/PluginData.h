@@ -33,7 +33,7 @@ enum eMemoryTypes {
 
 class PluginData {
 public:
-    ~PluginData() = default;
+    ~PluginData()= default;
 
     void freeMemory();
 

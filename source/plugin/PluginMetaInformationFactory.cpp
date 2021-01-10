@@ -66,8 +66,6 @@ std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(co
 
     uint32_t sec_num = reader.sections.size();
 
-    DEBUG_FUNCTION_LINE("%d number of sections", sec_num);
-
     for (uint32_t i = 0; i < sec_num; ++i) {
         section *psec = reader.sections[i];
 
@@ -101,7 +99,6 @@ std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(co
                     std::string value(curEntry + firstFound + 1);
 
                     if (key.compare("name") == 0) {
-                        DEBUG_FUNCTION_LINE("Name = %s", value.c_str());
                         pluginInfo.setName(value);
                     } else if (key.compare("author") == 0) {
                         pluginInfo.setAuthor(value);

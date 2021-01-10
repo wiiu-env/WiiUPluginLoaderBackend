@@ -23,9 +23,7 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
     // Copy data to global struct.
     plugin_information_single_t *plugin_data = &(pluginInformation->plugin_data[plugin_count]);
 
-    DEBUG_FUNCTION_LINE("%08X", plugin_data);
     // Make sure everything is reset.
-    //plugin_data = {};
     memset((void *) plugin_data, 0, sizeof(plugin_information_single_t));
 
     const auto &pluginMetaInfo = plugin.getMetaInformation();

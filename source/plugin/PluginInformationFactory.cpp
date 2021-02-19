@@ -79,7 +79,7 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
 
         return std::nullopt;
     }
-    DEBUG_FUNCTION_LINE("Allocated %d kb from ExpHeap", text_size / 1024);
+    DEBUG_FUNCTION_LINE_VERBOSE("Allocated %d kb from ExpHeap", text_size / 1024);
     void *data_data = MEMAllocFromExpHeapEx(heapHandle, data_size, 0x1000);
     if (data_data == nullptr) {
         DEBUG_FUNCTION_LINE("Failed to alloc memory for the .data section (%d bytes)", data_size);
@@ -87,7 +87,7 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
         MEMFreeToExpHeap(heapHandle, text_data);
         return std::nullopt;
     }
-    DEBUG_FUNCTION_LINE("Allocated %d kb from ExpHeap", data_size / 1024);
+    DEBUG_FUNCTION_LINE_VERBOSE("Allocated %d kb from ExpHeap", data_size / 1024);
 
     uint32_t entrypoint = (uint32_t) text_data + (uint32_t) reader.get_entry() - 0x02000000;
 
@@ -126,16 +126,16 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
             const char *p = psec->get_data();
 
             if (psec->get_type() == SHT_NOBITS) {
-                DEBUG_FUNCTION_LINE("memset section %s %08X to 0 (%d bytes)", psec->get_name().c_str(), destination, sectionSize);
+                DEBUG_FUNCTION_LINE_VERBOSE("memset section %s %08X to 0 (%d bytes)", psec->get_name().c_str(), destination, sectionSize);
                 memset((void *) destination, 0, sectionSize);
             } else if (psec->get_type() == SHT_PROGBITS) {
-                DEBUG_FUNCTION_LINE("Copy section %s %08X -> %08X (%d bytes)", psec->get_name().c_str(), p, destination, sectionSize);
+                DEBUG_FUNCTION_LINE_VERBOSE("Copy section %s %08X -> %08X (%d bytes)", psec->get_name().c_str(), p, destination, sectionSize);
                 memcpy((void *) destination, p, sectionSize);
             }
 
             std::string sectionName(psec->get_name());
             pluginInfo.addSectionInfo(SectionInfo(sectionName, destination, sectionSize));
-            DEBUG_FUNCTION_LINE("Saved %s section info. Location: %08X size: %08X", psec->get_name().c_str(), destination, sectionSize);
+            DEBUG_FUNCTION_LINE_VERBOSE("Saved %s section info. Location: %08X size: %08X", psec->get_name().c_str(), destination, sectionSize);
 
             totalSize += sectionSize;
 
@@ -147,7 +147,7 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
     for (uint32_t i = 0; i < sec_num; ++i) {
         section *psec = reader.sections[i];
         if ((psec->get_type() == SHT_PROGBITS || psec->get_type() == SHT_NOBITS) && (psec->get_flags() & SHF_ALLOC)) {
-            DEBUG_FUNCTION_LINE("Linking (%d)... %s at %08X", i, psec->get_name().c_str(), destinations[psec->get_index()]);
+            DEBUG_FUNCTION_LINE_VERBOSE("Linking (%d)... %s at %08X", i, psec->get_name().c_str(), destinations[psec->get_index()]);
 
             if (!linkSection(reader, psec->get_index(), (uint32_t) destinations[psec->get_index()], (uint32_t) text_data, (uint32_t) data_data, trampolin_data, trampolin_data_length, trampolinId)) {
                 DEBUG_FUNCTION_LINE("elfLink failed");
@@ -173,7 +173,7 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
 
     pluginInfo.setTrampolinId(trampolinId);
 
-    DEBUG_FUNCTION_LINE("Saved entrypoint as %08X", entrypoint);
+    DEBUG_FUNCTION_LINE_VERBOSE("Saved entrypoint as %08X", entrypoint);
 
     std::optional<SectionInfo> secInfo = pluginInfo.getSectionInfo(".wups.hooks");
     if (secInfo && secInfo->getSize() > 0) {
@@ -182,7 +182,7 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
         if (entries != nullptr) {
             for (size_t j = 0; j < entries_count; j++) {
                 wups_loader_hook_t *hook = &entries[j];
-                DEBUG_FUNCTION_LINE("Saving hook of plugin Type: %08X, target: %08X"/*,pluginData.getPluginInformation()->getName().c_str()*/, hook->type, (void *) hook->target);
+                DEBUG_FUNCTION_LINE_VERBOSE("Saving hook of plugin Type: %08X, target: %08X"/*,pluginData.getPluginInformation()->getName().c_str()*/, hook->type, (void *) hook->target);
                 HookData hook_data((void *) hook->target, hook->type);
                 pluginInfo.addHookData(hook_data);
             }
@@ -196,7 +196,7 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
         if (entries != NULL) {
             for (size_t j = 0; j < entries_count; j++) {
                 wups_loader_entry_t *cur_function = &entries[j];
-                DEBUG_FUNCTION_LINE("Saving function \"%s\" of plugin . PA:%08X VA:%08X Library: %08X, target: %08X, call_addr: %08X", cur_function->_function.name/*,pluginData.getPluginInformation()->getName().c_str()*/,
+                DEBUG_FUNCTION_LINE_VERBOSE("Saving function \"%s\" of plugin . PA:%08X VA:%08X Library: %08X, target: %08X, call_addr: %08X", cur_function->_function.name/*,pluginData.getPluginInformation()->getName().c_str()*/,
                                     cur_function->_function.physical_address, cur_function->_function.virtual_address, cur_function->_function.library, cur_function->_function.target, (void *) cur_function->_function.call_addr);
                 FunctionData function_data((void *) cur_function->_function.physical_address, (void *) cur_function->_function.virtual_address, cur_function->_function.name, (function_replacement_library_type_t) cur_function->_function.library,
                                            (void *) cur_function->_function.target, (void *) cur_function->_function.call_addr, (FunctionPatcherTargetProcess) cur_function->_function.targetProcess);
@@ -229,7 +229,7 @@ std::vector<RelocationData> PluginInformationFactory::getImportRelocationData(co
     for (uint32_t i = 0; i < sec_num; ++i) {
         section *psec = reader.sections[i];
         if (psec->get_type() == SHT_RELA || psec->get_type() == SHT_REL) {
-            DEBUG_FUNCTION_LINE("Found relocation section %s", psec->get_name().c_str());
+            DEBUG_FUNCTION_LINE_VERBOSE("Found relocation section %s", psec->get_name().c_str());
             relocation_section_accessor rel(reader, psec);
             for (uint32_t j = 0; j < (uint32_t) rel.get_entries_num(); ++j) {
                 Elf64_Addr offset;
@@ -288,7 +288,7 @@ bool PluginInformationFactory::linkSection(const elfio &reader, uint32_t section
     for (uint32_t i = 0; i < sec_num; ++i) {
         section *psec = reader.sections[i];
         if (psec->get_info() == section_index) {
-            DEBUG_FUNCTION_LINE("Found relocation section %s", psec->get_name().c_str());
+            DEBUG_FUNCTION_LINE_VERBOSE("Found relocation section %s", psec->get_name().c_str());
             relocation_section_accessor rel(reader, psec);
             for (uint32_t j = 0; j < (uint32_t) rel.get_entries_num(); ++j) {
                 Elf64_Addr offset;
@@ -344,10 +344,10 @@ bool PluginInformationFactory::linkSection(const elfio &reader, uint32_t section
                     return false;
                 }
             }
-            DEBUG_FUNCTION_LINE("done");
+            DEBUG_FUNCTION_LINE_VERBOSE("done");
             return true;
         }
     }
-    DEBUG_FUNCTION_LINE("Failed to find relocation section");
+    DEBUG_FUNCTION_LINE_VERBOSE("Failed to find relocation section");
     return true;
 }

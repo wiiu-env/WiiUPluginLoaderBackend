@@ -10,6 +10,3 @@ extern MEMHeapHandle pluginDataHeap;
 extern uint32_t gPluginDataHeapSize;
 extern plugin_information_on_reload_t gLinkOnReload;
 extern module_information_t *gModuleData;
-
-extern "C" void __init_wut();
-extern "C" void __fini_wut();

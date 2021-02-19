@@ -46,12 +46,11 @@ WUMS_APPLICATION_STARTS() {
     }
     bool initNeeded = false;
     if (pluginDataHeap == nullptr) {
-        DEBUG_FUNCTION_LINE("gModuleData = %08X", gModuleData);
+        DEBUG_FUNCTION_LINE_VERBOSE("gModuleData = %08X", gModuleData);
         DCFlushRange((void *) gModuleData, sizeof(module_information_t));
         uint32_t endAddress = 0;
-        DEBUG_FUNCTION_LINE("Using %d modules", gModuleData->number_used_modules);
+        DEBUG_FUNCTION_LINE_VERBOSE("Using %d modules", gModuleData->number_used_modules);
         for (int i = 0; i < gModuleData->number_used_modules; i++) {
-            DEBUG_FUNCTION_LINE("%08x", gModuleData->module_data[i].endAddress);
             uint32_t curEndAddr = gModuleData->module_data[i].endAddress;
             if (curEndAddr > endAddress) {
                 endAddress = curEndAddr;
@@ -70,7 +69,7 @@ WUMS_APPLICATION_STARTS() {
 
         if (pluginDataHeap != nullptr) {
             if (gPluginInformation == nullptr) {
-                DEBUG_FUNCTION_LINE("Allocate gPluginInformation on heap %08X (size: %d bytes)", pluginDataHeap, sizeof(plugin_information_t));
+                DEBUG_FUNCTION_LINE_VERBOSE("Allocate gPluginInformation on heap %08X (size: %d bytes)", pluginDataHeap, sizeof(plugin_information_t));
                 gPluginInformation = (plugin_information_t *) MEMAllocFromExpHeapEx(pluginDataHeap, sizeof(plugin_information_t), 4);
                 if (gPluginInformation == nullptr) {
                     DEBUG_FUNCTION_LINE("Failed to allocate global plugin information");
@@ -86,7 +85,7 @@ WUMS_APPLICATION_STARTS() {
 
             for (auto &pluginContainer : plugins) {
                 for (const auto &kv : pluginContainer.getPluginInformation().getSectionInfoList()) {
-                    DEBUG_FUNCTION_LINE("%s = %s %08X %d", kv.first.c_str(), kv.second.getName().c_str(), kv.second.getAddress(), kv.second.getSize());
+                    DEBUG_FUNCTION_LINE_VERBOSE("%s = %s %08X %d", kv.first.c_str(), kv.second.getName().c_str(), kv.second.getAddress(), kv.second.getSize());
                 }
                 if (!PluginContainerPersistence::savePlugin(gPluginInformation, pluginContainer)) {
                     DEBUG_FUNCTION_LINE("Failed to save plugin");
@@ -116,10 +115,10 @@ WUMS_APPLICATION_STARTS() {
                 DEBUG_FUNCTION_LINE("We need to delete the plugin data for plugin %s", plugin->meta.name);
                 if (plugin->data.buffer != nullptr) {
                     if (plugin->data.memoryType == eMemTypeMEM2) {
-                        DEBUG_FUNCTION_LINE("Free plugin data buffer for %s [%08X]", plugin->meta.name, plugin->data.buffer);
+                        DEBUG_FUNCTION_LINE_VERBOSE("Free plugin data buffer for %s [%08X]", plugin->meta.name, plugin->data.buffer);
                         free(plugin->data.buffer);
                     } else if (plugin->data.memoryType == eMemTypeExpHeap) {
-                        DEBUG_FUNCTION_LINE("Free plugin data buffer for %s [%08X on heap %08X]", plugin->meta.name, plugin->data.buffer, plugin->data.heapHandle);
+                        DEBUG_FUNCTION_LINE_VERBOSE("Free plugin data buffer for %s [%08X on heap %08X]", plugin->meta.name, plugin->data.buffer, plugin->data.heapHandle);
                         MEMFreeToExpHeap((MEMHeapHandle) plugin->data.heapHandle, plugin->data.buffer);
                     } else {
                         DEBUG_FUNCTION_LINE("########################");

@@ -50,7 +50,7 @@ std::vector<PluginData> PluginDataFactory::loadDir(const std::string &path, MEMH
         if ((stbuf.st_mode & S_IFMT) == S_IFDIR) { // Skip directories
             continue;
         } else {
-            DEBUG_FUNCTION_LINE("Found file: %s", full_file_path.c_str());
+            DEBUG_FUNCTION_LINE("Loading plugin: %s", full_file_path.c_str());
             auto pluginData = load(full_file_path, heapHandle);
             if (pluginData) {
                 result.push_back(pluginData.value());
@@ -88,7 +88,7 @@ std::optional<PluginData> PluginDataFactory::load(const std::string &filename, M
     free(data);
     is.close();
 
-    DEBUG_FUNCTION_LINE("Loaded file!");
+    DEBUG_FUNCTION_LINE_VERBOSE("Loaded file!");
 
     return load(result, heapHandle);
 }

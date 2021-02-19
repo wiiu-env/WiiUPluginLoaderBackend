@@ -48,7 +48,7 @@ static const char **hook_names = (const char *[]) {
 
 void CallHookEx(plugin_information_t *pluginInformation, wups_loader_hook_type_t hook_type, int32_t plugin_index_needed) {
     if(hook_type != WUPS_LOADER_HOOK_VSYNC) {
-        DEBUG_FUNCTION_LINE("Calling hook of type %s [%d]", hook_names[hook_type], hook_type);
+        DEBUG_FUNCTION_LINE_VERBOSE("Calling hook of type %s [%d]", hook_names[hook_type], hook_type);
     }
     for (int32_t plugin_index = 0; plugin_index < pluginInformation->number_used_plugins; plugin_index++) {
         plugin_information_single_t *plugin_data = &pluginInformation->plugin_data[plugin_index];

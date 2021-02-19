@@ -14,7 +14,6 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
     int32_t plugin_count = pluginInformation->number_used_plugins;
 
     auto pluginName = plugin.getMetaInformation().getName();
-    //auto pluginPath = plugin.getMetaInformation().getPath();
 
     if (plugin_count >= MAXIMUM_PLUGINS - 1) {
         DEBUG_FUNCTION_LINE("Maximum of %d plugins reached. %s won't be loaded!", MAXIMUM_PLUGINS, pluginName.c_str());
@@ -63,7 +62,6 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
 
     auto pluginInfo = plugin.getPluginInformation();
 
-
     // Relocation
     std::vector<RelocationData> relocationData = pluginInfo.getRelocationDataList();
     for (auto &reloc : relocationData) {
@@ -73,10 +71,8 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
         }
     }
 
-
     std::vector<FunctionData> function_data_list = pluginInfo.getFunctionDataList();
     std::vector<HookData> hook_data_list = pluginInfo.getHookDataList();
-
 
     if (function_data_list.size() > MAXIMUM_FUNCTION_PER_PLUGIN) {
         DEBUG_FUNCTION_LINE("Plugin %s would replace to many function (%d, maximum is %d). It won't be loaded.", pluginName.c_str(), function_data_list.size(), MAXIMUM_FUNCTION_PER_PLUGIN);
@@ -101,7 +97,7 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
             continue;
         }
 
-        DEBUG_FUNCTION_LINE("Adding function \"%s\" for plugin \"%s\"", curFunction.getName().c_str(), pluginName.c_str());
+        DEBUG_FUNCTION_LINE_VERBOSE("Adding function \"%s\" for plugin \"%s\"", curFunction.getName().c_str(), pluginName.c_str());
 
         strncpy(function_data->function_name, curFunction.getName().c_str(), MAXIMUM_FUNCTION_NAME_LENGTH - 1);
 
@@ -121,7 +117,7 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
     for (auto &curHook : pluginInfo.getHookDataList()) {
         replacement_data_hook_t *hook_data = &plugin_data->info.hooks[i];
 
-        DEBUG_FUNCTION_LINE("Set hook for plugin \"%s\" of type %08X to target %08X", plugin_data->meta.name, curHook.getType(), (void *) curHook.getFunctionPointer());
+        DEBUG_FUNCTION_LINE_VERBOSE("Set hook for plugin \"%s\" of type %08X to target %08X", plugin_data->meta.name, curHook.getType(), (void *) curHook.getFunctionPointer());
 
         hook_data->func_pointer = (void *) curHook.getFunctionPointer();
         hook_data->type = curHook.getType();
@@ -220,7 +216,7 @@ std::vector<PluginContainer> PluginContainerPersistence::loadPlugins(plugin_info
             if (sectionInfo->addr == 0 && sectionInfo->size == 0) {
                 continue;
             }
-            DEBUG_FUNCTION_LINE("Add SectionInfo %s", sectionInfo->name);
+            DEBUG_FUNCTION_LINE_VERBOSE("Add SectionInfo %s", sectionInfo->name);
             std::string name(sectionInfo->name);
             curPluginInformation.addSectionInfo(SectionInfo(name, sectionInfo->addr, sectionInfo->size));
         }

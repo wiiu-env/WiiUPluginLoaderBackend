@@ -65,7 +65,7 @@ bool PluginManagement::doRelocation(const std::vector<RelocationData> &relocData
 
 void PluginManagement::doRelocations(const std::vector<PluginContainer> &plugins, relocation_trampolin_entry_t *trampData, uint32_t tramp_size) {
     for (auto &pluginContainer : plugins) {
-        DEBUG_FUNCTION_LINE("Doing relocations for plugin: %s", pluginContainer.getMetaInformation().getName().c_str());
+        DEBUG_FUNCTION_LINE_VERBOSE("Doing relocations for plugin: %s", pluginContainer.getMetaInformation().getName().c_str());
 
         if (!PluginManagement::doRelocation(pluginContainer.getPluginInformation().getRelocationDataList(), trampData, tramp_size, pluginContainer.getPluginInformation().getTrampolinId())) {
             DEBUG_FUNCTION_LINE("Relocation failed");
@@ -77,12 +77,12 @@ void PluginManagement::memsetBSS(const std::vector<PluginContainer> &plugins) {
     for (auto &pluginContainer : plugins) {
         auto sbssSection = pluginContainer.getPluginInformation().getSectionInfo(".sbss");
         if (sbssSection) {
-            DEBUG_FUNCTION_LINE("memset .sbss %08X (%d)", sbssSection->getAddress(), sbssSection->getSize());
+            DEBUG_FUNCTION_LINE_VERBOSE("memset .sbss %08X (%d)", sbssSection->getAddress(), sbssSection->getSize());
             memset((void *) sbssSection->getAddress(), 0, sbssSection->getSize());
         }
         auto bssSection = pluginContainer.getPluginInformation().getSectionInfo(".bss");
         if (bssSection) {
-            DEBUG_FUNCTION_LINE("memset .bss %08X (%d)", bssSection->getAddress(), bssSection->getSize());
+            DEBUG_FUNCTION_LINE_VERBOSE("memset .bss %08X (%d)", bssSection->getAddress(), bssSection->getSize());
             memset((void *) bssSection->getAddress(), 0, bssSection->getSize());
         }
     }
@@ -98,7 +98,7 @@ void PluginManagement::callDeinitHooks(plugin_information_t *pluginInformation) 
     CallHook(pluginInformation, WUPS_LOADER_HOOK_FINI_WUT_NEWLIB);
     CallHook(pluginInformation, WUPS_LOADER_HOOK_FINI_WUT_MALLOC);
 
-    DEBUG_FUNCTION_LINE("Done calling deinit hooks");
+    DEBUG_FUNCTION_LINE_VERBOSE("Done calling deinit hooks");
 }
 
 
@@ -118,10 +118,10 @@ void PluginManagement::unloadPlugins(plugin_information_t *gPluginInformation, M
         if (freePluginData) {
             if (plugin->data.buffer != nullptr) {
                 if (plugin->data.memoryType == eMemTypeMEM2) {
-                    DEBUG_FUNCTION_LINE("Free plugin data buffer for %s [%08X]", plugin->meta.name, plugin->data.buffer);
+                    DEBUG_FUNCTION_LINE_VERBOSE("Free plugin data buffer for %s [%08X]", plugin->meta.name, plugin->data.buffer);
                     free(plugin->data.buffer);
                 } else if (plugin->data.memoryType == eMemTypeExpHeap) {
-                    DEBUG_FUNCTION_LINE("Free plugin data buffer for %s [%08X on heap %08X]", plugin->meta.name, plugin->data.buffer, plugin->data.heapHandle);
+                    DEBUG_FUNCTION_LINE_VERBOSE("Free plugin data buffer for %s [%08X on heap %08X]", plugin->meta.name, plugin->data.buffer, plugin->data.heapHandle);
                     MEMFreeToExpHeap((MEMHeapHandle) plugin->data.heapHandle, plugin->data.buffer);
                 } else {
                     DEBUG_FUNCTION_LINE("########################");
@@ -136,11 +136,11 @@ void PluginManagement::unloadPlugins(plugin_information_t *gPluginInformation, M
         }
         if (plugin->info.allocatedTextMemoryAddress != nullptr) {
             MEMFreeToExpHeap((MEMHeapHandle) pluginHeap, plugin->info.allocatedTextMemoryAddress);
-            DEBUG_FUNCTION_LINE("Deleted allocated .text section for plugin %s [%08X]", plugin->meta.name, plugin->info.allocatedTextMemoryAddress);
+            DEBUG_FUNCTION_LINE_VERBOSE("Deleted allocated .text section for plugin %s [%08X]", plugin->meta.name, plugin->info.allocatedTextMemoryAddress);
         }
         if (plugin->info.allocatedDataMemoryAddress != nullptr) {
             MEMFreeToExpHeap((MEMHeapHandle) pluginHeap, plugin->info.allocatedDataMemoryAddress);
-            DEBUG_FUNCTION_LINE("Deleted allocated .data section for plugin %s [%08X]", plugin->meta.name, plugin->info.allocatedDataMemoryAddress);
+            DEBUG_FUNCTION_LINE_VERBOSE("Deleted allocated .data section for plugin %s [%08X]", plugin->meta.name, plugin->info.allocatedDataMemoryAddress);
         }
 
         for (auto &trampoline : gPluginInformation->trampolines) {
@@ -162,7 +162,7 @@ void PluginManagement::callInitHooks(plugin_information_t *pluginInformation) {
     CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_WUT_MALLOC);
     CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_WUT_NEWLIB);
     CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_WUT_STDCPP);
-    DEBUG_FUNCTION_LINE("Done calling init hooks");
+    DEBUG_FUNCTION_LINE_VERBOSE("Done calling init hooks");
 }
 
 void module_callback(OSDynLoad_Module module,
@@ -178,7 +178,7 @@ void module_callback(OSDynLoad_Module module,
 }
 
 void PluginManagement::PatchFunctionsAndCallHooks(plugin_information_t *gPluginInformation) {
-    DEBUG_FUNCTION_LINE("Patching functions");
+    DEBUG_FUNCTION_LINE_VERBOSE("Patching functions");
     FunctionPatcherPatchFunction(method_hooks_hooks_static, method_hooks_size_hooks_static);
 
     DCFlushRange((void *) 0x00800000, 0x00800000);
@@ -197,7 +197,7 @@ std::vector<PluginContainer> PluginManagement::loadPlugins(const std::vector<Plu
     std::vector<PluginContainer> plugins;
 
     for (auto &pluginData : pluginList) {
-        DEBUG_FUNCTION_LINE("Load meta information");
+        DEBUG_FUNCTION_LINE_VERBOSE("Load meta information");
         auto metaInfo = PluginMetaInformationFactory::loadPlugin(pluginData);
         if (metaInfo) {
             PluginContainer container;

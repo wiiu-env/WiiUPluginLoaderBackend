@@ -111,7 +111,7 @@ std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(co
                     } else if (key.compare("description") == 0) {
                         pluginInfo.setDescription(value);
                     } else if (key.compare("wups") == 0) {
-                        if (value.compare("0.2") != 0) {
+                        if (value.compare("0.4") != 0) {
                             DEBUG_FUNCTION_LINE("Warning: Ignoring plugin - Unsupported WUPS version: %s.", value.c_str());
                             return std::nullopt;
                         }

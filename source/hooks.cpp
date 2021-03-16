@@ -20,31 +20,24 @@ bool HasHookCallHook(plugin_information_t *pluginInformation, wups_loader_hook_t
 }
 
 static const char **hook_names = (const char *[]) {
-        "WUPS_LOADER_HOOK_INIT_OVERLAY",
-        "WUPS_LOADER_HOOK_INIT_KERNEL",
-        "WUPS_LOADER_HOOK_INIT_VID_MEM",
         "WUPS_LOADER_HOOK_INIT_WUT_MALLOC",
         "WUPS_LOADER_HOOK_FINI_WUT_MALLOC",
-        "WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB",
-        "WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB",
         "WUPS_LOADER_HOOK_INIT_WUT_NEWLIB",
         "WUPS_LOADER_HOOK_FINI_WUT_NEWLIB",
         "WUPS_LOADER_HOOK_INIT_WUT_STDCPP",
         "WUPS_LOADER_HOOK_FINI_WUT_STDCPP",
+        "WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB",
+        "WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB",
+
         "WUPS_LOADER_HOOK_INIT_PLUGIN",
         "WUPS_LOADER_HOOK_DEINIT_PLUGIN",
-        "WUPS_LOADER_HOOK_APPLICATION_START",
+        "WUPS_LOADER_HOOK_APPLICATION_STARTS",
         "WUPS_LOADER_HOOK_FUNCTIONS_PATCHED",
         "WUPS_LOADER_HOOK_RELEASE_FOREGROUND",
         "WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND",
-        "WUPS_LOADER_HOOK_APPLICATION_END",
-        "WUPS_LOADER_HOOK_CONFIRM_RELEASE_FOREGROUND",
-        "WUPS_LOADER_HOOK_SAVES_DONE_READY_TO_RELEASE",
-        "WUPS_LOADER_HOOK_VSYNC",
-        "WUPS_LOADER_HOOK_GET_CONFIG",
-        "WUPS_LOADER_HOOK_VID_DRC_DRAW",
-        "WUPS_LOADER_HOOK_VID_TV_DRAW",
-        "WUPS_LOADER_HOOK_APPLET_START"};
+        "WUPS_LOADER_HOOK_APPLICATION_REQUESTS_EXIT",
+        "WUPS_LOADER_HOOK_APPLICATION_ENDS",
+        "WUPS_LOADER_HOOK_VSYNC"};
 
 void CallHookEx(plugin_information_t *pluginInformation, wups_loader_hook_type_t hook_type, int32_t plugin_index_needed) {
     if(hook_type != WUPS_LOADER_HOOK_VSYNC) {
@@ -71,20 +64,17 @@ void CallHookEx(plugin_information_t *pluginInformation, wups_loader_hook_type_t
                         ((void (*)()) ((uint32_t *) func_ptr))();
                     } else if (hook_type == WUPS_LOADER_HOOK_DEINIT_PLUGIN) {
                         ((void (*)()) ((uint32_t *) func_ptr))();
-                    } else if (hook_type == WUPS_LOADER_HOOK_APPLICATION_START) {
-                        wups_loader_app_started_args_t args;
-                        ((void (*)(wups_loader_app_started_args_t)) ((uint32_t *) func_ptr))(args);
+                    } else if (hook_type == WUPS_LOADER_HOOK_APPLICATION_STARTS) {
+                        ((void (*)()) ((uint32_t *) func_ptr))();
                     } else if (hook_type == WUPS_LOADER_HOOK_FUNCTIONS_PATCHED) {
                         ((void (*)()) ((uint32_t *) func_ptr))();
-                    } else if (hook_type == WUPS_LOADER_HOOK_APPLICATION_END) {
+                    } else if (hook_type == WUPS_LOADER_HOOK_APPLICATION_ENDS) {
+                        ((void (*)()) ((uint32_t *) func_ptr))();
+                    } else if (hook_type == WUPS_LOADER_HOOK_APPLICATION_REQUESTS_EXIT) {
                         ((void (*)()) ((uint32_t *) func_ptr))();
                     } else if (hook_type == WUPS_LOADER_HOOK_INIT_WUT_MALLOC) {
                         ((void (*)()) ((uint32_t *) func_ptr))();
                     } else if (hook_type == WUPS_LOADER_HOOK_FINI_WUT_MALLOC) {
-                        ((void (*)()) ((uint32_t *) func_ptr))();
-                    } else if (hook_type == WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB) {
-                        ((void (*)()) ((uint32_t *) func_ptr))();
-                    } else if (hook_type == WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB) {
                         ((void (*)()) ((uint32_t *) func_ptr))();
                     } else if (hook_type == WUPS_LOADER_HOOK_INIT_WUT_NEWLIB) {
                         ((void (*)()) ((uint32_t *) func_ptr))();
@@ -93,6 +83,10 @@ void CallHookEx(plugin_information_t *pluginInformation, wups_loader_hook_type_t
                     } else if (hook_type == WUPS_LOADER_HOOK_INIT_WUT_STDCPP) {
                         ((void (*)()) ((uint32_t *) func_ptr))();
                     } else if (hook_type == WUPS_LOADER_HOOK_FINI_WUT_STDCPP) {
+                        ((void (*)()) ((uint32_t *) func_ptr))();
+                    } else if (hook_type == WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB) {
+                        ((void (*)()) ((uint32_t *) func_ptr))();
+                    } else if (hook_type == WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB) {
                         ((void (*)()) ((uint32_t *) func_ptr))();
                     } else if (hook_type == WUPS_LOADER_HOOK_RELEASE_FOREGROUND) {
                         ((void (*)()) ((uint32_t *) func_ptr))();

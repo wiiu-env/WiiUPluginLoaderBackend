@@ -26,16 +26,21 @@ WUMS_INITIALIZE(args) {
     WHBLogPrintf("Init successful");
 }
 
+WUMS_APPLICATION_REQUESTS_EXIT() {
+    CallHook(gPluginInformation, WUPS_LOADER_HOOK_APPLICATION_REQUESTS_EXIT);
+}
+
 WUMS_APPLICATION_ENDS() {
-    DEBUG_FUNCTION_LINE("Reset alreadyPatched flags for dynamic functions");
+    CallHook(gPluginInformation, WUPS_LOADER_HOOK_APPLICATION_ENDS);
+    CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB);
+    CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_STDCPP);
+    CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_NEWLIB);
+    CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_MALLOC);
     auto pluginInformation = gPluginInformation;
     for (int32_t plugin_index = pluginInformation->number_used_plugins - 1; plugin_index >= 0; plugin_index--) {
         FunctionPatcherRestoreDynamicFunctions(pluginInformation->plugin_data[plugin_index].info.functions, pluginInformation->plugin_data[plugin_index].info.number_used_functions);
     }
     FunctionPatcherRestoreDynamicFunctions(method_hooks_hooks_static, method_hooks_size_hooks_static);
-    DEBUG_FUNCTION_LINE("Call hooks");
-    CallHook(gPluginInformation, WUPS_LOADER_HOOK_APPLICATION_END);
-    CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB);
 }
 
 WUMS_APPLICATION_STARTS() {
@@ -154,6 +159,11 @@ WUMS_APPLICATION_STARTS() {
 
         DCFlushRange((void *) pluginDataHeap, gPluginDataHeapSize);
         ICInvalidateRange((void *) pluginDataHeap, gPluginDataHeapSize);
+
+        CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_MALLOC);
+        CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_NEWLIB);
+        CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_STDCPP);
+        CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB);
 
         if (initNeeded) {
             PluginManagement::callInitHooks(gPluginInformation);

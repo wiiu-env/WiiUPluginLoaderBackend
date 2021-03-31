@@ -96,18 +96,16 @@ bool ElfUtils::elfLinkOne(char type, size_t offset, int32_t addend, uint32_t des
                             break;
                         }
                     }
-                    if (freeSlot != NULL) {
+                    if (freeSlot == NULL) {
                         DEBUG_FUNCTION_LINE("***24-bit relative branch cannot hit target. Trampolin data list is full");
-                        DEBUG_FUNCTION_LINE("***value %08X - target %08X = distance %08X", value, target, distance);
+                        DEBUG_FUNCTION_LINE("***value %08X - target %08X = distance %08X", value, target, target - (uint32_t) &(freeSlot->trampolin[0]));
                         return false;
                     }
                     if (target - (uint32_t) &(freeSlot->trampolin[0]) > 0x1FFFFFC) {
                         DEBUG_FUNCTION_LINE("**Cannot link 24-bit jump (too far to tramp buffer).");
-                        DEBUG_FUNCTION_LINE("***value %08X - target %08X = distance %08X", value, target, distance);
+                        DEBUG_FUNCTION_LINE("***value %08X - target %08X = distance %08X", value, target, (target - (uint32_t) &(freeSlot->trampolin[0])));
                         return false;
                     }
-
-                    DEBUG_FUNCTION_LINE("freeSlot = %08X", freeSlot);
 
                     freeSlot->trampolin[0] = 0x3D600000 | ((((uint32_t) value) >> 16) & 0x0000FFFF); // lis r11, real_addr@h
                     freeSlot->trampolin[1] = 0x616B0000 | (((uint32_t) value) & 0x0000ffff); // ori r11, r11, real_addr@l
@@ -124,12 +122,11 @@ bool ElfUtils::elfLinkOne(char type, size_t offset, int32_t addend, uint32_t des
                         freeSlot->status = RELOC_TRAMP_FIXED;
                     } else {
                         // Relocations for the imports may be overridden
-                        freeSlot->status = RELOC_TRAMP_IMPORT_IN_PROGRESS;
+                        freeSlot->status = RELOC_TRAMP_IMPORT_DONE;
                     }
                     uint32_t symbolValue = (uint32_t) &(freeSlot->trampolin[0]);
                     value = symbolValue + addend;
                     distance = static_cast<int32_t>(value) - static_cast<int32_t>(target);
-                    DEBUG_FUNCTION_LINE("Created tramp");
                 }
             }
 

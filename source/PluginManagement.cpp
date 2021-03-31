@@ -11,6 +11,7 @@
 #include "utils/ElfUtils.h"
 #include "PluginManagement.h"
 #include "hooks.h"
+#include "globals.h"
 
 bool PluginManagement::doRelocation(const std::vector<RelocationData> &relocData, relocation_trampolin_entry_t *tramp_data, uint32_t tramp_length, uint32_t trampolinID) {
     std::map<std::string, OSDynLoad_Module> moduleHandleCache;
@@ -139,10 +140,11 @@ void PluginManagement::unloadPlugins(plugin_information_t *gPluginInformation, M
             DEBUG_FUNCTION_LINE_VERBOSE("Deleted allocated .data section for plugin %s [%08X]", plugin->meta.name, plugin->info.allocatedDataMemoryAddress);
         }
 
-        for (auto &trampoline : gPluginInformation->trampolines) {
-            if (trampoline.id == plugin->info.trampolinId) {
-                trampoline.id = 0;
-                trampoline.status = RELOC_TRAMP_FREE;
+        for (uint32_t i = 0; i < gTrampolineDataSize; i++) {
+            auto trampoline = &(gTrampolineData[i]);
+            if (trampoline->id == plugin->info.trampolinId) {
+                trampoline->id = 0;
+                trampoline->status = RELOC_TRAMP_FREE;
             }
         }
     }

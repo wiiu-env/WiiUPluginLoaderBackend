@@ -2,6 +2,8 @@
 #include <wums.h>
 #include <coreinit/debug.h>
 #include <coreinit/cache.h>
+#include <coreinit/dynload.h>
+#include <coreinit/memdefaultheap.h>
 #include "plugin/PluginContainer.h"
 #include "globals.h"
 #include "plugin/PluginDataFactory.h"
@@ -43,6 +45,8 @@ WUMS_APPLICATION_ENDS() {
     FunctionPatcherRestoreDynamicFunctions(method_hooks_hooks_static, method_hooks_size_hooks_static);
 }
 
+void *allocOnCustomHeap(int alignment, int size);
+
 WUMS_APPLICATION_STARTS() {
     WHBLogUdpInit();
     uint32_t upid = OSGetUPID();
@@ -50,11 +54,9 @@ WUMS_APPLICATION_STARTS() {
         return;
     }
     bool initNeeded = false;
-    if (pluginDataHeap == nullptr) {
-        DEBUG_FUNCTION_LINE_VERBOSE("gModuleData = %08X", gModuleData);
+    if (gPluginDataHeap == nullptr) {
         DCFlushRange((void *) gModuleData, sizeof(module_information_t));
         uint32_t endAddress = 0;
-        DEBUG_FUNCTION_LINE_VERBOSE("Using %d modules", gModuleData->number_used_modules);
         for (int i = 0; i < gModuleData->number_used_modules; i++) {
             uint32_t curEndAddr = gModuleData->module_data[i].endAddress;
             if (curEndAddr > endAddress) {
@@ -67,26 +69,50 @@ WUMS_APPLICATION_STARTS() {
         // in the SetupPayload repo. (I know that's a bad idea)
         endAddress = (endAddress + 0x100) & 0xFFFFFF00;
 
-        gPluginDataHeapSize = 0x00FFF000 - endAddress;
+        gPluginInformationHeapSize = 0x00FFF000 - endAddress;
 
-        DEBUG_FUNCTION_LINE("Create heap to store plugins");
-        pluginDataHeap = MEMCreateExpHeapEx((void *) (endAddress), gPluginDataHeapSize, 0);
+        DEBUG_FUNCTION_LINE("Create heap for plugins information");
+        gPluginInformationHeap = MEMCreateExpHeapEx((void *) (endAddress), gPluginInformationHeapSize, 0);
 
-        if (pluginDataHeap != nullptr) {
+        if (gPluginInformationHeap == nullptr) {
+            OSFatal("PluginBackend: Failed to allocate memory for plugin information");
+        }
+
+        void *pluginHeapMemory = allocOnCustomHeap(0x1000, PLUGIN_DATA_HEAP_SIZE);
+        if (pluginHeapMemory == nullptr) {
+            DEBUG_FUNCTION_LINE("Use plugins information heap as fallback");
+            gPluginDataHeap = gPluginInformationHeap;
+            gPluginDataHeapSize = gPluginInformationHeapSize;
+        } else {
+            gPluginDataHeap = MEMCreateExpHeapEx(pluginHeapMemory, PLUGIN_DATA_HEAP_SIZE, 0);
+            gPluginDataHeapSize = PLUGIN_DATA_HEAP_SIZE;
+        }
+
+        if (gPluginDataHeap != nullptr) {
             if (gPluginInformation == nullptr) {
-                DEBUG_FUNCTION_LINE_VERBOSE("Allocate gPluginInformation on heap %08X (size: %d bytes)", pluginDataHeap, sizeof(plugin_information_t));
-                gPluginInformation = (plugin_information_t *) MEMAllocFromExpHeapEx(pluginDataHeap, sizeof(plugin_information_t), 4);
+                DEBUG_FUNCTION_LINE_VERBOSE("Allocate gPluginInformation on heap %08X (size: %d bytes)", gPluginInformationHeap, sizeof(plugin_information_t));
+                gPluginInformation = (plugin_information_t *) MEMAllocFromExpHeapEx(gPluginInformationHeap, sizeof(plugin_information_t), 4);
                 if (gPluginInformation == nullptr) {
-                    DEBUG_FUNCTION_LINE("Failed to allocate global plugin information");
+                    OSFatal("PluginBackend: Failed to allocate global plugin information");
                     return;
                 }
                 memset((void *) gPluginInformation, 0, sizeof(plugin_information_t));
             }
-            DEBUG_FUNCTION_LINE("Available memory for storing plugins: %d kb", MEMGetAllocatableSizeForExpHeapEx(pluginDataHeap, 4) / 1024);
-            std::vector<PluginData> pluginList = PluginDataFactory::loadDir("fs:/vol/external01/wiiu/plugins/", pluginDataHeap);
+            if (gTrampolineData == nullptr) {
+                DEBUG_FUNCTION_LINE_VERBOSE("Allocate gTrampolineData on heap %08X (size: %d bytes)", gPluginDataHeap, sizeof(relocation_trampolin_entry_t) * NUMBER_OF_TRAMPS);
+                gTrampolineData = (relocation_trampolin_entry_t *) MEMAllocFromExpHeapEx(gPluginDataHeap, sizeof(relocation_trampolin_entry_t) * NUMBER_OF_TRAMPS, 4);
+                if (gTrampolineData == nullptr) {
+                    OSFatal("PluginBackend: Failed to allocate gTrampolineData");
+                    return;
+                }
+                gTrampolineDataSize = NUMBER_OF_TRAMPS;
+                memset((void *) gTrampolineData, 0, sizeof(relocation_trampolin_entry_t) * NUMBER_OF_TRAMPS);
+            }
+            DEBUG_FUNCTION_LINE("Available memory for storing plugins: %d kb", MEMGetAllocatableSizeForExpHeapEx(gPluginDataHeap, 4) / 1024);
+            std::vector<PluginData> pluginList = PluginDataFactory::loadDir("fs:/vol/external01/wiiu/plugins/", gPluginDataHeap);
             DEBUG_FUNCTION_LINE("Loaded data for %d plugins.", pluginList.size());
 
-            std::vector<PluginContainer> plugins = PluginManagement::loadPlugins(pluginList, pluginDataHeap, gPluginInformation->trampolines, DYN_LINK_TRAMPOLIN_LIST_LENGTH);
+            std::vector<PluginContainer> plugins = PluginManagement::loadPlugins(pluginList, gPluginDataHeap, gTrampolineData, gTrampolineDataSize);
 
             for (auto &pluginContainer : plugins) {
                 for (const auto &kv : pluginContainer.getPluginInformation().getSectionInfoList()) {
@@ -138,9 +164,9 @@ WUMS_APPLICATION_STARTS() {
             }
         }
 
-        PluginManagement::unloadPlugins(gPluginInformation, pluginDataHeap, false);
+        PluginManagement::unloadPlugins(gPluginInformation, gPluginDataHeap, false);
 
-        std::vector<PluginContainer> plugins = PluginManagement::loadPlugins(pluginDataList, pluginDataHeap, gPluginInformation->trampolines, DYN_LINK_TRAMPOLIN_LIST_LENGTH);
+        std::vector<PluginContainer> plugins = PluginManagement::loadPlugins(pluginDataList, gPluginDataHeap, gTrampolineData, gTrampolineDataSize);
 
         for (auto &pluginContainer : plugins) {
             DEBUG_FUNCTION_LINE("Stored information for plugin %s ; %s", pluginContainer.getMetaInformation().getName().c_str(), pluginContainer.getMetaInformation().getAuthor().c_str());
@@ -152,13 +178,15 @@ WUMS_APPLICATION_STARTS() {
         initNeeded = true;
     }
 
-    if (pluginDataHeap != nullptr) {
+    if (gPluginDataHeap != nullptr) {
         std::vector<PluginContainer> plugins = PluginContainerPersistence::loadPlugins(gPluginInformation);
-        PluginManagement::doRelocations(plugins, gPluginInformation->trampolines, DYN_LINK_TRAMPOLIN_LIST_LENGTH);
+        PluginManagement::doRelocations(plugins, gTrampolineData, DYN_LINK_TRAMPOLIN_LIST_LENGTH);
         // PluginManagement::memsetBSS(plugins);
 
-        DCFlushRange((void *) pluginDataHeap, gPluginDataHeapSize);
-        ICInvalidateRange((void *) pluginDataHeap, gPluginDataHeapSize);
+        DCFlushRange((void *) gPluginDataHeap, gPluginDataHeapSize);
+        ICInvalidateRange((void *) gPluginDataHeap, gPluginDataHeapSize);
+        DCFlushRange((void *) gPluginInformation, sizeof(plugin_information_t));
+        ICInvalidateRange((void *) gPluginInformation, sizeof(plugin_information_t));
 
         CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_MALLOC);
         CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_NEWLIB);
@@ -171,4 +199,20 @@ WUMS_APPLICATION_STARTS() {
 
         PluginManagement::PatchFunctionsAndCallHooks(gPluginInformation);
     }
+}
+
+void *allocOnCustomHeap(int alignment, int size) {
+    OSDynLoad_Module module;
+    OSDynLoad_Error dyn_res = OSDynLoad_Acquire("homebrew_memorymapping", &module);
+    if (dyn_res != OS_DYNLOAD_OK) {
+        return nullptr;
+    }
+    uint32_t *custom_memalign;
+    dyn_res = OSDynLoad_FindExport(module, true, "MEMAllocFromMappedMemoryEx", reinterpret_cast<void **>(&custom_memalign));
+    void *(*customMEMAllocFromDefaultHeapEx)(uint32_t size, int align) = (void *(*)(uint32_t, int)) *custom_memalign;
+
+    if (dyn_res != OS_DYNLOAD_OK) {
+        return nullptr;
+    }
+    return customMEMAllocFromDefaultHeapEx(size, alignment);
 }

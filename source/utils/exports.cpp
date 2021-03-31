@@ -67,11 +67,11 @@ extern "C" int32_t WUPSDeletePluginData(const plugin_data_handle *plugin_data_ha
 extern "C" int32_t WUPSLoadPluginAsData(GetPluginInformationInputType inputType, const char *path, char *buffer, size_t size, plugin_data_handle *out) {
     std::optional<PluginData> pluginData;
     if (inputType == PLUGIN_INFORMATION_INPUT_TYPE_PATH && path != nullptr) {
-        pluginData = PluginDataFactory::load(path, pluginDataHeap);
+        pluginData = PluginDataFactory::load(path, gPluginDataHeap);
     } else if (inputType == PLUGIN_INFORMATION_INPUT_TYPE_BUFFER && buffer != nullptr && size > 0) {
         std::vector<uint8_t> data(size);
         memcpy(&data[0], buffer, size);
-        pluginData = PluginDataFactory::load(data, pluginDataHeap);
+        pluginData = PluginDataFactory::load(data, gPluginDataHeap);
     } else {
         return ERROR_INVALID_ARG;
     }

@@ -40,13 +40,13 @@ extern "C" {
 
 #define PLUGIN_DYN_LINK_RELOCATION_LIST_LENGTH              1000
 
-#define MAXIMUM_HOOKS_PER_PLUGIN                        25
-#define MAXIMUM_FUNCTION_PER_PLUGIN                     100
+#define MAXIMUM_HOOKS_PER_PLUGIN                            25
+#define MAXIMUM_FUNCTION_PER_PLUGIN                         100
 
 struct plugin_section_info_t {
-    char                            name[MAXIMUM_PLUGIN_SECTION_NAME_LENGTH] = "";
-    uint32_t                        addr;
-    uint32_t                        size;
+    char name[MAXIMUM_PLUGIN_SECTION_NAME_LENGTH] = "";
+    uint32_t addr;
+    uint32_t size;
 };
 
 struct plugin_meta_info_t {
@@ -95,7 +95,6 @@ struct plugin_information_single_t {
 struct plugin_information_t {
     int32_t                         number_used_plugins = 0;                        // Number of used plugins. Maximum is MAXIMUM_PLUGINS
     plugin_information_single_t     plugin_data[MAXIMUM_PLUGINS];
-    relocation_trampolin_entry_t    trampolines[DYN_LINK_TRAMPOLIN_LIST_LENGTH];
     dyn_linking_relocation_data_t   linking_data;                                   // RPL and function name list
 };
 

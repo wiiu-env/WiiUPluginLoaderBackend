@@ -55,7 +55,7 @@ void CallHookEx(plugin_information_t *pluginInformation, wups_loader_hook_type_t
             replacement_data_hook_t *hook_data = &plugin_data->info.hooks[j];
             if (hook_data->type == hook_type) {
                 if(hook_data->type != WUPS_LOADER_HOOK_VSYNC){
-                    DEBUG_FUNCTION_LINE("Calling hook of type %s for plugin %s [%d]", hook_names[hook_data->type], plugin_data->meta.name, hook_type);
+                    DEBUG_FUNCTION_LINE_VERBOSE("Calling hook of type %s for plugin %s [%d]", hook_names[hook_data->type], plugin_data->meta.name, hook_type);
                 }
                 void *func_ptr = hook_data->func_pointer;
                 if (func_ptr != nullptr) {

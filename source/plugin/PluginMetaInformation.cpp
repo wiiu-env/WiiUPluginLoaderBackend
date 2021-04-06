@@ -8,4 +8,5 @@ PluginMetaInformation::PluginMetaInformation(const PluginMetaInformation &other)
     this->buildtimestamp = other.buildtimestamp;
     this->description = other.description;
     this->size = other.size;
+    this->id = other.id;
 }

@@ -52,6 +52,10 @@ public:
         return this->size;
     }
 
+    [[nodiscard]] const std::string getId() const {
+        return this->id;
+    }
+
 private:
     PluginMetaInformation() = default;
 
@@ -83,12 +87,17 @@ private:
         this->size = _size;
     }
 
+    void setId(const std::string &id) {
+        this->id = id;
+    }
+
     std::string name;
     std::string author;
     std::string version;
     std::string license;
     std::string buildtimestamp;
     std::string description;
+    std::string id;
     size_t size{};
 
     friend class PluginMetaInformationFactory;

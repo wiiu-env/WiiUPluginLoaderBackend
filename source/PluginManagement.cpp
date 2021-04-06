@@ -155,6 +155,7 @@ void PluginManagement::unloadPlugins(plugin_information_t *gPluginInformation, M
 }
 
 void PluginManagement::callInitHooks(plugin_information_t *pluginInformation) {
+    CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_STORAGE);
     CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_PLUGIN);
     DEBUG_FUNCTION_LINE_VERBOSE("Done calling init hooks");
 }

@@ -23,6 +23,8 @@ WUT_ROOT := $(DEVKITPRO)/wut
 TARGET		:=	PluginBackend
 BUILD		:=	build
 SOURCES		:=	source \
+                source/fs \
+                source/config \
                 source/elfio \
                 source/patcher \
                 source/plugin \
@@ -41,9 +43,9 @@ CFLAGS	+=	$(INCLUDE) -D__WIIU__ -D__WUT__
 CXXFLAGS	:= $(CFLAGS) -std=c++20
 
 ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-g $(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map) -T$(WUMS_ROOT)/share/libfunctionpatcher.ld $(WUMSSPECS) 
+LDFLAGS	=	-g $(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map) -T$(WUMS_ROOT)/share/libfunctionpatcher.ld -T$(WUMS_ROOT)/share/libmappedmemory.ld $(WUMSSPECS) 
 
-LIBS	:= -lwums -lwut -lwups -lfunctionpatcher -lz
+LIBS	:= -lwums -lwut -lwups -lfunctionpatcher -lmappedmemory -lfreetype -lbz2 -lpng -lz
 
 #-------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level
@@ -93,7 +95,7 @@ export HFILES_BIN	:=	$(addsuffix .h,$(subst .,_,$(BINFILES)))
 
 export INCLUDE	:=	$(foreach dir,$(INCLUDES),-I$(CURDIR)/$(dir)) \
 			$(foreach dir,$(LIBDIRS),-I$(dir)/include) \
-			-I$(CURDIR)/$(BUILD)
+			-I$(CURDIR)/$(BUILD) -I$(DEVKITPRO)/portlibs/ppc/include/freetype2
 
 export LIBPATHS	:=	$(foreach dir,$(LIBDIRS),-L$(dir)/lib)
 

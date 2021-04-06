@@ -10,3 +10,6 @@ relocation_trampolin_entry_t *gTrampolineData __attribute__((section(".data"))) 
 uint32_t gPluginDataHeapSize = 0;
 uint32_t gPluginInformationHeapSize = 0;
 uint32_t gTrampolineDataSize = 0;
+
+StoredBuffer storedTVBuffer{};
+StoredBuffer storedDRCBuffer{};

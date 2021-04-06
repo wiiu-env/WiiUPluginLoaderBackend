@@ -81,7 +81,7 @@ std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(co
         }
 
         // Get meta information and check WUPS version:
-        if (psec->get_name().compare(".wups.meta") == 0) {
+        if (psec->get_name() == ".wups.meta") {
             const void *sectionData = psec->get_data();
             uint32_t sectionSize = psec->get_size();
 
@@ -92,7 +92,7 @@ std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(co
                     continue;
                 }
 
-                auto firstFound = std::string(curEntry).find_first_of("=");
+                auto firstFound = std::string(curEntry).find_first_of('=');
                 if (firstFound != std::string::npos) {
                     curEntry[firstFound] = '\0';
                     std::string key(curEntry);
@@ -110,8 +110,10 @@ std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(co
                         pluginInfo.setBuildTimestamp(value);
                     } else if (key.compare("description") == 0) {
                         pluginInfo.setDescription(value);
+                    } else if (key.compare("id") == 0) {
+                        pluginInfo.setId(value);
                     } else if (key.compare("wups") == 0) {
-                        if (value.compare("0.5") != 0) {
+                        if (value.compare("0.6") != 0) {
                             DEBUG_FUNCTION_LINE("Warning: Ignoring plugin - Unsupported WUPS version: %s.", value.c_str());
                             return std::nullopt;
                         }

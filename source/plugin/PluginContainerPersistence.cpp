@@ -48,7 +48,7 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
     strncpy(plugin_meta_data->license, pluginMetaInfo.getLicense().c_str(), MAXIMUM_PLUGIN_META_FIELD_LENGTH - 1);
 
     if (pluginMetaInfo.getBuildTimestamp().size() >= MAXIMUM_PLUGIN_META_FIELD_LENGTH) {
-        DEBUG_FUNCTION_LINE("Warning: build timestampt will be truncated.");
+        DEBUG_FUNCTION_LINE("Warning: build timestamp will be truncated.");
     }
     strncpy(plugin_meta_data->buildTimestamp, pluginMetaInfo.getBuildTimestamp().c_str(), MAXIMUM_PLUGIN_META_FIELD_LENGTH - 1);
 
@@ -57,6 +57,11 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
         DEBUG_FUNCTION_LINE("%s", pluginMetaInfo.getDescription().c_str());
     }
     strncpy(plugin_meta_data->descripion, pluginMetaInfo.getDescription().c_str(), MAXIMUM_PLUGIN_DESCRIPTION_LENGTH - 1);
+
+    if (pluginMetaInfo.getId().size() >= MAXIMUM_PLUGIN_META_FIELD_LENGTH) {
+        DEBUG_FUNCTION_LINE("Warning: plugin id will be truncated.");
+    }
+    strncpy(plugin_meta_data->id, pluginMetaInfo.getId().c_str(), MAXIMUM_PLUGIN_META_FIELD_LENGTH - 1);
 
     plugin_meta_data->size = pluginMetaInfo.getSize();
 

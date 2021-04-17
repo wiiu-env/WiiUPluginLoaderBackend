@@ -34,6 +34,7 @@ WUMS_APPLICATION_REQUESTS_EXIT() {
 
 WUMS_APPLICATION_ENDS() {
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_APPLICATION_ENDS);
+    CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_SOCKETS);
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB);
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_STDCPP);
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_NEWLIB);
@@ -192,6 +193,7 @@ WUMS_APPLICATION_STARTS() {
         CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_NEWLIB);
         CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_STDCPP);
         CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB);
+        CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_SOCKETS);
 
         if (initNeeded) {
             PluginManagement::callInitHooks(gPluginInformation);

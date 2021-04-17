@@ -103,7 +103,9 @@ void PluginManagement::unloadPlugins(plugin_information_t *gPluginInformation, M
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_NEWLIB);
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_STDCPP);
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB);
+    CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_SOCKETS);
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_DEINIT_PLUGIN);
+    // CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_SOCKETS); To keep network alive we skip this.
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB);
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_STDCPP);
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_NEWLIB);

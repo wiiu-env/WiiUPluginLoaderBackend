@@ -28,6 +28,8 @@ static const char **hook_names = (const char *[]) {
         "WUPS_LOADER_HOOK_FINI_WUT_STDCPP",
         "WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB",
         "WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB",
+        "WUPS_LOADER_HOOK_INIT_WUT_SOCKETS",
+        "WUPS_LOADER_HOOK_FINI_WUT_SOCKETS",
 
         "WUPS_LOADER_HOOK_INIT_PLUGIN",
         "WUPS_LOADER_HOOK_DEINIT_PLUGIN",
@@ -87,6 +89,10 @@ void CallHookEx(plugin_information_t *pluginInformation, wups_loader_hook_type_t
                     } else if (hook_type == WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB) {
                         ((void (*)()) ((uint32_t *) func_ptr))();
                     } else if (hook_type == WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB) {
+                        ((void (*)()) ((uint32_t *) func_ptr))();
+                    } else if (hook_type == WUPS_LOADER_HOOK_INIT_WUT_SOCKETS) {
+                        ((void (*)()) ((uint32_t *) func_ptr))();
+                    } else if (hook_type == WUPS_LOADER_HOOK_FINI_WUT_SOCKETS) {
                         ((void (*)()) ((uint32_t *) func_ptr))();
                     } else if (hook_type == WUPS_LOADER_HOOK_RELEASE_FOREGROUND) {
                         ((void (*)()) ((uint32_t *) func_ptr))();

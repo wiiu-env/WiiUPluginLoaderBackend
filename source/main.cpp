@@ -15,6 +15,8 @@
 
 WUMS_MODULE_EXPORT_NAME("homebrew_wupsbackend");
 
+WUMS_USE_WUT_DEVOPTAB()
+
 WUMS_INITIALIZE(args) {
     WHBLogUdpInit();
 

@@ -24,7 +24,7 @@ extern "C" int32_t WUPSLoadAndLinkByDataHandle(const plugin_data_handle *plugin_
     if (plugin_data_handle_list != nullptr && plugin_data_handle_list_size != 0) {
         for (uint32_t i = 0; i < plugin_data_handle_list_size; i++) {
             plugin_data_handle handle = plugin_data_handle_list[i];
-            PluginData *pluginData = (PluginData *) handle;
+            auto *pluginData = (PluginData *) handle;
             DEBUG_FUNCTION_LINE("Saving plugin data %08X", pluginData);
             PluginDataPersistence::save(&gLinkOnReload.plugin_data[gLinkOnReload.number_used_plugins], *pluginData);
 
@@ -44,7 +44,7 @@ extern "C" int32_t WUPSDeletePluginContainer(const plugin_container_handle *hand
     if (handle_list != nullptr && handle_list_size != 0) {
         for (uint32_t i = 0; i < handle_list_size; i++) {
             auto handle = handle_list[i];
-            PluginContainer *pluginContainer = (PluginContainer *) handle;
+            auto *pluginContainer = (PluginContainer *) handle;
             DEBUG_FUNCTION_LINE("Delete plugin container: %08X", pluginContainer);
             delete pluginContainer;
         }

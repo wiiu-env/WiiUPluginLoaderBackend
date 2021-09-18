@@ -77,12 +77,12 @@ bool ElfUtils::elfLinkOne(char type, size_t offset, int32_t addend, uint32_t des
             // }
             auto distance = static_cast<int32_t>(value) - static_cast<int32_t>(target);
             if (distance > 0x1FFFFFC || distance < -0x1FFFFFC) {
-                if (trampolin_data == NULL) {
+                if (trampolin_data == nullptr) {
                     DEBUG_FUNCTION_LINE("***24-bit relative branch cannot hit target. Trampolin isn't provided");
                     DEBUG_FUNCTION_LINE("***value %08X - target %08X = distance %08X", value, target, distance);
                     return false;
                 } else {
-                    relocation_trampolin_entry_t *freeSlot = NULL;
+                    relocation_trampolin_entry_t *freeSlot = nullptr;
                     for (uint32_t i = 0; i < trampolin_data_length; i++) {
                         // We want to override "old" relocations of imports
                         // Pending relocations have the status RELOC_TRAMP_IMPORT_IN_PROGRESS.
@@ -96,7 +96,7 @@ bool ElfUtils::elfLinkOne(char type, size_t offset, int32_t addend, uint32_t des
                             break;
                         }
                     }
-                    if (freeSlot == NULL) {
+                    if (freeSlot == nullptr) {
                         DEBUG_FUNCTION_LINE("***24-bit relative branch cannot hit target. Trampolin data list is full");
                         DEBUG_FUNCTION_LINE("***value %08X - target %08X = distance %08X", value, target, target - (uint32_t) &(freeSlot->trampolin[0]));
                         return false;

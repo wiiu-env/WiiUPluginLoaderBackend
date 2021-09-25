@@ -31,10 +31,10 @@ void PluginData::freeMemory() {
     }
 }
 
-PluginData::PluginData(const std::vector<uint8_t>& buffer) : PluginData(buffer, nullptr, eMemTypeMEM2) {
+PluginData::PluginData(const std::vector<uint8_t> &buffer) : PluginData(buffer, nullptr, eMemTypeMEM2) {
 }
 
-PluginData::PluginData(const std::vector<uint8_t>& input, MEMHeapHandle heapHandle, eMemoryTypes memoryType) :
+PluginData::PluginData(const std::vector<uint8_t> &input, MEMHeapHandle heapHandle, eMemoryTypes memoryType) :
         heapHandle(heapHandle),
         memoryType(memoryType),
         length(input.size()) {

@@ -6,9 +6,6 @@
 #include "PluginContainerPersistence.h"
 #include "PluginDataPersistence.h"
 #include "DynamicLinkingHelper.h"
-#include "../common/plugin_defines.h"
-#include "PluginInformation.h"
-#include "RelocationData.h"
 
 bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformation, PluginContainer &plugin) {
     int32_t plugin_count = pluginInformation->number_used_plugins;
@@ -69,7 +66,7 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
 
     // Relocation
     std::vector<RelocationData> relocationData = pluginInfo.getRelocationDataList();
-    for (auto &reloc : relocationData) {
+    for (auto &reloc: relocationData) {
         if (!DynamicLinkingHelper::addReloationEntry(&(pluginInformation->linking_data), plugin_data->info.linking_entries, PLUGIN_DYN_LINK_RELOCATION_LIST_LENGTH, reloc)) {
             DEBUG_FUNCTION_LINE("Failed to add a relocation entry");
             return false;
@@ -95,7 +92,7 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
 
     /* Store function replacement information */
     uint32_t i = 0;
-    for (auto &curFunction : pluginInfo.getFunctionDataList()) {
+    for (auto &curFunction: pluginInfo.getFunctionDataList()) {
         function_replacement_data_t *function_data = &plugin_data->info.functions[i];
         if (strlen(curFunction.getName().c_str()) > MAXIMUM_FUNCTION_NAME_LENGTH - 1) {
             DEBUG_FUNCTION_LINE("Could not add function \"%s\" for plugin \"%s\" function name is too long.", curFunction.getName().c_str(), pluginName.c_str());
@@ -119,7 +116,7 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
     }
 
     i = 0;
-    for (auto &curHook : pluginInfo.getHookDataList()) {
+    for (auto &curHook: pluginInfo.getHookDataList()) {
         replacement_data_hook_t *hook_data = &plugin_data->info.hooks[i];
 
         DEBUG_FUNCTION_LINE_VERBOSE("Set hook for plugin \"%s\" of type %08X to target %08X", plugin_data->meta.name, curHook.getType(), (void *) curHook.getFunctionPointer());
@@ -132,20 +129,20 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
     }
 
     /* Saving SectionInfos */
-    for (auto &curSection  : pluginInfo.getSectionInfoList()) {
+    for (auto &curSection: pluginInfo.getSectionInfoList()) {
         bool foundFreeSlot = false;
         uint32_t slot = 0;
-        for (uint32_t i = 0; i < MAXIMUM_PLUGIN_SECTION_LENGTH; i++) {
-            plugin_section_info_t *sectionInfo = &(plugin_data->info.sectionInfos[i]);
+        for (uint32_t j = 0; j < MAXIMUM_PLUGIN_SECTION_LENGTH; j++) {
+            plugin_section_info_t *sectionInfo = &(plugin_data->info.sectionInfos[j]);
             if (sectionInfo->addr == 0 && sectionInfo->size == 0) {
                 foundFreeSlot = true;
-                slot = i;
+                slot = j;
                 break;
             }
         }
         if (foundFreeSlot) {
             plugin_section_info_t *sectionInfo = &(plugin_data->info.sectionInfos[slot]);
-            if (strlen(curSection.first.c_str()) > MAXIMUM_PLUGIN_SECTION_NAME_LENGTH - 1) {
+            if (curSection.first.length() > MAXIMUM_PLUGIN_SECTION_NAME_LENGTH - 1) {
                 DEBUG_FUNCTION_LINE("Could not add section info \"%s\" for plugin \"%s\" section name is too long.", curSection.first.c_str(), pluginName.c_str());
                 break;
             }
@@ -180,7 +177,7 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
 std::vector<PluginContainer> PluginContainerPersistence::loadPlugins(plugin_information_t *pluginInformation) {
     std::vector<PluginContainer> result;
     if (pluginInformation == nullptr) {
-        DEBUG_FUNCTION_LINE("pluginInformation == NULL");
+        DEBUG_FUNCTION_LINE("pluginInformation == nullptr");
         return result;
     }
     DCFlushRange((void *) pluginInformation, sizeof(plugin_information_t));
@@ -216,7 +213,7 @@ std::vector<PluginContainer> PluginContainerPersistence::loadPlugins(plugin_info
         curPluginInformation.allocatedTextMemoryAddress = plugin_data->info.allocatedTextMemoryAddress;
         curPluginInformation.allocatedDataMemoryAddress = plugin_data->info.allocatedDataMemoryAddress;
 
-        for (auto & curItem : plugin_data->info.sectionInfos) {
+        for (auto &curItem: plugin_data->info.sectionInfos) {
             plugin_section_info_t *sectionInfo = &curItem;
             if (sectionInfo->addr == 0 && sectionInfo->size == 0) {
                 continue;
@@ -250,38 +247,30 @@ std::vector<PluginContainer> PluginContainerPersistence::loadPlugins(plugin_info
 
         for (uint32_t j = 0; j < functionReplaceCount; j++) {
             function_replacement_data_t *entry = &(plugin_data->info.functions[j]);
-            FunctionData func((void *) entry->physicalAddr, (void *) entry->virtualAddr, entry->function_name, (function_replacement_library_type_t) entry->library, (void *) entry->replaceAddr, (void *) entry->replaceCall, entry->targetProcess);
+            FunctionData func((void *) entry->physicalAddr, (void *) entry->virtualAddr, entry->function_name, (function_replacement_library_type_t) entry->library, (void *) entry->replaceAddr,
+                              (void *) entry->replaceCall, entry->targetProcess);
             curPluginInformation.addFunctionData(func);
         }
 
         /* load relocation data */
-        for (auto & linking_entrie : plugin_data->info.linking_entries) {
-            dyn_linking_relocation_entry_t *linking_entry = &linking_entrie;
-            if (linking_entry->destination == nullptr) {
+        for (auto &linking_entry: plugin_data->info.linking_entries) {
+            if (linking_entry.destination == nullptr) {
                 break;
             }
-            dyn_linking_import_t *importEntry = linking_entry->importEntry;
+            dyn_linking_import_t *importEntry = linking_entry.importEntry;
             if (importEntry == nullptr) {
-                DEBUG_FUNCTION_LINE("importEntry was NULL, skipping relocation entry");
+                DEBUG_FUNCTION_LINE("importEntry was nullptr, skipping relocation entry");
                 continue;
             }
-            if (importEntry->importName == nullptr) {
-                DEBUG_FUNCTION_LINE("importEntry->importName was NULL, skipping relocation entry");
-                continue;
-            }
-            dyn_linking_function_t *functionEntry = linking_entry->functionEntry;
+            dyn_linking_function_t *functionEntry = linking_entry.functionEntry;
 
             if (functionEntry == nullptr) {
-                DEBUG_FUNCTION_LINE("functionEntry was NULL, skipping relocation entry");
-                continue;
-            }
-            if (functionEntry->functionName == nullptr) {
-                DEBUG_FUNCTION_LINE("functionEntry->functionName was NULL, skipping relocation entry");
+                DEBUG_FUNCTION_LINE("functionEntry was nullptr, skipping relocation entry");
                 continue;
             }
             ImportRPLInformation rplInfo(importEntry->importName, importEntry->isData);
             std::string functionName(functionEntry->functionName);
-            RelocationData reloc(linking_entry->type, linking_entry->offset, linking_entry->addend, linking_entry->destination, functionName, rplInfo);
+            RelocationData reloc(linking_entry.type, linking_entry.offset, linking_entry.addend, linking_entry.destination, functionName, rplInfo);
             curPluginInformation.addRelocationData(reloc);
         }
 

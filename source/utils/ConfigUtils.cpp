@@ -4,16 +4,13 @@
 #include "../config/WUPSConfig.h"
 #include "../globals.h"
 #include "DrawUtils.h"
-#include "StringTools.h"
 
 #include <string>
 #include <vector>
 #include <coreinit/screen.h>
-#include <coreinit/cache.h>
 #include <memory/mappedmemory.h>
 #include <vpad/input.h>
 #include <padscore/kpad.h>
-#include <padscore/wpad.h>
 #include <gx2/display.h>
 
 #define COLOR_BACKGROUND Color(238, 238, 238, 255)
@@ -26,96 +23,94 @@
 #define COLOR_BLACK      Color(0, 0, 0, 255)
 
 struct ConfigDisplayItem {
-    WUPSConfig* config;
+    WUPSConfig *config{};
     std::string name;
     std::string author;
     std::string version;
-    bool enabled;
+    bool enabled{};
 };
 
 #define MAX_BUTTONS_ON_SCREEN 8
 
-static uint32_t remapWiiMoteButtons(uint32_t buttons)
-{
+static uint32_t remapWiiMoteButtons(uint32_t buttons) {
     uint32_t conv_buttons = 0;
 
-    if(buttons & WPAD_BUTTON_LEFT)
+    if (buttons & WPAD_BUTTON_LEFT)
         conv_buttons |= VPAD_BUTTON_LEFT;
 
-    if(buttons & WPAD_BUTTON_RIGHT)
+    if (buttons & WPAD_BUTTON_RIGHT)
         conv_buttons |= VPAD_BUTTON_RIGHT;
 
-    if(buttons & WPAD_BUTTON_DOWN)
+    if (buttons & WPAD_BUTTON_DOWN)
         conv_buttons |= VPAD_BUTTON_DOWN;
 
-    if(buttons & WPAD_BUTTON_UP)
+    if (buttons & WPAD_BUTTON_UP)
         conv_buttons |= VPAD_BUTTON_UP;
 
-    if(buttons & WPAD_BUTTON_PLUS)
+    if (buttons & WPAD_BUTTON_PLUS)
         conv_buttons |= VPAD_BUTTON_PLUS;
 
-    if(buttons & WPAD_BUTTON_B)
+    if (buttons & WPAD_BUTTON_B)
         conv_buttons |= VPAD_BUTTON_B;
 
-    if(buttons & WPAD_BUTTON_A)
+    if (buttons & WPAD_BUTTON_A)
         conv_buttons |= VPAD_BUTTON_A;
 
-    if(buttons & WPAD_BUTTON_MINUS)
+    if (buttons & WPAD_BUTTON_MINUS)
         conv_buttons |= VPAD_BUTTON_MINUS;
 
-    if(buttons & WPAD_BUTTON_HOME)
+    if (buttons & WPAD_BUTTON_HOME)
         conv_buttons |= VPAD_BUTTON_HOME;
 
     return conv_buttons;
 }
 
-static uint32_t remapClassicButtons(uint32_t buttons)
-{
+static uint32_t remapClassicButtons(uint32_t buttons) {
     uint32_t conv_buttons = 0;
 
-    if(buttons & WPAD_CLASSIC_BUTTON_LEFT)
+    if (buttons & WPAD_CLASSIC_BUTTON_LEFT)
         conv_buttons |= VPAD_BUTTON_LEFT;
 
-    if(buttons & WPAD_CLASSIC_BUTTON_RIGHT)
+    if (buttons & WPAD_CLASSIC_BUTTON_RIGHT)
         conv_buttons |= VPAD_BUTTON_RIGHT;
 
-    if(buttons & WPAD_CLASSIC_BUTTON_DOWN)
+    if (buttons & WPAD_CLASSIC_BUTTON_DOWN)
         conv_buttons |= VPAD_BUTTON_DOWN;
 
-    if(buttons & WPAD_CLASSIC_BUTTON_UP)
+    if (buttons & WPAD_CLASSIC_BUTTON_UP)
         conv_buttons |= VPAD_BUTTON_UP;
 
-    if(buttons & WPAD_CLASSIC_BUTTON_PLUS)
+    if (buttons & WPAD_CLASSIC_BUTTON_PLUS)
         conv_buttons |= VPAD_BUTTON_PLUS;
 
-    if(buttons & WPAD_CLASSIC_BUTTON_X)
+    if (buttons & WPAD_CLASSIC_BUTTON_X)
         conv_buttons |= VPAD_BUTTON_X;
 
-    if(buttons & WPAD_CLASSIC_BUTTON_Y)
+    if (buttons & WPAD_CLASSIC_BUTTON_Y)
         conv_buttons |= VPAD_BUTTON_Y;
 
-    if(buttons & WPAD_CLASSIC_BUTTON_B)
+    if (buttons & WPAD_CLASSIC_BUTTON_B)
         conv_buttons |= VPAD_BUTTON_B;
 
-    if(buttons & WPAD_CLASSIC_BUTTON_A)
+    if (buttons & WPAD_CLASSIC_BUTTON_A)
         conv_buttons |= VPAD_BUTTON_A;
 
-    if(buttons & WPAD_CLASSIC_BUTTON_MINUS)
+    if (buttons & WPAD_CLASSIC_BUTTON_MINUS)
         conv_buttons |= VPAD_BUTTON_MINUS;
 
-    if(buttons & WPAD_CLASSIC_BUTTON_HOME)
+    if (buttons & WPAD_CLASSIC_BUTTON_HOME)
         conv_buttons |= VPAD_BUTTON_HOME;
 
-    if(buttons & WPAD_CLASSIC_BUTTON_ZR)
+    if (buttons & WPAD_CLASSIC_BUTTON_ZR)
         conv_buttons |= VPAD_BUTTON_ZR;
 
-    if(buttons & WPAD_CLASSIC_BUTTON_ZL)
+    if (buttons & WPAD_CLASSIC_BUTTON_ZL)
         conv_buttons |= VPAD_BUTTON_ZL;
 
-    if(buttons & WPAD_CLASSIC_BUTTON_R)
+    if (buttons & WPAD_CLASSIC_BUTTON_R)
         conv_buttons |= VPAD_BUTTON_R;
 
-    if(buttons & WPAD_CLASSIC_BUTTON_L)
+    if (buttons & WPAD_CLASSIC_BUTTON_L)
         conv_buttons |= VPAD_BUTTON_L;
 
     return conv_buttons;
@@ -140,25 +135,19 @@ void ConfigUtils::displayMenu() {
                 if (hook_data->func_pointer == nullptr) {
                     break;
                 }
-                WUPSConfig *cur_config = reinterpret_cast<WUPSConfig *>(((WUPSConfigHandle (*)()) ((uint32_t *) hook_data->func_pointer))());
-                if(cur_config == nullptr){
+                auto *cur_config = reinterpret_cast<WUPSConfig *>(((WUPSConfigHandle (*)()) ((uint32_t *) hook_data->func_pointer))());
+                if (cur_config == nullptr) {
                     break;
                 }
-
-                //if(cur_config > 0x8000000);
-                //DCFlushRange(&cur_config, sizeof(WUPSConfig*));
-                //DCFlushRange(cur_config, sizeof(WUPSConfig));
                 cfg.config = cur_config;
-
-                DEBUG_FUNCTION_LINE("name %s author %s version %s enabled %d config %08X",cfg.name.c_str(),cfg.author.c_str(),cfg.version.c_str(),cfg.enabled, cfg.config)
                 configs.push_back(cfg);
                 break;
             }
         }
     }
 
-    ConfigDisplayItem* currentConfig = nullptr;
-    WUPSConfigCategory* currentCategory = nullptr;
+    ConfigDisplayItem *currentConfig = nullptr;
+    WUPSConfigCategory *currentCategory = nullptr;
 
     uint32_t selectedBtn = 0;
     uint32_t start = 0;
@@ -187,7 +176,7 @@ void ConfigUtils::displayMenu() {
         }
 
         for (int i = 0; i < 4; i++) {
-            if (KPADReadEx((KPADChan)i, &kpad_data, 1, &kpad_error) > 0) {
+            if (KPADReadEx((KPADChan) i, &kpad_data, 1, &kpad_error) > 0) {
                 if (kpad_error == KPAD_ERROR_OK) {
                     if (kpad_data.extensionType == WPAD_EXT_CORE || kpad_data.extensionType == WPAD_EXT_NUNCHUK) {
                         buttonsTriggered |= remapWiiMoteButtons(kpad_data.trigger);
@@ -211,8 +200,7 @@ void ConfigUtils::displayMenu() {
                     selectedBtn++;
                     redraw = true;
                 }
-            }
-            else if (buttonsTriggered & VPAD_BUTTON_UP) {
+            } else if (buttonsTriggered & VPAD_BUTTON_UP) {
                 if (selectedBtn > 0) {
                     selectedBtn--;
                     redraw = true;
@@ -221,11 +209,9 @@ void ConfigUtils::displayMenu() {
             if (buttonsTriggered & VPAD_BUTTON_X) {
                 configs[selectedBtn].enabled = !configs[selectedBtn].enabled;
                 redraw = true;
-            }
-            else if (buttonsTriggered & VPAD_BUTTON_A) {
+            } else if (buttonsTriggered & VPAD_BUTTON_A) {
                 currentConfig = &configs[selectedBtn];
-                if(currentConfig == nullptr){
-                    DEBUG_FUNCTION_LINE("BYEBYE");
+                if (currentConfig == nullptr) {
                     break;
                 }
 
@@ -245,8 +231,7 @@ void ConfigUtils::displayMenu() {
             if (selectedBtn >= end) {
                 end = selectedBtn + 1;
                 start = end - MAX_BUTTONS_ON_SCREEN;
-            }
-            else if (selectedBtn < start) {
+            } else if (selectedBtn < start) {
                 start = selectedBtn;
                 end = start + MAX_BUTTONS_ON_SCREEN;
             }
@@ -265,17 +250,17 @@ void ConfigUtils::displayMenu() {
                     }
 
                     if (i == selectedBtn) {
-                        DrawUtils::drawRect(16, index, SCREEN_WIDTH - 16*2, 44, 4, COLOR_BORDER_HIGHLIGHTED);
+                        DrawUtils::drawRect(16, index, SCREEN_WIDTH - 16 * 2, 44, 4, COLOR_BORDER_HIGHLIGHTED);
                     } else {
-                        DrawUtils::drawRect(16, index, SCREEN_WIDTH - 16*2, 44, 2, configs[i].enabled ? COLOR_BORDER : COLOR_DISABLED);
+                        DrawUtils::drawRect(16, index, SCREEN_WIDTH - 16 * 2, 44, 2, configs[i].enabled ? COLOR_BORDER : COLOR_DISABLED);
                     }
 
                     DrawUtils::setFontSize(24);
-                    DrawUtils::print(16*2, index + 8 + 24, configs[i].name.c_str());
+                    DrawUtils::print(16 * 2, index + 8 + 24, configs[i].name.c_str());
                     uint32_t sz = DrawUtils::getTextWidth(configs[i].name.c_str());
                     DrawUtils::setFontSize(12);
-                    DrawUtils::print(16*2 + sz + 4, index + 8 + 24, configs[i].author.c_str());
-                    DrawUtils::print(SCREEN_WIDTH - 16*2, index + 8 + 24, configs[i].version.c_str(), true);
+                    DrawUtils::print(16 * 2 + sz + 4, index + 8 + 24, configs[i].author.c_str());
+                    DrawUtils::print(SCREEN_WIDTH - 16 * 2, index + 8 + 24, configs[i].version.c_str(), true);
                     index += 42 + 8;
                 }
 
@@ -289,7 +274,7 @@ void ConfigUtils::displayMenu() {
                 DrawUtils::drawRectFilled(8, 8 + 24 + 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
 
                 // draw bottom bar
-                DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8*2, 3, COLOR_BLACK);
+                DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
                 DrawUtils::setFontSize(18);
                 DrawUtils::print(16, SCREEN_HEIGHT - 8, "\ue07d Navigate ");
                 if (configs[selectedBtn].enabled) {
@@ -309,7 +294,7 @@ void ConfigUtils::displayMenu() {
 
                 // draw home button
                 DrawUtils::setFontSize(18);
-                const char* exitHint = "\ue044 Exit";
+                const char *exitHint = "\ue044 Exit";
                 DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHint) / 2, SCREEN_HEIGHT - 8, exitHint, true);
 
                 DrawUtils::endDraw();
@@ -319,24 +304,22 @@ void ConfigUtils::displayMenu() {
             continue;
         }
 
-        if(!currentCategory){
-            auto cats = currentConfig->config->getCategories();
 
+        if (!currentCategory) {
+            auto cats = currentConfig->config->getCategories();
             if (buttonsTriggered & VPAD_BUTTON_DOWN) {
                 if (selectedBtn < cats.size() - 1) {
                     selectedBtn++;
                     redraw = true;
                 }
-            }
-            else if (buttonsTriggered & VPAD_BUTTON_UP) {
+            } else if (buttonsTriggered & VPAD_BUTTON_UP) {
                 if (selectedBtn > 0) {
                     selectedBtn--;
                     redraw = true;
                 }
-            }
-            else if (buttonsTriggered & VPAD_BUTTON_A) {
+            } else if (buttonsTriggered & VPAD_BUTTON_A) {
                 currentCategory = cats[selectedBtn];
-                if(currentCategory == nullptr){
+                if (currentCategory == nullptr) {
                     DEBUG_FUNCTION_LINE("BYEBYE");
                     break;
                 }
@@ -368,8 +351,7 @@ void ConfigUtils::displayMenu() {
             if (selectedBtn >= end) {
                 end = selectedBtn + 1;
                 start = end - MAX_BUTTONS_ON_SCREEN;
-            }
-            else if (selectedBtn < start) {
+            } else if (selectedBtn < start) {
                 start = selectedBtn;
                 end = start + MAX_BUTTONS_ON_SCREEN;
             }
@@ -384,13 +366,13 @@ void ConfigUtils::displayMenu() {
                     DrawUtils::setFontColor(COLOR_TEXT);
 
                     if (i == selectedBtn) {
-                        DrawUtils::drawRect(16, index, SCREEN_WIDTH - 16*2, 44, 4, COLOR_BORDER_HIGHLIGHTED);
+                        DrawUtils::drawRect(16, index, SCREEN_WIDTH - 16 * 2, 44, 4, COLOR_BORDER_HIGHLIGHTED);
                     } else {
-                        DrawUtils::drawRect(16, index, SCREEN_WIDTH - 16*2, 44, 2, COLOR_BORDER);
+                        DrawUtils::drawRect(16, index, SCREEN_WIDTH - 16 * 2, 44, 2, COLOR_BORDER);
                     }
 
                     DrawUtils::setFontSize(24);
-                    DrawUtils::print(16*2, index + 8 + 24, cats[i]->getName().c_str());
+                    DrawUtils::print(16 * 2, index + 8 + 24, cats[i]->getName().c_str());
                     index += 42 + 8;
                 }
 
@@ -404,7 +386,7 @@ void ConfigUtils::displayMenu() {
                 DrawUtils::drawRectFilled(8, 8 + 24 + 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
 
                 // draw bottom bar
-                DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8*2, 3, COLOR_BLACK);
+                DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
                 DrawUtils::setFontSize(18);
                 DrawUtils::print(16, SCREEN_HEIGHT - 8, "\ue07d Navigate ");
                 if (configs[selectedBtn].enabled) {
@@ -424,7 +406,7 @@ void ConfigUtils::displayMenu() {
 
                 // draw home button
                 DrawUtils::setFontSize(18);
-                const char* exitHint = "\ue044 Exit";
+                const char *exitHint = "\ue044 Exit";
                 DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHint) / 2, SCREEN_HEIGHT - 8, exitHint, true);
 
                 DrawUtils::endDraw();
@@ -441,14 +423,12 @@ void ConfigUtils::displayMenu() {
                 selectedBtn++;
                 redraw = true;
             }
-        }
-        else if (buttonsTriggered & VPAD_BUTTON_UP) {
+        } else if (buttonsTriggered & VPAD_BUTTON_UP) {
             if (selectedBtn > 0) {
                 selectedBtn--;
                 redraw = true;
             }
-        }
-        else if (buttonsTriggered & VPAD_BUTTON_B) {
+        } else if (buttonsTriggered & VPAD_BUTTON_B) {
             currentCategory = nullptr;
             selectedBtn = 0;
             start = 0;
@@ -490,8 +470,7 @@ void ConfigUtils::displayMenu() {
         if (selectedBtn >= end) {
             end = selectedBtn + 1;
             start = end - MAX_BUTTONS_ON_SCREEN;
-        }
-        else if (selectedBtn < start) {
+        } else if (selectedBtn < start) {
             start = selectedBtn;
             end = start + MAX_BUTTONS_ON_SCREEN;
         }
@@ -506,21 +485,20 @@ void ConfigUtils::displayMenu() {
                 DrawUtils::setFontColor(COLOR_TEXT);
 
                 if (i == selectedBtn) {
-                    DrawUtils::drawRect(16, index, SCREEN_WIDTH - 16*2, 44, 4, COLOR_BORDER_HIGHLIGHTED);
+                    DrawUtils::drawRect(16, index, SCREEN_WIDTH - 16 * 2, 44, 4, COLOR_BORDER_HIGHLIGHTED);
                 } else {
-                    DrawUtils::drawRect(16, index, SCREEN_WIDTH - 16*2, 44, 2, COLOR_BORDER);
+                    DrawUtils::drawRect(16, index, SCREEN_WIDTH - 16 * 2, 44, 2, COLOR_BORDER);
                 }
 
                 DrawUtils::setFontSize(24);
-                DrawUtils::print(16*2, index + 8 + 24, config_items[i]->getDisplayName().c_str());
+                DrawUtils::print(16 * 2, index + 8 + 24, config_items[i]->getDisplayName().c_str());
                 if (i == selectedBtn) {
                     if (pressedButtons != WUPS_CONFIG_BUTTON_NONE) {
                         config_items[i]->onButtonPressed(pressedButtons);
                     }
-                    DrawUtils::print(SCREEN_WIDTH - 16*2, index + 8 + 24, config_items[i]->getCurrentValueSelectedDisplay().c_str(), true);
-                }
-                else {
-                    DrawUtils::print(SCREEN_WIDTH - 16*2, index + 8 + 24, config_items[i]->getCurrentValueDisplay().c_str(), true);
+                    DrawUtils::print(SCREEN_WIDTH - 16 * 2, index + 8 + 24, config_items[i]->getCurrentValueSelectedDisplay().c_str(), true);
+                } else {
+                    DrawUtils::print(SCREEN_WIDTH - 16 * 2, index + 8 + 24, config_items[i]->getCurrentValueDisplay().c_str(), true);
                 }
                 index += 42 + 8;
             }
@@ -528,7 +506,7 @@ void ConfigUtils::displayMenu() {
             DrawUtils::setFontColor(COLOR_TEXT);
 
             std::string headline;
-            StringTools::strprintf(headline, "%s - %s",currentConfig->config->getName().c_str(), currentCategory->getName().c_str());
+            StringTools::strprintf(headline, "%s - %s", currentConfig->config->getName().c_str(), currentCategory->getName().c_str());
             // draw top bar
             DrawUtils::setFontSize(24);
             DrawUtils::print(16, 6 + 24, headline.c_str());
@@ -537,7 +515,7 @@ void ConfigUtils::displayMenu() {
             DrawUtils::print(SCREEN_WIDTH - 16, 8 + 24, currentConfig->version.c_str(), true);
 
             // draw bottom bar
-            DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8*2, 3, COLOR_BLACK);
+            DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
             DrawUtils::setFontSize(18);
             DrawUtils::print(16, SCREEN_HEIGHT - 8, "\ue07d Navigate ");
             DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 8, "\ue001 Back", true);
@@ -553,7 +531,7 @@ void ConfigUtils::displayMenu() {
 
             // draw home button
             DrawUtils::setFontSize(18);
-            const char* exitHint = "\ue044 Exit";
+            const char *exitHint = "\ue044 Exit";
             DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHint) / 2, SCREEN_HEIGHT - 8, exitHint, true);
 
             DrawUtils::endDraw();
@@ -561,10 +539,10 @@ void ConfigUtils::displayMenu() {
         }
     }
 
-    for (const auto& element : configs) {
-        for (const auto& cat : element.config->getCategories()) {
-            for (const auto& item : cat->getItems()) {
-                if(item->isDirty()){
+    for (const auto &element: configs) {
+        for (const auto &cat: element.config->getCategories()) {
+            for (const auto &item: cat->getItems()) {
+                if (item->isDirty()) {
                     item->callCallback();
                 }
             }
@@ -589,36 +567,35 @@ void ConfigUtils::displayMenu() {
         }
     }
 
-    for (const auto& element : configs) {
+    for (const auto &element: configs) {
         DEBUG_FUNCTION_LINE("Delete %08X", element.config);
         delete element.config;
     }
 }
 
-void ConfigUtils::openConfigMenu()
-{
+void ConfigUtils::openConfigMenu() {
     bool wasHomeButtonMenuEnabled = OSIsHomeButtonMenuEnabled();
 
     OSScreenInit();
 
     uint32_t screen_buf0_size = OSScreenGetBufferSizeEx(SCREEN_TV);
     uint32_t screen_buf1_size = OSScreenGetBufferSizeEx(SCREEN_DRC);
-    void* screenbuffer0 = MEMAllocFromMappedMemoryForGX2Ex(screen_buf0_size, 0x100);
-    void* screenbuffer1 = MEMAllocFromMappedMemoryForGX2Ex(screen_buf1_size, 0x100);
+    void *screenbuffer0 = MEMAllocFromMappedMemoryForGX2Ex(screen_buf0_size, 0x100);
+    void *screenbuffer1 = MEMAllocFromMappedMemoryForGX2Ex(screen_buf1_size, 0x100);
 
     bool skipScreen0Free = false;
     bool skipScreen1Free = false;
 
     if (!screenbuffer0 || !screenbuffer1) {
-        if(screenbuffer0 == nullptr){
-            if(storedTVBuffer.buffer_size >= screen_buf0_size){
+        if (screenbuffer0 == nullptr) {
+            if (storedTVBuffer.buffer_size >= screen_buf0_size) {
                 screenbuffer0 = storedTVBuffer.buffer;
                 skipScreen0Free = true;
                 DEBUG_FUNCTION_LINE("Use storedTVBuffer");
             }
         }
-        if(screenbuffer1 == nullptr){
-            if(storedDRCBuffer.buffer_size >= screen_buf1_size){
+        if (screenbuffer1 == nullptr) {
+            if (storedDRCBuffer.buffer_size >= screen_buf1_size) {
                 screenbuffer1 = storedDRCBuffer.buffer;
                 skipScreen1Free = true;
                 DEBUG_FUNCTION_LINE("Use storedDRCBuffer");
@@ -658,22 +635,20 @@ void ConfigUtils::openConfigMenu()
 
     error_exit:
 
-    if(storedTVBuffer.buffer != nullptr) {
+    if (storedTVBuffer.buffer != nullptr) {
         GX2SetTVBuffer(storedTVBuffer.buffer, storedTVBuffer.buffer_size, static_cast<GX2TVRenderMode>(storedTVBuffer.mode),
                        storedTVBuffer.surface_format, storedTVBuffer.buffering_mode);
     }
 
-    if(storedDRCBuffer.buffer != nullptr) {
+    if (storedDRCBuffer.buffer != nullptr) {
         GX2SetDRCBuffer(storedDRCBuffer.buffer, storedDRCBuffer.buffer_size, static_cast<GX2DrcRenderMode>(storedDRCBuffer.mode),
                         storedDRCBuffer.surface_format, storedDRCBuffer.buffering_mode);
     }
     if (!skipScreen0Free && screenbuffer0) {
         MEMFreeToMappedMemory(screenbuffer0);
-        screenbuffer0 = nullptr;
     }
 
     if (!skipScreen1Free && screenbuffer1) {
         MEMFreeToMappedMemory(screenbuffer1);
-        screenbuffer1 = nullptr;
     }
 }

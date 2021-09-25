@@ -140,7 +140,7 @@ public:
         This function will be called whenever this item should call it's (optional) given
         callback with the current value.
         Returns true if a valid callback could be called
-        Returns false if no callback was called (e.g. callback was NULL)
+        Returns false if no callback was called (e.g. callback was nullptr)
     **/
     bool callCallback() {
         if (this->callbacks.callCallback != nullptr) {

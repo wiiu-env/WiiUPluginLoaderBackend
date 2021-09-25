@@ -29,7 +29,7 @@ public:
     }
 
     ~WUPSConfigCategory() {
-        for (auto &element : items) {
+        for (auto &element: items) {
             delete element;
         }
     }
@@ -53,7 +53,7 @@ public:
                 for deleting the WUPSConfigItem instance.
     **/
     [[nodiscard]] bool addItem(WUPSConfigItem *item) {
-        if(item != nullptr){
+        if (item != nullptr) {
             items.push_back(item);
             return true;
         }

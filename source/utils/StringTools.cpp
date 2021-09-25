@@ -25,14 +25,11 @@
  ***************************************************************************/
 #include <vector>
 #include <string>
+#include <cstdarg>
+#include <cstdlib>
 #include <string.h>
-#include <stdarg.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <wchar.h>
-#include <strings.h>
 #include <wut_types.h>
-#include <stdio.h>
+#include <cstdio>
 #include <utils/StringTools.h>
 
 
@@ -78,7 +75,7 @@ const char *StringTools::fmt(const char *format, ...) {
     }
     va_end(va);
 
-    return NULL;
+    return nullptr;
 }
 
 const wchar_t *StringTools::wfmt(const char *format, ...) {
@@ -107,7 +104,7 @@ const wchar_t *StringTools::wfmt(const char *format, ...) {
     }
     va_end(va);
 
-    return NULL;
+    return nullptr;
 }
 
 int32_t StringTools::strprintf(std::string &str, const char *format, ...) {
@@ -165,11 +162,11 @@ int32_t StringTools::strtokcmp(const char *string, const char *compare, const ch
 
     char *strTok = strtok(TokCopy, separator);
 
-    while (strTok != NULL) {
+    while (strTok != nullptr) {
         if (strcasecmp(string, strTok) == 0) {
             return 0;
         }
-        strTok = strtok(NULL, separator);
+        strTok = strtok(nullptr, separator);
     }
 
     return -1;

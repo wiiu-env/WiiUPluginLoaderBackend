@@ -21,21 +21,17 @@
 #include <coreinit/cache.h>
 #include <coreinit/memexpheap.h>
 #include <wups.h>
-#include <whb/file.h>
 #include "PluginData.h"
 #include "PluginInformationFactory.h"
-#include "HookData.h"
-#include "SectionInfo.h"
-#include "../elfio/elfio.hpp"
 #include "../utils/utils.h"
 #include "../utils/ElfUtils.h"
-#include "../utils/StringTools.h"
 
 using namespace ELFIO;
 
-std::optional<PluginInformation> PluginInformationFactory::load(const PluginData &pluginData, MEMHeapHandle heapHandle, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length, uint8_t trampolinId) {
+std::optional<PluginInformation>
+PluginInformationFactory::load(const PluginData &pluginData, MEMHeapHandle heapHandle, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length, uint8_t trampolinId) {
     if (pluginData.buffer == nullptr) {
-        DEBUG_FUNCTION_LINE("Buffer was NULL");
+        DEBUG_FUNCTION_LINE("Buffer was nullptr");
         return std::nullopt;
     }
     elfio reader;
@@ -62,7 +58,7 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
 
         if ((psec->get_type() == SHT_PROGBITS || psec->get_type() == SHT_NOBITS) && (psec->get_flags() & SHF_ALLOC)) {
             uint32_t sectionSize = psec->get_size();
-            uint32_t address = (uint32_t) psec->get_address();
+            auto address = (uint32_t) psec->get_address();
             if ((address >= 0x02000000) && address < 0x10000000) {
                 text_size += sectionSize;
             } else if ((address >= 0x10000000) && address < 0xC0000000) {
@@ -89,8 +85,6 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
     }
     DEBUG_FUNCTION_LINE_VERBOSE("Allocated %d kb from ExpHeap", data_size / 1024);
 
-    uint32_t entrypoint = (uint32_t) text_data + (uint32_t) reader.get_entry() - 0x02000000;
-
     for (uint32_t i = 0; i < sec_num; ++i) {
         section *psec = reader.sections[i];
         if (psec->get_type() == 0x80000002) {
@@ -99,7 +93,7 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
 
         if ((psec->get_type() == SHT_PROGBITS || psec->get_type() == SHT_NOBITS) && (psec->get_flags() & SHF_ALLOC)) {
             uint32_t sectionSize = psec->get_size();
-            uint32_t address = (uint32_t) psec->get_address();
+            auto address = (uint32_t) psec->get_address();
 
             uint32_t destination = address;
             if ((address >= 0x02000000) && address < 0x10000000) {
@@ -160,7 +154,7 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
     }
     std::vector<RelocationData> relocationData = getImportRelocationData(reader, destinations);
 
-    for (auto const &reloc : relocationData) {
+    for (auto const &reloc: relocationData) {
         pluginInfo.addRelocationData(reloc);
     }
 
@@ -172,8 +166,6 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
     free(destinations);
 
     pluginInfo.setTrampolinId(trampolinId);
-
-    DEBUG_FUNCTION_LINE_VERBOSE("Saved entrypoint as %08X", entrypoint);
 
     std::optional<SectionInfo> secInfo = pluginInfo.getSectionInfo(".wups.hooks");
     if (secInfo && secInfo->getSize() > 0) {
@@ -193,12 +185,15 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
     if (secInfo && secInfo->getSize() > 0) {
         size_t entries_count = secInfo->getSize() / sizeof(wups_loader_entry_t);
         auto *entries = (wups_loader_entry_t *) secInfo->getAddress();
-        if (entries != NULL) {
+        if (entries != nullptr) {
             for (size_t j = 0; j < entries_count; j++) {
                 wups_loader_entry_t *cur_function = &entries[j];
-                DEBUG_FUNCTION_LINE_VERBOSE("Saving function \"%s\" of plugin . PA:%08X VA:%08X Library: %08X, target: %08X, call_addr: %08X", cur_function->_function.name/*,pluginData.getPluginInformation()->getName().c_str()*/,
-                                    cur_function->_function.physical_address, cur_function->_function.virtual_address, cur_function->_function.library, cur_function->_function.target, (void *) cur_function->_function.call_addr);
-                FunctionData function_data((void *) cur_function->_function.physical_address, (void *) cur_function->_function.virtual_address, cur_function->_function.name, (function_replacement_library_type_t) cur_function->_function.library,
+                DEBUG_FUNCTION_LINE_VERBOSE("Saving function \"%s\" of plugin . PA:%08X VA:%08X Library: %08X, target: %08X, call_addr: %08X",
+                                            cur_function->_function.name/*,pluginData.getPluginInformation()->getName().c_str()*/,
+                                            cur_function->_function.physical_address, cur_function->_function.virtual_address, cur_function->_function.library, cur_function->_function.target,
+                                            (void *) cur_function->_function.call_addr);
+                FunctionData function_data((void *) cur_function->_function.physical_address, (void *) cur_function->_function.virtual_address, cur_function->_function.name,
+                                           (function_replacement_library_type_t) cur_function->_function.library,
                                            (void *) cur_function->_function.target, (void *) cur_function->_function.call_addr, (FunctionPatcherTargetProcess) cur_function->_function.targetProcess);
                 pluginInfo.addFunctionData(function_data);
             }
@@ -212,7 +207,7 @@ std::optional<PluginInformation> PluginInformationFactory::load(const PluginData
     return pluginInfo;
 }
 
-std::vector<RelocationData> PluginInformationFactory::getImportRelocationData(const elfio & reader, uint8_t **destinations) {
+std::vector<RelocationData> PluginInformationFactory::getImportRelocationData(const elfio &reader, uint8_t **destinations) {
     std::vector<RelocationData> result;
 
     std::map<uint32_t, std::string> infoMap;
@@ -244,7 +239,7 @@ std::vector<RelocationData> PluginInformationFactory::getImportRelocationData(co
                     break;
                 }
 
-                uint32_t adjusted_sym_value = (uint32_t) sym_value;
+                auto adjusted_sym_value = (uint32_t) sym_value;
                 if (adjusted_sym_value < 0xC0000000) {
                     continue;
                 }
@@ -254,7 +249,7 @@ std::vector<RelocationData> PluginInformationFactory::getImportRelocationData(co
 
                 bool isData = false;
 
-                std::string rplName = "";
+                std::string rplName;
                 std::string rawSectionName = infoMap[sym_section_index];
 
                 if (rawSectionName.size() < fimport.size()) {
@@ -274,14 +269,15 @@ std::vector<RelocationData> PluginInformationFactory::getImportRelocationData(co
 
                 uint32_t section_index = psec->get_info();
 
-                result.push_back(RelocationData(type, offset - 0x02000000, addend, (void *) (destinations[section_index]), sym_name, rplInfo));
+                result.emplace_back(type, offset - 0x02000000, addend, (void *) (destinations[section_index]), sym_name, rplInfo);
             }
         }
     }
     return result;
 }
 
-bool PluginInformationFactory::linkSection(const elfio &reader, uint32_t section_index, uint32_t destination, uint32_t base_text, uint32_t base_data, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length,
+bool PluginInformationFactory::linkSection(const elfio &reader, uint32_t section_index, uint32_t destination, uint32_t base_text, uint32_t base_data, relocation_trampolin_entry_t *trampolin_data,
+                                           uint32_t trampolin_data_length,
                                            uint8_t trampolinId) {
     uint32_t sec_num = reader.sections.size();
 
@@ -303,7 +299,7 @@ bool PluginInformationFactory::linkSection(const elfio &reader, uint32_t section
                     break;
                 }
 
-                uint32_t adjusted_sym_value = (uint32_t) sym_value;
+                auto adjusted_sym_value = (uint32_t) sym_value;
                 if ((adjusted_sym_value >= 0x02000000) && adjusted_sym_value < 0x10000000) {
                     adjusted_sym_value -= 0x02000000;
                     adjusted_sym_value += base_text;
@@ -321,7 +317,7 @@ bool PluginInformationFactory::linkSection(const elfio &reader, uint32_t section
                     return false;
                 }
 
-                uint32_t adjusted_offset = (uint32_t) offset;
+                auto adjusted_offset = (uint32_t) offset;
                 if ((offset >= 0x02000000) && offset < 0x10000000) {
                     adjusted_offset -= 0x02000000;
                 } else if ((adjusted_offset >= 0x10000000) && adjusted_offset < 0xC0000000) {
@@ -336,9 +332,8 @@ bool PluginInformationFactory::linkSection(const elfio &reader, uint32_t section
                     DEBUG_FUNCTION_LINE("NOT IMPLEMENTED: %04X", sym_section_index);
                     return false;
                 }
-                if (false) {
-                    DEBUG_FUNCTION_LINE("sym_value %08X adjusted_sym_value %08X offset %08X adjusted_offset %08X", (uint32_t) sym_value, adjusted_sym_value, (uint32_t) offset, adjusted_offset);
-                }
+                DEBUG_FUNCTION_LINE_VERBOSE("sym_value %08X adjusted_sym_value %08X offset %08X adjusted_offset %08X", (uint32_t) sym_value, adjusted_sym_value, (uint32_t) offset, adjusted_offset);
+
                 if (!ElfUtils::elfLinkOne(type, adjusted_offset, addend, destination, adjusted_sym_value, trampolin_data, trampolin_data_length, RELOC_TYPE_FIXED, trampolinId)) {
                     DEBUG_FUNCTION_LINE("Link failed");
                     return false;

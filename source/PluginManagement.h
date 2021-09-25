@@ -1,6 +1,5 @@
 #pragma once
 
-
 #include <common/plugin_defines.h>
 #include <vector>
 

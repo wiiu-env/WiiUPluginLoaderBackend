@@ -28,8 +28,8 @@
 using namespace ELFIO;
 
 std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(const PluginData &pluginData) {
-    if (pluginData.buffer == NULL) {
-        DEBUG_FUNCTION_LINE("Buffer was NULL");
+    if (pluginData.buffer == nullptr) {
+        DEBUG_FUNCTION_LINE("Buffer was nullptr");
         return std::nullopt;
     }
     elfio reader;
@@ -59,7 +59,7 @@ std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(ch
     return loadPlugin(reader);
 }
 
-std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(const elfio& reader) {
+std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(const elfio &reader) {
     size_t pluginSize = 0;
 
     PluginMetaInformation pluginInfo;
@@ -72,7 +72,7 @@ std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(co
         // Calculate total size:
         if ((psec->get_type() == SHT_PROGBITS || psec->get_type() == SHT_NOBITS) && (psec->get_flags() & SHF_ALLOC)) {
             uint32_t sectionSize = psec->get_size();
-            uint32_t address = (uint32_t) psec->get_address();
+            auto address = (uint32_t) psec->get_address();
             if ((address >= 0x02000000) && address < 0x10000000) {
                 pluginSize += sectionSize;
             } else if ((address >= 0x10000000) && address < 0xC0000000) {
@@ -98,22 +98,22 @@ std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(co
                     std::string key(curEntry);
                     std::string value(curEntry + firstFound + 1);
 
-                    if (key.compare("name") == 0) {
+                    if (key == "name") {
                         pluginInfo.setName(value);
-                    } else if (key.compare("author") == 0) {
+                    } else if (key == "author") {
                         pluginInfo.setAuthor(value);
-                    } else if (key.compare("version") == 0) {
+                    } else if (key == "version") {
                         pluginInfo.setVersion(value);
-                    } else if (key.compare("license") == 0) {
+                    } else if (key == "license") {
                         pluginInfo.setLicense(value);
-                    } else if (key.compare("buildtimestamp") == 0) {
+                    } else if (key == "buildtimestamp") {
                         pluginInfo.setBuildTimestamp(value);
-                    } else if (key.compare("description") == 0) {
+                    } else if (key == "description") {
                         pluginInfo.setDescription(value);
-                    } else if (key.compare("id") == 0) {
+                    } else if (key == "id") {
                         pluginInfo.setId(value);
-                    } else if (key.compare("wups") == 0) {
-                        if (value.compare("0.6") != 0) {
+                    } else if (key == "wups") {
+                        if (value != "0.6") {
                             DEBUG_FUNCTION_LINE("Warning: Ignoring plugin - Unsupported WUPS version: %s.", value.c_str());
                             return std::nullopt;
                         }

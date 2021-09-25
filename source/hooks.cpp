@@ -1,6 +1,6 @@
 #include "hooks.h"
 #include "utils/logger.h"
-#include "utils/StorageUtils.h" 
+#include "utils/StorageUtils.h"
 
 void CallHook(plugin_information_t *pluginInformation, wups_loader_hook_type_t hook_type) {
     CallHookEx(pluginInformation, hook_type, -1);
@@ -83,7 +83,7 @@ void CallHookEx(plugin_information_t *pluginInformation, wups_loader_hook_type_t
                         hook_type == WUPS_LOADER_HOOK_CONFIG_CLOSED ||
                         hook_type == WUPS_LOADER_HOOK_RELEASE_FOREGROUND ||
                         hook_type == WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND
-                     ){
+                            ) {
                         ((void (*)()) ((uint32_t *) func_ptr))();
                     } else if (hook_type == WUPS_LOADER_HOOK_INIT_STORAGE) {
                         wups_loader_init_storage_args_t args;

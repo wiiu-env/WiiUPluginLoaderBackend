@@ -44,7 +44,7 @@ int32_t WUPSConfig_AddCategoryByName(WUPSConfigHandle handle, const char *catego
     if (res.has_value()) {
         if (out != nullptr) {
             *out = reinterpret_cast<WUPSConfigCategoryHandle>(res.value());
-        }else{
+        } else {
             return -3;
         }
         return 0;

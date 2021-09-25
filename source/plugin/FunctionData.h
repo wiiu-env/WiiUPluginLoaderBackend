@@ -23,7 +23,8 @@
 class FunctionData {
 
 public:
-    FunctionData(void *paddress, void *vaddress, const std::string &name, function_replacement_library_type_t library, void *replaceAddr, void *replaceCall, FunctionPatcherTargetProcess targetProcess) {
+    FunctionData(void *paddress, void *vaddress, const std::string &name, function_replacement_library_type_t library, void *replaceAddr, void *replaceCall,
+                 FunctionPatcherTargetProcess targetProcess) {
         this->paddress = paddress;
         this->vaddress = vaddress;
         this->name = name;

@@ -1,14 +1,12 @@
-#include <stdio.h>
-#include <string.h>
+#include <cstring>
 #include <coreinit/cache.h>
 
 #include "utils/logger.h"
-
-#include "elfio/elfio.hpp"
 #include "ElfUtils.h"
 
 // See https://github.com/decaf-emu/decaf-emu/blob/43366a34e7b55ab9d19b2444aeb0ccd46ac77dea/src/libdecaf/src/cafe/loader/cafe_loader_reloc.cpp#L144
-bool ElfUtils::elfLinkOne(char type, size_t offset, int32_t addend, uint32_t destination, uint32_t symbol_addr, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length, RelocationType reloc_type, uint8_t trampolinId) {
+bool ElfUtils::elfLinkOne(char type, size_t offset, int32_t addend, uint32_t destination, uint32_t symbol_addr, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length,
+                          RelocationType reloc_type, uint8_t trampolinId) {
     if (type == R_PPC_NONE) {
         return true;
     }

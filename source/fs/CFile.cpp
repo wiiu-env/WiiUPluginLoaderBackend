@@ -1,13 +1,12 @@
 
-#include <stdarg.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include <cstdarg>
+#include <cstdio>
 #include <strings.h>
 #include <fs/CFile.hpp>
 
 CFile::CFile() {
     iFd = -1;
-    mem_file = NULL;
+    mem_file = nullptr;
     filesize = 0;
     pos = 0;
 }
@@ -78,7 +77,7 @@ void CFile::close() {
         ::close(iFd);
 
     iFd = -1;
-    mem_file = NULL;
+    mem_file = nullptr;
     filesize = 0;
     pos = 0;
 }
@@ -99,7 +98,7 @@ int32_t CFile::read(uint8_t *ptr, size_t size) {
     if (readsize <= 0)
         return readsize;
 
-    if (mem_file != NULL) {
+    if (mem_file != nullptr) {
         memcpy(ptr, mem_file + pos, readsize);
         pos += readsize;
         return readsize;
@@ -147,7 +146,7 @@ int32_t CFile::seek(long int offset, int32_t origin) {
     if (iFd >= 0)
         ret = ::lseek(iFd, pos, SEEK_SET);
 
-    if (mem_file != NULL) {
+    if (mem_file != nullptr) {
         if (pos > filesize) {
             pos = filesize;
         }

@@ -31,7 +31,7 @@ public:
     }
 
     ~WUPSConfig() {
-        for (auto &element : categories) {
+        for (auto &element: categories) {
             delete element;
         }
     }
@@ -69,7 +69,7 @@ public:
         \param category: The category that will be added to this config.
 
         \return On success, the inserted category will be returned.
-                On error NULL will be returned. In this case the caller still has the responsibility
+                On error nullptr will be returned. In this case the caller still has the responsibility
                 for deleting the WUPSConfigCategory instance.
     **/
     WUPSConfigCategory *addCategory(WUPSConfigCategory *category) {

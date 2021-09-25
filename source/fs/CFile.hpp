@@ -1,9 +1,8 @@
-#ifndef CFILE_HPP_
-#define CFILE_HPP_
+#pragma once
 
-#include <stdio.h>
+#include <cstdio>
 #include <string>
-#include <string.h>
+#include <cstring>
 #include <fcntl.h>
 #include <unistd.h>
 #include <wut_types.h>
@@ -29,7 +28,7 @@ public:
 
     int32_t open(const uint8_t *memory, int32_t memsize);
 
-    BOOL isOpen() const {
+    [[nodiscard]] BOOL isOpen() const {
         if (iFd >= 0)
             return true;
 
@@ -49,11 +48,11 @@ public:
 
     int32_t seek(long int offset, int32_t origin);
 
-    uint64_t tell() {
+    [[nodiscard]] uint64_t tell() const {
         return pos;
     };
 
-    uint64_t size() {
+    [[nodiscard]] uint64_t size() const {
         return filesize;
     };
 
@@ -63,9 +62,7 @@ public:
 
 protected:
     int32_t iFd;
-    const uint8_t *mem_file;
-    uint64_t filesize;
-    uint64_t pos;
+    const uint8_t *mem_file{};
+    uint64_t filesize{};
+    uint64_t pos{};
 };
-
-#endif

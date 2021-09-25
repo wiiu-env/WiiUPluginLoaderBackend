@@ -3,7 +3,7 @@
 #include <gx2/enum.h>
 
 struct StoredBuffer {
-    void* buffer;
+    void *buffer;
     uint32_t buffer_size;
     uint32_t mode;
     GX2SurfaceFormat surface_format;

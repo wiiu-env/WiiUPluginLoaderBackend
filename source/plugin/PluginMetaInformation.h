@@ -24,36 +24,36 @@ class PluginMetaInformation {
 public:
     PluginMetaInformation(const PluginMetaInformation &other);
 
-    [[nodiscard]] std::string getName() const {
+    [[nodiscard]] const std::string &getName() const {
         return name;
     }
 
-    [[nodiscard]] std::string getAuthor() const {
+    [[nodiscard]] const std::string &getAuthor() const {
         return this->author;
     }
 
-    [[nodiscard]] std::string getVersion() const {
+    [[nodiscard]] const std::string &getVersion() const {
         return this->version;
     }
 
-    [[nodiscard]] std::string getLicense() const {
+    [[nodiscard]] const std::string &getLicense() const {
         return this->license;
     }
 
-    [[nodiscard]] std::string getBuildTimestamp() const {
+    [[nodiscard]] const std::string &getBuildTimestamp() const {
         return this->buildtimestamp;
     }
 
-    [[nodiscard]] std::string getDescription() const {
+    [[nodiscard]] const std::string &getDescription() const {
         return this->description;
+    }
+
+    [[nodiscard]] const std::string &getId() const {
+        return this->id;
     }
 
     [[nodiscard]] size_t getSize() const {
         return this->size;
-    }
-
-    [[nodiscard]] const std::string getId() const {
-        return this->id;
     }
 
 private:
@@ -87,8 +87,8 @@ private:
         this->size = _size;
     }
 
-    void setId(const std::string &id) {
-        this->id = id;
+    void setId(const std::string &_id) {
+        this->id = _id;
     }
 
     std::string name;

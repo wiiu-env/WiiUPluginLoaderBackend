@@ -31,7 +31,7 @@ DECL_FUNCTION(void, GX2SetTVBuffer, void *buffer, uint32_t buffer_size, int32_t 
     storedTVBuffer.surface_format = format;
     storedTVBuffer.buffering_mode = buffering_mode;
 
-    return real_GX2SetTVBuffer(buffer,buffer_size,tv_render_mode,format,buffering_mode);
+    return real_GX2SetTVBuffer(buffer, buffer_size, tv_render_mode, format, buffering_mode);
 }
 
 DECL_FUNCTION(void, GX2SetDRCBuffer, void *buffer, uint32_t buffer_size, uint32_t drc_mode, GX2SurfaceFormat surface_format, GX2BufferingMode buffering_mode) {
@@ -41,19 +41,20 @@ DECL_FUNCTION(void, GX2SetDRCBuffer, void *buffer, uint32_t buffer_size, uint32_
     storedDRCBuffer.surface_format = surface_format;
     storedDRCBuffer.buffering_mode = buffering_mode;
 
-    return real_GX2SetDRCBuffer(buffer,buffer_size,drc_mode,surface_format,buffering_mode);
+    return real_GX2SetDRCBuffer(buffer, buffer_size, drc_mode, surface_format, buffering_mode);
 }
 
 static uint32_t lastData0 = 0;
+
 DECL_FUNCTION(uint32_t, OSReceiveMessage, OSMessageQueue *queue, OSMessage *message, uint32_t flags) {
-    int32_t res = real_OSReceiveMessage(queue, message, flags);
+    uint32_t res = real_OSReceiveMessage(queue, message, flags);
     if (queue == OSGetSystemMessageQueue()) {
         if (message != nullptr && res) {
             if (lastData0 != message->args[0]) {
                 if (message->args[0] == 0xFACEF000) {
                     CallHook(gPluginInformation, WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND);
                 } else if (message->args[0] == 0xD1E0D1E0) {
-                   // Implemented via WUMS Hook
+                    // Implemented via WUMS Hook
                 }
             }
             lastData0 = message->args[0];
@@ -89,7 +90,7 @@ DECL_FUNCTION(void, WPADRead, WPADChan chan, WPADStatusProController *data) {
     if (!configMenuOpened && data[0].err == 0) {
         if (data[0].extensionType == WPAD_EXT_CORE || data[0].extensionType == WPAD_EXT_NUNCHUK) {
             // button data is in the first 2 bytes for wiimotes
-            if (((uint16_t*)data)[0] == (WPAD_BUTTON_B | WPAD_BUTTON_DOWN | WPAD_BUTTON_MINUS)) {
+            if (((uint16_t *) data)[0] == (WPAD_BUTTON_B | WPAD_BUTTON_DOWN | WPAD_BUTTON_MINUS)) {
                 wantsToOpenConfigMenu = true;
             }
         } else {
@@ -102,13 +103,13 @@ DECL_FUNCTION(void, WPADRead, WPADChan chan, WPADStatusProController *data) {
 }
 
 function_replacement_data_t method_hooks_hooks_static[] __attribute__((section(".data"))) = {
-        REPLACE_FUNCTION(GX2SwapScanBuffers,    LIBRARY_GX2,        GX2SwapScanBuffers),
-        REPLACE_FUNCTION(GX2SetTVBuffer,        LIBRARY_GX2,        GX2SetTVBuffer),
-        REPLACE_FUNCTION(GX2SetDRCBuffer,       LIBRARY_GX2,        GX2SetDRCBuffer),
-        REPLACE_FUNCTION(OSReceiveMessage,      LIBRARY_COREINIT,   OSReceiveMessage),
-        REPLACE_FUNCTION(OSReleaseForeground,   LIBRARY_COREINIT,   OSReleaseForeground),
-        REPLACE_FUNCTION(VPADRead,              LIBRARY_VPAD,       VPADRead),
-        REPLACE_FUNCTION(WPADRead,              LIBRARY_PADSCORE,   WPADRead),
+        REPLACE_FUNCTION(GX2SwapScanBuffers, LIBRARY_GX2, GX2SwapScanBuffers),
+        REPLACE_FUNCTION(GX2SetTVBuffer, LIBRARY_GX2, GX2SetTVBuffer),
+        REPLACE_FUNCTION(GX2SetDRCBuffer, LIBRARY_GX2, GX2SetDRCBuffer),
+        REPLACE_FUNCTION(OSReceiveMessage, LIBRARY_COREINIT, OSReceiveMessage),
+        REPLACE_FUNCTION(OSReleaseForeground, LIBRARY_COREINIT, OSReleaseForeground),
+        REPLACE_FUNCTION(VPADRead, LIBRARY_VPAD, VPADRead),
+        REPLACE_FUNCTION(WPADRead, LIBRARY_PADSCORE, WPADRead),
 };
 
 uint32_t method_hooks_size_hooks_static __attribute__((section(".data"))) = sizeof(method_hooks_hooks_static) / sizeof(function_replacement_data_t);

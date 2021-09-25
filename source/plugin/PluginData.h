@@ -33,7 +33,7 @@ enum eMemoryTypes {
 
 class PluginData {
 public:
-    ~PluginData()= default;
+    ~PluginData() = default;
 
     void freeMemory();
 
@@ -49,7 +49,7 @@ public:
 private:
     explicit PluginData(const std::vector<uint8_t> &buffer);
 
-    PluginData(const std::vector<uint8_t>& input, MEMHeapHandle heapHandle, eMemoryTypes memoryType);
+    PluginData(const std::vector<uint8_t> &input, MEMHeapHandle heapHandle, eMemoryTypes memoryType);
 
     friend class PluginDataFactory;
 

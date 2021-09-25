@@ -7,7 +7,6 @@
 #include "plugin/PluginMetaInformationFactory.h"
 #include "plugin/PluginInformationFactory.h"
 
-#include "utils/logger.h"
 #include "utils/ElfUtils.h"
 #include "PluginManagement.h"
 #include "hooks.h"
@@ -15,7 +14,7 @@
 
 bool PluginManagement::doRelocation(const std::vector<RelocationData> &relocData, relocation_trampolin_entry_t *tramp_data, uint32_t tramp_length, uint32_t trampolinID) {
     std::map<std::string, OSDynLoad_Module> moduleHandleCache;
-    for (auto const &cur : relocData) {
+    for (auto const &cur: relocData) {
         uint32_t functionAddress = 0;
         const std::string &functionName = cur.getName();
 
@@ -65,7 +64,7 @@ bool PluginManagement::doRelocation(const std::vector<RelocationData> &relocData
 
 
 void PluginManagement::doRelocations(const std::vector<PluginContainer> &plugins, relocation_trampolin_entry_t *trampData, uint32_t tramp_size) {
-    for (auto &pluginContainer : plugins) {
+    for (auto &pluginContainer: plugins) {
         DEBUG_FUNCTION_LINE_VERBOSE("Doing relocations for plugin: %s", pluginContainer.getMetaInformation().getName().c_str());
 
         if (!PluginManagement::doRelocation(pluginContainer.getPluginInformation().getRelocationDataList(), trampData, tramp_size, pluginContainer.getPluginInformation().getTrampolinId())) {
@@ -75,7 +74,7 @@ void PluginManagement::doRelocations(const std::vector<PluginContainer> &plugins
 }
 
 void PluginManagement::memsetBSS(const std::vector<PluginContainer> &plugins) {
-    for (auto &pluginContainer : plugins) {
+    for (auto &pluginContainer: plugins) {
         auto sbssSection = pluginContainer.getPluginInformation().getSectionInfo(".sbss");
         if (sbssSection) {
             DEBUG_FUNCTION_LINE_VERBOSE("memset .sbss %08X (%d)", sbssSection->getAddress(), sbssSection->getSize());
@@ -98,22 +97,22 @@ void PluginManagement::RestorePatches(plugin_information_t *pluginInformation, B
     }
 }
 
-void PluginManagement::unloadPlugins(plugin_information_t *gPluginInformation, MEMHeapHandle pluginHeap, BOOL freePluginData) {
-    CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_MALLOC);
-    CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_NEWLIB);
-    CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_STDCPP);
-    CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB);
-    CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_SOCKETS);
-    CallHook(gPluginInformation, WUPS_LOADER_HOOK_DEINIT_PLUGIN);
-    // CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_SOCKETS); To keep network alive we skip this.
-    CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB);
-    CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_STDCPP);
-    CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_NEWLIB);
-    CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_MALLOC);
+void PluginManagement::unloadPlugins(plugin_information_t *pluginInformation, MEMHeapHandle pluginHeap, BOOL freePluginData) {
+    CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_WUT_MALLOC);
+    CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_WUT_NEWLIB);
+    CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_WUT_STDCPP);
+    CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB);
+    CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_WUT_SOCKETS);
+    CallHook(pluginInformation, WUPS_LOADER_HOOK_DEINIT_PLUGIN);
+    // CallHook(pluginInformation, WUPS_LOADER_HOOK_FINI_WUT_SOCKETS); To keep network alive we skip this.
+    CallHook(pluginInformation, WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB);
+    CallHook(pluginInformation, WUPS_LOADER_HOOK_FINI_WUT_STDCPP);
+    CallHook(pluginInformation, WUPS_LOADER_HOOK_FINI_WUT_NEWLIB);
+    CallHook(pluginInformation, WUPS_LOADER_HOOK_FINI_WUT_MALLOC);
 
-    RestorePatches(gPluginInformation, true);
-    for (int32_t plugin_index = 0; plugin_index < gPluginInformation->number_used_plugins; plugin_index++) {
-        plugin_information_single_t *plugin = &(gPluginInformation->plugin_data[plugin_index]);
+    RestorePatches(pluginInformation, true);
+    for (int32_t plugin_index = 0; plugin_index < pluginInformation->number_used_plugins; plugin_index++) {
+        plugin_information_single_t *plugin = &(pluginInformation->plugin_data[plugin_index]);
         if (freePluginData) {
             if (plugin->data.buffer != nullptr) {
                 if (plugin->data.memoryType == eMemTypeMEM2) {
@@ -151,7 +150,7 @@ void PluginManagement::unloadPlugins(plugin_information_t *gPluginInformation, M
         }
     }
 
-    memset((void *) gPluginInformation, 0, sizeof(plugin_information_t));
+    memset((void *) pluginInformation, 0, sizeof(plugin_information_t));
 }
 
 void PluginManagement::callInitHooks(plugin_information_t *pluginInformation) {
@@ -165,32 +164,33 @@ void module_callback(OSDynLoad_Module module,
                      OSDynLoad_NotifyReason reason,
                      OSDynLoad_NotifyData *infos) {
     if (reason == OS_DYNLOAD_NOTIFY_LOADED) {
-        auto *gPluginInformation = (plugin_information_t *) userContext;
-        for (int32_t plugin_index = 0; plugin_index < gPluginInformation->number_used_plugins; plugin_index++) {
-            FunctionPatcherPatchFunction(gPluginInformation->plugin_data[plugin_index].info.functions, gPluginInformation->plugin_data[plugin_index].info.number_used_functions);
+        auto *pluginInformation = (plugin_information_t *) userContext;
+        for (int32_t plugin_index = 0; plugin_index < pluginInformation->number_used_plugins; plugin_index++) {
+            FunctionPatcherPatchFunction(pluginInformation->plugin_data[plugin_index].info.functions, pluginInformation->plugin_data[plugin_index].info.number_used_functions);
         }
     }
 }
 
-void PluginManagement::PatchFunctionsAndCallHooks(plugin_information_t *gPluginInformation) {
+void PluginManagement::PatchFunctionsAndCallHooks(plugin_information_t *pluginInformation) {
     DEBUG_FUNCTION_LINE_VERBOSE("Patching functions");
     FunctionPatcherPatchFunction(method_hooks_hooks_static, method_hooks_size_hooks_static);
 
     DCFlushRange((void *) 0x00800000, 0x00800000);
     ICInvalidateRange((void *) 0x00800000, 0x00800000);
 
-    for (int32_t plugin_index = 0; plugin_index < gPluginInformation->number_used_plugins; plugin_index++) {
-        CallHookEx(gPluginInformation, WUPS_LOADER_HOOK_APPLICATION_STARTS, plugin_index);
-        FunctionPatcherPatchFunction(gPluginInformation->plugin_data[plugin_index].info.functions, gPluginInformation->plugin_data[plugin_index].info.number_used_functions);
-        CallHookEx(gPluginInformation, WUPS_LOADER_HOOK_FUNCTIONS_PATCHED, plugin_index);
+    for (int32_t plugin_index = 0; plugin_index < pluginInformation->number_used_plugins; plugin_index++) {
+        CallHookEx(pluginInformation, WUPS_LOADER_HOOK_APPLICATION_STARTS, plugin_index);
+        FunctionPatcherPatchFunction(pluginInformation->plugin_data[plugin_index].info.functions, pluginInformation->plugin_data[plugin_index].info.number_used_functions);
+        CallHookEx(pluginInformation, WUPS_LOADER_HOOK_FUNCTIONS_PATCHED, plugin_index);
     }
-    OSDynLoad_AddNotifyCallback(module_callback, gPluginInformation);
+    OSDynLoad_AddNotifyCallback(module_callback, pluginInformation);
 }
 
-std::vector<PluginContainer> PluginManagement::loadPlugins(const std::vector<PluginData> &pluginList, MEMHeapHandle heapHandle, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length) {
+std::vector<PluginContainer>
+PluginManagement::loadPlugins(const std::vector<PluginData> &pluginList, MEMHeapHandle heapHandle, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length) {
     std::vector<PluginContainer> plugins;
 
-    for (auto &pluginData : pluginList) {
+    for (auto &pluginData: pluginList) {
         DEBUG_FUNCTION_LINE_VERBOSE("Load meta information");
         auto metaInfo = PluginMetaInformationFactory::loadPlugin(pluginData);
         if (metaInfo) {
@@ -203,7 +203,7 @@ std::vector<PluginContainer> PluginManagement::loadPlugins(const std::vector<Plu
         }
     }
     uint32_t trampolineID = 0;
-    for (auto &pluginContainer : plugins) {
+    for (auto &pluginContainer: plugins) {
         std::optional<PluginInformation> info = PluginInformationFactory::load(pluginContainer.getPluginData(), heapHandle, trampolin_data, trampolin_data_length, trampolineID++);
         if (!info) {
             DEBUG_FUNCTION_LINE("Failed to load Plugin %s", pluginContainer.getMetaInformation().getName().c_str());

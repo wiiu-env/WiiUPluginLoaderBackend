@@ -81,11 +81,11 @@ BOOL DirList::InternalLoadPath(std::string &folderpath) {
     if (folderpath.size() < 3)
         return false;
 
-    struct dirent *dirent = NULL;
-    DIR *dir = NULL;
+    struct dirent *dirent = nullptr;
+    DIR *dir = nullptr;
 
     dir = opendir(folderpath.c_str());
-    if (dir == NULL)
+    if (dir == nullptr)
         return false;
 
     while ((dirent = readdir(dir)) != 0) {
@@ -153,7 +153,7 @@ void DirList::ClearList() {
     for (uint32_t i = 0; i < FileInfo.size(); ++i) {
         if (FileInfo[i].FilePath) {
             free(FileInfo[i].FilePath);
-            FileInfo[i].FilePath = NULL;
+            FileInfo[i].FilePath = nullptr;
         }
     }
 

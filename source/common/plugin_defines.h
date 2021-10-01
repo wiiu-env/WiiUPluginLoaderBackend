@@ -56,7 +56,7 @@ struct plugin_meta_info_t {
     char                            license[MAXIMUM_PLUGIN_META_FIELD_LENGTH] = "";
     char                            buildTimestamp[MAXIMUM_PLUGIN_META_FIELD_LENGTH] = "";
     char                            descripion[MAXIMUM_PLUGIN_DESCRIPTION_LENGTH] = "";
-    char                            id[MAXIMUM_PLUGIN_META_FIELD_LENGTH] = "";
+    char                            storageId[MAXIMUM_PLUGIN_META_FIELD_LENGTH] = "";
     uint32_t                        size{};
 };
 

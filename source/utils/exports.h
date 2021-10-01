@@ -31,7 +31,7 @@ PluginBackendApiErrorType WUPSGetPluginDataForContainerHandles(const plugin_cont
 
 PluginBackendApiErrorType WUPSGetMetaInformation(const plugin_container_handle *plugin_container_handle_list, plugin_information *plugin_information_list, uint32_t buffer_size);
 
-PluginBackendApiErrorType WUPSGetLoadedPlugins(plugin_container_handle *io_handles, uint32_t buffer_size, uint32_t *outSize);
+PluginBackendApiErrorType WUPSGetLoadedPlugins(plugin_container_handle *io_handles, uint32_t buffer_size, uint32_t *outSize, uint32_t *plugin_information_version);
 
 #ifdef __cplusplus
 }

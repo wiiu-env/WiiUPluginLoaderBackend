@@ -146,6 +146,10 @@ void ConfigUtils::displayMenu() {
         }
     }
 
+    if(configs.empty()){
+        return;
+    }
+
     ConfigDisplayItem *currentConfig = nullptr;
     WUPSConfigCategory *currentCategory = nullptr;
 

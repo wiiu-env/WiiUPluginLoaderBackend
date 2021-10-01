@@ -55,10 +55,10 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
     }
     strncpy(plugin_meta_data->descripion, pluginMetaInfo.getDescription().c_str(), MAXIMUM_PLUGIN_DESCRIPTION_LENGTH - 1);
 
-    if (pluginMetaInfo.getId().size() >= MAXIMUM_PLUGIN_META_FIELD_LENGTH) {
-        DEBUG_FUNCTION_LINE("Warning: plugin id will be truncated.");
+    if (pluginMetaInfo.getStorageId().length() >= MAXIMUM_PLUGIN_META_FIELD_LENGTH) {
+        DEBUG_FUNCTION_LINE("Warning: plugin storage id will be truncated.");
     }
-    strncpy(plugin_meta_data->id, pluginMetaInfo.getId().c_str(), MAXIMUM_PLUGIN_META_FIELD_LENGTH - 1);
+    strncpy(plugin_meta_data->storageId, pluginMetaInfo.getStorageId().c_str(), MAXIMUM_PLUGIN_META_FIELD_LENGTH - 1);
 
     plugin_meta_data->size = pluginMetaInfo.getSize();
 
@@ -202,6 +202,7 @@ std::vector<PluginContainer> PluginContainerPersistence::loadPlugins(plugin_info
         metaInformation.setDescription(meta->descripion);
         metaInformation.setSize(meta->size);
         metaInformation.setName(meta->name);
+        metaInformation.setStorageId(meta->storageId);
 
         plugin_data_t *data = &(plugin_data->data);
 
@@ -235,6 +236,18 @@ std::vector<PluginContainer> PluginContainerPersistence::loadPlugins(plugin_info
             replacement_data_hook_t *hook_entry = &(plugin_data->info.hooks[j]);
             HookData curHook(hook_entry->func_pointer, hook_entry->type);
             curPluginInformation.addHookData(curHook);
+        }
+
+        bool storageHasId = true;
+        for(auto const &value : curPluginInformation.getHookDataList()){
+            if(value.getType() == WUPS_LOADER_HOOK_INIT_STORAGE &&
+            metaInformation.getStorageId().empty()){
+                storageHasId = false;
+            }
+        }
+        if(!storageHasId){
+            DEBUG_FUNCTION_LINE("Plugin is using the storage API but has not set an ID");
+            continue;
         }
 
         /* load function replacement data */

@@ -10,13 +10,14 @@
 #include <wums.h>
 
 void fillPluginInformation(plugin_information *out, PluginMetaInformation *metaInformation) {
+    out->plugin_information_version = PLUGIN_INFORMATION_VERSION;
     strncpy(out->author, metaInformation->getAuthor().c_str(), sizeof(out->author) - 1);
     strncpy(out->buildTimestamp, metaInformation->getBuildTimestamp().c_str(), sizeof(out->buildTimestamp) - 1);
     strncpy(out->description, metaInformation->getDescription().c_str(), sizeof(out->description) - 1);
     strncpy(out->name, metaInformation->getName().c_str(), sizeof(out->name) - 1);
     strncpy(out->license, metaInformation->getLicense().c_str(), sizeof(out->license) - 1);
     strncpy(out->version, metaInformation->getVersion().c_str(), sizeof(out->version) - 1);
-    strncpy(out->id, metaInformation->getId().c_str(), sizeof(out->id) - 1);
+    strncpy(out->storageId, metaInformation->getStorageId().c_str(), sizeof(out->storageId) - 1);
     out->size = metaInformation->getSize();
 }
 
@@ -156,13 +157,14 @@ extern "C" PluginBackendApiErrorType WUPSGetMetaInformation(const plugin_contain
             auto handle = plugin_container_handle_list[i];
             auto *container = (PluginContainer *) handle;
 
-            strncpy(plugin_information_list[i].id, container->metaInformation.getId().c_str(), 255);
-            strncpy(plugin_information_list[i].author, container->metaInformation.getAuthor().c_str(), 255);
-            strncpy(plugin_information_list[i].buildTimestamp, container->metaInformation.getBuildTimestamp().c_str(), 255);
-            strncpy(plugin_information_list[i].description, container->metaInformation.getDescription().c_str(), 255);
-            strncpy(plugin_information_list[i].name, container->metaInformation.getName().c_str(), 255);
-            strncpy(plugin_information_list[i].license, container->metaInformation.getLicense().c_str(), 255);
-            strncpy(plugin_information_list[i].version, container->metaInformation.getVersion().c_str(), 255);
+            plugin_information_list[i].plugin_information_version = PLUGIN_INFORMATION_VERSION;
+            strncpy(plugin_information_list[i].storageId, container->metaInformation.getStorageId().c_str(), sizeof(plugin_information_list[i].storageId) - 1);
+            strncpy(plugin_information_list[i].author, container->metaInformation.getAuthor().c_str(), sizeof(plugin_information_list[i].author) - 1);
+            strncpy(plugin_information_list[i].buildTimestamp, container->metaInformation.getBuildTimestamp().c_str(), sizeof(plugin_information_list[i].buildTimestamp) - 1);
+            strncpy(plugin_information_list[i].description, container->metaInformation.getDescription().c_str(), sizeof(plugin_information_list[i].description) - 1);
+            strncpy(plugin_information_list[i].name, container->metaInformation.getName().c_str(), sizeof(plugin_information_list[i].name) - 1);
+            strncpy(plugin_information_list[i].license, container->metaInformation.getLicense().c_str(), sizeof(plugin_information_list[i].license) - 1);
+            strncpy(plugin_information_list[i].version, container->metaInformation.getVersion().c_str(), sizeof(plugin_information_list[i].version) - 1);
             plugin_information_list[i].size = container->metaInformation.getSize();
         }
     } else {
@@ -172,7 +174,12 @@ extern "C" PluginBackendApiErrorType WUPSGetMetaInformation(const plugin_contain
     return res;
 }
 
-extern "C" PluginBackendApiErrorType WUPSGetLoadedPlugins(plugin_container_handle *io_handles, uint32_t buffer_size, uint32_t *outSize) {
+extern "C" PluginBackendApiErrorType WUPSGetLoadedPlugins(plugin_container_handle *io_handles, uint32_t buffer_size, uint32_t *outSize, uint32_t *plugin_information_version) {
+    DEBUG_FUNCTION_LINE();
+    if (plugin_information_version == nullptr) {
+        return PLUGIN_BACKEND_API_ERROR_INVALID_ARG;
+    }
+    *plugin_information_version = PLUGIN_INFORMATION_VERSION;
     auto plugins = PluginContainerPersistence::loadPlugins(gPluginInformation);
     uint32_t counter = 0;
     for (auto &plugin: plugins) {

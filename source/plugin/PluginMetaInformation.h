@@ -48,8 +48,8 @@ public:
         return this->description;
     }
 
-    [[nodiscard]] const std::string &getId() const {
-        return this->id;
+    [[nodiscard]] const std::string &getStorageId() const {
+        return this->storageId;
     }
 
     [[nodiscard]] size_t getSize() const {
@@ -87,8 +87,8 @@ private:
         this->size = _size;
     }
 
-    void setId(const std::string &_id) {
-        this->id = _id;
+    void setStorageId(const std::string &_storageId) {
+        this->storageId = _storageId;
     }
 
     std::string name;
@@ -97,7 +97,7 @@ private:
     std::string license;
     std::string buildtimestamp;
     std::string description;
-    std::string id;
+    std::string storageId;
     size_t size{};
 
     friend class PluginMetaInformationFactory;

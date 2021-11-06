@@ -1,4 +1,6 @@
 #include <whb/log_udp.h>
+#include <whb/log_cafe.h>
+#include <whb/log_module.h>
 #include <wums.h>
 #include <coreinit/debug.h>
 #include <coreinit/cache.h>
@@ -18,7 +20,10 @@ WUMS_MODULE_EXPORT_NAME("homebrew_wupsbackend");
 WUMS_USE_WUT_DEVOPTAB();
 
 WUMS_INITIALIZE(args) {
-    WHBLogUdpInit();
+    if (!WHBLogModuleInit()) {
+        WHBLogCafeInit();
+        WHBLogUdpInit();
+    }
 
     gModuleData = args.module_information;
     if (gModuleData == nullptr) {
@@ -51,7 +56,10 @@ WUMS_APPLICATION_ENDS() {
 void *allocOnCustomHeap(int alignment, int size);
 
 WUMS_APPLICATION_STARTS() {
-    WHBLogUdpInit();
+    if (!WHBLogModuleInit()) {
+        WHBLogCafeInit();
+        WHBLogUdpInit();
+    }
     uint32_t upid = OSGetUPID();
     if (upid != 2 && upid != 15) {
         return;

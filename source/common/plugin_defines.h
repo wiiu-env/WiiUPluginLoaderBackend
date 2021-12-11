@@ -35,7 +35,7 @@ extern "C" {
 
 #define MAXIMUM_PLUGIN_PATH_NAME_LENGTH                     256
 #define MAXIMUM_PLUGIN_NAME_LENGTH                          51
-#define MAXIMUM_PLUGIN_DESCRIPTION_LENGTH                   255
+#define MAXIMUM_PLUGIN_DESCRIPTION_LENGTH                   100
 #define MAXIMUM_PLUGIN_META_FIELD_LENGTH                    51
 
 #define PLUGIN_DYN_LINK_RELOCATION_LIST_LENGTH              1000

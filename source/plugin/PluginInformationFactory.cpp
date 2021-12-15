@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
 
+#include <memory>
 #include <string>
 #include <vector>
 #include <map>
@@ -28,19 +29,20 @@
 
 using namespace ELFIO;
 
-std::optional<PluginInformation>
-PluginInformationFactory::load(const PluginData &pluginData, MEMHeapHandle heapHandle, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length, uint8_t trampolinId) {
-    if (pluginData.buffer == nullptr) {
+std::optional<std::shared_ptr<PluginInformation>>
+PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, MEMHeapHandle heapHandle, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length,
+                               uint8_t trampolinId) {
+    if (pluginData->buffer == nullptr) {
         DEBUG_FUNCTION_LINE("Buffer was nullptr");
         return std::nullopt;
     }
     elfio reader;
-    if (!reader.load((char *) pluginData.buffer, pluginData.length)) {
+    if (!reader.load((char *) pluginData->buffer, pluginData->length)) {
         DEBUG_FUNCTION_LINE("Can't process PluginData in elfio");
         return std::nullopt;
     }
 
-    PluginInformation pluginInfo;
+    auto pluginInfo = std::make_shared<PluginInformation>();
 
     uint32_t sec_num = reader.sections.size();
     auto **destinations = (uint8_t **) malloc(sizeof(uint8_t *) * sec_num);
@@ -128,7 +130,7 @@ PluginInformationFactory::load(const PluginData &pluginData, MEMHeapHandle heapH
             }
 
             std::string sectionName(psec->get_name());
-            pluginInfo.addSectionInfo(SectionInfo(sectionName, destination, sectionSize));
+            pluginInfo->addSectionInfo(std::make_shared<SectionInfo>(sectionName, destination, sectionSize));
             DEBUG_FUNCTION_LINE_VERBOSE("Saved %s section info. Location: %08X size: %08X", psec->get_name().c_str(), destination, sectionSize);
 
             totalSize += sectionSize;
@@ -152,10 +154,10 @@ PluginInformationFactory::load(const PluginData &pluginData, MEMHeapHandle heapH
             }
         }
     }
-    std::vector<RelocationData> relocationData = getImportRelocationData(reader, destinations);
+    auto relocationData = getImportRelocationData(reader, destinations);
 
     for (auto const &reloc: relocationData) {
-        pluginInfo.addRelocationData(reloc);
+        pluginInfo->addRelocationData(reloc);
     }
 
     DCFlushRange((void *) text_data, text_size);
@@ -165,37 +167,38 @@ PluginInformationFactory::load(const PluginData &pluginData, MEMHeapHandle heapH
 
     free(destinations);
 
-    pluginInfo.setTrampolinId(trampolinId);
+    pluginInfo->setTrampolinId(trampolinId);
 
-    std::optional<SectionInfo> secInfo = pluginInfo.getSectionInfo(".wups.hooks");
-    if (secInfo && secInfo->getSize() > 0) {
-        size_t entries_count = secInfo->getSize() / sizeof(wups_loader_hook_t);
-        auto *entries = (wups_loader_hook_t *) secInfo->getAddress();
+    auto secInfo = pluginInfo->getSectionInfo(".wups.hooks");
+    if (secInfo && secInfo.value()->getSize() > 0) {
+        size_t entries_count = secInfo.value()->getSize() / sizeof(wups_loader_hook_t);
+        auto *entries = (wups_loader_hook_t *) secInfo.value()->getAddress();
         if (entries != nullptr) {
             for (size_t j = 0; j < entries_count; j++) {
                 wups_loader_hook_t *hook = &entries[j];
-                DEBUG_FUNCTION_LINE_VERBOSE("Saving hook of plugin Type: %08X, target: %08X"/*,pluginData.getPluginInformation()->getName().c_str()*/, hook->type, (void *) hook->target);
-                HookData hook_data((void *) hook->target, hook->type);
-                pluginInfo.addHookData(hook_data);
+                DEBUG_FUNCTION_LINE_VERBOSE("Saving hook of plugin Type: %08X, target: %08X"/*,pluginData->getPluginInformation()->getName().c_str()*/, hook->type, (void *) hook->target);
+                auto hook_data = std::make_shared<HookData>((void *) hook->target, hook->type);
+                pluginInfo->addHookData(hook_data);
             }
         }
     }
 
-    secInfo = pluginInfo.getSectionInfo(".wups.load");
-    if (secInfo && secInfo->getSize() > 0) {
-        size_t entries_count = secInfo->getSize() / sizeof(wups_loader_entry_t);
-        auto *entries = (wups_loader_entry_t *) secInfo->getAddress();
+    secInfo = pluginInfo->getSectionInfo(".wups.load");
+    if (secInfo && secInfo.value()->getSize() > 0) {
+        size_t entries_count = secInfo.value()->getSize() / sizeof(wups_loader_entry_t);
+        auto *entries = (wups_loader_entry_t *) secInfo.value()->getAddress();
         if (entries != nullptr) {
             for (size_t j = 0; j < entries_count; j++) {
                 wups_loader_entry_t *cur_function = &entries[j];
                 DEBUG_FUNCTION_LINE_VERBOSE("Saving function \"%s\" of plugin . PA:%08X VA:%08X Library: %08X, target: %08X, call_addr: %08X",
-                                            cur_function->_function.name/*,pluginData.getPluginInformation()->getName().c_str()*/,
+                                            cur_function->_function.name/*,pluginData->getPluginInformation()->getName().c_str()*/,
                                             cur_function->_function.physical_address, cur_function->_function.virtual_address, cur_function->_function.library, cur_function->_function.target,
                                             (void *) cur_function->_function.call_addr);
-                FunctionData function_data((void *) cur_function->_function.physical_address, (void *) cur_function->_function.virtual_address, cur_function->_function.name,
-                                           (function_replacement_library_type_t) cur_function->_function.library,
-                                           (void *) cur_function->_function.target, (void *) cur_function->_function.call_addr, (FunctionPatcherTargetProcess) cur_function->_function.targetProcess);
-                pluginInfo.addFunctionData(function_data);
+                auto function_data = std::make_shared<FunctionData>((void *) cur_function->_function.physical_address, (void *) cur_function->_function.virtual_address, cur_function->_function.name,
+                                                                    (function_replacement_library_type_t) cur_function->_function.library,
+                                                                    (void *) cur_function->_function.target, (void *) cur_function->_function.call_addr,
+                                                                    (FunctionPatcherTargetProcess) cur_function->_function.targetProcess);
+                pluginInfo->addFunctionData(function_data);
             }
         }
     }
@@ -221,14 +224,13 @@ PluginInformationFactory::load(const PluginData &pluginData, MEMHeapHandle heapH
                         if (type == STT_FUNC) { // We only care about functions.
                             auto sectionVal = reader.sections[section];
                             auto offsetVal = value - sectionVal->get_address();
-                            auto sectionOpt = pluginInfo.getSectionInfo(sectionVal->get_name());
+                            auto sectionOpt = pluginInfo->getSectionInfo(sectionVal->get_name());
                             if (!sectionOpt.has_value()) {
                                 continue;
                             }
 
-                            auto finalAddress = offsetVal + sectionOpt->getAddress();
-
-                            pluginInfo.addFunctionSymbolData(FunctionSymbolData(name, (void *) finalAddress, (uint32_t) size));
+                            auto finalAddress = offsetVal + sectionOpt.value()->getAddress();
+                            pluginInfo->addFunctionSymbolData(std::make_shared<FunctionSymbolData>(name, (void *) finalAddress, (uint32_t) size));
                         }
                     }
                 }
@@ -238,14 +240,14 @@ PluginInformationFactory::load(const PluginData &pluginData, MEMHeapHandle heapH
     }
 
     // Save the addresses for the allocated memory. This way we can free it again :)
-    pluginInfo.allocatedDataMemoryAddress = data_data;
-    pluginInfo.allocatedTextMemoryAddress = text_data;
+    pluginInfo->allocatedDataMemoryAddress = data_data;
+    pluginInfo->allocatedTextMemoryAddress = text_data;
 
     return pluginInfo;
 }
 
-std::vector<RelocationData> PluginInformationFactory::getImportRelocationData(const elfio &reader, uint8_t **destinations) {
-    std::vector<RelocationData> result;
+std::vector<std::shared_ptr<RelocationData>> PluginInformationFactory::getImportRelocationData(const elfio &reader, uint8_t **destinations) {
+    std::vector<std::shared_ptr<RelocationData>> result;
 
     std::map<uint32_t, std::string> infoMap;
 
@@ -302,11 +304,10 @@ std::vector<RelocationData> PluginInformationFactory::getImportRelocationData(co
                     continue;
                 }
 
-                ImportRPLInformation rplInfo(rplName, isData);
+                auto rplInfo = std::make_shared<ImportRPLInformation>(rplName, isData);
 
                 uint32_t section_index = psec->get_info();
-
-                result.emplace_back(type, offset - 0x02000000, addend, (void *) (destinations[section_index]), sym_name, rplInfo);
+                result.push_back(std::make_shared<RelocationData>(type, offset - 0x02000000, addend, (void *) (destinations[section_index]), sym_name, rplInfo));
             }
         }
     }

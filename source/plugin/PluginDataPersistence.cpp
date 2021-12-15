@@ -1,24 +1,35 @@
+#include <memory>
 #include "../common/plugin_defines.h"
 #include "PluginDataPersistence.h"
-#include "PluginData.h"
 
-bool PluginDataPersistence::save(plugin_data_t *pluginDataStruct, PluginData &plugin) {
+bool PluginDataPersistence::save(plugin_data_t *pluginDataStruct, const std::shared_ptr<PluginData> &plugin) {
     if (pluginDataStruct == nullptr) {
         return false;
     }
-    pluginDataStruct->buffer = (char *) plugin.buffer;
-    pluginDataStruct->bufferLength = plugin.length;
-    pluginDataStruct->memoryType = plugin.memoryType;
-    pluginDataStruct->heapHandle = (int) plugin.heapHandle;
+    pluginDataStruct->buffer = (char *) plugin->buffer;
+    pluginDataStruct->bufferLength = plugin->length;
+    pluginDataStruct->memoryType = plugin->memoryType;
+    pluginDataStruct->heapHandle = (int) plugin->heapHandle;
     return true;
 }
 
-PluginData PluginDataPersistence::load(plugin_data_t *pluginDataStruct) {
-    PluginData pluginData;
+bool PluginDataPersistence::save(plugin_data_t *pluginDataStruct, PluginData* plugin) {
+    if (pluginDataStruct == nullptr) {
+        return false;
+    }
+    pluginDataStruct->buffer = (char *) plugin->buffer;
+    pluginDataStruct->bufferLength = plugin->length;
+    pluginDataStruct->memoryType = plugin->memoryType;
+    pluginDataStruct->heapHandle = (int) plugin->heapHandle;
+    return true;
+}
 
-    pluginData.buffer = pluginDataStruct->buffer;
-    pluginData.length = pluginDataStruct->bufferLength;
-    pluginData.memoryType = (eMemoryTypes) pluginDataStruct->memoryType;
-    pluginData.heapHandle = (MEMHeapHandle) pluginDataStruct->heapHandle;
+std::shared_ptr<PluginData> PluginDataPersistence::load(plugin_data_t *pluginDataStruct) {
+    auto pluginData = std::make_shared<PluginData>();
+
+    pluginData->buffer = pluginDataStruct->buffer;
+    pluginData->length = pluginDataStruct->bufferLength;
+    pluginData->memoryType = (eMemoryTypes) pluginDataStruct->memoryType;
+    pluginData->heapHandle = (MEMHeapHandle) pluginDataStruct->heapHandle;
     return pluginData;
 }

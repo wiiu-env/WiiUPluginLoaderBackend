@@ -29,12 +29,12 @@
 
 class PluginInformationFactory {
 public:
-    static std::optional<PluginInformation>
-    load(const PluginData &pluginData, MEMHeapHandle heaphandle, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length, uint8_t trampolinId);
+    static std::optional<std::shared_ptr<PluginInformation>>
+    load(const std::shared_ptr<PluginData> &pluginData, MEMHeapHandle heaphandle, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length, uint8_t trampolinId);
 
     static bool
     linkSection(const elfio &reader, uint32_t section_index, uint32_t destination, uint32_t base_text, uint32_t base_data, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length,
                 uint8_t trampolinId);
 
-    static std::vector<RelocationData> getImportRelocationData(const elfio &reader, uint8_t **destinations);
+    static std::vector<std::shared_ptr<RelocationData>> getImportRelocationData(const elfio &reader, uint8_t **destinations);
 };

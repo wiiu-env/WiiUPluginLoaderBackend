@@ -23,8 +23,8 @@
 #include "../utils/StringTools.h"
 
 
-std::vector<PluginData> PluginDataFactory::loadDir(const std::string &path, MEMHeapHandle heapHandle) {
-    std::vector<PluginData> result;
+std::vector<std::shared_ptr<PluginData>> PluginDataFactory::loadDir(const std::string &path, MEMHeapHandle heapHandle) {
+    std::vector<std::shared_ptr<PluginData>> result;
     struct dirent *dp;
     DIR *dfd = nullptr;
 
@@ -64,7 +64,7 @@ std::vector<PluginData> PluginDataFactory::loadDir(const std::string &path, MEMH
     return result;
 }
 
-std::optional<PluginData> PluginDataFactory::load(const std::string &filename, MEMHeapHandle heapHandle) {
+std::optional<std::shared_ptr<PluginData>> PluginDataFactory::load(const std::string &filename, MEMHeapHandle heapHandle) {
     // Not going to explicitly check these.
     // The use of gcount() below will compensate for a failure here.
     std::ifstream is(filename, std::ios::binary);
@@ -93,11 +93,10 @@ std::optional<PluginData> PluginDataFactory::load(const std::string &filename, M
     return load(result, heapHandle);
 }
 
-std::optional<PluginData> PluginDataFactory::load(std::vector<uint8_t> &buffer, MEMHeapHandle heapHandle) {
+std::optional<std::shared_ptr<PluginData>> PluginDataFactory::load(std::vector<uint8_t> &buffer, MEMHeapHandle heapHandle) {
     if (buffer.empty()) {
         return std::nullopt;
     }
 
-    PluginData pluginData(buffer, heapHandle, eMemoryTypes::eMemTypeMEM2);
-    return pluginData;
+    return std::shared_ptr<PluginData>(new PluginData(buffer, heapHandle, eMemoryTypes::eMemTypeMEM2));
 }

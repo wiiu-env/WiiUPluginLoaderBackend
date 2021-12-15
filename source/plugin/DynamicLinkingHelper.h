@@ -3,6 +3,7 @@
 #include <wums/defines/dynamic_linking_defines.h>
 #include <string>
 #include <vector>
+#include <memory>
 #include "RelocationData.h"
 
 class DynamicLinkingHelper {
@@ -46,12 +47,12 @@ public:
     **/
     static dyn_linking_import_t *getOrAddImport(dyn_linking_relocation_data_t *data, const char *importName, bool isData);
 
-    static bool addReloationEntry(dyn_linking_relocation_data_t *linking_data, dyn_linking_relocation_entry_t *linking_entries, uint32_t linking_entry_length, const RelocationData &relocationData);
+    static bool addReloationEntry(dyn_linking_relocation_data_t *linking_data, dyn_linking_relocation_entry_t *linking_entries, uint32_t linking_entry_length, const std::shared_ptr<RelocationData> &relocationData);
 
     static bool
     addReloationEntry(dyn_linking_relocation_data_t *linking_data, dyn_linking_relocation_entry_t *linking_entries, uint32_t linking_entry_length, char type, size_t offset, int32_t addend,
                       const void *destination, const std::string &name,
-                      const ImportRPLInformation &rplInfo);
+                      const std::shared_ptr<ImportRPLInformation> &rplInfo);
 
     static bool addReloationEntry(dyn_linking_relocation_entry_t *linking_entries, uint32_t linking_entry_length, char type, size_t offset, int32_t addend, const void *destination,
                                   dyn_linking_function_t *functionName,

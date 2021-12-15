@@ -16,31 +16,28 @@
  ****************************************************************************/
 
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <dirent.h>
 #include <whb/file.h>
+#include <memory>
 #include "../utils/StringTools.h"
 #include "PluginMetaInformationFactory.h"
-#include "PluginMetaInformation.h"
-#include "../elfio/elfio.hpp"
-#include "../utils/logger.h"
 
 using namespace ELFIO;
 
-std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(const PluginData &pluginData) {
-    if (pluginData.buffer == nullptr) {
+std::optional<std::shared_ptr<PluginMetaInformation>> PluginMetaInformationFactory::loadPlugin(const std::shared_ptr<PluginData> &pluginData) {
+    if (pluginData->buffer == nullptr) {
         DEBUG_FUNCTION_LINE("Buffer was nullptr");
         return std::nullopt;
     }
     elfio reader;
-    if (!reader.load((char *) pluginData.buffer, pluginData.length)) {
+    if (!reader.load((char *) pluginData->buffer, pluginData->length)) {
         DEBUG_FUNCTION_LINE("Can't process PluginData in elfio");
         return std::nullopt;
     }
     return loadPlugin(reader);
 }
 
-std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(std::string &filePath) {
+std::optional<std::shared_ptr<PluginMetaInformation>> PluginMetaInformationFactory::loadPlugin(std::string &filePath) {
     elfio reader;
     if (!reader.load(filePath)) {
         DEBUG_FUNCTION_LINE("Can't find or process ELF file");
@@ -49,7 +46,7 @@ std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(st
     return loadPlugin(reader);
 }
 
-std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(char *buffer, size_t size) {
+std::optional<std::shared_ptr<PluginMetaInformation>> PluginMetaInformationFactory::loadPlugin(char *buffer, size_t size) {
     elfio reader;
     if (!reader.load(buffer, size)) {
         DEBUG_FUNCTION_LINE("Can't find or process ELF file");
@@ -59,10 +56,10 @@ std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(ch
     return loadPlugin(reader);
 }
 
-std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(const elfio &reader) {
+std::optional<std::shared_ptr<PluginMetaInformation>> PluginMetaInformationFactory::loadPlugin(const elfio &reader) {
     size_t pluginSize = 0;
 
-    PluginMetaInformation pluginInfo;
+    auto pluginInfo = std::shared_ptr<PluginMetaInformation>(new PluginMetaInformation);
 
     uint32_t sec_num = reader.sections.size();
 
@@ -99,19 +96,19 @@ std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(co
                     std::string value(curEntry + firstFound + 1);
 
                     if (key == "name") {
-                        pluginInfo.setName(value);
+                        pluginInfo->setName(value);
                     } else if (key == "author") {
-                        pluginInfo.setAuthor(value);
+                        pluginInfo->setAuthor(value);
                     } else if (key == "version") {
-                        pluginInfo.setVersion(value);
+                        pluginInfo->setVersion(value);
                     } else if (key == "license") {
-                        pluginInfo.setLicense(value);
+                        pluginInfo->setLicense(value);
                     } else if (key == "buildtimestamp") {
-                        pluginInfo.setBuildTimestamp(value);
+                        pluginInfo->setBuildTimestamp(value);
                     } else if (key == "description") {
-                        pluginInfo.setDescription(value);
+                        pluginInfo->setDescription(value);
                     } else if (key == "storage_id") {
-                        pluginInfo.setStorageId(value);
+                        pluginInfo->setStorageId(value);
                     } else if (key == "wups") {
                         if (value != "0.6.1") {
                             DEBUG_FUNCTION_LINE("Warning: Ignoring plugin - Unsupported WUPS version: %s.", value.c_str());
@@ -124,7 +121,7 @@ std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(co
         }
     }
 
-    pluginInfo.setSize(pluginSize);
+    pluginInfo->setSize(pluginSize);
 
     return pluginInfo;
 }

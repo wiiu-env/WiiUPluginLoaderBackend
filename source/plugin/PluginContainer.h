@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <memory>
 #include "PluginData.h"
 #include "PluginMetaInformation.h"
 #include "PluginInformation.h"
@@ -31,31 +32,31 @@ public:
 
     PluginContainer() = default;
 
-    [[nodiscard]] const PluginMetaInformation &getMetaInformation() const {
+    [[nodiscard]] const std::shared_ptr<PluginMetaInformation> &getMetaInformation() const {
         return this->metaInformation;
     }
 
-    void setMetaInformation(const PluginMetaInformation &metaInfo) {
+    void setMetaInformation(const std::shared_ptr<PluginMetaInformation> &metaInfo) {
         this->metaInformation = metaInfo;
     }
 
-    [[nodiscard]] const PluginInformation &getPluginInformation() const {
+    [[nodiscard]] const std::shared_ptr<PluginInformation> &getPluginInformation() const {
         return pluginInformation;
     }
 
-    void setPluginInformation(const PluginInformation &_pluginInformation) {
+    void setPluginInformation(const std::shared_ptr<PluginInformation> &_pluginInformation) {
         this->pluginInformation = _pluginInformation;
     }
 
-    [[nodiscard]] const PluginData &getPluginData() const {
+    [[nodiscard]] const std::shared_ptr<PluginData> &getPluginData() const {
         return pluginData;
     }
 
-    void setPluginData(const PluginData &_pluginData) {
+    void setPluginData(const std::shared_ptr<PluginData> &_pluginData) {
         this->pluginData = _pluginData;
     }
 
-    PluginData pluginData;
-    PluginMetaInformation metaInformation;
-    PluginInformation pluginInformation;
+    std::shared_ptr<PluginData> pluginData;
+    std::shared_ptr<PluginMetaInformation> metaInformation;
+    std::shared_ptr<PluginInformation> pluginInformation;
 };

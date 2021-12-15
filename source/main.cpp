@@ -6,6 +6,7 @@
 #include <coreinit/cache.h>
 #include <coreinit/dynload.h>
 #include <coreinit/memdefaultheap.h>
+#include <memory>
 #include "plugin/PluginContainer.h"
 #include "globals.h"
 #include "plugin/PluginDataFactory.h"
@@ -120,14 +121,14 @@ WUMS_APPLICATION_STARTS() {
                 memset((void *) gTrampolineData, 0, sizeof(relocation_trampolin_entry_t) * NUMBER_OF_TRAMPS);
             }
             DEBUG_FUNCTION_LINE("Available memory for storing plugins: %d kb", MEMGetAllocatableSizeForExpHeapEx(gPluginDataHeap, 4) / 1024);
-            std::vector<PluginData> pluginList = PluginDataFactory::loadDir("fs:/vol/external01/wiiu/plugins/", gPluginDataHeap);
+            std::vector<std::shared_ptr<PluginData>> pluginList = PluginDataFactory::loadDir("fs:/vol/external01/wiiu/plugins/", gPluginDataHeap);
             DEBUG_FUNCTION_LINE("Loaded data for %d plugins.", pluginList.size());
 
-            std::vector<PluginContainer> plugins = PluginManagement::loadPlugins(pluginList, gPluginDataHeap, gTrampolineData, gTrampolineDataSize);
+            auto plugins = PluginManagement::loadPlugins(pluginList, gPluginDataHeap, gTrampolineData, gTrampolineDataSize);
 
             for (auto &pluginContainer: plugins) {
-                for (const auto &kv: pluginContainer.getPluginInformation().getSectionInfoList()) {
-                    DEBUG_FUNCTION_LINE_VERBOSE("%s = %s %08X %d", kv.first.c_str(), kv.second.getName().c_str(), kv.second.getAddress(), kv.second.getSize());
+                for (const auto &kv: pluginContainer->getPluginInformation()->getSectionInfoList()) {
+                    DEBUG_FUNCTION_LINE_VERBOSE("%s = %s %08X %d", kv.first.c_str(), kv.second->getName().c_str(), kv.second->getAddress(), kv.second->getSize());
                 }
                 if (!PluginContainerPersistence::savePlugin(gPluginInformation, pluginContainer, gPluginDataHeap)) {
                     DEBUG_FUNCTION_LINE("Failed to save plugin");
@@ -138,7 +139,7 @@ WUMS_APPLICATION_STARTS() {
     }
     if (gLinkOnReload.loadOnReload) {
         DEBUG_FUNCTION_LINE("Reload with new plugin list.");
-        std::vector<PluginData> pluginDataList;
+        std::vector<std::shared_ptr<PluginData>> pluginDataList;
         for (int32_t i = 0; i < gLinkOnReload.number_used_plugins; i++) {
             auto pluginData = PluginDataPersistence::load(&gLinkOnReload.plugin_data[i]);
             pluginDataList.push_back(pluginData);
@@ -148,7 +149,7 @@ WUMS_APPLICATION_STARTS() {
             plugin_information_single_t *plugin = &(gPluginInformation->plugin_data[plugin_index]);
             BOOL doDelete = true;
             for (auto &pluginData: pluginDataList) {
-                if (pluginData.buffer == plugin->data.buffer) {
+                if (pluginData->buffer == plugin->data.buffer) {
                     doDelete = false;
                     break;
                 }
@@ -177,10 +178,10 @@ WUMS_APPLICATION_STARTS() {
 
         PluginManagement::unloadPlugins(gPluginInformation, gPluginDataHeap, false);
 
-        std::vector<PluginContainer> plugins = PluginManagement::loadPlugins(pluginDataList, gPluginDataHeap, gTrampolineData, gTrampolineDataSize);
+        auto plugins = PluginManagement::loadPlugins(pluginDataList, gPluginDataHeap, gTrampolineData, gTrampolineDataSize);
 
         for (auto &pluginContainer: plugins) {
-            DEBUG_FUNCTION_LINE("Stored information for plugin %s ; %s", pluginContainer.getMetaInformation().getName().c_str(), pluginContainer.getMetaInformation().getAuthor().c_str());
+            DEBUG_FUNCTION_LINE("Stored information for plugin %s ; %s", pluginContainer->getMetaInformation()->getName().c_str(), pluginContainer->getMetaInformation()->getAuthor().c_str());
             if (!PluginContainerPersistence::savePlugin(gPluginInformation, pluginContainer, gPluginDataHeap)) {
                 DEBUG_FUNCTION_LINE("Failed to save plugin");
             }
@@ -190,7 +191,7 @@ WUMS_APPLICATION_STARTS() {
     }
 
     if (gPluginDataHeap != nullptr) {
-        std::vector<PluginContainer> plugins = PluginContainerPersistence::loadPlugins(gPluginInformation);
+       auto plugins = PluginContainerPersistence::loadPlugins(gPluginInformation);
         PluginManagement::doRelocations(plugins, gTrampolineData, DYN_LINK_TRAMPOLIN_LIST_LENGTH);
         // PluginManagement::memsetBSS(plugins);
 

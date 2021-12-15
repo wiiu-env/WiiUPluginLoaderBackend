@@ -1,6 +1,8 @@
+#include <memory.h>
 #include <coreinit/cache.h>
 #include <coreinit/dynload.h>
 #include <coreinit/memdefaultheap.h>
+#include <memory>
 
 #include "patcher/hooks_patcher_static.h"
 #include "plugin/PluginContainer.h"
@@ -12,11 +14,11 @@
 #include "hooks.h"
 #include "globals.h"
 
-bool PluginManagement::doRelocation(const std::vector<RelocationData> &relocData, relocation_trampolin_entry_t *tramp_data, uint32_t tramp_length, uint32_t trampolinID) {
+bool PluginManagement::doRelocation(const std::vector<std::shared_ptr<RelocationData>> &relocData, relocation_trampolin_entry_t *tramp_data, uint32_t tramp_length, uint32_t trampolinID) {
     std::map<std::string, OSDynLoad_Module> moduleHandleCache;
     for (auto const &cur: relocData) {
         uint32_t functionAddress = 0;
-        const std::string &functionName = cur.getName();
+        const std::string &functionName = cur->getName();
 
         if (functionName == "MEMAllocFromDefaultHeap") {
             OSDynLoad_Module rplHandle;
@@ -33,8 +35,8 @@ bool PluginManagement::doRelocation(const std::vector<RelocationData> &relocData
         }
 
         if (functionAddress == 0) {
-            std::string rplName = cur.getImportRPLInformation().getName();
-            int32_t isData = cur.getImportRPLInformation().isData();
+            std::string rplName = cur->getImportRPLInformation()->getName();
+            int32_t isData = cur->getImportRPLInformation()->isData();
             OSDynLoad_Module rplHandle = nullptr;
             if (moduleHandleCache.count(rplName) > 0) {
                 rplHandle = moduleHandleCache[rplName];
@@ -51,7 +53,7 @@ bool PluginManagement::doRelocation(const std::vector<RelocationData> &relocData
         } else {
             //DEBUG_FUNCTION_LINE("Found export for %s %s", rplName.c_str(), functionName.c_str());
         }
-        if (!ElfUtils::elfLinkOne(cur.getType(), cur.getOffset(), cur.getAddend(), (uint32_t) cur.getDestination(), functionAddress, tramp_data, tramp_length, RELOC_TYPE_IMPORT, trampolinID)) {
+        if (!ElfUtils::elfLinkOne(cur->getType(), cur->getOffset(), cur->getAddend(), (uint32_t) cur->getDestination(), functionAddress, tramp_data, tramp_length, RELOC_TYPE_IMPORT, trampolinID)) {
             DEBUG_FUNCTION_LINE("Relocation failed");
             return false;
         }
@@ -63,27 +65,27 @@ bool PluginManagement::doRelocation(const std::vector<RelocationData> &relocData
 }
 
 
-void PluginManagement::doRelocations(const std::vector<PluginContainer> &plugins, relocation_trampolin_entry_t *trampData, uint32_t tramp_size) {
+void PluginManagement::doRelocations(const std::vector<std::shared_ptr<PluginContainer>> &plugins, relocation_trampolin_entry_t *trampData, uint32_t tramp_size) {
     for (auto &pluginContainer: plugins) {
-        DEBUG_FUNCTION_LINE_VERBOSE("Doing relocations for plugin: %s", pluginContainer.getMetaInformation().getName().c_str());
+        DEBUG_FUNCTION_LINE_VERBOSE("Doing relocations for plugin: %s", pluginContainer->getMetaInformation()->getName().c_str());
 
-        if (!PluginManagement::doRelocation(pluginContainer.getPluginInformation().getRelocationDataList(), trampData, tramp_size, pluginContainer.getPluginInformation().getTrampolinId())) {
+        if (!PluginManagement::doRelocation(pluginContainer->getPluginInformation()->getRelocationDataList(), trampData, tramp_size, pluginContainer->getPluginInformation()->getTrampolinId())) {
             DEBUG_FUNCTION_LINE("Relocation failed");
         }
     }
 }
 
-void PluginManagement::memsetBSS(const std::vector<PluginContainer> &plugins) {
+void PluginManagement::memsetBSS(const std::vector<std::shared_ptr<PluginContainer>> &plugins) {
     for (auto &pluginContainer: plugins) {
-        auto sbssSection = pluginContainer.getPluginInformation().getSectionInfo(".sbss");
+        auto sbssSection = pluginContainer->getPluginInformation()->getSectionInfo(".sbss");
         if (sbssSection) {
-            DEBUG_FUNCTION_LINE_VERBOSE("memset .sbss %08X (%d)", sbssSection->getAddress(), sbssSection->getSize());
-            memset((void *) sbssSection->getAddress(), 0, sbssSection->getSize());
+            DEBUG_FUNCTION_LINE_VERBOSE("memset .sbss %08X (%d)", sbssSection.value()->getAddress(), sbssSection.value()->getSize());
+            memset((void *) sbssSection.value()->getAddress(), 0, sbssSection.value()->getSize());
         }
-        auto bssSection = pluginContainer.getPluginInformation().getSectionInfo(".bss");
+        auto bssSection = pluginContainer->getPluginInformation()->getSectionInfo(".bss");
         if (bssSection) {
-            DEBUG_FUNCTION_LINE_VERBOSE("memset .bss %08X (%d)", bssSection->getAddress(), bssSection->getSize());
-            memset((void *) bssSection->getAddress(), 0, bssSection->getSize());
+            DEBUG_FUNCTION_LINE_VERBOSE("memset .bss %08X (%d)", bssSection.value()->getAddress(), bssSection.value()->getSize());
+            memset((void *) bssSection.value()->getAddress(), 0, bssSection.value()->getSize());
         }
     }
 }
@@ -186,17 +188,17 @@ void PluginManagement::PatchFunctionsAndCallHooks(plugin_information_t *pluginIn
     OSDynLoad_AddNotifyCallback(module_callback, pluginInformation);
 }
 
-std::vector<PluginContainer>
-PluginManagement::loadPlugins(const std::vector<PluginData> &pluginList, MEMHeapHandle heapHandle, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length) {
-    std::vector<PluginContainer> plugins;
+std::vector<std::shared_ptr<PluginContainer>>
+PluginManagement::loadPlugins(const std::vector<std::shared_ptr<PluginData>> &pluginList, MEMHeapHandle heapHandle, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length) {
+    std::vector<std::shared_ptr<PluginContainer>> plugins;
 
     for (auto &pluginData: pluginList) {
         DEBUG_FUNCTION_LINE_VERBOSE("Load meta information");
         auto metaInfo = PluginMetaInformationFactory::loadPlugin(pluginData);
         if (metaInfo) {
-            PluginContainer container;
-            container.setMetaInformation(metaInfo.value());
-            container.setPluginData(pluginData);
+            auto container = std::make_shared<PluginContainer>();
+            container->setMetaInformation(metaInfo.value());
+            container->setPluginData(pluginData);
             plugins.push_back(container);
         } else {
             DEBUG_FUNCTION_LINE("Failed to get meta information");
@@ -204,12 +206,12 @@ PluginManagement::loadPlugins(const std::vector<PluginData> &pluginList, MEMHeap
     }
     uint32_t trampolineID = 0;
     for (auto &pluginContainer: plugins) {
-        std::optional<PluginInformation> info = PluginInformationFactory::load(pluginContainer.getPluginData(), heapHandle, trampolin_data, trampolin_data_length, trampolineID++);
+        auto info = PluginInformationFactory::load(pluginContainer->getPluginData(), heapHandle, trampolin_data, trampolin_data_length, trampolineID++);
         if (!info) {
-            DEBUG_FUNCTION_LINE("Failed to load Plugin %s", pluginContainer.getMetaInformation().getName().c_str());
+            DEBUG_FUNCTION_LINE("Failed to load Plugin %s", pluginContainer->getMetaInformation()->getName().c_str());
             continue;
         }
-        pluginContainer.setPluginInformation(info.value());
+        pluginContainer->setPluginInformation(info.value());
     }
     return plugins;
 }

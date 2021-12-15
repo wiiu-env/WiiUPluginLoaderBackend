@@ -22,12 +22,21 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <memory>
 #include "PluginMetaInformation.h"
 #include "RelocationData.h"
 #include "HookData.h"
 #include "FunctionData.h"
 #include "SectionInfo.h"
 #include "FunctionSymbolData.h"
+
+struct FunctionSymbolDataComparator {
+    bool operator()(const std::shared_ptr<FunctionSymbolData>& lhs,
+                    const std::shared_ptr<FunctionSymbolData>& rhs) const
+    {
+        return (uint32_t) lhs->getAddress() < (uint32_t) rhs->getAddress();
+    }
+};
 
 class PluginInformation {
 public:
@@ -37,47 +46,48 @@ public:
 
     virtual ~PluginInformation() = default;
 
-    void addHookData(const HookData &hook_data) {
+    void addHookData(const std::shared_ptr<HookData> &hook_data) {
         hook_data_list.push_back(hook_data);
     }
 
-    [[nodiscard]] const std::vector<HookData> &getHookDataList() const {
+    [[nodiscard]] const std::vector<std::shared_ptr<HookData>> &getHookDataList() const {
         return hook_data_list;
     }
 
-    void addFunctionData(const FunctionData &function_data) {
+    void addFunctionData(const std::shared_ptr<FunctionData> &function_data) {
         function_data_list.push_back(function_data);
     }
 
-    [[nodiscard]] const std::vector<FunctionData> &getFunctionDataList() const {
+    [[nodiscard]] const std::vector<std::shared_ptr<FunctionData>> &getFunctionDataList() const {
         return function_data_list;
     }
 
-    void addRelocationData(const RelocationData &relocation_data) {
+    void addRelocationData(const std::shared_ptr<RelocationData> &relocation_data) {
         relocation_data_list.push_back(relocation_data);
     }
 
-    [[nodiscard]] const std::vector<RelocationData> &getRelocationDataList() const {
+    [[nodiscard]] const std::vector<std::shared_ptr<RelocationData>> &getRelocationDataList() const {
         return relocation_data_list;
     }
 
-    void addFunctionSymbolData(const FunctionSymbolData &symbol_data) {
+
+    void addFunctionSymbolData(const std::shared_ptr<FunctionSymbolData> &symbol_data) {
         symbol_data_list.insert(symbol_data);
     }
 
-    [[nodiscard]] const std::set<FunctionSymbolData> &getFunctionSymbolDataList() const {
+    [[nodiscard]] const std::set<std::shared_ptr<FunctionSymbolData>, FunctionSymbolDataComparator> &getFunctionSymbolDataList() const {
         return symbol_data_list;
     }
 
-    void addSectionInfo(const SectionInfo &sectionInfo) {
-        section_info_list[sectionInfo.getName()] = sectionInfo;
+    void addSectionInfo(const std::shared_ptr<SectionInfo> &sectionInfo) {
+        section_info_list[sectionInfo->getName()] = sectionInfo;
     }
 
-    [[nodiscard]] const std::map<std::string, SectionInfo> &getSectionInfoList() const {
+    [[nodiscard]] const std::map<std::string, std::shared_ptr<SectionInfo>> &getSectionInfoList() const {
         return section_info_list;
     }
 
-    [[nodiscard]] std::optional<SectionInfo> getSectionInfo(const std::string &sectionName) const {
+    [[nodiscard]] std::optional<std::shared_ptr<SectionInfo>> getSectionInfo(const std::string &sectionName) const {
         if (getSectionInfoList().count(sectionName) > 0) {
             return section_info_list.at(sectionName);
         }
@@ -93,11 +103,11 @@ public:
     }
 
 private:
-    std::vector<HookData> hook_data_list;
-    std::vector<FunctionData> function_data_list;
-    std::vector<RelocationData> relocation_data_list;
-    std::set<FunctionSymbolData> symbol_data_list;
-    std::map<std::string, SectionInfo> section_info_list;
+    std::vector<std::shared_ptr<HookData>> hook_data_list;
+    std::vector<std::shared_ptr<FunctionData>> function_data_list;
+    std::vector<std::shared_ptr<RelocationData>> relocation_data_list;
+    std::set<std::shared_ptr<FunctionSymbolData>, FunctionSymbolDataComparator> symbol_data_list;
+    std::map<std::string, std::shared_ptr<SectionInfo>> section_info_list;
 
     uint8_t trampolinId = 0;
 

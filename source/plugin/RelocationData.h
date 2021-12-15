@@ -18,18 +18,19 @@
 #pragma once
 
 #include <string>
+#include <utility>
 #include "ImportRPLInformation.h"
 
 class RelocationData {
 
 public:
-    RelocationData(const char type, size_t offset, int32_t addend, void *destination, std::string &name, const ImportRPLInformation &rplInfo) :
+    RelocationData(const char type, size_t offset, int32_t addend, void *destination, std::string &name, std::shared_ptr<ImportRPLInformation> rplInfo) :
             type(type),
             offset(offset),
             addend(addend),
             destination(destination),
             name(name),
-            rplInfo(rplInfo) {
+            rplInfo(std::move(rplInfo)) {
     }
 
     RelocationData(const RelocationData &o2) = default;
@@ -56,7 +57,7 @@ public:
         return name;
     }
 
-    [[nodiscard]] const ImportRPLInformation &getImportRPLInformation() const {
+    [[nodiscard]] const std::shared_ptr<ImportRPLInformation> &getImportRPLInformation() const {
         return rplInfo;
     }
 
@@ -66,5 +67,5 @@ private:
     int32_t addend;
     void *destination;
     std::string name;
-    ImportRPLInformation rplInfo;
+    std::shared_ptr<ImportRPLInformation> rplInfo;
 };

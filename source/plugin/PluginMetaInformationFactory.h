@@ -19,17 +19,18 @@
 
 #include <optional>
 #include <string>
+#include <memory>
 #include <vector>
 #include "PluginMetaInformation.h"
 #include "PluginData.h"
 
 class PluginMetaInformationFactory {
 public:
-    static std::optional<PluginMetaInformation> loadPlugin(const PluginData &pluginData);
+    static std::optional<std::shared_ptr<PluginMetaInformation>> loadPlugin(const std::shared_ptr<PluginData> &pluginData);
 
-    static std::optional<PluginMetaInformation> loadPlugin(std::string &filePath);
+    static std::optional<std::shared_ptr<PluginMetaInformation>> loadPlugin(std::string &filePath);
 
-    static std::optional<PluginMetaInformation> loadPlugin(char *buffer, size_t size);
+    static std::optional<std::shared_ptr<PluginMetaInformation>> loadPlugin(char *buffer, size_t size);
 
-    static std::optional<PluginMetaInformation> loadPlugin(const elfio &reader);
+    static std::optional<std::shared_ptr<PluginMetaInformation>> loadPlugin(const elfio &reader);
 };

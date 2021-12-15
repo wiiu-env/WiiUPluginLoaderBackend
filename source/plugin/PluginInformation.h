@@ -18,6 +18,7 @@
 #pragma once
 
 #include <map>
+#include <set>
 #include <optional>
 #include <string>
 #include <vector>
@@ -26,6 +27,7 @@
 #include "HookData.h"
 #include "FunctionData.h"
 #include "SectionInfo.h"
+#include "FunctionSymbolData.h"
 
 class PluginInformation {
 public:
@@ -59,6 +61,14 @@ public:
         return relocation_data_list;
     }
 
+    void addFunctionSymbolData(const FunctionSymbolData &symbol_data) {
+        symbol_data_list.insert(symbol_data);
+    }
+
+    [[nodiscard]] const std::set<FunctionSymbolData> &getFunctionSymbolDataList() const {
+        return symbol_data_list;
+    }
+
     void addSectionInfo(const SectionInfo &sectionInfo) {
         section_info_list[sectionInfo.getName()] = sectionInfo;
     }
@@ -86,6 +96,7 @@ private:
     std::vector<HookData> hook_data_list;
     std::vector<FunctionData> function_data_list;
     std::vector<RelocationData> relocation_data_list;
+    std::set<FunctionSymbolData> symbol_data_list;
     std::map<std::string, SectionInfo> section_info_list;
 
     uint8_t trampolinId = 0;

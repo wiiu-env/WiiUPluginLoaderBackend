@@ -5,7 +5,7 @@
 
 class PluginContainerPersistence {
 public:
-    static bool savePlugin(plugin_information_t *pluginInformation, PluginContainer &plugin);
+    static bool savePlugin(plugin_information_t *pluginInformation, PluginContainer &plugin, MEMHeapHandle heapHandle);
 
     static std::vector<PluginContainer> loadPlugins(plugin_information_t *pluginInformation);
 };

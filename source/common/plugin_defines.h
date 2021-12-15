@@ -65,6 +65,12 @@ struct replacement_data_hook_t {
     wups_loader_hook_type_t type{};                                   /* [will be filled] */
 };
 
+struct plugin_function_symbol_data_t {
+    char* name;
+    void* address;
+    uint32_t size;
+};
+
 struct plugin_info_t {
     dyn_linking_relocation_entry_t  linking_entries[PLUGIN_DYN_LINK_RELOCATION_LIST_LENGTH]{};
     plugin_section_info_t           sectionInfos[MAXIMUM_PLUGIN_SECTION_LENGTH];
@@ -73,8 +79,11 @@ struct plugin_info_t {
     uint32_t                        number_used_hooks{};                            // Number of used hooks. Maximum is MAXIMUM_HOOKS_PER_PLUGIN
     replacement_data_hook_t         hooks[MAXIMUM_HOOKS_PER_PLUGIN];                // Replacement information for each function.
     uint8_t                         trampolinId{};
+    plugin_function_symbol_data_t * function_symbol_data = nullptr;
+    uint32_t                        number_function_symbol_data = 0;
     void *                          allocatedTextMemoryAddress = nullptr;
     void *                          allocatedDataMemoryAddress = nullptr;
+    void *                          allocatedFuncSymStringTableAddress = nullptr;
 };
 
 struct plugin_data_t {

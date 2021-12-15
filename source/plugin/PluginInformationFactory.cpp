@@ -200,7 +200,44 @@ PluginInformationFactory::load(const PluginData &pluginData, MEMHeapHandle heapH
         }
     }
 
-    // Save the addresses for the allocated. This way we can free it again :)
+    // Get the symbol for functions.
+    Elf_Half n = reader.sections.size();
+    for (Elf_Half i = 0; i < n; ++i) {
+        section *sec = reader.sections[i];
+        if (SHT_SYMTAB == sec->get_type()) {
+            symbol_section_accessor symbols(reader, sec);
+            auto sym_no = (uint32_t) symbols.get_symbols_num();
+            if (sym_no > 0) {
+                for (Elf_Half j = 0; j < sym_no; ++j) {
+                    std::string name;
+                    Elf64_Addr value = 0;
+                    Elf_Xword size = 0;
+                    unsigned char bind = 0;
+                    unsigned char type = 0;
+                    Elf_Half section = 0;
+                    unsigned char other = 0;
+                    if (symbols.get_symbol(j, name, value, size, bind, type, section, other)) {
+
+                        if (type == STT_FUNC) { // We only care about functions.
+                            auto sectionVal = reader.sections[section];
+                            auto offsetVal = value - sectionVal->get_address();
+                            auto sectionOpt = pluginInfo.getSectionInfo(sectionVal->get_name());
+                            if (!sectionOpt.has_value()) {
+                                continue;
+                            }
+
+                            auto finalAddress = offsetVal + sectionOpt->getAddress();
+
+                            pluginInfo.addFunctionSymbolData(FunctionSymbolData(name, (void *) finalAddress, (uint32_t) size));
+                        }
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    // Save the addresses for the allocated memory. This way we can free it again :)
     pluginInfo.allocatedDataMemoryAddress = data_data;
     pluginInfo.allocatedTextMemoryAddress = text_data;
 
@@ -332,7 +369,7 @@ bool PluginInformationFactory::linkSection(const elfio &reader, uint32_t section
                     DEBUG_FUNCTION_LINE("NOT IMPLEMENTED: %04X", sym_section_index);
                     return false;
                 }
-                DEBUG_FUNCTION_LINE_VERBOSE("sym_value %08X adjusted_sym_value %08X offset %08X adjusted_offset %08X", (uint32_t) sym_value, adjusted_sym_value, (uint32_t) offset, adjusted_offset);
+                // DEBUG_FUNCTION_LINE_VERBOSE("sym_value %08X adjusted_sym_value %08X offset %08X adjusted_offset %08X", (uint32_t) sym_value, adjusted_sym_value, (uint32_t) offset, adjusted_offset);
 
                 if (!ElfUtils::elfLinkOne(type, adjusted_offset, addend, destination, adjusted_sym_value, trampolin_data, trampolin_data_length, RELOC_TYPE_FIXED, trampolinId)) {
                     DEBUG_FUNCTION_LINE("Link failed");

@@ -7,7 +7,7 @@
 #include "PluginDataPersistence.h"
 #include "DynamicLinkingHelper.h"
 
-bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformation, PluginContainer &plugin) {
+bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformation, PluginContainer &plugin, MEMHeapHandle heapHandle) {
     int32_t plugin_count = pluginInformation->number_used_plugins;
 
     auto pluginName = plugin.getMetaInformation().getName();
@@ -160,6 +160,48 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
     plugin_data->info.allocatedDataMemoryAddress = pluginInfo.allocatedDataMemoryAddress;
 
 
+    uint32_t entryCount = pluginInfo.getFunctionSymbolDataList().size();
+    if (entryCount > 0) {
+        /* Saving SectionInfos */
+        uint32_t funcSymStringLen = 1;
+        for (auto &curFuncSym: pluginInfo.getFunctionSymbolDataList()) {
+            funcSymStringLen += curFuncSym.getName().length() + 1;
+        }
+
+        char *stringTable = (char *) MEMAllocFromExpHeapEx(heapHandle, funcSymStringLen, 0x4);
+        if (stringTable == nullptr) {
+            DEBUG_FUNCTION_LINE("Failed alloc memory to store string table for function symbol data");
+            return false;
+        }
+        memset(stringTable, 0, funcSymStringLen);
+        DEBUG_FUNCTION_LINE("Allocated %d for the function symbol string table", funcSymStringLen);
+        auto *entryTable = (plugin_function_symbol_data_t *) MEMAllocFromExpHeapEx(heapHandle, entryCount * sizeof(plugin_function_symbol_data_t), 0x4);
+        if (entryTable == nullptr) {
+            MEMFreeToExpHeap((MEMHeapHandle) heapHandle, stringTable);
+            free(stringTable);
+            DEBUG_FUNCTION_LINE("Failed alloc memory to store function symbol data");
+            return false;
+        }
+        DEBUG_FUNCTION_LINE("Allocated %d for the function symbol data", entryCount * sizeof(plugin_function_symbol_data_t));
+
+        uint32_t curStringOffset = 0;
+        uint32_t curEntryIndex = 0;
+        for (auto &curFuncSym: pluginInfo.getFunctionSymbolDataList()) {
+            entryTable[curEntryIndex].address = curFuncSym.getAddress();
+            entryTable[curEntryIndex].name = &stringTable[curStringOffset];
+            entryTable[curEntryIndex].size = curFuncSym.getSize();
+            auto len = curFuncSym.getName().length() + 1;
+            memcpy(stringTable + curStringOffset, curFuncSym.getName().c_str(), len);
+            curStringOffset += len;
+            curEntryIndex++;
+        }
+
+        plugin_data->info.allocatedFuncSymStringTableAddress = stringTable;
+        plugin_data->info.function_symbol_data = entryTable;
+    }
+
+    plugin_data->info.number_function_symbol_data = entryCount;
+
     /* Copy plugin data */
     auto pluginData = plugin.getPluginData();
     auto plugin_data_data = &plugin_data->data;
@@ -239,13 +281,13 @@ std::vector<PluginContainer> PluginContainerPersistence::loadPlugins(plugin_info
         }
 
         bool storageHasId = true;
-        for(auto const &value : curPluginInformation.getHookDataList()){
-            if(value.getType() == WUPS_LOADER_HOOK_INIT_STORAGE &&
-            metaInformation.getStorageId().empty()){
+        for (auto const &value: curPluginInformation.getHookDataList()) {
+            if (value.getType() == WUPS_LOADER_HOOK_INIT_STORAGE &&
+                metaInformation.getStorageId().empty()) {
                 storageHasId = false;
             }
         }
-        if(!storageHasId){
+        if (!storageHasId) {
             DEBUG_FUNCTION_LINE("Plugin is using the storage API but has not set an ID");
             continue;
         }
@@ -285,6 +327,14 @@ std::vector<PluginContainer> PluginContainerPersistence::loadPlugins(plugin_info
             std::string functionName(functionEntry->functionName);
             RelocationData reloc(linking_entry.type, linking_entry.offset, linking_entry.addend, linking_entry.destination, functionName, rplInfo);
             curPluginInformation.addRelocationData(reloc);
+        }
+
+        /* load function symbol data */
+        for (uint32_t j = 0; j < plugin_data->info.number_function_symbol_data; j++) {
+            auto symbol_data = &plugin_data->info.function_symbol_data[j];
+            std::string symbol_name = symbol_data->name;
+            FunctionSymbolData funSymbolData(symbol_name, (void *) symbol_data->address, symbol_data->size);
+            curPluginInformation.addFunctionSymbolData(funSymbolData);
         }
 
         PluginContainer container;

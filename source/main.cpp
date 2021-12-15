@@ -129,7 +129,7 @@ WUMS_APPLICATION_STARTS() {
                 for (const auto &kv: pluginContainer.getPluginInformation().getSectionInfoList()) {
                     DEBUG_FUNCTION_LINE_VERBOSE("%s = %s %08X %d", kv.first.c_str(), kv.second.getName().c_str(), kv.second.getAddress(), kv.second.getSize());
                 }
-                if (!PluginContainerPersistence::savePlugin(gPluginInformation, pluginContainer)) {
+                if (!PluginContainerPersistence::savePlugin(gPluginInformation, pluginContainer, gPluginDataHeap)) {
                     DEBUG_FUNCTION_LINE("Failed to save plugin");
                 }
             }
@@ -181,7 +181,7 @@ WUMS_APPLICATION_STARTS() {
 
         for (auto &pluginContainer: plugins) {
             DEBUG_FUNCTION_LINE("Stored information for plugin %s ; %s", pluginContainer.getMetaInformation().getName().c_str(), pluginContainer.getMetaInformation().getAuthor().c_str());
-            if (!PluginContainerPersistence::savePlugin(gPluginInformation, pluginContainer)) {
+            if (!PluginContainerPersistence::savePlugin(gPluginInformation, pluginContainer, gPluginDataHeap)) {
                 DEBUG_FUNCTION_LINE("Failed to save plugin");
             }
         }
@@ -221,7 +221,7 @@ void *allocOnCustomHeap(int alignment, int size) {
     }
     uint32_t *custom_memalign;
     dyn_res = OSDynLoad_FindExport(module, true, "MEMAllocFromMappedMemoryEx", reinterpret_cast<void **>(&custom_memalign));
-    auto * customMEMAllocFromDefaultHeapEx = (void *(*)(uint32_t, int)) *custom_memalign;
+    auto *customMEMAllocFromDefaultHeapEx = (void *(*)(uint32_t, int)) *custom_memalign;
 
     if (dyn_res != OS_DYNLOAD_OK) {
         return nullptr;

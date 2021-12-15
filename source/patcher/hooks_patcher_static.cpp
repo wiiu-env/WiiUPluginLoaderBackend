@@ -102,6 +102,116 @@ DECL_FUNCTION(void, WPADRead, WPADChan chan, WPADStatusProController *data) {
     }
 }
 
+
+#define KiReport ((void (*)( const char*, ... ))0xfff0ad0c)
+
+
+#pragma GCC push_options
+#pragma GCC optimize ("O0")
+
+DECL_FUNCTION(uint32_t, SC17_FindClosestSymbol,
+              uint32_t addr,
+              uint32_t *outDistance,
+              char *symbolNameBuffer,
+              uint32_t symbolNameBufferLength,
+              char *moduleNameBuffer,
+              uint32_t moduleNameBufferLength) {
+    for (int32_t plugin_index = 0; plugin_index < gPluginInformation->number_used_plugins; plugin_index++) {
+        plugin_information_single_t *plugin = &(gPluginInformation->plugin_data[plugin_index]);
+        plugin_section_info_t *section = nullptr;
+
+        for (auto &sectionInfo: plugin->info.sectionInfos) {
+            if (sectionInfo.addr == 0 && sectionInfo.size == 0) {
+                break;
+            }
+            if (strncmp(sectionInfo.name, ".text", sizeof(sectionInfo.name)) == 0) {
+                section = &sectionInfo;
+                break;
+            }
+        }
+        if (section == nullptr) {
+            continue;
+        }
+        if (addr < section->addr || addr >= (section->addr + section->size)) {
+            continue;
+        }
+
+        strncpy(moduleNameBuffer, plugin->meta.name, moduleNameBufferLength);
+        if (plugin->info.function_symbol_data != nullptr && plugin->info.number_function_symbol_data > 1) {
+            for (uint32_t i = 0; i < plugin->info.number_function_symbol_data - 1; i++) {
+                auto symbolData = &plugin->info.function_symbol_data[i];
+                auto symbolDataNext = &plugin->info.function_symbol_data[i + 1];
+                if (i == plugin->info.number_function_symbol_data - 2 || (addr >= (uint32_t) symbolData->address && addr < (uint32_t) symbolDataNext->address)) {
+                    strncpy(symbolNameBuffer, symbolData->name, moduleNameBufferLength);
+                    if (outDistance) {
+                        *outDistance = addr - (uint32_t) symbolData->address;
+                    }
+                    return 0;
+                }
+            }
+        }
+
+        strncpy(symbolNameBuffer, ".text", symbolNameBufferLength);
+
+        if (outDistance) {
+            *outDistance = addr - (uint32_t) section->addr;
+        }
+
+        return 0;
+    }
+
+    return real_SC17_FindClosestSymbol(addr, outDistance, symbolNameBuffer, symbolNameBufferLength, moduleNameBuffer, moduleNameBufferLength);
+}
+
+DECL_FUNCTION(uint32_t, KiGetAppSymbolName, uint32_t addr, char *buffer, int32_t bufSize) {
+    for (int32_t plugin_index = 0; plugin_index < gPluginInformation->number_used_plugins; plugin_index++) {
+        plugin_information_single_t *plugin = &(gPluginInformation->plugin_data[plugin_index]);
+        plugin_section_info_t *section = nullptr;
+
+        for (auto &sectionInfo: plugin->info.sectionInfos) {
+            if (sectionInfo.addr == 0 && sectionInfo.size == 0) {
+                break;
+            }
+            if (strncmp(sectionInfo.name, ".text", sizeof(sectionInfo.name)) == 0) {
+                section = &sectionInfo;
+                break;
+            }
+        }
+        if (section == nullptr) {
+            continue;
+        }
+        if (addr < section->addr || addr >= (section->addr + section->size)) {
+            continue;
+        }
+
+        auto pluginNameLen = strlen(plugin->meta.name);
+        int32_t spaceLeftInBuffer = (int32_t) bufSize - (int32_t) pluginNameLen - 1;
+        if (spaceLeftInBuffer < 0) {
+            spaceLeftInBuffer = 0;
+        }
+        strncpy(buffer, plugin->meta.name, bufSize);
+
+        if (plugin->info.function_symbol_data != nullptr && plugin->info.number_function_symbol_data > 1) {
+            for (uint32_t i = 0; i < plugin->info.number_function_symbol_data - 1; i++) {
+                auto symbolData = &plugin->info.function_symbol_data[i];
+                auto symbolDataNext = &plugin->info.function_symbol_data[i + 1];
+                if (i == plugin->info.number_function_symbol_data - 2 || (addr >= (uint32_t) symbolData->address && addr < (uint32_t) symbolDataNext->address)) {
+                    if(spaceLeftInBuffer > 2){
+                        buffer[pluginNameLen] = '|';
+                        buffer[pluginNameLen + 1] = '\0';
+                        strncpy(buffer + pluginNameLen + 1, symbolData->name, spaceLeftInBuffer - 1);
+                    }
+                    return (uint32_t) symbolData->address;
+                }
+            }
+        }
+        return addr;
+    }
+
+    return real_KiGetAppSymbolName(addr, buffer, bufSize);
+}
+#pragma GCC pop_options
+
 function_replacement_data_t method_hooks_hooks_static[] __attribute__((section(".data"))) = {
         REPLACE_FUNCTION(GX2SwapScanBuffers, LIBRARY_GX2, GX2SwapScanBuffers),
         REPLACE_FUNCTION(GX2SetTVBuffer, LIBRARY_GX2, GX2SetTVBuffer),
@@ -110,6 +220,9 @@ function_replacement_data_t method_hooks_hooks_static[] __attribute__((section("
         REPLACE_FUNCTION(OSReleaseForeground, LIBRARY_COREINIT, OSReleaseForeground),
         REPLACE_FUNCTION(VPADRead, LIBRARY_VPAD, VPADRead),
         REPLACE_FUNCTION(WPADRead, LIBRARY_PADSCORE, WPADRead),
+        REPLACE_FUNCTION_VIA_ADDRESS(SC17_FindClosestSymbol, 0xfff10218, 0xfff10218),
+        REPLACE_FUNCTION_VIA_ADDRESS(KiGetAppSymbolName, 0xfff0e3a0, 0xfff0e3a0),
+
 };
 
 uint32_t method_hooks_size_hooks_static __attribute__((section(".data"))) = sizeof(method_hooks_hooks_static) / sizeof(function_replacement_data_t);

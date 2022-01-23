@@ -1,6 +1,3 @@
-#include <whb/log_udp.h>
-#include <whb/log_cafe.h>
-#include <whb/log_module.h>
 #include <wums.h>
 #include <coreinit/debug.h>
 #include <coreinit/cache.h>
@@ -21,10 +18,7 @@ WUMS_MODULE_EXPORT_NAME("homebrew_wupsbackend");
 WUMS_USE_WUT_DEVOPTAB();
 
 WUMS_INITIALIZE(args) {
-    if (!WHBLogModuleInit()) {
-        WHBLogCafeInit();
-        WHBLogUdpInit();
-    }
+    initLogging();
 
     gModuleData = args.module_information;
     if (gModuleData == nullptr) {
@@ -33,11 +27,13 @@ WUMS_INITIALIZE(args) {
     if (gModuleData->version != MODULE_INFORMATION_VERSION) {
         OSFatal("WUPS-Backend: The module information struct version does not match.");
     }
-    WHBLogPrintf("Init successful");
+    DEBUG_FUNCTION_LINE("Init successful");
+    deinitLogging();
 }
 
 WUMS_APPLICATION_REQUESTS_EXIT() {
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_APPLICATION_REQUESTS_EXIT);
+    deinitLogging();
 }
 
 WUMS_APPLICATION_ENDS() {
@@ -57,15 +53,13 @@ WUMS_APPLICATION_ENDS() {
 
 void *allocOnCustomHeap(int alignment, int size);
 
+
 WUMS_APPLICATION_STARTS() {
-    if (!WHBLogModuleInit()) {
-        WHBLogCafeInit();
-        WHBLogUdpInit();
-    }
     uint32_t upid = OSGetUPID();
     if (upid != 2 && upid != 15) {
         return;
     }
+    initLogging();
     bool initNeeded = false;
     if (gPluginDataHeap == nullptr) {
         DCFlushRange((void *) gModuleData, sizeof(module_information_t));
@@ -125,16 +119,19 @@ WUMS_APPLICATION_STARTS() {
             std::vector<std::shared_ptr<PluginData>> pluginList = PluginDataFactory::loadDir("fs:/vol/external01/wiiu/plugins/", gPluginDataHeap);
             DEBUG_FUNCTION_LINE("Loaded data for %d plugins.", pluginList.size());
 
-            auto plugins = PluginManagement::loadPlugins(pluginList, gPluginDataHeap, gTrampolineData, gTrampolineDataSize);
 
+            auto plugins = PluginManagement::loadPlugins(pluginList, gPluginDataHeap, gTrampolineData, gTrampolineDataSize);
             for (auto &pluginContainer: plugins) {
+#ifdef DEBUG
                 for (const auto &kv: pluginContainer->getPluginInformation()->getSectionInfoList()) {
                     DEBUG_FUNCTION_LINE_VERBOSE("%s = %s %08X %d", kv.first.c_str(), kv.second->getName().c_str(), kv.second->getAddress(), kv.second->getSize());
                 }
+#endif
                 if (!PluginContainerPersistence::savePlugin(gPluginInformation, pluginContainer, gPluginDataHeap)) {
                     DEBUG_FUNCTION_LINE("Failed to save plugin");
                 }
             }
+
             initNeeded = true;
         }
     }

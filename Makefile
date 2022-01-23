@@ -35,15 +35,20 @@ INCLUDES	:=	source
 #-------------------------------------------------------------------------------
 # options for code generation
 #-------------------------------------------------------------------------------
-CFLAGS	:=	-g -Wall -O3 -ffunction-sections -fno-exceptions -fno-rtti\
+CFLAGS	:=	-Wall -O2 -ffunction-sections\
 			$(MACHDEP)
 
 CFLAGS	+=	$(INCLUDE) -D__WIIU__ -D__WUT__ 
 
-CXXFLAGS	:= $(CFLAGS) -std=c++20
+CXXFLAGS	:= $(CFLAGS) -std=c++20  -fno-exceptions -fno-rtti
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-g $(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map) -T$(WUMS_ROOT)/share/libfunctionpatcher.ld -T$(WUMS_ROOT)/share/libmappedmemory.ld $(WUMSSPECS) 
+
+ifeq ($(DEBUG),1)
+CXXFLAGS += -DDEBUG -g
+CCFLAGS += -DDEBUG -g
+endif
 
 LIBS	:= -lwums -lwut -lwups -lfunctionpatcher -lmappedmemory -lfreetype -lbz2 -lpng -lz
 

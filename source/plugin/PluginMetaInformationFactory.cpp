@@ -110,7 +110,7 @@ std::optional<std::shared_ptr<PluginMetaInformation>> PluginMetaInformationFacto
                     } else if (key == "storage_id") {
                         pluginInfo->setStorageId(value);
                     } else if (key == "wups") {
-                        if (value != "0.6.1") {
+                        if (value != "0.7.0") {
                             DEBUG_FUNCTION_LINE("Warning: Ignoring plugin - Unsupported WUPS version: %s.", value.c_str());
                             return std::nullopt;
                         }

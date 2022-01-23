@@ -32,6 +32,9 @@ static const char **hook_names = (const char *[]) {
         "WUPS_LOADER_HOOK_INIT_WUT_SOCKETS",
         "WUPS_LOADER_HOOK_FINI_WUT_SOCKETS",
 
+        "WUPS_LOADER_HOOK_INIT_WRAPPER",
+        "WUPS_LOADER_HOOK_FINI_WRAPPER",
+
         "WUPS_LOADER_HOOK_GET_CONFIG",
         "WUPS_LOADER_HOOK_CONFIG_CLOSED",
 
@@ -79,6 +82,8 @@ void CallHookEx(plugin_information_t *pluginInformation, wups_loader_hook_type_t
                         hook_type == WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB ||
                         hook_type == WUPS_LOADER_HOOK_INIT_WUT_SOCKETS ||
                         hook_type == WUPS_LOADER_HOOK_FINI_WUT_SOCKETS ||
+                        hook_type == WUPS_LOADER_HOOK_INIT_WRAPPER ||
+                        hook_type == WUPS_LOADER_HOOK_FINI_WRAPPER ||
                         hook_type == WUPS_LOADER_HOOK_GET_CONFIG ||
                         hook_type == WUPS_LOADER_HOOK_CONFIG_CLOSED ||
                         hook_type == WUPS_LOADER_HOOK_RELEASE_FOREGROUND ||

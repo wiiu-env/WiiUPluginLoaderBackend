@@ -42,6 +42,7 @@ WUMS_APPLICATION_REQUESTS_EXIT() {
 
 WUMS_APPLICATION_ENDS() {
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_APPLICATION_ENDS);
+    CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WRAPPER);
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_SOCKETS);
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB);
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_STDCPP);
@@ -191,7 +192,7 @@ WUMS_APPLICATION_STARTS() {
     }
 
     if (gPluginDataHeap != nullptr) {
-       auto plugins = PluginContainerPersistence::loadPlugins(gPluginInformation);
+        auto plugins = PluginContainerPersistence::loadPlugins(gPluginInformation);
         PluginManagement::doRelocations(plugins, gTrampolineData, DYN_LINK_TRAMPOLIN_LIST_LENGTH);
         // PluginManagement::memsetBSS(plugins);
 
@@ -205,6 +206,8 @@ WUMS_APPLICATION_STARTS() {
         CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_STDCPP);
         CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB);
         CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_SOCKETS);
+
+        CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WRAPPER);
 
         if (initNeeded) {
             PluginManagement::callInitHooks(gPluginInformation);

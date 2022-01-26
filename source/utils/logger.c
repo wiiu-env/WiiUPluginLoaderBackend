@@ -4,7 +4,6 @@
 #include <whb/log_cafe.h>
 #include <whb/log_module.h>
 
-
 uint32_t moduleLogInit = false;
 uint32_t cafeLogInit = false;
 uint32_t udpLogInit = false;
@@ -22,7 +21,7 @@ void initLogging() {
 void deinitLogging() {
 #ifdef DEBUG
     if (moduleLogInit) {
-        WHBLogMffoduleDeinit();
+        WHBLogModuleDeinit();
         moduleLogInit = false;
     }
     if (cafeLogInit) {

@@ -106,14 +106,14 @@ WUMS_APPLICATION_STARTS() {
                 memset((void *) gPluginInformation, 0, sizeof(plugin_information_t));
             }
             if (gTrampolineData == nullptr) {
-                DEBUG_FUNCTION_LINE_VERBOSE("Allocate gTrampolineData on heap %08X (size: %d bytes)", gPluginDataHeap, sizeof(relocation_trampolin_entry_t) * NUMBER_OF_TRAMPS);
-                gTrampolineData = (relocation_trampolin_entry_t *) MEMAllocFromExpHeapEx(gPluginDataHeap, sizeof(relocation_trampolin_entry_t) * NUMBER_OF_TRAMPS, 4);
+                DEBUG_FUNCTION_LINE_VERBOSE("Allocate gTrampolineData on heap %08X (size: %d bytes)", gPluginDataHeap, sizeof(relocation_trampoline_entry_t) * NUMBER_OF_TRAMPS);
+                gTrampolineData = (relocation_trampoline_entry_t *) MEMAllocFromExpHeapEx(gPluginDataHeap, sizeof(relocation_trampoline_entry_t) * NUMBER_OF_TRAMPS, 4);
                 if (gTrampolineData == nullptr) {
                     OSFatal("PluginBackend: Failed to allocate gTrampolineData");
                     return;
                 }
                 gTrampolineDataSize = NUMBER_OF_TRAMPS;
-                memset((void *) gTrampolineData, 0, sizeof(relocation_trampolin_entry_t) * NUMBER_OF_TRAMPS);
+                memset((void *) gTrampolineData, 0, sizeof(relocation_trampoline_entry_t) * NUMBER_OF_TRAMPS);
             }
             DEBUG_FUNCTION_LINE("Available memory for storing plugins: %d kb", MEMGetAllocatableSizeForExpHeapEx(gPluginDataHeap, 4) / 1024);
             std::vector<std::shared_ptr<PluginData>> pluginList = PluginDataFactory::loadDir("fs:/vol/external01/wiiu/plugins/", gPluginDataHeap);
@@ -190,7 +190,7 @@ WUMS_APPLICATION_STARTS() {
 
     if (gPluginDataHeap != nullptr) {
         auto plugins = PluginContainerPersistence::loadPlugins(gPluginInformation);
-        PluginManagement::doRelocations(plugins, gTrampolineData, DYN_LINK_TRAMPOLIN_LIST_LENGTH);
+        PluginManagement::doRelocations(plugins, gTrampolineData, DYN_LINK_TRAMPOLINE_LIST_LENGTH);
         // PluginManagement::memsetBSS(plugins);
 
         DCFlushRange((void *) gPluginDataHeap, gPluginDataHeapSize);

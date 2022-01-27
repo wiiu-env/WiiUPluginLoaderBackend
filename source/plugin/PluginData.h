@@ -43,7 +43,7 @@ public:
 
     void *buffer = nullptr;
     MEMHeapHandle heapHandle{};
-    eMemoryTypes memoryType;
+    eMemoryTypes memoryType{};
     size_t length = 0;
 
 private:

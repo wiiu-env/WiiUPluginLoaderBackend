@@ -31,9 +31,8 @@
 #include "FunctionSymbolData.h"
 
 struct FunctionSymbolDataComparator {
-    bool operator()(const std::shared_ptr<FunctionSymbolData>& lhs,
-                    const std::shared_ptr<FunctionSymbolData>& rhs) const
-    {
+    bool operator()(const std::shared_ptr<FunctionSymbolData> &lhs,
+                    const std::shared_ptr<FunctionSymbolData> &rhs) const {
         return (uint32_t) lhs->getAddress() < (uint32_t) rhs->getAddress();
     }
 };
@@ -94,12 +93,12 @@ public:
         return std::nullopt;
     }
 
-    void setTrampolinId(uint8_t _trampolinId) {
-        this->trampolinId = _trampolinId;
+    void setTrampolineId(uint8_t _trampolineId) {
+        this->trampolineId = _trampolineId;
     }
 
-    [[nodiscard]] uint8_t getTrampolinId() const {
-        return trampolinId;
+    [[nodiscard]] uint8_t getTrampolineId() const {
+        return trampolineId;
     }
 
 private:
@@ -109,7 +108,7 @@ private:
     std::set<std::shared_ptr<FunctionSymbolData>, FunctionSymbolDataComparator> symbol_data_list;
     std::map<std::string, std::shared_ptr<SectionInfo>> section_info_list;
 
-    uint8_t trampolinId = 0;
+    uint8_t trampolineId = 0;
 
     void *allocatedTextMemoryAddress = nullptr;
     void *allocatedDataMemoryAddress = nullptr;

@@ -30,8 +30,8 @@
 using namespace ELFIO;
 
 std::optional<std::shared_ptr<PluginInformation>>
-PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, MEMHeapHandle heapHandle, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length,
-                               uint8_t trampolinId) {
+PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, MEMHeapHandle heapHandle, relocation_trampoline_entry_t *trampoline_data, uint32_t trampoline_data_length,
+                               uint8_t trampolineId) {
     if (pluginData->buffer == nullptr) {
         DEBUG_FUNCTION_LINE("Buffer was nullptr");
         return std::nullopt;
@@ -145,7 +145,8 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, ME
         if ((psec->get_type() == SHT_PROGBITS || psec->get_type() == SHT_NOBITS) && (psec->get_flags() & SHF_ALLOC)) {
             DEBUG_FUNCTION_LINE_VERBOSE("Linking (%d)... %s at %08X", i, psec->get_name().c_str(), destinations[psec->get_index()]);
 
-            if (!linkSection(reader, psec->get_index(), (uint32_t) destinations[psec->get_index()], (uint32_t) text_data, (uint32_t) data_data, trampolin_data, trampolin_data_length, trampolinId)) {
+            if (!linkSection(reader, psec->get_index(), (uint32_t) destinations[psec->get_index()], (uint32_t) text_data, (uint32_t) data_data, trampoline_data, trampoline_data_length,
+                             trampolineId)) {
                 DEBUG_FUNCTION_LINE("elfLink failed");
                 free(destinations);
                 MEMFreeToExpHeap(heapHandle, text_data);
@@ -167,7 +168,7 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, ME
 
     free(destinations);
 
-    pluginInfo->setTrampolinId(trampolinId);
+    pluginInfo->setTrampolineId(trampolineId);
 
     auto secInfo = pluginInfo->getSectionInfo(".wups.hooks");
     if (secInfo && secInfo.value()->getSize() > 0) {
@@ -314,9 +315,9 @@ std::vector<std::shared_ptr<RelocationData>> PluginInformationFactory::getImport
     return result;
 }
 
-bool PluginInformationFactory::linkSection(const elfio &reader, uint32_t section_index, uint32_t destination, uint32_t base_text, uint32_t base_data, relocation_trampolin_entry_t *trampolin_data,
-                                           uint32_t trampolin_data_length,
-                                           uint8_t trampolinId) {
+bool PluginInformationFactory::linkSection(const elfio &reader, uint32_t section_index, uint32_t destination, uint32_t base_text, uint32_t base_data, relocation_trampoline_entry_t *trampoline_data,
+                                           uint32_t trampoline_data_length,
+                                           uint8_t trampolineId) {
     uint32_t sec_num = reader.sections.size();
 
     for (uint32_t i = 0; i < sec_num; ++i) {
@@ -372,7 +373,7 @@ bool PluginInformationFactory::linkSection(const elfio &reader, uint32_t section
                 }
                 // DEBUG_FUNCTION_LINE_VERBOSE("sym_value %08X adjusted_sym_value %08X offset %08X adjusted_offset %08X", (uint32_t) sym_value, adjusted_sym_value, (uint32_t) offset, adjusted_offset);
 
-                if (!ElfUtils::elfLinkOne(type, adjusted_offset, addend, destination, adjusted_sym_value, trampolin_data, trampolin_data_length, RELOC_TYPE_FIXED, trampolinId)) {
+                if (!ElfUtils::elfLinkOne(type, adjusted_offset, addend, destination, adjusted_sym_value, trampoline_data, trampoline_data_length, RELOC_TYPE_FIXED, trampolineId)) {
                     DEBUG_FUNCTION_LINE("Link failed");
                     return false;
                 }

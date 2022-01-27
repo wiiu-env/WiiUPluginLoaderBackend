@@ -10,7 +10,7 @@ dyn_linking_function_t *DynamicLinkingHelper::getOrAddFunctionEntryByName(dyn_li
         return nullptr;
     }
     dyn_linking_function_t *result = nullptr;
-    for (auto & curEntry : data->functions) {
+    for (auto &curEntry: data->functions) {
         if (strlen(curEntry.functionName) == 0) {
             if (strlen(functionName) > DYN_LINK_FUNCTION_NAME_LENGTH) {
                 DEBUG_FUNCTION_LINE("Failed to add function name, it's too long.");
@@ -41,7 +41,7 @@ dyn_linking_import_t *DynamicLinkingHelper::getOrAddImport(dyn_linking_relocatio
         return nullptr;
     }
     dyn_linking_import_t *result = nullptr;
-    for (auto & curEntry : data->imports) {
+    for (auto &curEntry: data->imports) {
         if (strlen(curEntry.importName) == 0) {
             if (strlen(importName) > DYN_LINK_IMPORT_NAME_LENGTH) {
                 DEBUG_FUNCTION_LINE("Failed to add Import, it's too long.");

@@ -14,7 +14,7 @@ PluginInformation::PluginInformation(const PluginInformation &other) {
         symbol_data_list.insert(i);
     }
     section_info_list = other.section_info_list;
-    trampolinId = other.trampolinId;
+    trampolineId = other.trampolineId;
     allocatedTextMemoryAddress = other.allocatedTextMemoryAddress;
     allocatedDataMemoryAddress = other.allocatedDataMemoryAddress;
 }

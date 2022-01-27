@@ -26,7 +26,7 @@
 std::vector<std::shared_ptr<PluginData>> PluginDataFactory::loadDir(const std::string &path, MEMHeapHandle heapHandle) {
     std::vector<std::shared_ptr<PluginData>> result;
     struct dirent *dp;
-    DIR *dfd = nullptr;
+    DIR *dfd;
 
     if (path.empty()) {
         DEBUG_FUNCTION_LINE("Path was empty");

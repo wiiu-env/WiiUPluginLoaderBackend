@@ -146,7 +146,7 @@ void ConfigUtils::displayMenu() {
         }
     }
 
-    if(configs.empty()){
+    if (configs.empty()) {
         return;
     }
 

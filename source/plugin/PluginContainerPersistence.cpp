@@ -157,7 +157,7 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
             return false;
         }
     }
-    plugin_data->info.trampolinId = pluginInfo->getTrampolinId();
+    plugin_data->info.trampolineId = pluginInfo->getTrampolineId();
     plugin_data->info.allocatedTextMemoryAddress = pluginInfo->allocatedTextMemoryAddress;
     plugin_data->info.allocatedDataMemoryAddress = pluginInfo->allocatedDataMemoryAddress;
 
@@ -253,7 +253,7 @@ std::vector<std::shared_ptr<PluginContainer>> PluginContainerPersistence::loadPl
 
         auto curPluginInformation = std::make_shared<PluginInformation>();
 
-        curPluginInformation->setTrampolinId(plugin_data->info.trampolinId);
+        curPluginInformation->setTrampolineId(plugin_data->info.trampolineId);
         curPluginInformation->allocatedTextMemoryAddress = plugin_data->info.allocatedTextMemoryAddress;
         curPluginInformation->allocatedDataMemoryAddress = plugin_data->info.allocatedDataMemoryAddress;
 

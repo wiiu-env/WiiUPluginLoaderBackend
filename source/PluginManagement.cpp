@@ -14,7 +14,7 @@
 #include "hooks.h"
 #include "globals.h"
 
-bool PluginManagement::doRelocation(const std::vector<std::shared_ptr<RelocationData>> &relocData, relocation_trampolin_entry_t *tramp_data, uint32_t tramp_length, uint32_t trampolinID) {
+bool PluginManagement::doRelocation(const std::vector<std::shared_ptr<RelocationData>> &relocData, relocation_trampoline_entry_t *tramp_data, uint32_t tramp_length, uint32_t trampolineID) {
     std::map<std::string, OSDynLoad_Module> moduleHandleCache;
     for (auto const &cur: relocData) {
         uint32_t functionAddress = 0;
@@ -53,23 +53,23 @@ bool PluginManagement::doRelocation(const std::vector<std::shared_ptr<Relocation
         } else {
             //DEBUG_FUNCTION_LINE("Found export for %s %s", rplName.c_str(), functionName.c_str());
         }
-        if (!ElfUtils::elfLinkOne(cur->getType(), cur->getOffset(), cur->getAddend(), (uint32_t) cur->getDestination(), functionAddress, tramp_data, tramp_length, RELOC_TYPE_IMPORT, trampolinID)) {
+        if (!ElfUtils::elfLinkOne(cur->getType(), cur->getOffset(), cur->getAddend(), (uint32_t) cur->getDestination(), functionAddress, tramp_data, tramp_length, RELOC_TYPE_IMPORT, trampolineID)) {
             DEBUG_FUNCTION_LINE("Relocation failed");
             return false;
         }
     }
 
-    DCFlushRange(tramp_data, tramp_length * sizeof(relocation_trampolin_entry_t));
-    ICInvalidateRange(tramp_data, tramp_length * sizeof(relocation_trampolin_entry_t));
+    DCFlushRange(tramp_data, tramp_length * sizeof(relocation_trampoline_entry_t));
+    ICInvalidateRange(tramp_data, tramp_length * sizeof(relocation_trampoline_entry_t));
     return true;
 }
 
 
-void PluginManagement::doRelocations(const std::vector<std::shared_ptr<PluginContainer>> &plugins, relocation_trampolin_entry_t *trampData, uint32_t tramp_size) {
+void PluginManagement::doRelocations(const std::vector<std::shared_ptr<PluginContainer>> &plugins, relocation_trampoline_entry_t *trampData, uint32_t tramp_size) {
     for (auto &pluginContainer: plugins) {
         DEBUG_FUNCTION_LINE_VERBOSE("Doing relocations for plugin: %s", pluginContainer->getMetaInformation()->getName().c_str());
 
-        if (!PluginManagement::doRelocation(pluginContainer->getPluginInformation()->getRelocationDataList(), trampData, tramp_size, pluginContainer->getPluginInformation()->getTrampolinId())) {
+        if (!PluginManagement::doRelocation(pluginContainer->getPluginInformation()->getRelocationDataList(), trampData, tramp_size, pluginContainer->getPluginInformation()->getTrampolineId())) {
             DEBUG_FUNCTION_LINE("Relocation failed");
         }
     }
@@ -145,7 +145,7 @@ void PluginManagement::unloadPlugins(plugin_information_t *pluginInformation, ME
 
         for (uint32_t i = 0; i < gTrampolineDataSize; i++) {
             auto trampoline = &(gTrampolineData[i]);
-            if (trampoline->id == plugin->info.trampolinId) {
+            if (trampoline->id == plugin->info.trampolineId) {
                 trampoline->id = 0;
                 trampoline->status = RELOC_TRAMP_FREE;
             }
@@ -189,7 +189,7 @@ void PluginManagement::PatchFunctionsAndCallHooks(plugin_information_t *pluginIn
 }
 
 std::vector<std::shared_ptr<PluginContainer>>
-PluginManagement::loadPlugins(const std::vector<std::shared_ptr<PluginData>> &pluginList, MEMHeapHandle heapHandle, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length) {
+PluginManagement::loadPlugins(const std::vector<std::shared_ptr<PluginData>> &pluginList, MEMHeapHandle heapHandle, relocation_trampoline_entry_t *trampoline_data, uint32_t trampoline_data_length) {
     std::vector<std::shared_ptr<PluginContainer>> plugins;
 
     for (auto &pluginData: pluginList) {
@@ -206,7 +206,7 @@ PluginManagement::loadPlugins(const std::vector<std::shared_ptr<PluginData>> &pl
     }
     uint32_t trampolineID = 0;
     for (auto &pluginContainer: plugins) {
-        auto info = PluginInformationFactory::load(pluginContainer->getPluginData(), heapHandle, trampolin_data, trampolin_data_length, trampolineID++);
+        auto info = PluginInformationFactory::load(pluginContainer->getPluginData(), heapHandle, trampoline_data, trampoline_data_length, trampolineID++);
         if (!info) {
             DEBUG_FUNCTION_LINE("Failed to load Plugin %s", pluginContainer->getMetaInformation()->getName().c_str());
             continue;

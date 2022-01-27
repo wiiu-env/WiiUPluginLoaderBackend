@@ -9,7 +9,7 @@
 #include "exports.h"
 #include <wums.h>
 
-void fillPluginInformation(plugin_information *out, const std::shared_ptr<PluginMetaInformation>& metaInformation) {
+void fillPluginInformation(plugin_information *out, const std::shared_ptr<PluginMetaInformation> &metaInformation) {
     out->plugin_information_version = PLUGIN_INFORMATION_VERSION;
     strncpy(out->author, metaInformation->getAuthor().c_str(), sizeof(out->author) - 1);
     strncpy(out->buildTimestamp, metaInformation->getBuildTimestamp().c_str(), sizeof(out->buildTimestamp) - 1);

@@ -196,7 +196,7 @@ DECL_FUNCTION(uint32_t, KiGetAppSymbolName, uint32_t addr, char *buffer, int32_t
                 auto symbolData = &plugin->info.function_symbol_data[i];
                 auto symbolDataNext = &plugin->info.function_symbol_data[i + 1];
                 if (i == plugin->info.number_function_symbol_data - 2 || (addr >= (uint32_t) symbolData->address && addr < (uint32_t) symbolDataNext->address)) {
-                    if(spaceLeftInBuffer > 2){
+                    if (spaceLeftInBuffer > 2) {
                         buffer[pluginNameLen] = '|';
                         buffer[pluginNameLen + 1] = '\0';
                         strncpy(buffer + pluginNameLen + 1, symbolData->name, spaceLeftInBuffer - 1);
@@ -210,6 +210,7 @@ DECL_FUNCTION(uint32_t, KiGetAppSymbolName, uint32_t addr, char *buffer, int32_t
 
     return real_KiGetAppSymbolName(addr, buffer, bufSize);
 }
+
 #pragma GCC pop_options
 
 function_replacement_data_t method_hooks_hooks_static[] __attribute__((section(".data"))) = {

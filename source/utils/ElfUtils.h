@@ -46,6 +46,6 @@ uint32_t load_loader_elf(unsigned char *baseAddress, char *elf_data, uint32_t fi
 class ElfUtils {
 
 public:
-    static bool elfLinkOne(char type, size_t offset, int32_t addend, uint32_t destination, uint32_t symbol_addr, relocation_trampolin_entry_t *trampolin_data, uint32_t trampolin_data_length,
-                           RelocationType reloc_type, uint8_t trampolinId);
+    static bool elfLinkOne(char type, size_t offset, int32_t addend, uint32_t destination, uint32_t symbol_addr, relocation_trampoline_entry_t *trampoline_data, uint32_t trampoline_data_length,
+                           RelocationType reloc_type, uint8_t trampolineId);
 };

@@ -13,7 +13,7 @@ bool PluginDataPersistence::save(plugin_data_t *pluginDataStruct, const std::sha
     return true;
 }
 
-bool PluginDataPersistence::save(plugin_data_t *pluginDataStruct, PluginData* plugin) {
+bool PluginDataPersistence::save(plugin_data_t *pluginDataStruct, PluginData *plugin) {
     if (pluginDataStruct == nullptr) {
         return false;
     }

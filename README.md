@@ -2,16 +2,16 @@
 This is the Backend for the [WiiUPluginSystem](https://github.com/Maschell/WiiUPluginSystem). Check out the readme for more information about the Plugin System.
 
 ## Usage
-Put the `PluginBackend.wms` in the `sd:/wiiu/modules` folder of your sd card and load it via the [SetupPayload](https://github.com/wiiu-env/SetupPayload).
+(`[ENVIRONMENT]` is a placeholder for the actual environment name.)
+
+1. Copy the file `PluginBackend.wms` into `sd:/wiiu/environments/[ENVIRONMENT]/modules`.  
+2. Requires the [WUMSLoader](https://github.com/wiiu-env/WUMSLoader) in `sd:/wiiu/environments/[ENVIRONMENT]/modules/setup`.
 
 Plugins needs to be placed into the following folder:
 
 ```
-sd:/wiiu/plugins
+sd:/wiiu/environments/[ENVIRONMENT]/plugins
 ```
-
-
-Plugins can be disabled/enabled using the [WiiUPluginSystemGUI](https://github.com/wiiu-env/WiiUPluginLoaderGUI).
 
 ## Building
 In order to be able to compile this, you need to have devkitPPC installed

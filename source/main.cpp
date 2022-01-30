@@ -1,6 +1,7 @@
 #include <wums.h>
 #include <coreinit/debug.h>
 #include <coreinit/cache.h>
+#include <coreinit/ios.h>
 #include <coreinit/dynload.h>
 #include <coreinit/memdefaultheap.h>
 #include <memory>
@@ -53,6 +54,21 @@ WUMS_APPLICATION_ENDS() {
 
 void *allocOnCustomHeap(int alignment, int size);
 
+std::string getPluginPath() {
+    char environmentPath[0x100];
+    memset(environmentPath, 0, sizeof(environmentPath));
+
+    auto handle = IOS_Open("/dev/mcp", IOS_OPEN_READ);
+    if (handle >= 0) {
+        int in = 0xF9; // IPC_CUSTOM_COPY_ENVIRONMENT_PATH
+        if (IOS_Ioctl(handle, 100, &in, sizeof(in), environmentPath, sizeof(environmentPath)) != IOS_ERROR_OK) {
+            return "fs:/vol/external01/wiiu/plugins";
+        }
+
+        IOS_Close(handle);
+    }
+    return std::string(environmentPath) + "/plugins";
+}
 
 WUMS_APPLICATION_STARTS() {
     uint32_t upid = OSGetUPID();
@@ -116,9 +132,13 @@ WUMS_APPLICATION_STARTS() {
                 memset((void *) gTrampolineData, 0, sizeof(relocation_trampoline_entry_t) * NUMBER_OF_TRAMPS);
             }
             DEBUG_FUNCTION_LINE("Available memory for storing plugins: %d kb", MEMGetAllocatableSizeForExpHeapEx(gPluginDataHeap, 4) / 1024);
-            std::vector<std::shared_ptr<PluginData>> pluginList = PluginDataFactory::loadDir("fs:/vol/external01/wiiu/plugins/", gPluginDataHeap);
-            DEBUG_FUNCTION_LINE("Loaded data for %d plugins.", pluginList.size());
 
+            auto pluginPath = getPluginPath();
+
+            DEBUG_FUNCTION_LINE("Load plugins from %s", pluginPath.c_str());
+
+            std::vector<std::shared_ptr<PluginData>> pluginList = PluginDataFactory::loadDir(pluginPath, gPluginDataHeap);
+            DEBUG_FUNCTION_LINE("Loaded data for %d plugins.", pluginList.size());
 
             auto plugins = PluginManagement::loadPlugins(pluginList, gPluginDataHeap, gTrampolineData, gTrampolineDataSize);
             for (auto &pluginContainer: plugins) {

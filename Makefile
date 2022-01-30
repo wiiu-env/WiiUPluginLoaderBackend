@@ -47,7 +47,7 @@ LDFLAGS	=	-g $(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map) -T$(WUMS_ROOT)/share/
 
 ifeq ($(DEBUG),1)
 CXXFLAGS += -DDEBUG -g
-CCFLAGS += -DDEBUG -g
+CFLAGS += -DDEBUG -g
 endif
 
 LIBS	:= -lwums -lwut -lwups -lfunctionpatcher -lmappedmemory -lfreetype -lbz2 -lpng -lz

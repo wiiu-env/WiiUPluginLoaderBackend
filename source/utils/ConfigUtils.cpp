@@ -1,26 +1,26 @@
 #include "ConfigUtils.h"
 
-#include "logger.h"
 #include "../config/WUPSConfig.h"
 #include "../globals.h"
 #include "DrawUtils.h"
+#include "logger.h"
 
+#include <coreinit/screen.h>
+#include <gx2/display.h>
+#include <memory/mappedmemory.h>
+#include <padscore/kpad.h>
 #include <string>
 #include <vector>
-#include <coreinit/screen.h>
-#include <memory/mappedmemory.h>
 #include <vpad/input.h>
-#include <padscore/kpad.h>
-#include <gx2/display.h>
 
-#define COLOR_BACKGROUND Color(238, 238, 238, 255)
-#define COLOR_TEXT       Color(51,  51,  51,  255)
-#define COLOR_TEXT2      Color(72,  72,  72,  255)
-#define COLOR_DISABLED   Color(255, 0,   0,   255)
-#define COLOR_BORDER     Color(204, 204, 204, 255)
+#define COLOR_BACKGROUND         Color(238, 238, 238, 255)
+#define COLOR_TEXT               Color(51, 51, 51, 255)
+#define COLOR_TEXT2              Color(72, 72, 72, 255)
+#define COLOR_DISABLED           Color(255, 0, 0, 255)
+#define COLOR_BORDER             Color(204, 204, 204, 255)
 #define COLOR_BORDER_HIGHLIGHTED Color(0x3478e4FF)
-#define COLOR_WHITE      Color(0xFFFFFFFF)
-#define COLOR_BLACK      Color(0, 0, 0, 255)
+#define COLOR_WHITE              Color(0xFFFFFFFF)
+#define COLOR_BLACK              Color(0, 0, 0, 255)
 
 struct ConfigDisplayItem {
     WUPSConfig *config{};
@@ -124,18 +124,18 @@ void ConfigUtils::displayMenu() {
             continue;
         }
         ConfigDisplayItem cfg;
-        cfg.name = std::string(plugin_data->meta.name);
-        cfg.author = std::string(plugin_data->meta.author);
+        cfg.name    = std::string(plugin_data->meta.name);
+        cfg.author  = std::string(plugin_data->meta.author);
         cfg.version = std::string(plugin_data->meta.version);
         cfg.enabled = true;
 
         for (uint32_t j = 0; j < plugin_data->info.number_used_hooks; j++) {
             replacement_data_hook_t *hook_data = &plugin_data->info.hooks[j];
-            if (hook_data->type == WUPS_LOADER_HOOK_GET_CONFIG/*WUPS_LOADER_HOOK_GET_CONFIG*/) {
+            if (hook_data->type == WUPS_LOADER_HOOK_GET_CONFIG /*WUPS_LOADER_HOOK_GET_CONFIG*/) {
                 if (hook_data->func_pointer == nullptr) {
                     break;
                 }
-                auto *cur_config = reinterpret_cast<WUPSConfig *>(((WUPSConfigHandle (*)()) ((uint32_t *) hook_data->func_pointer))());
+                auto *cur_config = reinterpret_cast<WUPSConfig *>(((WUPSConfigHandle(*)())((uint32_t *) hook_data->func_pointer))());
                 if (cur_config == nullptr) {
                     break;
                 }
@@ -150,12 +150,12 @@ void ConfigUtils::displayMenu() {
         return;
     }
 
-    ConfigDisplayItem *currentConfig = nullptr;
+    ConfigDisplayItem *currentConfig    = nullptr;
     WUPSConfigCategory *currentCategory = nullptr;
 
     uint32_t selectedBtn = 0;
-    uint32_t start = 0;
-    uint32_t end = MAX_BUTTONS_ON_SCREEN;
+    uint32_t start       = 0;
+    uint32_t end         = MAX_BUTTONS_ON_SCREEN;
     if (configs.size() < MAX_BUTTONS_ON_SCREEN) {
         end = configs.size();
     }
@@ -171,12 +171,12 @@ void ConfigUtils::displayMenu() {
 
     while (true) {
         buttonsTriggered = 0;
-        buttonsReleased = 0;
+        buttonsReleased  = 0;
 
         VPADRead(VPAD_CHAN_0, &vpad_data, 1, &vpad_error);
         if (vpad_error == VPAD_READ_SUCCESS) {
             buttonsTriggered = vpad_data.trigger;
-            buttonsReleased = vpad_data.release;
+            buttonsReleased  = vpad_data.release;
         }
 
         for (int i = 0; i < 4; i++) {
@@ -212,7 +212,7 @@ void ConfigUtils::displayMenu() {
             }
             if (buttonsTriggered & VPAD_BUTTON_X) {
                 configs[selectedBtn].enabled = !configs[selectedBtn].enabled;
-                redraw = true;
+                redraw                       = true;
             } else if (buttonsTriggered & VPAD_BUTTON_A) {
                 currentConfig = &configs[selectedBtn];
                 if (currentConfig == nullptr) {
@@ -220,8 +220,8 @@ void ConfigUtils::displayMenu() {
                 }
 
                 selectedBtn = 0;
-                start = 0;
-                end = MAX_BUTTONS_ON_SCREEN;
+                start       = 0;
+                end         = MAX_BUTTONS_ON_SCREEN;
 
                 auto cats = currentConfig->config->getCategories();
                 if (cats.size() < MAX_BUTTONS_ON_SCREEN) {
@@ -233,11 +233,11 @@ void ConfigUtils::displayMenu() {
             }
 
             if (selectedBtn >= end) {
-                end = selectedBtn + 1;
+                end   = selectedBtn + 1;
                 start = end - MAX_BUTTONS_ON_SCREEN;
             } else if (selectedBtn < start) {
                 start = selectedBtn;
-                end = start + MAX_BUTTONS_ON_SCREEN;
+                end   = start + MAX_BUTTONS_ON_SCREEN;
             }
 
             if (redraw) {
@@ -329,8 +329,8 @@ void ConfigUtils::displayMenu() {
                 }
 
                 selectedBtn = 0;
-                start = 0;
-                end = MAX_BUTTONS_ON_SCREEN;
+                start       = 0;
+                end         = MAX_BUTTONS_ON_SCREEN;
 
                 auto items = currentCategory->getItems();
                 if (items.size() < MAX_BUTTONS_ON_SCREEN) {
@@ -340,11 +340,11 @@ void ConfigUtils::displayMenu() {
                 redraw = true;
                 continue;
             } else if (buttonsTriggered & VPAD_BUTTON_B) {
-                currentConfig = nullptr;
+                currentConfig   = nullptr;
                 currentCategory = nullptr;
-                selectedBtn = 0;
-                start = 0;
-                end = MAX_BUTTONS_ON_SCREEN;
+                selectedBtn     = 0;
+                start           = 0;
+                end             = MAX_BUTTONS_ON_SCREEN;
                 if (configs.size() < MAX_BUTTONS_ON_SCREEN) {
                     end = configs.size();
                 }
@@ -353,11 +353,11 @@ void ConfigUtils::displayMenu() {
             }
 
             if (selectedBtn >= end) {
-                end = selectedBtn + 1;
+                end   = selectedBtn + 1;
                 start = end - MAX_BUTTONS_ON_SCREEN;
             } else if (selectedBtn < start) {
                 start = selectedBtn;
-                end = start + MAX_BUTTONS_ON_SCREEN;
+                end   = start + MAX_BUTTONS_ON_SCREEN;
             }
 
             if (redraw) {
@@ -434,10 +434,10 @@ void ConfigUtils::displayMenu() {
             }
         } else if (buttonsTriggered & VPAD_BUTTON_B) {
             currentCategory = nullptr;
-            selectedBtn = 0;
-            start = 0;
-            end = MAX_BUTTONS_ON_SCREEN;
-            auto catSize = currentConfig->config->getCategories().size();
+            selectedBtn     = 0;
+            start           = 0;
+            end             = MAX_BUTTONS_ON_SCREEN;
+            auto catSize    = currentConfig->config->getCategories().size();
             if (catSize < MAX_BUTTONS_ON_SCREEN) {
                 end = catSize;
             }
@@ -472,11 +472,11 @@ void ConfigUtils::displayMenu() {
         }
 
         if (selectedBtn >= end) {
-            end = selectedBtn + 1;
+            end   = selectedBtn + 1;
             start = end - MAX_BUTTONS_ON_SCREEN;
         } else if (selectedBtn < start) {
             start = selectedBtn;
-            end = start + MAX_BUTTONS_ON_SCREEN;
+            end   = start + MAX_BUTTONS_ON_SCREEN;
         }
 
         if (redraw) {
@@ -543,9 +543,9 @@ void ConfigUtils::displayMenu() {
         }
     }
 
-    for (const auto &element: configs) {
-        for (const auto &cat: element.config->getCategories()) {
-            for (const auto &item: cat->getItems()) {
+    for (const auto &element : configs) {
+        for (const auto &cat : element.config->getCategories()) {
+            for (const auto &item : cat->getItems()) {
                 if (item->isDirty()) {
                     item->callCallback();
                 }
@@ -565,13 +565,13 @@ void ConfigUtils::displayMenu() {
                 if (hook_data->func_pointer == nullptr) {
                     break;
                 }
-                ((void (*)()) ((uint32_t *) hook_data->func_pointer))();
+                ((void (*)())((uint32_t *) hook_data->func_pointer))();
                 break;
             }
         }
     }
 
-    for (const auto &element: configs) {
+    for (const auto &element : configs) {
         DEBUG_FUNCTION_LINE("Delete %08X", element.config);
         delete element.config;
     }
@@ -584,8 +584,8 @@ void ConfigUtils::openConfigMenu() {
 
     uint32_t screen_buf0_size = OSScreenGetBufferSizeEx(SCREEN_TV);
     uint32_t screen_buf1_size = OSScreenGetBufferSizeEx(SCREEN_DRC);
-    void *screenbuffer0 = MEMAllocFromMappedMemoryForGX2Ex(screen_buf0_size, 0x100);
-    void *screenbuffer1 = MEMAllocFromMappedMemoryForGX2Ex(screen_buf1_size, 0x100);
+    void *screenbuffer0       = MEMAllocFromMappedMemoryForGX2Ex(screen_buf0_size, 0x100);
+    void *screenbuffer1       = MEMAllocFromMappedMemoryForGX2Ex(screen_buf1_size, 0x100);
 
     bool skipScreen0Free = false;
     bool skipScreen1Free = false;
@@ -593,14 +593,14 @@ void ConfigUtils::openConfigMenu() {
     if (!screenbuffer0 || !screenbuffer1) {
         if (screenbuffer0 == nullptr) {
             if (storedTVBuffer.buffer_size >= screen_buf0_size) {
-                screenbuffer0 = storedTVBuffer.buffer;
+                screenbuffer0   = storedTVBuffer.buffer;
                 skipScreen0Free = true;
                 DEBUG_FUNCTION_LINE("Use storedTVBuffer");
             }
         }
         if (screenbuffer1 == nullptr) {
             if (storedDRCBuffer.buffer_size >= screen_buf1_size) {
-                screenbuffer1 = storedDRCBuffer.buffer;
+                screenbuffer1   = storedDRCBuffer.buffer;
                 skipScreen1Free = true;
                 DEBUG_FUNCTION_LINE("Use storedDRCBuffer");
             }
@@ -637,7 +637,7 @@ void ConfigUtils::openConfigMenu() {
 
     DrawUtils::deinitFont();
 
-    error_exit:
+error_exit:
 
     if (storedTVBuffer.buffer != nullptr) {
         GX2SetTVBuffer(storedTVBuffer.buffer, storedTVBuffer.buffer_size, static_cast<GX2TVRenderMode>(storedTVBuffer.mode),

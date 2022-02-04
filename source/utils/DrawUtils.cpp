@@ -2,31 +2,31 @@
 
 #include <coreinit/memory.h>
 #include <coreinit/screen.h>
-#include <png.h>
 #include <ft2build.h>
+#include <png.h>
 #include FT_FREETYPE_H
 
 // buffer width
-#define TV_WIDTH 0x500
+#define TV_WIDTH  0x500
 #define DRC_WIDTH 0x380
 
 bool DrawUtils::isBackBuffer;
 
-uint8_t *DrawUtils::tvBuffer = nullptr;
-uint32_t DrawUtils::tvSize = 0;
+uint8_t *DrawUtils::tvBuffer  = nullptr;
+uint32_t DrawUtils::tvSize    = 0;
 uint8_t *DrawUtils::drcBuffer = nullptr;
-uint32_t DrawUtils::drcSize = 0;
+uint32_t DrawUtils::drcSize   = 0;
 
 // Don't put those into the clase or we have to include ft everywhere
 static FT_Library ft_lib = nullptr;
-static FT_Face ft_face = nullptr;
+static FT_Face ft_face   = nullptr;
 static Color font_col(0xFFFFFFFF);
 
 void DrawUtils::initBuffers(void *tvBuffer_, uint32_t tvSize_, void *drcBuffer_, uint32_t drcSize_) {
-    DrawUtils::tvBuffer = (uint8_t *) tvBuffer_;
-    DrawUtils::tvSize = tvSize_;
+    DrawUtils::tvBuffer  = (uint8_t *) tvBuffer_;
+    DrawUtils::tvSize    = tvSize_;
     DrawUtils::drcBuffer = (uint8_t *) drcBuffer_;
-    DrawUtils::drcSize = drcSize_;
+    DrawUtils::drcSize   = drcSize_;
 }
 
 void DrawUtils::beginDraw() {
@@ -68,11 +68,11 @@ void DrawUtils::drawPixel(uint32_t x, uint32_t y, uint8_t r, uint8_t g, uint8_t 
             i += drcSize / 2;
         }
         if (a == 0xFF) {
-            drcBuffer[i] = r;
+            drcBuffer[i]     = r;
             drcBuffer[i + 1] = g;
             drcBuffer[i + 2] = b;
         } else {
-            drcBuffer[i] = r * opacity + drcBuffer[i] * (1 - opacity);
+            drcBuffer[i]     = r * opacity + drcBuffer[i] * (1 - opacity);
             drcBuffer[i + 1] = g * opacity + drcBuffer[i + 1] * (1 - opacity);
             drcBuffer[i + 2] = b * opacity + drcBuffer[i + 2] * (1 - opacity);
         }
@@ -87,11 +87,11 @@ void DrawUtils::drawPixel(uint32_t x, uint32_t y, uint8_t r, uint8_t g, uint8_t 
                     i += tvSize / 2;
                 }
                 if (a == 0xFF) {
-                    tvBuffer[i] = r;
+                    tvBuffer[i]     = r;
                     tvBuffer[i + 1] = g;
                     tvBuffer[i + 2] = b;
                 } else {
-                    tvBuffer[i] = r * opacity + tvBuffer[i] * (1 - opacity);
+                    tvBuffer[i]     = r * opacity + tvBuffer[i] * (1 - opacity);
                     tvBuffer[i + 1] = g * opacity + tvBuffer[i + 1] * (1 - opacity);
                     tvBuffer[i + 2] = b * opacity + tvBuffer[i + 2] * (1 - opacity);
                 }
@@ -122,8 +122,8 @@ void DrawUtils::drawBitmap(uint32_t x, uint32_t y, uint32_t target_width, uint32
     }
 
     uint32_t dataPos = __builtin_bswap32(*(uint32_t *) &(data[0x0A]));
-    uint32_t width = __builtin_bswap32(*(uint32_t *) &(data[0x12]));
-    uint32_t height = __builtin_bswap32(*(uint32_t *) &(data[0x16]));
+    uint32_t width   = __builtin_bswap32(*(uint32_t *) &(data[0x12]));
+    uint32_t height  = __builtin_bswap32(*(uint32_t *) &(data[0x16]));
 
     if (dataPos == 0) {
         dataPos = 54;
@@ -164,17 +164,17 @@ void DrawUtils::drawPNG(uint32_t x, uint32_t y, const uint8_t *data) {
 
     png_read_info(png_ptr, info_ptr);
 
-    uint32_t width = 0;
+    uint32_t width  = 0;
     uint32_t height = 0;
-    int bitDepth = 0;
-    int colorType = -1;
+    int bitDepth    = 0;
+    int colorType   = -1;
     uint32_t retval = png_get_IHDR(png_ptr, info_ptr, &width, &height, &bitDepth, &colorType, nullptr, nullptr, nullptr);
     if (retval != 1) {
         return;
     }
 
     uint32_t bytesPerRow = png_get_rowbytes(png_ptr, info_ptr);
-    auto *rowData = new uint8_t[bytesPerRow];
+    auto *rowData        = new uint8_t[bytesPerRow];
 
     for (uint32_t yy = y; yy < y + height; yy++) {
         png_read_row(png_ptr, (png_bytep) rowData, nullptr);
@@ -195,7 +195,7 @@ void DrawUtils::drawPNG(uint32_t x, uint32_t y, const uint8_t *data) {
 }
 
 void DrawUtils::initFont() {
-    void *font = nullptr;
+    void *font    = nullptr;
     uint32_t size = 0;
     OSGetSharedData(OS_SHAREDDATATYPE_FONT_STANDARD, 0, &font, &size);
 
@@ -243,7 +243,8 @@ void DrawUtils::print(uint32_t x, uint32_t y, const char *string, bool alignRigh
         buffer[num] = 0;
     } else {
         wchar_t *tmp = buffer;
-        while ((*tmp++ = *string++));
+        while ((*tmp++ = *string++))
+            ;
     }
 
     print(x, y, buffer, alignRight);
@@ -252,7 +253,7 @@ void DrawUtils::print(uint32_t x, uint32_t y, const char *string, bool alignRigh
 
 void DrawUtils::print(uint32_t x, uint32_t y, const wchar_t *string, bool alignRight) {
     FT_GlyphSlot slot = ft_face->glyph;
-    FT_Vector pen = {(int) x, (int) y};
+    FT_Vector pen     = {(int) x, (int) y};
 
     if (alignRight) {
         pen.x -= getTextWidth(string);
@@ -283,7 +284,8 @@ uint32_t DrawUtils::getTextWidth(const char *string) {
         buffer[num] = 0;
     } else {
         wchar_t *tmp = buffer;
-        while ((*tmp++ = *string++));
+        while ((*tmp++ = *string++))
+            ;
     }
 
     uint32_t width = getTextWidth(buffer);
@@ -294,7 +296,7 @@ uint32_t DrawUtils::getTextWidth(const char *string) {
 
 uint32_t DrawUtils::getTextWidth(const wchar_t *string) {
     FT_GlyphSlot slot = ft_face->glyph;
-    uint32_t width = 0;
+    uint32_t width    = 0;
 
     for (; *string; string++) {
         FT_Load_Glyph(ft_face, FT_Get_Char_Index(ft_face, *string), FT_LOAD_BITMAP_METRICS_ONLY);

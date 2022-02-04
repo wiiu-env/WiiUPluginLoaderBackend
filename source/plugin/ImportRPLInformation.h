@@ -17,15 +17,15 @@
 
 #pragma once
 
+#include "../utils/logger.h"
 #include <string>
 #include <utility>
-#include "../utils/logger.h"
 
 class ImportRPLInformation {
 
 public:
     explicit ImportRPLInformation(std::string name, bool isData = false) {
-        this->name = std::move(name);
+        this->name    = std::move(name);
         this->_isData = isData;
     }
 

@@ -1,7 +1,7 @@
+#include "../utils/logger.h"
+#include "WUPSConfigCategory.h"
 #include <wums.h>
 #include <wups/config.h>
-#include "WUPSConfigCategory.h"
-#include "../utils/logger.h"
 
 int32_t WUPSConfigCategory_Create(WUPSConfigCategoryHandle *out, const char *name) {
     if (name == nullptr || out == nullptr) {
@@ -39,7 +39,7 @@ int32_t WUPSConfigCategory_AddItem(WUPSConfigCategoryHandle handle, WUPSConfigIt
         return -1;
     }
     auto *category = reinterpret_cast<WUPSConfigCategory *>(handle);
-    auto *item = reinterpret_cast<WUPSConfigItem *>(item_Handle);
+    auto *item     = reinterpret_cast<WUPSConfigItem *>(item_Handle);
     if (category->addItem(item)) {
         return 0;
     }

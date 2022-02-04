@@ -15,17 +15,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
 
+#include "PluginInformationFactory.h"
+#include "../utils/ElfUtils.h"
+#include "../utils/utils.h"
+#include "PluginData.h"
+#include <coreinit/cache.h>
+#include <coreinit/memexpheap.h>
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
-#include <map>
-#include <coreinit/cache.h>
-#include <coreinit/memexpheap.h>
 #include <wups.h>
-#include "PluginData.h"
-#include "PluginInformationFactory.h"
-#include "../utils/utils.h"
-#include "../utils/ElfUtils.h"
 
 using namespace ELFIO;
 
@@ -44,7 +44,7 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, ME
 
     auto pluginInfo = std::make_shared<PluginInformation>();
 
-    uint32_t sec_num = reader.sections.size();
+    uint32_t sec_num    = reader.sections.size();
     auto **destinations = (uint8_t **) malloc(sizeof(uint8_t *) * sec_num);
 
     uint32_t totalSize = 0;
@@ -60,7 +60,7 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, ME
 
         if ((psec->get_type() == SHT_PROGBITS || psec->get_type() == SHT_NOBITS) && (psec->get_flags() & SHF_ALLOC)) {
             uint32_t sectionSize = psec->get_size();
-            auto address = (uint32_t) psec->get_address();
+            auto address         = (uint32_t) psec->get_address();
             if ((address >= 0x02000000) && address < 0x10000000) {
                 text_size += sectionSize;
             } else if ((address >= 0x10000000) && address < 0xC0000000) {
@@ -95,7 +95,7 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, ME
 
         if ((psec->get_type() == SHT_PROGBITS || psec->get_type() == SHT_NOBITS) && (psec->get_flags() & SHF_ALLOC)) {
             uint32_t sectionSize = psec->get_size();
-            auto address = (uint32_t) psec->get_address();
+            auto address         = (uint32_t) psec->get_address();
 
             uint32_t destination = address;
             if ((address >= 0x02000000) && address < 0x10000000) {
@@ -157,7 +157,7 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, ME
     }
     auto relocationData = getImportRelocationData(reader, destinations);
 
-    for (auto const &reloc: relocationData) {
+    for (auto const &reloc : relocationData) {
         pluginInfo->addRelocationData(reloc);
     }
 
@@ -173,11 +173,11 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, ME
     auto secInfo = pluginInfo->getSectionInfo(".wups.hooks");
     if (secInfo && secInfo.value()->getSize() > 0) {
         size_t entries_count = secInfo.value()->getSize() / sizeof(wups_loader_hook_t);
-        auto *entries = (wups_loader_hook_t *) secInfo.value()->getAddress();
+        auto *entries        = (wups_loader_hook_t *) secInfo.value()->getAddress();
         if (entries != nullptr) {
             for (size_t j = 0; j < entries_count; j++) {
                 wups_loader_hook_t *hook = &entries[j];
-                DEBUG_FUNCTION_LINE_VERBOSE("Saving hook of plugin Type: %08X, target: %08X"/*,pluginData->getPluginInformation()->getName().c_str()*/, hook->type, (void *) hook->target);
+                DEBUG_FUNCTION_LINE_VERBOSE("Saving hook of plugin Type: %08X, target: %08X" /*,pluginData->getPluginInformation()->getName().c_str()*/, hook->type, (void *) hook->target);
                 auto hook_data = std::make_shared<HookData>((void *) hook->target, hook->type);
                 pluginInfo->addHookData(hook_data);
             }
@@ -187,12 +187,12 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, ME
     secInfo = pluginInfo->getSectionInfo(".wups.load");
     if (secInfo && secInfo.value()->getSize() > 0) {
         size_t entries_count = secInfo.value()->getSize() / sizeof(wups_loader_entry_t);
-        auto *entries = (wups_loader_entry_t *) secInfo.value()->getAddress();
+        auto *entries        = (wups_loader_entry_t *) secInfo.value()->getAddress();
         if (entries != nullptr) {
             for (size_t j = 0; j < entries_count; j++) {
                 wups_loader_entry_t *cur_function = &entries[j];
                 DEBUG_FUNCTION_LINE_VERBOSE("Saving function \"%s\" of plugin . PA:%08X VA:%08X Library: %08X, target: %08X, call_addr: %08X",
-                                            cur_function->_function.name/*,pluginData->getPluginInformation()->getName().c_str()*/,
+                                            cur_function->_function.name /*,pluginData->getPluginInformation()->getName().c_str()*/,
                                             cur_function->_function.physical_address, cur_function->_function.virtual_address, cur_function->_function.library, cur_function->_function.target,
                                             (void *) cur_function->_function.call_addr);
                 auto function_data = std::make_shared<FunctionData>((void *) cur_function->_function.physical_address, (void *) cur_function->_function.virtual_address, cur_function->_function.name,
@@ -214,17 +214,17 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, ME
             if (sym_no > 0) {
                 for (Elf_Half j = 0; j < sym_no; ++j) {
                     std::string name;
-                    Elf64_Addr value = 0;
-                    Elf_Xword size = 0;
-                    unsigned char bind = 0;
-                    unsigned char type = 0;
-                    Elf_Half section = 0;
+                    Elf64_Addr value    = 0;
+                    Elf_Xword size      = 0;
+                    unsigned char bind  = 0;
+                    unsigned char type  = 0;
+                    Elf_Half section    = 0;
                     unsigned char other = 0;
                     if (symbols.get_symbol(j, name, value, size, bind, type, section, other)) {
 
                         if (type == STT_FUNC) { // We only care about functions.
                             auto sectionVal = reader.sections[section];
-                            auto offsetVal = value - sectionVal->get_address();
+                            auto offsetVal  = value - sectionVal->get_address();
                             auto sectionOpt = pluginInfo->getSectionInfo(sectionVal->get_name());
                             if (!sectionOpt.has_value()) {
                                 continue;
@@ -299,7 +299,7 @@ std::vector<std::shared_ptr<RelocationData>> PluginInformationFactory::getImport
                     rplName = rawSectionName.substr(fimport.size());
                 } else if (std::equal(dimport.begin(), dimport.end(), rawSectionName.begin())) {
                     rplName = rawSectionName.substr(dimport.size());
-                    isData = true;
+                    isData  = true;
                 } else {
                     DEBUG_FUNCTION_LINE("invalid section name");
                     continue;

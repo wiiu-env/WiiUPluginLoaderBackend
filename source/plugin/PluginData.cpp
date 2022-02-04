@@ -1,14 +1,14 @@
 #include "PluginData.h"
 
-#include <utility>
-#include <malloc.h>
 #include "../utils/logger.h"
+#include <malloc.h>
+#include <utility>
 
 PluginData::PluginData(const PluginData &obj) {
-    this->buffer = obj.buffer;
+    this->buffer     = obj.buffer;
     this->heapHandle = obj.heapHandle;
     this->memoryType = obj.memoryType;
-    this->length = obj.length;
+    this->length     = obj.length;
 }
 
 void PluginData::freeMemory() {
@@ -34,10 +34,9 @@ void PluginData::freeMemory() {
 PluginData::PluginData(const std::vector<uint8_t> &buffer) : PluginData(buffer, nullptr, eMemTypeMEM2) {
 }
 
-PluginData::PluginData(const std::vector<uint8_t> &input, MEMHeapHandle heapHandle, eMemoryTypes memoryType) :
-        heapHandle(heapHandle),
-        memoryType(memoryType),
-        length(input.size()) {
+PluginData::PluginData(const std::vector<uint8_t> &input, MEMHeapHandle heapHandle, eMemoryTypes memoryType) : heapHandle(heapHandle),
+                                                                                                               memoryType(memoryType),
+                                                                                                               length(input.size()) {
     void *data_copy = nullptr;
     switch (memoryType) {
         default:

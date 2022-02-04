@@ -1,6 +1,8 @@
 #pragma once
 
+#include "../common/plugin_defines.h"
 #include "PluginData.h"
+#include <memory>
 
 class PluginDataPersistence {
 

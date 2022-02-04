@@ -7,8 +7,6 @@
 extern "C" {
 #endif
 
-void fillPluginInformation(plugin_information *out, PluginMetaInformation *metaInformation);
-
 PluginBackendApiErrorType WUPSLoadAndLinkByDataHandle(const plugin_data_handle *plugin_data_handle_list, uint32_t plugin_data_handle_list_size);
 
 PluginBackendApiErrorType WUPSDeletePluginContainer(const plugin_container_handle *handle_list, uint32_t handle_list_size);

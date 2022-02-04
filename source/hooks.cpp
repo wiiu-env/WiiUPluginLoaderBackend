@@ -1,6 +1,6 @@
 #include "hooks.h"
-#include "utils/logger.h"
 #include "utils/StorageUtils.h"
+#include "utils/logger.h"
 
 void CallHook(plugin_information_t *pluginInformation, wups_loader_hook_type_t hook_type) {
     CallHookEx(pluginInformation, hook_type, -1);
@@ -20,7 +20,7 @@ bool HasHookCallHook(plugin_information_t *pluginInformation, wups_loader_hook_t
     return false;
 }
 
-static const char **hook_names = (const char *[]) {
+static const char **hook_names = (const char *[]){
         "WUPS_LOADER_HOOK_INIT_WUT_MALLOC",
         "WUPS_LOADER_HOOK_FINI_WUT_MALLOC",
         "WUPS_LOADER_HOOK_INIT_WUT_NEWLIB",
@@ -87,15 +87,14 @@ void CallHookEx(plugin_information_t *pluginInformation, wups_loader_hook_type_t
                         hook_type == WUPS_LOADER_HOOK_GET_CONFIG ||
                         hook_type == WUPS_LOADER_HOOK_CONFIG_CLOSED ||
                         hook_type == WUPS_LOADER_HOOK_RELEASE_FOREGROUND ||
-                        hook_type == WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND
-                            ) {
-                        ((void (*)()) ((uint32_t *) func_ptr))();
+                        hook_type == WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND) {
+                        ((void (*)())((uint32_t *) func_ptr))();
                     } else if (hook_type == WUPS_LOADER_HOOK_INIT_STORAGE) {
                         wups_loader_init_storage_args_t args;
-                        args.open_storage_ptr = &StorageUtils::OpenStorage;
+                        args.open_storage_ptr  = &StorageUtils::OpenStorage;
                         args.close_storage_ptr = &StorageUtils::CloseStorage;
-                        args.plugin_id = plugin_data->meta.storageId;
-                        ((void (*)(wups_loader_init_storage_args_t)) ((uint32_t *) func_ptr))(args);
+                        args.plugin_id         = plugin_data->meta.storageId;
+                        ((void (*)(wups_loader_init_storage_args_t))((uint32_t *) func_ptr))(args);
                     } else {
                         DEBUG_FUNCTION_LINE("######################################");
                         DEBUG_FUNCTION_LINE("Hook is not implemented %s [%d]", hook_names[hook_type], hook_type);

@@ -20,9 +20,9 @@
 #include <string>
 #include <vector>
 
-#include <wups/config.h>
 #include "utils/StringTools.h"
 #include "utils/logger.h"
+#include <wups/config.h>
 
 class WUPSConfigItem {
 public:
@@ -154,10 +154,10 @@ public:
     }
 
     WUPSConfigItem(const std::string &_configID, const std::string &_displayName, WUPSConfigCallbacks_t callbacks, void *_context) {
-        this->configID = _configID;
-        this->displayName = _displayName;
-        this->context = _context;
-        this->callbacks = callbacks;
+        this->configID     = _configID;
+        this->displayName  = _displayName;
+        this->context      = _context;
+        this->callbacks    = callbacks;
         this->defaultValue = getCurrentValueDisplay();
     }
 

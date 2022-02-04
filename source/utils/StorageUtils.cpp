@@ -1,40 +1,40 @@
 #include "StorageUtils.h"
 #include <string>
 
-#include "utils/logger.h"
-#include "utils/json.hpp"
 #include "fs/CFile.hpp"
 #include "fs/FSUtils.h"
+#include "utils/json.hpp"
+#include "utils/logger.h"
 
 static void processJson(wups_storage_item_t *items, nlohmann::json json) {
     if (items == nullptr) {
         return;
     }
 
-    items->data = (wups_storage_item_t *) malloc(json.size() * sizeof(wups_storage_item_t));
+    items->data      = (wups_storage_item_t *) malloc(json.size() * sizeof(wups_storage_item_t));
     items->data_size = json.size();
 
     uint32_t index = 0;
     for (auto it = json.begin(); it != json.end(); ++it) {
         wups_storage_item_t *item = &((wups_storage_item_t *) items->data)[index];
-        item->type = WUPS_STORAGE_TYPE_INVALID;
-        item->pending_delete = false;
-        item->data = nullptr;
-        item->key = nullptr;
+        item->type                = WUPS_STORAGE_TYPE_INVALID;
+        item->pending_delete      = false;
+        item->data                = nullptr;
+        item->key                 = nullptr;
 
         item->key = (char *) malloc(it.key().size() + 1);
         strcpy(item->key, it.key().c_str());
 
         if (it.value().is_string()) {
-            item->type = WUPS_STORAGE_TYPE_STRING;
-            uint32_t size = it.value().get<std::string>().size() + 1;
-            item->data = malloc(size);
+            item->type      = WUPS_STORAGE_TYPE_STRING;
+            uint32_t size   = it.value().get<std::string>().size() + 1;
+            item->data      = malloc(size);
             item->data_size = size;
             strcpy((char *) item->data, it.value().get<std::string>().c_str());
         } else if (it.value().is_number_integer()) {
-            item->type = WUPS_STORAGE_TYPE_INT;
-            item->data = malloc(sizeof(int32_t));
-            item->data_size = sizeof(int32_t);
+            item->type              = WUPS_STORAGE_TYPE_INT;
+            item->data              = malloc(sizeof(int32_t));
+            item->data_size         = sizeof(int32_t);
             *(int32_t *) item->data = it.value().get<int32_t>();
         } else if (it.value().is_object()) {
             if (it.value().size() > 0) {
@@ -58,7 +58,7 @@ int StorageUtils::OpenStorage(const char *plugin_id, wups_storage_item_t *items)
     nlohmann::json j;
     CFile file(filePath, CFile::ReadOnly);
     if (file.isOpen() && file.size() > 0) {
-        uint8_t *json_data = new uint8_t[file.size() + 1];
+        uint8_t *json_data     = new uint8_t[file.size() + 1];
         json_data[file.size()] = '\0';
 
         file.read(json_data, file.size());
@@ -113,7 +113,7 @@ int StorageUtils::CloseStorage(const char *plugin_id, wups_storage_item_t *items
     }
 
     std::string folderPath = "fs:/vol/external01/wiiu/plugins/config/";
-    std::string filePath = folderPath + plugin_id + ".json";
+    std::string filePath   = folderPath + plugin_id + ".json";
 
     FSUtils::CreateSubfolder(folderPath.c_str());
 

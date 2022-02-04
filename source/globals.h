@@ -2,8 +2,8 @@
 
 #include <wums.h>
 
-#include "plugin/PluginContainer.h"
 #include "common/plugin_defines.h"
+#include "plugin/PluginContainer.h"
 #include "utils/ConfigUtils.h"
 
 extern plugin_information_t *gPluginInformation;
@@ -19,4 +19,4 @@ extern StoredBuffer storedTVBuffer;
 extern StoredBuffer storedDRCBuffer;
 
 #define PLUGIN_DATA_HEAP_SIZE (8 * 1024 * 1024)
-#define NUMBER_OF_TRAMPS 1024
+#define NUMBER_OF_TRAMPS      1024

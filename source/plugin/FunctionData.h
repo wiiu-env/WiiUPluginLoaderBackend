@@ -16,22 +16,22 @@
  ****************************************************************************/
 #pragma once
 
-#include <wups.h>
-#include <string>
 #include <function_patcher/fpatching_defines.h>
+#include <string>
+#include <wups.h>
 
 class FunctionData {
 
 public:
     FunctionData(void *paddress, void *vaddress, const std::string &name, function_replacement_library_type_t library, void *replaceAddr, void *replaceCall,
                  FunctionPatcherTargetProcess targetProcess) {
-        this->paddress = paddress;
-        this->vaddress = vaddress;
-        this->name = name;
-        this->library = library;
+        this->paddress      = paddress;
+        this->vaddress      = vaddress;
+        this->name          = name;
+        this->library       = library;
         this->targetProcess = targetProcess;
-        this->replaceAddr = replaceAddr;
-        this->replaceCall = replaceCall;
+        this->replaceAddr   = replaceAddr;
+        this->replaceCall   = replaceCall;
     }
 
     ~FunctionData() = default;
@@ -73,4 +73,3 @@ private:
     void *replaceAddr = nullptr;
     void *replaceCall = nullptr;
 };
-

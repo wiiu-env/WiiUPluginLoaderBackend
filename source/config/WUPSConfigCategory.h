@@ -17,10 +17,10 @@
 
 #pragma once
 
+#include "WUPSConfigItem.h"
 #include <string>
 #include <vector>
 #include <wups/config.h>
-#include "WUPSConfigItem.h"
 
 class WUPSConfigCategory {
 public:
@@ -29,7 +29,7 @@ public:
     }
 
     ~WUPSConfigCategory() {
-        for (auto &element: items) {
+        for (auto &element : items) {
             delete element;
         }
     }

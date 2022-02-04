@@ -1,18 +1,18 @@
-#include <wums.h>
-#include <coreinit/debug.h>
-#include <coreinit/cache.h>
-#include <coreinit/ios.h>
-#include <coreinit/dynload.h>
-#include <coreinit/memdefaultheap.h>
-#include <memory>
-#include "plugin/PluginContainer.h"
-#include "globals.h"
-#include "plugin/PluginDataFactory.h"
-#include "plugin/PluginDataPersistence.h"
-#include "plugin/PluginContainerPersistence.h"
 #include "PluginManagement.h"
+#include "globals.h"
 #include "hooks.h"
 #include "patcher/hooks_patcher_static.h"
+#include "plugin/PluginContainer.h"
+#include "plugin/PluginContainerPersistence.h"
+#include "plugin/PluginDataFactory.h"
+#include "plugin/PluginDataPersistence.h"
+#include <coreinit/cache.h>
+#include <coreinit/debug.h>
+#include <coreinit/dynload.h>
+#include <coreinit/ios.h>
+#include <coreinit/memdefaultheap.h>
+#include <memory>
+#include <wums.h>
 
 WUMS_MODULE_EXPORT_NAME("homebrew_wupsbackend");
 
@@ -104,10 +104,10 @@ WUMS_APPLICATION_STARTS() {
         void *pluginHeapMemory = allocOnCustomHeap(0x1000, PLUGIN_DATA_HEAP_SIZE);
         if (pluginHeapMemory == nullptr) {
             DEBUG_FUNCTION_LINE("Use plugins information heap as fallback");
-            gPluginDataHeap = gPluginInformationHeap;
+            gPluginDataHeap     = gPluginInformationHeap;
             gPluginDataHeapSize = gPluginInformationHeapSize;
         } else {
-            gPluginDataHeap = MEMCreateExpHeapEx(pluginHeapMemory, PLUGIN_DATA_HEAP_SIZE, 0);
+            gPluginDataHeap     = MEMCreateExpHeapEx(pluginHeapMemory, PLUGIN_DATA_HEAP_SIZE, 0);
             gPluginDataHeapSize = PLUGIN_DATA_HEAP_SIZE;
         }
 
@@ -141,9 +141,9 @@ WUMS_APPLICATION_STARTS() {
             DEBUG_FUNCTION_LINE("Loaded data for %d plugins.", pluginList.size());
 
             auto plugins = PluginManagement::loadPlugins(pluginList, gPluginDataHeap, gTrampolineData, gTrampolineDataSize);
-            for (auto &pluginContainer: plugins) {
+            for (auto &pluginContainer : plugins) {
 #ifdef DEBUG
-                for (const auto &kv: pluginContainer->getPluginInformation()->getSectionInfoList()) {
+                for (const auto &kv : pluginContainer->getPluginInformation()->getSectionInfoList()) {
                     DEBUG_FUNCTION_LINE_VERBOSE("%s = %s %08X %d", kv.first.c_str(), kv.second->getName().c_str(), kv.second->getAddress(), kv.second->getSize());
                 }
 #endif
@@ -165,8 +165,8 @@ WUMS_APPLICATION_STARTS() {
 
         for (int32_t plugin_index = 0; plugin_index < gPluginInformation->number_used_plugins; plugin_index++) {
             plugin_information_single_t *plugin = &(gPluginInformation->plugin_data[plugin_index]);
-            BOOL doDelete = true;
-            for (auto &pluginData: pluginDataList) {
+            BOOL doDelete                       = true;
+            for (auto &pluginData : pluginDataList) {
                 if (pluginData->buffer == plugin->data.buffer) {
                     doDelete = false;
                     break;
@@ -186,7 +186,7 @@ WUMS_APPLICATION_STARTS() {
                         DEBUG_FUNCTION_LINE("Failed to free memory from plugin");
                         DEBUG_FUNCTION_LINE("########################");
                     }
-                    plugin->data.buffer = nullptr;
+                    plugin->data.buffer       = nullptr;
                     plugin->data.bufferLength = 0;
                 } else {
                     DEBUG_FUNCTION_LINE("Plugin %s has no copy of elf saved in memory, can't free it", plugin->meta.name);
@@ -198,14 +198,14 @@ WUMS_APPLICATION_STARTS() {
 
         auto plugins = PluginManagement::loadPlugins(pluginDataList, gPluginDataHeap, gTrampolineData, gTrampolineDataSize);
 
-        for (auto &pluginContainer: plugins) {
+        for (auto &pluginContainer : plugins) {
             DEBUG_FUNCTION_LINE("Stored information for plugin %s ; %s", pluginContainer->getMetaInformation()->getName().c_str(), pluginContainer->getMetaInformation()->getAuthor().c_str());
             if (!PluginContainerPersistence::savePlugin(gPluginInformation, pluginContainer, gPluginDataHeap)) {
                 DEBUG_FUNCTION_LINE("Failed to save plugin");
             }
         }
         gLinkOnReload.loadOnReload = false;
-        initNeeded = true;
+        initNeeded                 = true;
     }
 
     if (gPluginDataHeap != nullptr) {
@@ -241,8 +241,8 @@ void *allocOnCustomHeap(int alignment, int size) {
         return nullptr;
     }
     uint32_t *custom_memalign;
-    dyn_res = OSDynLoad_FindExport(module, true, "MEMAllocFromMappedMemoryEx", reinterpret_cast<void **>(&custom_memalign));
-    auto *customMEMAllocFromDefaultHeapEx = (void *(*)(uint32_t, int)) *custom_memalign;
+    dyn_res                               = OSDynLoad_FindExport(module, true, "MEMAllocFromMappedMemoryEx", reinterpret_cast<void **>(&custom_memalign));
+    auto *customMEMAllocFromDefaultHeapEx = (void *(*) (uint32_t, int) ) * custom_memalign;
 
     if (dyn_res != OS_DYNLOAD_OK) {
         return nullptr;

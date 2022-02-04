@@ -17,17 +17,17 @@
 
 #pragma once
 
-#include <memory>
 #include "PluginData.h"
-#include "PluginMetaInformation.h"
 #include "PluginInformation.h"
+#include "PluginMetaInformation.h"
+#include <memory>
 
 class PluginContainer {
 public:
     PluginContainer(const PluginContainer &other) {
-        this->pluginData = other.pluginData;
+        this->pluginData        = other.pluginData;
         this->pluginInformation = other.pluginInformation;
-        this->metaInformation = other.metaInformation;
+        this->metaInformation   = other.metaInformation;
     }
 
     PluginContainer() = default;

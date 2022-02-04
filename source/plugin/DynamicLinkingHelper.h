@@ -1,10 +1,10 @@
 #pragma once
 
-#include <wums/defines/dynamic_linking_defines.h>
+#include "RelocationData.h"
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
-#include "RelocationData.h"
+#include <wums/defines/dynamic_linking_defines.h>
 
 class DynamicLinkingHelper {
 public:

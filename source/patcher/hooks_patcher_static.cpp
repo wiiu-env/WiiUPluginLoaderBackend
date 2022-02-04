@@ -1,16 +1,16 @@
 #include "hooks_patcher_static.h"
-#include <wups.h>
-#include <vpad/input.h>
-#include <padscore/wpad.h>
-#include <coreinit/messagequeue.h>
 #include <coreinit/core.h>
+#include <coreinit/messagequeue.h>
+#include <padscore/wpad.h>
+#include <vpad/input.h>
+#include <wups.h>
 
-#include "../utils/ConfigUtils.h"
 #include "../globals.h"
 #include "../hooks.h"
+#include "../utils/ConfigUtils.h"
 
-uint8_t vpadPressCooldown = 0xFF;
-bool configMenuOpened = false;
+uint8_t vpadPressCooldown  = 0xFF;
+bool configMenuOpened      = false;
 bool wantsToOpenConfigMenu = false;
 
 DECL_FUNCTION(void, GX2SwapScanBuffers, void) {
@@ -19,15 +19,15 @@ DECL_FUNCTION(void, GX2SwapScanBuffers, void) {
     if (wantsToOpenConfigMenu && !configMenuOpened) {
         configMenuOpened = true;
         ConfigUtils::openConfigMenu();
-        configMenuOpened = false;
+        configMenuOpened      = false;
         wantsToOpenConfigMenu = false;
     }
 }
 
 DECL_FUNCTION(void, GX2SetTVBuffer, void *buffer, uint32_t buffer_size, int32_t tv_render_mode, GX2SurfaceFormat format, GX2BufferingMode buffering_mode) {
-    storedTVBuffer.buffer = buffer;
-    storedTVBuffer.buffer_size = buffer_size;
-    storedTVBuffer.mode = tv_render_mode;
+    storedTVBuffer.buffer         = buffer;
+    storedTVBuffer.buffer_size    = buffer_size;
+    storedTVBuffer.mode           = tv_render_mode;
     storedTVBuffer.surface_format = format;
     storedTVBuffer.buffering_mode = buffering_mode;
 
@@ -35,9 +35,9 @@ DECL_FUNCTION(void, GX2SetTVBuffer, void *buffer, uint32_t buffer_size, int32_t 
 }
 
 DECL_FUNCTION(void, GX2SetDRCBuffer, void *buffer, uint32_t buffer_size, uint32_t drc_mode, GX2SurfaceFormat surface_format, GX2BufferingMode buffering_mode) {
-    storedDRCBuffer.buffer = buffer;
-    storedDRCBuffer.buffer_size = buffer_size;
-    storedDRCBuffer.mode = drc_mode;
+    storedDRCBuffer.buffer         = buffer;
+    storedDRCBuffer.buffer_size    = buffer_size;
+    storedDRCBuffer.mode           = drc_mode;
     storedDRCBuffer.surface_format = surface_format;
     storedDRCBuffer.buffering_mode = buffering_mode;
 
@@ -75,7 +75,7 @@ DECL_FUNCTION(int32_t, VPADRead, int32_t chan, VPADStatus *buffer, uint32_t buff
 
     if (result > 0 && (buffer[0].hold == (VPAD_BUTTON_L | VPAD_BUTTON_DOWN | VPAD_BUTTON_MINUS)) && vpadPressCooldown == 0 && !configMenuOpened) {
         wantsToOpenConfigMenu = true;
-        vpadPressCooldown = 0x3C;
+        vpadPressCooldown     = 0x3C;
     }
 
     if (vpadPressCooldown > 0) {
@@ -103,11 +103,11 @@ DECL_FUNCTION(void, WPADRead, WPADChan chan, WPADStatusProController *data) {
 }
 
 
-#define KiReport ((void (*)( const char*, ... ))0xfff0ad0c)
+#define KiReport ((void (*)(const char *, ...)) 0xfff0ad0c)
 
 
 #pragma GCC push_options
-#pragma GCC optimize ("O0")
+#pragma GCC optimize("O0")
 
 DECL_FUNCTION(uint32_t, SC17_FindClosestSymbol,
               uint32_t addr,
@@ -118,9 +118,9 @@ DECL_FUNCTION(uint32_t, SC17_FindClosestSymbol,
               uint32_t moduleNameBufferLength) {
     for (int32_t plugin_index = 0; plugin_index < gPluginInformation->number_used_plugins; plugin_index++) {
         plugin_information_single_t *plugin = &(gPluginInformation->plugin_data[plugin_index]);
-        plugin_section_info_t *section = nullptr;
+        plugin_section_info_t *section      = nullptr;
 
-        for (auto &sectionInfo: plugin->info.sectionInfos) {
+        for (auto &sectionInfo : plugin->info.sectionInfos) {
             if (sectionInfo.addr == 0 && sectionInfo.size == 0) {
                 break;
             }
@@ -139,7 +139,7 @@ DECL_FUNCTION(uint32_t, SC17_FindClosestSymbol,
         strncpy(moduleNameBuffer, plugin->meta.name, moduleNameBufferLength);
         if (plugin->info.function_symbol_data != nullptr && plugin->info.number_function_symbol_data > 1) {
             for (uint32_t i = 0; i < plugin->info.number_function_symbol_data - 1; i++) {
-                auto symbolData = &plugin->info.function_symbol_data[i];
+                auto symbolData     = &plugin->info.function_symbol_data[i];
                 auto symbolDataNext = &plugin->info.function_symbol_data[i + 1];
                 if (i == plugin->info.number_function_symbol_data - 2 || (addr >= (uint32_t) symbolData->address && addr < (uint32_t) symbolDataNext->address)) {
                     strncpy(symbolNameBuffer, symbolData->name, moduleNameBufferLength);
@@ -166,9 +166,9 @@ DECL_FUNCTION(uint32_t, SC17_FindClosestSymbol,
 DECL_FUNCTION(uint32_t, KiGetAppSymbolName, uint32_t addr, char *buffer, int32_t bufSize) {
     for (int32_t plugin_index = 0; plugin_index < gPluginInformation->number_used_plugins; plugin_index++) {
         plugin_information_single_t *plugin = &(gPluginInformation->plugin_data[plugin_index]);
-        plugin_section_info_t *section = nullptr;
+        plugin_section_info_t *section      = nullptr;
 
-        for (auto &sectionInfo: plugin->info.sectionInfos) {
+        for (auto &sectionInfo : plugin->info.sectionInfos) {
             if (sectionInfo.addr == 0 && sectionInfo.size == 0) {
                 break;
             }
@@ -184,7 +184,7 @@ DECL_FUNCTION(uint32_t, KiGetAppSymbolName, uint32_t addr, char *buffer, int32_t
             continue;
         }
 
-        auto pluginNameLen = strlen(plugin->meta.name);
+        auto pluginNameLen        = strlen(plugin->meta.name);
         int32_t spaceLeftInBuffer = (int32_t) bufSize - (int32_t) pluginNameLen - 1;
         if (spaceLeftInBuffer < 0) {
             spaceLeftInBuffer = 0;
@@ -193,11 +193,11 @@ DECL_FUNCTION(uint32_t, KiGetAppSymbolName, uint32_t addr, char *buffer, int32_t
 
         if (plugin->info.function_symbol_data != nullptr && plugin->info.number_function_symbol_data > 1) {
             for (uint32_t i = 0; i < plugin->info.number_function_symbol_data - 1; i++) {
-                auto symbolData = &plugin->info.function_symbol_data[i];
+                auto symbolData     = &plugin->info.function_symbol_data[i];
                 auto symbolDataNext = &plugin->info.function_symbol_data[i + 1];
                 if (i == plugin->info.number_function_symbol_data - 2 || (addr >= (uint32_t) symbolData->address && addr < (uint32_t) symbolDataNext->address)) {
                     if (spaceLeftInBuffer > 2) {
-                        buffer[pluginNameLen] = '|';
+                        buffer[pluginNameLen]     = '|';
                         buffer[pluginNameLen + 1] = '\0';
                         strncpy(buffer + pluginNameLen + 1, symbolData->name, spaceLeftInBuffer - 1);
                     }

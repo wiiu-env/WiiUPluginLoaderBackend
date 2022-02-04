@@ -24,14 +24,13 @@ class FunctionSymbolData {
 public:
     FunctionSymbolData(const FunctionSymbolData &o2) = default;
 
-    FunctionSymbolData(std::string &name, void *address, uint32_t size) :
-            name(name),
-            address(address),
-            size(size) {
+    FunctionSymbolData(std::string &name, void *address, uint32_t size) : name(name),
+                                                                          address(address),
+                                                                          size(size) {
     }
 
     bool operator<(const FunctionSymbolData &rhs) const {
-        return (uint32_t) address < (uint32_t) rhs.address;  //assume that you compare the record based on a
+        return (uint32_t) address < (uint32_t) rhs.address; //assume that you compare the record based on a
     }
 
     virtual ~FunctionSymbolData() = default;

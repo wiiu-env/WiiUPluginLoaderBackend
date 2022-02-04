@@ -14,13 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
-#include <fcntl.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <memory>
 #include "PluginDataFactory.h"
-#include "../utils/logger.h"
 #include "../utils/StringTools.h"
+#include "../utils/logger.h"
+#include <dirent.h>
+#include <fcntl.h>
+#include <memory>
+#include <sys/stat.h>
 
 
 std::vector<std::shared_ptr<PluginData>> PluginDataFactory::loadDir(const std::string &path, MEMHeapHandle heapHandle) {
@@ -39,7 +39,7 @@ std::vector<std::shared_ptr<PluginData>> PluginDataFactory::loadDir(const std::s
     }
 
     while ((dp = readdir(dfd)) != nullptr) {
-        struct stat stbuf{};
+        struct stat stbuf {};
         std::string full_file_path = StringTools::strfmt("%s/%s", path.c_str(), dp->d_name);
         StringTools::RemoveDoubleSlashs(full_file_path);
         if (stat(full_file_path.c_str(), &stbuf) == -1) {

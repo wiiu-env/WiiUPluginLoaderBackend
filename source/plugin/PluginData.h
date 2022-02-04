@@ -17,10 +17,10 @@
 
 #pragma once
 
+#include <coreinit/memexpheap.h>
+#include <malloc.h>
 #include <optional>
 #include <vector>
-#include <malloc.h>
-#include <coreinit/memexpheap.h>
 
 #include "../elfio/elfio.hpp"
 

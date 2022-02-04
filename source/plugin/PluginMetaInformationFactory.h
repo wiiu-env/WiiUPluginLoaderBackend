@@ -17,12 +17,12 @@
 
 #pragma once
 
+#include "PluginData.h"
+#include "PluginMetaInformation.h"
+#include <memory>
 #include <optional>
 #include <string>
-#include <memory>
 #include <vector>
-#include "PluginMetaInformation.h"
-#include "PluginData.h"
 
 class PluginMetaInformationFactory {
 public:

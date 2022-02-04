@@ -2,12 +2,12 @@
 
 #include <memory>
 
+#include "DynamicLinkingHelper.h"
 #include "PluginContainer.h"
-#include "PluginInformationFactory.h"
-#include "PluginMetaInformationFactory.h"
 #include "PluginContainerPersistence.h"
 #include "PluginDataPersistence.h"
-#include "DynamicLinkingHelper.h"
+#include "PluginInformationFactory.h"
+#include "PluginMetaInformationFactory.h"
 
 bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformation, const std::shared_ptr<PluginContainer> &plugin, MEMHeapHandle heapHandle) {
     int32_t plugin_count = pluginInformation->number_used_plugins;
@@ -25,7 +25,7 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
     memset((void *) plugin_data, 0, sizeof(plugin_information_single_t));
 
     const auto &pluginMetaInfo = plugin->getMetaInformation();
-    auto plugin_meta_data = &plugin_data->meta;
+    auto plugin_meta_data      = &plugin_data->meta;
 
     if (pluginMetaInfo->getName().size() >= MAXIMUM_PLUGIN_META_FIELD_LENGTH) {
         DEBUG_FUNCTION_LINE("Warning: name will be truncated.");
@@ -68,7 +68,7 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
 
     // Relocation
     auto relocationData = pluginInfo->getRelocationDataList();
-    for (auto &reloc: relocationData) {
+    for (auto &reloc : relocationData) {
         if (!DynamicLinkingHelper::addReloationEntry(&(pluginInformation->linking_data), plugin_data->info.linking_entries, PLUGIN_DYN_LINK_RELOCATION_LIST_LENGTH, reloc)) {
             DEBUG_FUNCTION_LINE("Failed to add a relocation entry");
             return false;
@@ -76,7 +76,7 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
     }
 
     auto function_data_list = pluginInfo->getFunctionDataList();
-    auto hook_data_list = pluginInfo->getHookDataList();
+    auto hook_data_list     = pluginInfo->getHookDataList();
 
     if (function_data_list.size() > MAXIMUM_FUNCTION_PER_PLUGIN) {
         DEBUG_FUNCTION_LINE("Plugin %s would replace to many function (%d, maximum is %d). It won't be loaded.", pluginName.c_str(), function_data_list.size(), MAXIMUM_FUNCTION_PER_PLUGIN);
@@ -94,7 +94,7 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
 
     /* Store function replacement information */
     uint32_t i = 0;
-    for (auto &curFunction: pluginInfo->getFunctionDataList()) {
+    for (auto &curFunction : pluginInfo->getFunctionDataList()) {
         function_replacement_data_t *function_data = &plugin_data->info.functions[i];
         if (strlen(curFunction->getName().c_str()) > MAXIMUM_FUNCTION_NAME_LENGTH - 1) {
             DEBUG_FUNCTION_LINE("Could not add function \"%s\" for plugin \"%s\" function name is too long.", curFunction->getName().c_str(), pluginName.c_str());
@@ -105,12 +105,12 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
 
         strncpy(function_data->function_name, curFunction->getName().c_str(), MAXIMUM_FUNCTION_NAME_LENGTH - 1);
 
-        function_data->VERSION = FUNCTION_REPLACEMENT_DATA_STRUCT_VERSION;
-        function_data->library = (function_replacement_library_type_t) curFunction->getLibrary();
-        function_data->replaceAddr = (uint32_t) curFunction->getReplaceAddress();
-        function_data->replaceCall = (uint32_t) curFunction->getReplaceCall();
-        function_data->physicalAddr = (uint32_t) curFunction->getPhysicalAddress();
-        function_data->virtualAddr = (uint32_t) curFunction->getVirtualAddress();
+        function_data->VERSION       = FUNCTION_REPLACEMENT_DATA_STRUCT_VERSION;
+        function_data->library       = (function_replacement_library_type_t) curFunction->getLibrary();
+        function_data->replaceAddr   = (uint32_t) curFunction->getReplaceAddress();
+        function_data->replaceCall   = (uint32_t) curFunction->getReplaceCall();
+        function_data->physicalAddr  = (uint32_t) curFunction->getPhysicalAddress();
+        function_data->virtualAddr   = (uint32_t) curFunction->getVirtualAddress();
         function_data->targetProcess = curFunction->getTargetProcess();
 
         plugin_data->info.number_used_functions++;
@@ -118,27 +118,27 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
     }
 
     i = 0;
-    for (auto &curHook: pluginInfo->getHookDataList()) {
+    for (auto &curHook : pluginInfo->getHookDataList()) {
         replacement_data_hook_t *hook_data = &plugin_data->info.hooks[i];
 
         DEBUG_FUNCTION_LINE_VERBOSE("Set hook for plugin \"%s\" of type %08X to target %08X", plugin_data->meta.name, curHook->getType(), (void *) curHook->getFunctionPointer());
 
         hook_data->func_pointer = (void *) curHook->getFunctionPointer();
-        hook_data->type = curHook->getType();
+        hook_data->type         = curHook->getType();
 
         plugin_data->info.number_used_hooks++;
         i++;
     }
 
     /* Saving SectionInfos */
-    for (auto &curSection: pluginInfo->getSectionInfoList()) {
+    for (auto &curSection : pluginInfo->getSectionInfoList()) {
         bool foundFreeSlot = false;
-        uint32_t slot = 0;
+        uint32_t slot      = 0;
         for (uint32_t j = 0; j < MAXIMUM_PLUGIN_SECTION_LENGTH; j++) {
             auto *sectionInfo = &(plugin_data->info.sectionInfos[j]);
             if (sectionInfo->addr == 0 && sectionInfo->size == 0) {
                 foundFreeSlot = true;
-                slot = j;
+                slot          = j;
                 break;
             }
         }
@@ -157,7 +157,7 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
             return false;
         }
     }
-    plugin_data->info.trampolineId = pluginInfo->getTrampolineId();
+    plugin_data->info.trampolineId               = pluginInfo->getTrampolineId();
     plugin_data->info.allocatedTextMemoryAddress = pluginInfo->allocatedTextMemoryAddress;
     plugin_data->info.allocatedDataMemoryAddress = pluginInfo->allocatedDataMemoryAddress;
 
@@ -165,7 +165,7 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
     if (entryCount > 0) {
         // Saving SectionInfos
         uint32_t funcSymStringLen = 1;
-        for (auto &curFuncSym: pluginInfo->getFunctionSymbolDataList()) {
+        for (auto &curFuncSym : pluginInfo->getFunctionSymbolDataList()) {
             funcSymStringLen += curFuncSym->getName().length() + 1;
         }
 
@@ -186,25 +186,25 @@ bool PluginContainerPersistence::savePlugin(plugin_information_t *pluginInformat
         DEBUG_FUNCTION_LINE("Allocated %d for the function symbol data", entryCount * sizeof(plugin_function_symbol_data_t));
 
         uint32_t curStringOffset = 0;
-        uint32_t curEntryIndex = 0;
-        for (auto &curFuncSym: pluginInfo->getFunctionSymbolDataList()) {
+        uint32_t curEntryIndex   = 0;
+        for (auto &curFuncSym : pluginInfo->getFunctionSymbolDataList()) {
             entryTable[curEntryIndex].address = curFuncSym->getAddress();
-            entryTable[curEntryIndex].name = &stringTable[curStringOffset];
-            entryTable[curEntryIndex].size = curFuncSym->getSize();
-            auto len = curFuncSym->getName().length() + 1;
+            entryTable[curEntryIndex].name    = &stringTable[curStringOffset];
+            entryTable[curEntryIndex].size    = curFuncSym->getSize();
+            auto len                          = curFuncSym->getName().length() + 1;
             memcpy(stringTable + curStringOffset, curFuncSym->getName().c_str(), len);
             curStringOffset += len;
             curEntryIndex++;
         }
 
         plugin_data->info.allocatedFuncSymStringTableAddress = stringTable;
-        plugin_data->info.function_symbol_data = entryTable;
+        plugin_data->info.function_symbol_data               = entryTable;
     }
 
     plugin_data->info.number_function_symbol_data = entryCount;
 
     /* Copy plugin data */
-    auto pluginData = plugin->getPluginData();
+    auto pluginData       = plugin->getPluginData();
     auto plugin_data_data = &plugin_data->data;
 
     PluginDataPersistence::save(plugin_data_data, pluginData);
@@ -257,7 +257,7 @@ std::vector<std::shared_ptr<PluginContainer>> PluginContainerPersistence::loadPl
         curPluginInformation->allocatedTextMemoryAddress = plugin_data->info.allocatedTextMemoryAddress;
         curPluginInformation->allocatedDataMemoryAddress = plugin_data->info.allocatedDataMemoryAddress;
 
-        for (auto &curItem: plugin_data->info.sectionInfos) {
+        for (auto &curItem : plugin_data->info.sectionInfos) {
             plugin_section_info_t *sectionInfo = &curItem;
             if (sectionInfo->addr == 0 && sectionInfo->size == 0) {
                 continue;
@@ -281,7 +281,7 @@ std::vector<std::shared_ptr<PluginContainer>> PluginContainerPersistence::loadPl
         }
 
         bool storageHasId = true;
-        for (auto const &value: curPluginInformation->getHookDataList()) {
+        for (auto const &value : curPluginInformation->getHookDataList()) {
             if (value->getType() == WUPS_LOADER_HOOK_INIT_STORAGE &&
                 metaInformation->getStorageId().empty()) {
                 storageHasId = false;
@@ -302,14 +302,14 @@ std::vector<std::shared_ptr<PluginContainer>> PluginContainerPersistence::loadPl
 
         for (uint32_t j = 0; j < functionReplaceCount; j++) {
             function_replacement_data_t *entry = &(plugin_data->info.functions[j]);
-            auto func = std::make_shared<FunctionData>((void *) entry->physicalAddr, (void *) entry->virtualAddr, entry->function_name, (function_replacement_library_type_t) entry->library,
+            auto func                          = std::make_shared<FunctionData>((void *) entry->physicalAddr, (void *) entry->virtualAddr, entry->function_name, (function_replacement_library_type_t) entry->library,
                                                        (void *) entry->replaceAddr,
                                                        (void *) entry->replaceCall, entry->targetProcess);
             curPluginInformation->addFunctionData(func);
         }
 
         /* load relocation data */
-        for (auto &linking_entry: plugin_data->info.linking_entries) {
+        for (auto &linking_entry : plugin_data->info.linking_entries) {
             if (linking_entry.destination == nullptr) {
                 break;
             }
@@ -332,9 +332,9 @@ std::vector<std::shared_ptr<PluginContainer>> PluginContainerPersistence::loadPl
 
         /* load function symbol data */
         for (uint32_t j = 0; j < plugin_data->info.number_function_symbol_data; j++) {
-            auto symbol_data = &plugin_data->info.function_symbol_data[j];
+            auto symbol_data        = &plugin_data->info.function_symbol_data[j];
             std::string symbol_name = symbol_data->name;
-            auto funSymbolData = std::make_shared<FunctionSymbolData>(symbol_name, (void *) symbol_data->address, symbol_data->size);
+            auto funSymbolData      = std::make_shared<FunctionSymbolData>(symbol_name, (void *) symbol_data->address, symbol_data->size);
             curPluginInformation->addFunctionSymbolData(funSymbolData);
         }
 

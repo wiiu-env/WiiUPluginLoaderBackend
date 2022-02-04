@@ -17,15 +17,15 @@
 
 #pragma once
 
+#include "../elfio/elfio.hpp"
+#include "PluginContainer.h"
+#include "PluginInformation.h"
+#include <coreinit/memheap.h>
+#include <map>
 #include <optional>
 #include <string>
 #include <vector>
-#include <map>
-#include <coreinit/memheap.h>
 #include <wums/defines/relocation_defines.h>
-#include "PluginInformation.h"
-#include "PluginContainer.h"
-#include "../elfio/elfio.hpp"
 
 class PluginInformationFactory {
 public:

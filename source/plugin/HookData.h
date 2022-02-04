@@ -17,15 +17,15 @@
 
 #pragma once
 
-#include <wups.h>
 #include <string>
+#include <wups.h>
 
 class HookData {
 
 public:
     HookData(void *function_pointer, wups_loader_hook_type_t type) {
         this->function_pointer = function_pointer;
-        this->type = type;
+        this->type             = type;
     }
 
     ~HookData() = default;

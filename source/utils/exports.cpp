@@ -1,15 +1,15 @@
-#include <coreinit/cache.h>
-#include "../plugin/PluginMetaInformationFactory.h"
+#include "exports.h"
+#include "../PluginManagement.h"
+#include "../globals.h"
 #include "../plugin/PluginContainer.h"
 #include "../plugin/PluginContainerPersistence.h"
 #include "../plugin/PluginDataFactory.h"
-#include "../PluginManagement.h"
-#include "../globals.h"
 #include "../plugin/PluginDataPersistence.h"
-#include "exports.h"
+#include "../plugin/PluginMetaInformationFactory.h"
+#include <coreinit/cache.h>
 #include <wums.h>
 
-void fillPluginInformation(plugin_information *out, const std::shared_ptr<PluginMetaInformation> &metaInformation) {
+static void fillPluginInformation(plugin_information *out, const std::shared_ptr<PluginMetaInformation> &metaInformation) {
     out->plugin_information_version = PLUGIN_INFORMATION_VERSION;
     strncpy(out->author, metaInformation->getAuthor().c_str(), sizeof(out->author) - 1);
     strncpy(out->buildTimestamp, metaInformation->getBuildTimestamp().c_str(), sizeof(out->buildTimestamp) - 1);
@@ -26,7 +26,7 @@ extern "C" PluginBackendApiErrorType WUPSLoadAndLinkByDataHandle(const plugin_da
     if (plugin_data_handle_list != nullptr && plugin_data_handle_list_size != 0) {
         for (uint32_t i = 0; i < plugin_data_handle_list_size; i++) {
             plugin_data_handle handle = plugin_data_handle_list[i];
-            auto *pluginData = (PluginData *) handle;
+            auto *pluginData          = (PluginData *) handle;
             PluginDataPersistence::save(&gLinkOnReload.plugin_data[gLinkOnReload.number_used_plugins], pluginData);
 
             gLinkOnReload.number_used_plugins++;
@@ -45,7 +45,7 @@ extern "C" PluginBackendApiErrorType WUPSLoadAndLinkByDataHandle(const plugin_da
 extern "C" PluginBackendApiErrorType WUPSDeletePluginContainer(const plugin_container_handle *handle_list, uint32_t handle_list_size) {
     if (handle_list != nullptr && handle_list_size != 0) {
         for (uint32_t i = 0; i < handle_list_size; i++) {
-            auto handle = handle_list[i];
+            auto handle           = handle_list[i];
             auto *pluginContainer = (PluginContainer *) handle;
             delete pluginContainer;
         }
@@ -56,7 +56,7 @@ extern "C" PluginBackendApiErrorType WUPSDeletePluginContainer(const plugin_cont
 extern "C" PluginBackendApiErrorType WUPSDeletePluginData(const plugin_data_handle *plugin_data_handle_list, uint32_t plugin_data_handle_list_size) {
     if (plugin_data_handle_list != nullptr && plugin_data_handle_list_size != 0) {
         for (uint32_t i = 0; i < plugin_data_handle_list_size; i++) {
-            auto handle = plugin_data_handle_list[i];
+            auto handle      = plugin_data_handle_list[i];
             auto *pluginData = (PluginData *) handle;
             delete pluginData;
         }
@@ -86,7 +86,7 @@ extern "C" PluginBackendApiErrorType WUPSLoadPluginAsData(GetPluginInformationIn
         return PLUGIN_BACKEND_API_ERROR_INVALID_ARG;
     } else {
         auto *pluginDataHandle = new PluginData(*pluginData.value());
-        *out = (uint32_t) pluginDataHandle;
+        *out                   = (uint32_t) pluginDataHandle;
     }
 
     return PLUGIN_BACKEND_API_ERROR_NONE;
@@ -138,9 +138,9 @@ extern "C" PluginBackendApiErrorType WUPSGetPluginDataForContainerHandles(const 
     PluginBackendApiErrorType res = PLUGIN_BACKEND_API_ERROR_NONE;
     if (plugin_container_handle_list != nullptr && buffer_size != 0) {
         for (uint32_t i = 0; i < buffer_size; i++) {
-            auto handle = plugin_container_handle_list[i];
-            auto *container = (PluginContainer *) handle;
-            auto *pluginData = new PluginData(*container->getPluginData());
+            auto handle         = plugin_container_handle_list[i];
+            auto *container     = (PluginContainer *) handle;
+            auto *pluginData    = new PluginData(*container->getPluginData());
             plugin_data_list[i] = (uint32_t) pluginData;
         }
     } else {
@@ -154,7 +154,7 @@ extern "C" PluginBackendApiErrorType WUPSGetMetaInformation(const plugin_contain
     PluginBackendApiErrorType res = PLUGIN_BACKEND_API_ERROR_NONE;
     if (plugin_container_handle_list != nullptr && buffer_size != 0) {
         for (uint32_t i = 0; i < buffer_size; i++) {
-            auto handle = plugin_container_handle_list[i];
+            auto handle     = plugin_container_handle_list[i];
             auto *container = (PluginContainer *) handle;
 
             plugin_information_list[i].plugin_information_version = PLUGIN_INFORMATION_VERSION;
@@ -180,11 +180,11 @@ extern "C" PluginBackendApiErrorType WUPSGetLoadedPlugins(plugin_container_handl
         return PLUGIN_BACKEND_API_ERROR_INVALID_ARG;
     }
     *plugin_information_version = PLUGIN_INFORMATION_VERSION;
-    auto plugins = PluginContainerPersistence::loadPlugins(gPluginInformation);
-    uint32_t counter = 0;
-    for (auto &plugin: plugins) {
+    auto plugins                = PluginContainerPersistence::loadPlugins(gPluginInformation);
+    uint32_t counter            = 0;
+    for (auto &plugin : plugins) {
         if (counter < buffer_size) {
-            auto *container = new PluginContainer(*plugin);
+            auto *container     = new PluginContainer(*plugin);
             io_handles[counter] = (uint32_t) container;
             counter++;
         } else {

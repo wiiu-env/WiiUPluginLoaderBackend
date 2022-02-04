@@ -1,6 +1,6 @@
+#include "WUPSConfigItem.h"
 #include <wums.h>
 #include <wups/config.h>
-#include "WUPSConfigItem.h"
 
 typedef uint32_t WUPSConfigItemHandle;
 

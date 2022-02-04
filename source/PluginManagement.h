@@ -1,11 +1,12 @@
 #pragma once
 
+#include "plugin/PluginContainer.h"
 #include <common/plugin_defines.h>
+#include <memory>
 #include <vector>
 
 class PluginManagement {
 public:
-
     static void doRelocations(const std::vector<std::shared_ptr<PluginContainer>> &plugins, relocation_trampoline_entry_t *trampData, uint32_t tramp_size);
 
     static void memsetBSS(const std::vector<std::shared_ptr<PluginContainer>> &plugins);

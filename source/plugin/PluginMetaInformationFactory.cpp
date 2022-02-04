@@ -15,12 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
 
-#include <sys/types.h>
-#include <dirent.h>
-#include <whb/file.h>
-#include <memory>
-#include "../utils/StringTools.h"
 #include "PluginMetaInformationFactory.h"
+#include "../utils/StringTools.h"
+#include <dirent.h>
+#include <memory>
+#include <sys/types.h>
+#include <whb/file.h>
 
 using namespace ELFIO;
 
@@ -69,7 +69,7 @@ std::optional<std::shared_ptr<PluginMetaInformation>> PluginMetaInformationFacto
         // Calculate total size:
         if ((psec->get_type() == SHT_PROGBITS || psec->get_type() == SHT_NOBITS) && (psec->get_flags() & SHF_ALLOC)) {
             uint32_t sectionSize = psec->get_size();
-            auto address = (uint32_t) psec->get_address();
+            auto address         = (uint32_t) psec->get_address();
             if ((address >= 0x02000000) && address < 0x10000000) {
                 pluginSize += sectionSize;
             } else if ((address >= 0x10000000) && address < 0xC0000000) {
@@ -80,7 +80,7 @@ std::optional<std::shared_ptr<PluginMetaInformation>> PluginMetaInformationFacto
         // Get meta information and check WUPS version:
         if (psec->get_name() == ".wups.meta") {
             const void *sectionData = psec->get_data();
-            uint32_t sectionSize = psec->get_size();
+            uint32_t sectionSize    = psec->get_size();
 
             char *curEntry = (char *) sectionData;
             while ((uint32_t) curEntry < (uint32_t) sectionData + sectionSize) {

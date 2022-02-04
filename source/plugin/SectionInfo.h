@@ -22,10 +22,9 @@
 class SectionInfo {
 
 public:
-    SectionInfo(std::string &name, uint32_t address, uint32_t sectionSize) :
-            name(name),
-            address(address),
-            sectionSize(sectionSize) {
+    SectionInfo(std::string &name, uint32_t address, uint32_t sectionSize) : name(name),
+                                                                             address(address),
+                                                                             sectionSize(sectionSize) {
     }
 
     SectionInfo() = default;

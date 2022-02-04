@@ -17,11 +17,12 @@
 
 #pragma once
 
+#include "PluginData.h"
+#include <coreinit/memexpheap.h>
+#include <memory>
 #include <optional>
 #include <string>
 #include <vector>
-#include <coreinit/memexpheap.h>
-#include "PluginData.h"
 
 class PluginDataFactory {
 public:

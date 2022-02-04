@@ -17,18 +17,18 @@
 
 #pragma once
 
-#include <map>
-#include <set>
-#include <optional>
-#include <string>
-#include <vector>
-#include <memory>
+#include "FunctionData.h"
+#include "FunctionSymbolData.h"
+#include "HookData.h"
 #include "PluginMetaInformation.h"
 #include "RelocationData.h"
-#include "HookData.h"
-#include "FunctionData.h"
 #include "SectionInfo.h"
-#include "FunctionSymbolData.h"
+#include <map>
+#include <memory>
+#include <optional>
+#include <set>
+#include <string>
+#include <vector>
 
 struct FunctionSymbolDataComparator {
     bool operator()(const std::shared_ptr<FunctionSymbolData> &lhs,

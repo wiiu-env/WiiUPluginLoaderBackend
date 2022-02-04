@@ -24,22 +24,22 @@
  * DirList Class
  * for WiiXplorer 2010
  ***************************************************************************/
+#include <algorithm>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <string>
 #include <strings.h>
-#include <algorithm>
-#include <sys/stat.h>
 #include <sys/dirent.h>
+#include <sys/stat.h>
 
 #include <fs/DirList.h>
 #include <utils/StringTools.h>
 
 DirList::DirList() {
-    Flags = 0;
+    Flags  = 0;
     Filter = 0;
-    Depth = 0;
+    Depth  = 0;
 }
 
 DirList::DirList(const std::string &path, const char *filter, uint32_t flags, uint32_t maxDepth) {
@@ -55,9 +55,9 @@ BOOL DirList::LoadPath(const std::string &folder, const char *filter, uint32_t f
     if (folder.empty())
         return false;
 
-    Flags = flags;
+    Flags  = flags;
     Filter = filter;
-    Depth = maxDepth;
+    Depth  = maxDepth;
 
     std::string folderpath(folder);
     uint32_t length = folderpath.size();
@@ -82,14 +82,14 @@ BOOL DirList::InternalLoadPath(std::string &folderpath) {
         return false;
 
     struct dirent *dirent = nullptr;
-    DIR *dir = nullptr;
+    DIR *dir              = nullptr;
 
     dir = opendir(folderpath.c_str());
     if (dir == nullptr)
         return false;
 
     while ((dirent = readdir(dir)) != 0) {
-        BOOL isDir = dirent->d_type & DT_DIR;
+        BOOL isDir           = dirent->d_type & DT_DIR;
         const char *filename = dirent->d_name;
 
         if (isDir) {

@@ -44,9 +44,7 @@ WUMS_APPLICATION_ENDS() {
     }
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_SOCKETS);
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB);
-    CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_STDCPP);
-    CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_NEWLIB);
-    CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_MALLOC);
+
     auto pluginInformation = gPluginInformation;
     for (int32_t plugin_index = pluginInformation->number_used_plugins - 1; plugin_index >= 0; plugin_index--) {
         FunctionPatcherRestoreDynamicFunctions(pluginInformation->plugin_data[plugin_index].info.functions, pluginInformation->plugin_data[plugin_index].info.number_used_functions);
@@ -220,13 +218,17 @@ WUMS_APPLICATION_STARTS() {
         DCFlushRange((void *) gPluginInformation, sizeof(plugin_information_t));
         ICInvalidateRange((void *) gPluginInformation, sizeof(plugin_information_t));
 
-        CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_MALLOC);
-        CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_NEWLIB);
-        CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_STDCPP);
+        if (initNeeded) {
+            CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_MALLOC);
+            CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_NEWLIB);
+            CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_STDCPP);
+        }
         CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB);
         CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WUT_SOCKETS);
 
-        CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WRAPPER);
+        if (initNeeded) {
+            CallHook(gPluginInformation, WUPS_LOADER_HOOK_INIT_WRAPPER);
+        }
 
         if (initNeeded) {
             PluginManagement::callInitHooks(gPluginInformation);

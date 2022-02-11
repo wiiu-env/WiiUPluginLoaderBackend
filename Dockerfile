@@ -1,4 +1,4 @@
-FROM wiiuenv/devkitppc:20211229
+FROM wiiuenv/devkitppc:20220211
 
 COPY --from=wiiuenv/wiiumodulesystem:20220127 /artifacts $DEVKITPRO
 COPY --from=wiiuenv/wiiupluginsystem:20220123 /artifacts $DEVKITPRO

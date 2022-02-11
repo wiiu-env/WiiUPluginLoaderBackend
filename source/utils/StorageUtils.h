@@ -1,6 +1,6 @@
 #pragma once
 
-#include <wups.h>
+#include <wups/storage.h>
 
 class StorageUtils {
 public:

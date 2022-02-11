@@ -167,7 +167,7 @@ void ConfigUtils::displayMenu() {
     VPADStatus vpad_data{};
     VPADReadError vpad_error;
     KPADStatus kpad_data{};
-    int32_t kpad_error;
+    KPADError kpad_error;
 
     while (true) {
         buttonsTriggered = 0;
@@ -565,7 +565,9 @@ void ConfigUtils::displayMenu() {
                 if (hook_data->func_pointer == nullptr) {
                     break;
                 }
-                ((void (*)())((uint32_t *) hook_data->func_pointer))();
+                // clang-format off
+                ((void(*)())((uint32_t *) hook_data->func_pointer))();
+                // clang-format on
                 break;
             }
         }

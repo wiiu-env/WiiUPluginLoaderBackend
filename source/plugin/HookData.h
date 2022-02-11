@@ -18,8 +18,7 @@
 #pragma once
 
 #include <string>
-#include <wups.h>
-
+#include <wups/hooks.h>
 class HookData {
 
 public:

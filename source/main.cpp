@@ -39,7 +39,9 @@ WUMS_APPLICATION_REQUESTS_EXIT() {
 
 WUMS_APPLICATION_ENDS() {
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_APPLICATION_ENDS);
-    CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WRAPPER);
+    if (gLinkOnReload.loadOnReload) {
+        CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WRAPPER);
+    }
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_SOCKETS);
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB);
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_FINI_WUT_STDCPP);

@@ -3,7 +3,6 @@
 #include <coreinit/messagequeue.h>
 #include <padscore/wpad.h>
 #include <vpad/input.h>
-#include <wups.h>
 
 #include "../globals.h"
 #include "../hooks.h"
@@ -102,9 +101,9 @@ DECL_FUNCTION(void, WPADRead, WPADChan chan, WPADStatusProController *data) {
     }
 }
 
-
-#define KiReport ((void (*)(const char *, ...)) 0xfff0ad0c)
-
+// clang-format off
+#define KiReport ((void(*)(const char *, ...)) 0xfff0ad0c)
+// clang-format on
 
 #pragma GCC push_options
 #pragma GCC optimize("O0")

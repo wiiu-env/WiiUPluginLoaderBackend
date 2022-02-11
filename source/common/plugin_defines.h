@@ -24,7 +24,7 @@
 #include <wums/defines/relocation_defines.h>
 
 #include <function_patcher/function_patching.h>
-#include <wups.h>
+#include <wups/hooks.h>
 
 #ifdef __cplusplus
 extern "C" {

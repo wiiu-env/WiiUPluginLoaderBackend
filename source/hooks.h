@@ -1,7 +1,7 @@
 #pragma once
 
 #include "common/plugin_defines.h"
-#include <wups.h>
+#include <wups/hooks.h>
 
 void CallHook(plugin_information_t *pluginInformation, wups_loader_hook_type_t hook_type);
 

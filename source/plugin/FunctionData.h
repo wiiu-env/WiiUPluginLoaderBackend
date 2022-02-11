@@ -18,7 +18,6 @@
 
 #include <function_patcher/fpatching_defines.h>
 #include <string>
-#include <wups.h>
 
 class FunctionData {
 

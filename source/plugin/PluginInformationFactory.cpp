@@ -18,14 +18,12 @@
 #include "PluginInformationFactory.h"
 #include "../utils/ElfUtils.h"
 #include "../utils/utils.h"
-#include "PluginData.h"
 #include <coreinit/cache.h>
-#include <coreinit/memexpheap.h>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
-#include <wups.h>
+#include <wups/function_patching.h>
 
 using namespace ELFIO;
 

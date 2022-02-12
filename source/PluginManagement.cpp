@@ -100,17 +100,6 @@ void PluginManagement::RestorePatches(plugin_information_t *pluginInformation, B
 }
 
 void PluginManagement::unloadPlugins(plugin_information_t *pluginInformation, MEMHeapHandle pluginHeap, BOOL freePluginData) {
-    CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_WUT_MALLOC);
-    CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_WUT_NEWLIB);
-    CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_WUT_STDCPP);
-    CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB);
-    CallHook(pluginInformation, WUPS_LOADER_HOOK_INIT_WUT_SOCKETS);
-    CallHook(pluginInformation, WUPS_LOADER_HOOK_DEINIT_PLUGIN);
-    // CallHook(pluginInformation, WUPS_LOADER_HOOK_FINI_WUT_SOCKETS); To keep network alive we skip this.
-    CallHook(pluginInformation, WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB);
-    CallHook(pluginInformation, WUPS_LOADER_HOOK_FINI_WUT_STDCPP);
-    CallHook(pluginInformation, WUPS_LOADER_HOOK_FINI_WUT_NEWLIB);
-    CallHook(pluginInformation, WUPS_LOADER_HOOK_FINI_WUT_MALLOC);
 
     RestorePatches(pluginInformation, true);
     for (int32_t plugin_index = 0; plugin_index < pluginInformation->number_used_plugins; plugin_index++) {

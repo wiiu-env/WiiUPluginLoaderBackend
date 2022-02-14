@@ -1,11 +1,24 @@
 #include "utils/logger.h"
+#include <coreinit/ios.h>
+#include <cstring>
 #include <malloc.h>
-#include <stdarg.h>
-#include <stddef.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <whb/log.h>
+#include <string>
+
+std::string getPluginPath() {
+    char environmentPath[0x100];
+    memset(environmentPath, 0, sizeof(environmentPath));
+
+    auto handle = IOS_Open("/dev/mcp", IOS_OPEN_READ);
+    if (handle >= 0) {
+        int in = 0xF9; // IPC_CUSTOM_COPY_ENVIRONMENT_PATH
+        if (IOS_Ioctl(handle, 100, &in, sizeof(in), environmentPath, sizeof(environmentPath)) != IOS_ERROR_OK) {
+            return "fs:/vol/external01/wiiu/plugins";
+        }
+
+        IOS_Close(handle);
+    }
+    return std::string(environmentPath) + "/plugins";
+}
 
 // https://gist.github.com/ccbrown/9722406
 void dumpHex(const void *data, size_t size) {
@@ -25,7 +38,7 @@ void dumpHex(const void *data, size_t size) {
             if ((i + 1) % 16 == 0) {
                 WHBLogPrintf("|  %s ", ascii);
                 if (i + 1 < size) {
-                    DEBUG_FUNCTION_LINE("0x%08X (0x%04X); ", data + i + 1, i + 1);
+                    DEBUG_FUNCTION_LINE("0x%08X (0x%04X); ", ((uint32_t) data) + i + 1, i + 1);
                 }
             } else if (i + 1 == size) {
                 ascii[(i + 1) % 16] = '\0';

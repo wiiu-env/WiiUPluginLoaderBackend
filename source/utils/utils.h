@@ -1,7 +1,7 @@
-#ifndef __UTILS_H_
-#define __UTILS_H_
+#pragma once
 
 #include <malloc.h>
+#include <string>
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,4 +41,4 @@ void dumpHex(const void *data, size_t size);
 }
 #endif
 
-#endif // __UTILS_H_
+std::string getPluginPath();

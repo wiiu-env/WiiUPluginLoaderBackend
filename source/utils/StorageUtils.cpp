@@ -54,7 +54,7 @@ int StorageUtils::OpenStorage(const char *plugin_id, wups_storage_item_t *items)
         return WUPS_STORAGE_ERROR_INVALID_BACKEND_PARAMS;
     }
 
-    std::string filePath = std::string("fs:/vol/external01/wiiu/plugins/config/") + plugin_id + ".json";
+    std::string filePath = getPluginPath() + "/config/" + plugin_id + ".json";
 
     nlohmann::json j;
     CFile file(filePath, CFile::ReadOnly);
@@ -113,7 +113,7 @@ int StorageUtils::CloseStorage(const char *plugin_id, wups_storage_item_t *items
         return WUPS_STORAGE_ERROR_INVALID_BACKEND_PARAMS;
     }
 
-    std::string folderPath = "fs:/vol/external01/wiiu/plugins/config/";
+    std::string folderPath = getPluginPath() + "/config/";
     std::string filePath   = folderPath + plugin_id + ".json";
 
     FSUtils::CreateSubfolder(folderPath.c_str());
@@ -133,5 +133,6 @@ int StorageUtils::CloseStorage(const char *plugin_id, wups_storage_item_t *items
     memcpy(data, jsonString.c_str(), writeSize);
     file.write(data, writeSize);
     file.close();
+
     return WUPS_STORAGE_ERROR_SUCCESS;
 }

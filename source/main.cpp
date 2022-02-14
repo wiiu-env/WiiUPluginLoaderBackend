@@ -34,7 +34,6 @@ WUMS_INITIALIZE(args) {
 
 WUMS_APPLICATION_REQUESTS_EXIT() {
     CallHook(gPluginInformation, WUPS_LOADER_HOOK_APPLICATION_REQUESTS_EXIT);
-    deinitLogging();
 }
 
 WUMS_APPLICATION_ENDS() {
@@ -50,6 +49,7 @@ WUMS_APPLICATION_ENDS() {
         FunctionPatcherRestoreDynamicFunctions(pluginInformation->plugin_data[plugin_index].info.functions, pluginInformation->plugin_data[plugin_index].info.number_used_functions);
     }
     FunctionPatcherRestoreDynamicFunctions(method_hooks_hooks_static, method_hooks_size_hooks_static);
+    deinitLogging();
 }
 
 void *allocOnCustomHeap(int alignment, int size);

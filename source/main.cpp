@@ -2,15 +2,13 @@
 #include "globals.h"
 #include "hooks.h"
 #include "patcher/hooks_patcher_static.h"
-#include "plugin/PluginContainer.h"
 #include "plugin/PluginContainerPersistence.h"
 #include "plugin/PluginDataFactory.h"
 #include "plugin/PluginDataPersistence.h"
+#include "utils/utils.h"
 #include <coreinit/cache.h>
 #include <coreinit/debug.h>
 #include <coreinit/dynload.h>
-#include <coreinit/ios.h>
-#include <coreinit/memdefaultheap.h>
 #include <memory>
 #include <wums.h>
 
@@ -53,22 +51,6 @@ WUMS_APPLICATION_ENDS() {
 }
 
 void *allocOnCustomHeap(int alignment, int size);
-
-std::string getPluginPath() {
-    char environmentPath[0x100];
-    memset(environmentPath, 0, sizeof(environmentPath));
-
-    auto handle = IOS_Open("/dev/mcp", IOS_OPEN_READ);
-    if (handle >= 0) {
-        int in = 0xF9; // IPC_CUSTOM_COPY_ENVIRONMENT_PATH
-        if (IOS_Ioctl(handle, 100, &in, sizeof(in), environmentPath, sizeof(environmentPath)) != IOS_ERROR_OK) {
-            return "fs:/vol/external01/wiiu/plugins";
-        }
-
-        IOS_Close(handle);
-    }
-    return std::string(environmentPath) + "/plugins";
-}
 
 WUMS_APPLICATION_STARTS() {
     uint32_t upid = OSGetUPID();

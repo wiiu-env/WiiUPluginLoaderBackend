@@ -22,6 +22,9 @@ extern "C" {
 #define ALIGN4(x)             (((x) + 3) & ~3)
 #define ALIGN32(x)            (((x) + 31) & ~31)
 
+#define ALIGN_DATA(align)     __attribute__((aligned(align)))
+#define ALIGN_DATA_0x40       ALIGN_DATA(0x40)
+
 // those work only in powers of 2
 #define ROUNDDOWN(val, align) ((val) & ~(align - 1))
 #define ROUNDUP(val, align)   ROUNDDOWN(((val) + (align - 1)), align)

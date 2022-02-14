@@ -16,6 +16,7 @@
  ****************************************************************************/
 
 #include "PluginMetaInformationFactory.h"
+#include "../fs/FSUtils.h"
 #include "../utils/StringTools.h"
 #include <dirent.h>
 #include <memory>
@@ -32,18 +33,28 @@ std::optional<std::shared_ptr<PluginMetaInformation>> PluginMetaInformationFacto
     elfio reader;
     if (!reader.load((char *) pluginData->buffer, pluginData->length)) {
         DEBUG_FUNCTION_LINE("Can't process PluginData in elfio");
-        return std::nullopt;
+        return {};
     }
     return loadPlugin(reader);
 }
 
 std::optional<std::shared_ptr<PluginMetaInformation>> PluginMetaInformationFactory::loadPlugin(std::string &filePath) {
     elfio reader;
-    if (!reader.load(filePath)) {
-        DEBUG_FUNCTION_LINE("Can't find or process ELF file");
-        return std::nullopt;
+
+    uint8_t *buffer = nullptr;
+    uint32_t length = 0;
+    if (FSUtils::LoadFileToMem(filePath.c_str(), &buffer, &length) < 0) {
+        DEBUG_FUNCTION_LINE("Failed to load file to memory");
+        return {};
     }
-    return loadPlugin(reader);
+
+    if (!reader.load((char *) buffer, length)) {
+        DEBUG_FUNCTION_LINE("Can't process PluginData in elfio");
+        return {};
+    }
+    auto res = loadPlugin(reader);
+    free(buffer);
+    return res;
 }
 
 std::optional<std::shared_ptr<PluginMetaInformation>> PluginMetaInformationFactory::loadPlugin(char *buffer, size_t size) {

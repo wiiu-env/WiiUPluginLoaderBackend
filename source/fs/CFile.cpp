@@ -1,4 +1,5 @@
 
+#include "utils/utils.h"
 #include <cstdarg>
 #include <cstdio>
 #include <fs/CFile.hpp>
@@ -156,7 +157,7 @@ int32_t CFile::seek(long int offset, int32_t origin) {
 }
 
 int32_t CFile::fwrite(const char *format, ...) {
-    char tmp[512];
+    ALIGN_DATA_0x40 char tmp[512];
     tmp[0]         = 0;
     int32_t result = -1;
 

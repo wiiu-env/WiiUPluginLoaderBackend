@@ -15,13 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
 #include "PluginDataFactory.h"
+#include "../fs/FSUtils.h"
 #include "../utils/StringTools.h"
-#include "../utils/logger.h"
 #include <dirent.h>
-#include <fcntl.h>
 #include <memory>
 #include <sys/stat.h>
-
 
 std::vector<std::shared_ptr<PluginData>> PluginDataFactory::loadDir(const std::string &path, MEMHeapHandle heapHandle) {
     std::vector<std::shared_ptr<PluginData>> result;
@@ -65,28 +63,17 @@ std::vector<std::shared_ptr<PluginData>> PluginDataFactory::loadDir(const std::s
 }
 
 std::optional<std::shared_ptr<PluginData>> PluginDataFactory::load(const std::string &filename, MEMHeapHandle heapHandle) {
-    // Not going to explicitly check these.
-    // The use of gcount() below will compensate for a failure here.
-    std::ifstream is(filename, std::ios::binary);
-
-    is.seekg(0, std::ios::end);
-    std::streampos length = is.tellg();
-    is.seekg(0, std::ios::beg);
-
-    // reading into a 0x40 aligned buffer increases reading speed.
-    char *data = (char *) memalign(0x40, length);
-    if (!data) {
-        is.close();
-        DEBUG_FUNCTION_LINE("Failed to alloc memory for holding the plugin");
+    uint8_t *buffer = nullptr;
+    uint32_t fsize  = 0;
+    if (FSUtils::LoadFileToMem(filename.c_str(), &buffer, &fsize) < 0) {
+        DEBUG_FUNCTION_LINE("Failed to load file");
         return {};
     }
-    is.read(data, length);
 
     std::vector<uint8_t> result;
-    result.resize(length);
-    memcpy(&result[0], data, length);
-    free(data);
-    is.close();
+    result.resize(fsize);
+    memcpy(&result[0], buffer, fsize);
+    free(buffer);
 
     DEBUG_FUNCTION_LINE_VERBOSE("Loaded file!");
 

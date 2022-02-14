@@ -1,32 +1,35 @@
 #include "fs/FSUtils.h"
 #include "fs/CFile.hpp"
 #include "utils/logger.h"
+#include "utils/utils.h"
+#include <cstdio>
+#include <cstring>
 #include <fcntl.h>
 #include <malloc.h>
-#include <stdio.h>
-#include <string.h>
 #include <unistd.h>
 
 int32_t FSUtils::LoadFileToMem(const char *filepath, uint8_t **inbuffer, uint32_t *size) {
     //! always initialze input
-    *inbuffer = nullptr;
-    if (size)
+    *inbuffer = NULL;
+    if (size) {
         *size = 0;
+    }
 
     int32_t iFd = open(filepath, O_RDONLY);
-    if (iFd < 0)
+    if (iFd < 0) {
         return -1;
+    }
 
     uint32_t filesize = lseek(iFd, 0, SEEK_END);
     lseek(iFd, 0, SEEK_SET);
 
-    uint8_t *buffer = (uint8_t *) malloc(filesize);
+    auto *buffer = (uint8_t *) memalign(0x40, ROUNDUP(filesize, 0x40));
     if (buffer == nullptr) {
         close(iFd);
         return -2;
     }
 
-    uint32_t blocksize = 0x4000;
+    uint32_t blocksize = 0x20000;
     uint32_t done      = 0;
     int32_t readBytes  = 0;
 
@@ -40,7 +43,7 @@ int32_t FSUtils::LoadFileToMem(const char *filepath, uint8_t **inbuffer, uint32_
         done += readBytes;
     }
 
-    close(iFd);
+    ::close(iFd);
 
     if (done != filesize) {
         free(buffer);

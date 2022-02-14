@@ -3,6 +3,7 @@
 
 #include "fs/CFile.hpp"
 #include "fs/FSUtils.h"
+#include "utils.h"
 #include "utils/json.hpp"
 #include "utils/logger.h"
 
@@ -58,7 +59,7 @@ int StorageUtils::OpenStorage(const char *plugin_id, wups_storage_item_t *items)
     nlohmann::json j;
     CFile file(filePath, CFile::ReadOnly);
     if (file.isOpen() && file.size() > 0) {
-        uint8_t *json_data     = new uint8_t[file.size() + 1];
+        auto *json_data        = (uint8_t *) memalign(0x40, ROUNDUP(file.size() + 1, 0x40));
         json_data[file.size()] = '\0';
 
         file.read(json_data, file.size());
@@ -127,7 +128,10 @@ int StorageUtils::CloseStorage(const char *plugin_id, wups_storage_item_t *items
     j["storageitems"] = processItems(items);
 
     std::string jsonString = j.dump(4);
-    file.write((const uint8_t *) jsonString.c_str(), jsonString.size());
+    auto writeSize         = jsonString.size();
+    auto *data             = (uint8_t *) memalign(0x40, ROUNDUP(writeSize, 0x40));
+    memcpy(data, jsonString.c_str(), writeSize);
+    file.write(data, writeSize);
     file.close();
     return WUPS_STORAGE_ERROR_SUCCESS;
 }

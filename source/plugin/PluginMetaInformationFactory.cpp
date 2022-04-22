@@ -27,12 +27,12 @@ using namespace ELFIO;
 
 std::optional<std::shared_ptr<PluginMetaInformation>> PluginMetaInformationFactory::loadPlugin(const std::shared_ptr<PluginData> &pluginData) {
     if (pluginData->buffer == nullptr) {
-        DEBUG_FUNCTION_LINE("Buffer was nullptr");
+        DEBUG_FUNCTION_LINE_ERR("Buffer was nullptr");
         return std::nullopt;
     }
     elfio reader;
     if (!reader.load((char *) pluginData->buffer, pluginData->length)) {
-        DEBUG_FUNCTION_LINE("Can't process PluginData in elfio");
+        DEBUG_FUNCTION_LINE_ERR("Can't process PluginData in elfio");
         return {};
     }
     return loadPlugin(reader);
@@ -44,12 +44,12 @@ std::optional<std::shared_ptr<PluginMetaInformation>> PluginMetaInformationFacto
     uint8_t *buffer = nullptr;
     uint32_t length = 0;
     if (FSUtils::LoadFileToMem(filePath.c_str(), &buffer, &length) < 0) {
-        DEBUG_FUNCTION_LINE("Failed to load file to memory");
+        DEBUG_FUNCTION_LINE_ERR("Failed to load file to memory");
         return {};
     }
 
     if (!reader.load((char *) buffer, length)) {
-        DEBUG_FUNCTION_LINE("Can't process PluginData in elfio");
+        DEBUG_FUNCTION_LINE_ERR("Can't process PluginData in elfio");
         return {};
     }
     auto res = loadPlugin(reader);
@@ -60,7 +60,7 @@ std::optional<std::shared_ptr<PluginMetaInformation>> PluginMetaInformationFacto
 std::optional<std::shared_ptr<PluginMetaInformation>> PluginMetaInformationFactory::loadPlugin(char *buffer, size_t size) {
     elfio reader;
     if (!reader.load(buffer, size)) {
-        DEBUG_FUNCTION_LINE("Can't find or process ELF file");
+        DEBUG_FUNCTION_LINE_ERR("Can't find or process ELF file");
         return std::nullopt;
     }
 
@@ -122,7 +122,7 @@ std::optional<std::shared_ptr<PluginMetaInformation>> PluginMetaInformationFacto
                         pluginInfo->setStorageId(value);
                     } else if (key == "wups") {
                         if (value != "0.7.0") {
-                            DEBUG_FUNCTION_LINE("Warning: Ignoring plugin - Unsupported WUPS version: %s.", value.c_str());
+                            DEBUG_FUNCTION_LINE_ERR("Warning: Ignoring plugin - Unsupported WUPS version: %s.", value.c_str());
                             return std::nullopt;
                         }
                     }

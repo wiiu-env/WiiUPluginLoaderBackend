@@ -43,7 +43,7 @@ static void processJson(wups_storage_item_t *items, nlohmann::json json) {
                 processJson(item, it.value());
             }
         } else {
-            DEBUG_FUNCTION_LINE("Unknown type %s for value %s", it.value().type_name(), it.key().c_str());
+            DEBUG_FUNCTION_LINE_ERR("Unknown type %s for value %s", it.value().type_name(), it.key().c_str());
         }
         index++;
     }
@@ -102,7 +102,7 @@ static nlohmann::json processItems(wups_storage_item_t *items) {
         } else if (item->type == WUPS_STORAGE_TYPE_ITEM) {
             json[item->key] = processItems(item);
         } else {
-            DEBUG_FUNCTION_LINE("Saving type %d not implemented", item->type);
+            DEBUG_FUNCTION_LINE_ERR("Saving type %d not implemented", item->type);
         }
     }
     return json;
@@ -120,7 +120,7 @@ int StorageUtils::CloseStorage(const char *plugin_id, wups_storage_item_t *items
 
     CFile file(filePath, CFile::WriteOnly);
     if (!file.isOpen()) {
-        DEBUG_FUNCTION_LINE("Cannot create file %s", filePath.c_str());
+        DEBUG_FUNCTION_LINE_ERR("Cannot create file %s", filePath.c_str());
         return WUPS_STORAGE_ERROR_IO;
     };
 

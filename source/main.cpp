@@ -130,7 +130,7 @@ WUMS_APPLICATION_STARTS() {
                 }
 #endif
                 if (!PluginContainerPersistence::savePlugin(gPluginInformation, pluginContainer, gPluginDataHeap)) {
-                    DEBUG_FUNCTION_LINE("Failed to save plugin");
+                    DEBUG_FUNCTION_LINE_ERR("Failed to save plugin");
                 }
             }
 
@@ -164,14 +164,14 @@ WUMS_APPLICATION_STARTS() {
                         DEBUG_FUNCTION_LINE_VERBOSE("Free plugin data buffer for %s [%08X on heap %08X]", plugin->meta.name, plugin->data.buffer, plugin->data.heapHandle);
                         MEMFreeToExpHeap((MEMHeapHandle) plugin->data.heapHandle, plugin->data.buffer);
                     } else {
-                        DEBUG_FUNCTION_LINE("########################");
-                        DEBUG_FUNCTION_LINE("Failed to free memory from plugin");
-                        DEBUG_FUNCTION_LINE("########################");
+                        DEBUG_FUNCTION_LINE_ERR("########################");
+                        DEBUG_FUNCTION_LINE_ERR("Failed to free memory from plugin");
+                        DEBUG_FUNCTION_LINE_ERR("########################");
                     }
                     plugin->data.buffer       = nullptr;
                     plugin->data.bufferLength = 0;
                 } else {
-                    DEBUG_FUNCTION_LINE("Plugin %s has no copy of elf saved in memory, can't free it", plugin->meta.name);
+                    DEBUG_FUNCTION_LINE_ERR("Plugin %s has no copy of elf saved in memory, can't free it", plugin->meta.name);
                 }
             }
         }
@@ -183,7 +183,7 @@ WUMS_APPLICATION_STARTS() {
         for (auto &pluginContainer : plugins) {
             DEBUG_FUNCTION_LINE("Stored information for plugin %s ; %s", pluginContainer->getMetaInformation()->getName().c_str(), pluginContainer->getMetaInformation()->getAuthor().c_str());
             if (!PluginContainerPersistence::savePlugin(gPluginInformation, pluginContainer, gPluginDataHeap)) {
-                DEBUG_FUNCTION_LINE("Failed to save plugin");
+                DEBUG_FUNCTION_LINE_ERR("Failed to save plugin");
             }
         }
         gLinkOnReload.loadOnReload = false;

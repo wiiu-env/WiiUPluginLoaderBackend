@@ -72,6 +72,7 @@ public:
                 return StringTools::strfmt("[ERROR %d]", res);
             }
         }
+        DEBUG_FUNCTION_LINE_ERR("NOT IMPLEMENTED");
         return "NOT_IMPLEMENTED";
     }
 
@@ -89,6 +90,7 @@ public:
                 return StringTools::strfmt("[ERROR %d]", res);
             }
         }
+        DEBUG_FUNCTION_LINE_ERR("NOT IMPLEMENTED");
         return "NOT_IMPLEMENTED";
     }
 
@@ -100,7 +102,9 @@ public:
     void onSelected(bool isSelected) const {
         if (this->callbacks.onSelected != nullptr) {
             this->callbacks.onSelected(context, isSelected);
+            return;
         }
+        DEBUG_FUNCTION_LINE_ERR("NOT IMPLEMENTED");
     }
 
     /**
@@ -110,7 +114,9 @@ public:
     void onButtonPressed(WUPSConfigButtons buttons) const {
         if (this->callbacks.onButtonPressed != nullptr) {
             this->callbacks.onButtonPressed(context, buttons);
+            return;
         }
+        DEBUG_FUNCTION_LINE_ERR("NOT IMPLEMENTED");
     }
 
     /**
@@ -123,6 +129,7 @@ public:
         if (this->callbacks.isMovementAllowed != nullptr) {
             return this->callbacks.isMovementAllowed(context);
         }
+        DEBUG_FUNCTION_LINE_ERR("NOT IMPLEMENTED");
         return false;
     }
 
@@ -132,7 +139,9 @@ public:
     void restoreDefault() {
         if (this->callbacks.restoreDefault != nullptr) {
             this->callbacks.restoreDefault(context);
+            return;
         }
+        DEBUG_FUNCTION_LINE_ERR("NOT IMPLEMENTED");
     }
 
     /**
@@ -164,7 +173,9 @@ public:
     virtual ~WUPSConfigItem() {
         if (this->callbacks.onDelete != nullptr) {
             this->callbacks.onDelete(context);
+            return;
         }
+        DEBUG_FUNCTION_LINE_ERR("NOT IMPLEMENTED");
     };
 
 private:

@@ -72,7 +72,6 @@ int StorageUtils::OpenStorage(const char *plugin_id, wups_storage_item_t *items)
             return WUPS_STORAGE_ERROR_INVALID_JSON;
         }
     } else { // empty or no config exists yet
-        DEBUG_FUNCTION_LINE("open failed");
         return WUPS_STORAGE_ERROR_SUCCESS;
     }
 

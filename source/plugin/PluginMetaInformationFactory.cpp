@@ -18,10 +18,7 @@
 #include "PluginMetaInformationFactory.h"
 #include "../fs/FSUtils.h"
 #include "../utils/StringTools.h"
-#include <dirent.h>
 #include <memory>
-#include <sys/types.h>
-#include <whb/file.h>
 
 using namespace ELFIO;
 

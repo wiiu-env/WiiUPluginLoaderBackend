@@ -2,7 +2,6 @@
 
 #include "../utils/logger.h"
 #include <malloc.h>
-#include <utility>
 
 PluginData::PluginData(const PluginData &obj) {
     this->buffer     = obj.buffer;

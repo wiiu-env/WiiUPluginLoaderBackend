@@ -31,7 +31,6 @@ int32_t WUPSConfig_GetName(WUPSConfigHandle handle, char *out_buf, int32_t out_l
     }
     auto *config = reinterpret_cast<WUPSConfig *>(handle);
     snprintf(out_buf, out_len, "%s", config->getName().c_str());
-    DEBUG_FUNCTION_LINE("%s", out_buf);
     return 0;
 }
 

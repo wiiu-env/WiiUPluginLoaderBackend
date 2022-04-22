@@ -30,7 +30,7 @@ public:
     }
 
     bool operator<(const FunctionSymbolData &rhs) const {
-        return (uint32_t) address < (uint32_t) rhs.address; //assume that you compare the record based on a
+        return (uint32_t) address < (uint32_t) rhs.address;
     }
 
     virtual ~FunctionSymbolData() = default;

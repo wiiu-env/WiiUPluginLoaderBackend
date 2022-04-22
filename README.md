@@ -1,15 +1,17 @@
 ﻿[![CI-Release](https://github.com/wiiu-env/WiiUPluginLoaderBackend/actions/workflows/ci.yml/badge.svg)](https://github.com/wiiu-env/WiiUPluginLoaderBackend/actions/workflows/ci.yml)
 
 # Wii U Plugin Loader Backend
-This is the Backend for the [WiiUPluginSystem](https://github.com/Maschell/WiiUPluginSystem). Check out the readme for more information about the Plugin System.
+This is the backend for the [WiiUPluginSystem](https://github.com/wiiu-env/WiiUPluginSystem). Check out the readme for more information about the Plugin System.
 
 ## Usage
 (`[ENVIRONMENT]` is a placeholder for the actual environment name.)
 
 1. Copy the file `PluginBackend.wms` into `sd:/wiiu/environments/[ENVIRONMENT]/modules`.  
 2. Requires the [WUMSLoader](https://github.com/wiiu-env/WUMSLoader) in `sd:/wiiu/environments/[ENVIRONMENT]/modules/setup`.
+3. Requires the [FunctionPatcherModule](https://github.com/wiiu-env/FunctionPatcherModule) in `sd:/wiiu/environments/[ENVIRONMENT]/modules`.
+4. Requires the [MemoryMappingModule](https://github.com/wiiu-env/MemoryMappingModule) in `sd:/wiiu/environments/[ENVIRONMENT]/modules`.
 
-Plugins needs to be placed into the following folder:
+Plugins needs to be placed into the following directory:
 
 ```
 sd:/wiiu/environments/[ENVIRONMENT]/plugins
@@ -21,7 +23,7 @@ In order to be able to compile this, you need to have devkitPPC installed
 pacman packages installed.
 
 ```
-pacman -Syu devkitPPC
+(sudo) (dkp-)pacman -Syu --needed wiiu-dev
 ```
 
 Make sure the following environment variables are set:
@@ -30,8 +32,7 @@ DEVKITPRO=/opt/devkitpro
 DEVKITPPC=/opt/devkitpro/devkitPPC
 ```
 
-Also make sure to install [wut](https://github.com/decaf-emu/wut), [WiiUPluginSystem](https://github.com/wiiu-env/WiiUPluginSystem) and the [WiiUModuleSystem](https://github.com/wiiu-env/WiiUModuleSystem).
-It requires the [FunctionPatcherModule](https://github.com/wiiu-env/FunctionPatcherModule) to be running at the same time and it's linking aginst [libfunctionpatcher](https://github.com/wiiu-env/libfunctionpatcher).
+Also make sure to install [wut](https://github.com/decaf-emu/wut), [WiiUPluginSystem](https://github.com/wiiu-env/WiiUPluginSystem), [WiiUModuleSystem](https://github.com/wiiu-env/WiiUModuleSystem), [libfunctionpatcher](https://github.com/wiiu-env/libfunctionpatcher) and [libmappedmemory](https://github.com/wiiu-env/libmappedmemory).
 
 ## Buildflags
 

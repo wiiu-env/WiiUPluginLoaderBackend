@@ -35,7 +35,7 @@ INCLUDES	:=	source
 #-------------------------------------------------------------------------------
 # options for code generation
 #-------------------------------------------------------------------------------
-CFLAGS	:=	-Wall -O2 -ffunction-sections\
+CFLAGS	:=	-Wall -Os -ffunction-sections\
 			$(MACHDEP)
 
 CFLAGS	+=	$(INCLUDE) -D__WIIU__ -D__WUT__ 

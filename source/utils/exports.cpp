@@ -36,7 +36,7 @@ extern "C" PluginBackendApiErrorType WUPSLoadAndLinkByDataHandle(const plugin_da
         }
         DCFlushRange(&gLinkOnReload, sizeof(gLinkOnReload));
     } else {
-        DEBUG_FUNCTION_LINE("PLUGIN_BACKEND_API_ERROR_INVALID_ARG");
+        DEBUG_FUNCTION_LINE_ERR("PLUGIN_BACKEND_API_ERROR_INVALID_ARG");
         return PLUGIN_BACKEND_API_ERROR_INVALID_ARG;
     }
     return PLUGIN_BACKEND_API_ERROR_NONE;
@@ -77,12 +77,12 @@ extern "C" PluginBackendApiErrorType WUPSLoadPluginAsData(GetPluginInformationIn
     }
 
     if (!pluginData) {
-        DEBUG_FUNCTION_LINE("PLUGIN_BACKEND_API_ERROR_FAILED_ALLOC");
+        DEBUG_FUNCTION_LINE_ERR("PLUGIN_BACKEND_API_ERROR_FAILED_ALLOC");
         return PLUGIN_BACKEND_API_ERROR_FAILED_ALLOC;
     }
 
     if (out == nullptr) {
-        DEBUG_FUNCTION_LINE("PLUGIN_BACKEND_API_ERROR_INVALID_ARG");
+        DEBUG_FUNCTION_LINE_ERR("PLUGIN_BACKEND_API_ERROR_INVALID_ARG");
         return PLUGIN_BACKEND_API_ERROR_INVALID_ARG;
     } else {
         auto *pluginDataHandle = new PluginData(*pluginData.value());
@@ -108,17 +108,17 @@ extern "C" PluginBackendApiErrorType WUPSGetPluginMetaInformation(GetPluginInfor
     } else if (inputType == PLUGIN_INFORMATION_INPUT_TYPE_BUFFER && buffer != nullptr && size > 0) {
         pluginInfo = PluginMetaInformationFactory::loadPlugin(buffer, size);
     } else {
-        DEBUG_FUNCTION_LINE("PLUGIN_BACKEND_API_ERROR_INVALID_ARG");
+        DEBUG_FUNCTION_LINE_ERR("PLUGIN_BACKEND_API_ERROR_INVALID_ARG");
         return PLUGIN_BACKEND_API_ERROR_INVALID_ARG;
     }
 
     if (!pluginInfo) {
-        DEBUG_FUNCTION_LINE("PLUGIN_BACKEND_API_ERROR_FILE_NOT_FOUND");
+        DEBUG_FUNCTION_LINE_ERR("PLUGIN_BACKEND_API_ERROR_FILE_NOT_FOUND");
         return PLUGIN_BACKEND_API_ERROR_FILE_NOT_FOUND;
     }
 
     if (output == nullptr) {
-        DEBUG_FUNCTION_LINE("PLUGIN_BACKEND_API_ERROR_INVALID_ARG");
+        DEBUG_FUNCTION_LINE_ERR("PLUGIN_BACKEND_API_ERROR_INVALID_ARG");
         return PLUGIN_BACKEND_API_ERROR_INVALID_ARG;
     } else {
         fillPluginInformation(output, pluginInfo.value());
@@ -144,7 +144,7 @@ extern "C" PluginBackendApiErrorType WUPSGetPluginDataForContainerHandles(const 
             plugin_data_list[i] = (uint32_t) pluginData;
         }
     } else {
-        DEBUG_FUNCTION_LINE("PLUGIN_BACKEND_API_ERROR_INVALID_ARG");
+        DEBUG_FUNCTION_LINE_ERR("PLUGIN_BACKEND_API_ERROR_INVALID_ARG");
         res = PLUGIN_BACKEND_API_ERROR_INVALID_ARG;
     }
     return res;
@@ -168,7 +168,7 @@ extern "C" PluginBackendApiErrorType WUPSGetMetaInformation(const plugin_contain
             plugin_information_list[i].size = container->metaInformation->getSize();
         }
     } else {
-        DEBUG_FUNCTION_LINE("PLUGIN_BACKEND_API_ERROR_INVALID_ARG");
+        DEBUG_FUNCTION_LINE_ERR("PLUGIN_BACKEND_API_ERROR_INVALID_ARG");
         res = PLUGIN_BACKEND_API_ERROR_INVALID_ARG;
     }
     return res;

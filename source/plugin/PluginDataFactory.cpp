@@ -27,12 +27,12 @@ std::vector<std::shared_ptr<PluginData>> PluginDataFactory::loadDir(const std::s
     DIR *dfd;
 
     if (path.empty()) {
-        DEBUG_FUNCTION_LINE("Path was empty");
+        DEBUG_FUNCTION_LINE_VERBOSE("Path was empty");
         return result;
     }
 
     if ((dfd = opendir(path.c_str())) == nullptr) {
-        DEBUG_FUNCTION_LINE("Couldn't open dir %s", path.c_str());
+        DEBUG_FUNCTION_LINE_VERBOSE("Couldn't open dir %s", path.c_str());
         return result;
     }
 
@@ -41,7 +41,7 @@ std::vector<std::shared_ptr<PluginData>> PluginDataFactory::loadDir(const std::s
         std::string full_file_path = StringTools::strfmt("%s/%s", path.c_str(), dp->d_name);
         StringTools::RemoveDoubleSlashs(full_file_path);
         if (stat(full_file_path.c_str(), &stbuf) == -1) {
-            DEBUG_FUNCTION_LINE("Unable to stat file: %s", full_file_path.c_str());
+            DEBUG_FUNCTION_LINE_VERBOSE("Unable to stat file: %s", full_file_path.c_str());
             continue;
         }
 
@@ -66,7 +66,7 @@ std::optional<std::shared_ptr<PluginData>> PluginDataFactory::load(const std::st
     uint8_t *buffer = nullptr;
     uint32_t fsize  = 0;
     if (FSUtils::LoadFileToMem(filename.c_str(), &buffer, &fsize) < 0) {
-        DEBUG_FUNCTION_LINE("Failed to load file");
+        DEBUG_FUNCTION_LINE_VERBOSE("Failed to load file");
         return {};
     }
 

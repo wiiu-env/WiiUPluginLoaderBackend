@@ -324,7 +324,7 @@ void ConfigUtils::displayMenu() {
             } else if (buttonsTriggered & VPAD_BUTTON_A) {
                 currentCategory = cats[selectedBtn];
                 if (currentCategory == nullptr) {
-                    DEBUG_FUNCTION_LINE("BYEBYE");
+                    DEBUG_FUNCTION_LINE_ERR("currentCategory was NULL");
                     break;
                 }
 
@@ -597,18 +597,18 @@ void ConfigUtils::openConfigMenu() {
             if (storedTVBuffer.buffer_size >= screen_buf0_size) {
                 screenbuffer0   = storedTVBuffer.buffer;
                 skipScreen0Free = true;
-                DEBUG_FUNCTION_LINE("Use storedTVBuffer");
+                DEBUG_FUNCTION_LINE_VERBOSE("Use storedTVBuffer");
             }
         }
         if (screenbuffer1 == nullptr) {
             if (storedDRCBuffer.buffer_size >= screen_buf1_size) {
                 screenbuffer1   = storedDRCBuffer.buffer;
                 skipScreen1Free = true;
-                DEBUG_FUNCTION_LINE("Use storedDRCBuffer");
+                DEBUG_FUNCTION_LINE_VERBOSE("Use storedDRCBuffer");
             }
         }
         if (!screenbuffer0 || !screenbuffer1) {
-            DEBUG_FUNCTION_LINE("Failed to alloc buffers");
+            DEBUG_FUNCTION_LINE_ERR("Failed to alloc buffers");
             goto error_exit;
         }
     }

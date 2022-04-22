@@ -31,12 +31,12 @@ std::optional<std::shared_ptr<PluginInformation>>
 PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, MEMHeapHandle heapHandle, relocation_trampoline_entry_t *trampoline_data, uint32_t trampoline_data_length,
                                uint8_t trampolineId) {
     if (pluginData->buffer == nullptr) {
-        DEBUG_FUNCTION_LINE("Buffer was nullptr");
+        DEBUG_FUNCTION_LINE_ERR("Buffer was nullptr");
         return std::nullopt;
     }
     elfio reader;
     if (!reader.load((char *) pluginData->buffer, pluginData->length)) {
-        DEBUG_FUNCTION_LINE("Can't process PluginData in elfio");
+        DEBUG_FUNCTION_LINE_ERR("Can't process PluginData in elfio");
         return std::nullopt;
     }
 
@@ -71,14 +71,14 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, ME
     }
     void *text_data = MEMAllocFromExpHeapEx(heapHandle, text_size, 0x1000);
     if (text_data == nullptr) {
-        DEBUG_FUNCTION_LINE("Failed to alloc memory for the .text section (%d bytes)", text_size);
+        DEBUG_FUNCTION_LINE_ERR("Failed to alloc memory for the .text section (%d bytes)", text_size);
 
         return std::nullopt;
     }
     DEBUG_FUNCTION_LINE_VERBOSE("Allocated %d kb from ExpHeap", text_size / 1024);
     void *data_data = MEMAllocFromExpHeapEx(heapHandle, data_size, 0x1000);
     if (data_data == nullptr) {
-        DEBUG_FUNCTION_LINE("Failed to alloc memory for the .data section (%d bytes)", data_size);
+        DEBUG_FUNCTION_LINE_ERR("Failed to alloc memory for the .data section (%d bytes)", data_size);
 
         MEMFreeToExpHeap(heapHandle, text_data);
         return std::nullopt;
@@ -110,7 +110,7 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, ME
                 //destinations[psec->get_index()] = (uint8_t *) data_data;
                 //destinations[psec->get_index()] -= 0xC0000000;
             } else {
-                DEBUG_FUNCTION_LINE("Unhandled case");
+                DEBUG_FUNCTION_LINE_ERR("Unhandled case");
                 free(destinations);
                 MEMFreeToExpHeap(heapHandle, text_data);
                 MEMFreeToExpHeap(heapHandle, data_data);
@@ -145,7 +145,7 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, ME
 
             if (!linkSection(reader, psec->get_index(), (uint32_t) destinations[psec->get_index()], (uint32_t) text_data, (uint32_t) data_data, trampoline_data, trampoline_data_length,
                              trampolineId)) {
-                DEBUG_FUNCTION_LINE("elfLink failed");
+                DEBUG_FUNCTION_LINE_ERR("elfLink failed");
                 free(destinations);
                 MEMFreeToExpHeap(heapHandle, text_data);
                 MEMFreeToExpHeap(heapHandle, data_data);
@@ -273,7 +273,7 @@ std::vector<std::shared_ptr<RelocationData>> PluginInformationFactory::getImport
                 Elf_Half sym_section_index;
 
                 if (!rel.get_entry(j, offset, sym_value, sym_name, type, addend, sym_section_index)) {
-                    DEBUG_FUNCTION_LINE("Failed to get relocation");
+                    DEBUG_FUNCTION_LINE_ERR("Failed to get relocation");
                     break;
                 }
 
@@ -291,7 +291,7 @@ std::vector<std::shared_ptr<RelocationData>> PluginInformationFactory::getImport
                 std::string rawSectionName = infoMap[sym_section_index];
 
                 if (rawSectionName.size() < fimport.size()) {
-                    DEBUG_FUNCTION_LINE("Section name was shorter than expected, skipping this relocation");
+                    DEBUG_FUNCTION_LINE_ERR("Section name was shorter than expected, skipping this relocation");
                     continue;
                 } else if (std::equal(fimport.begin(), fimport.end(), rawSectionName.begin())) {
                     rplName = rawSectionName.substr(fimport.size());
@@ -299,7 +299,7 @@ std::vector<std::shared_ptr<RelocationData>> PluginInformationFactory::getImport
                     rplName = rawSectionName.substr(dimport.size());
                     isData  = true;
                 } else {
-                    DEBUG_FUNCTION_LINE("invalid section name");
+                    DEBUG_FUNCTION_LINE_ERR("invalid section name");
                     continue;
                 }
 
@@ -332,7 +332,7 @@ bool PluginInformationFactory::linkSection(const elfio &reader, uint32_t section
                 Elf_Half sym_section_index;
 
                 if (!rel.get_entry(j, offset, sym_value, sym_name, type, addend, sym_section_index)) {
-                    DEBUG_FUNCTION_LINE("Failed to get relocation");
+                    DEBUG_FUNCTION_LINE_ERR("Failed to get relocation");
                     break;
                 }
 
@@ -350,7 +350,7 @@ bool PluginInformationFactory::linkSection(const elfio &reader, uint32_t section
                 } else if (adjusted_sym_value == 0x0) {
                     //
                 } else {
-                    DEBUG_FUNCTION_LINE("Unhandled case %08X", adjusted_sym_value);
+                    DEBUG_FUNCTION_LINE_ERR("Unhandled case %08X", adjusted_sym_value);
                     return false;
                 }
 
@@ -366,13 +366,13 @@ bool PluginInformationFactory::linkSection(const elfio &reader, uint32_t section
                 if (sym_section_index == SHN_ABS) {
                     //
                 } else if (sym_section_index > SHN_LORESERVE) {
-                    DEBUG_FUNCTION_LINE("NOT IMPLEMENTED: %04X", sym_section_index);
+                    DEBUG_FUNCTION_LINE_ERR("NOT IMPLEMENTED: %04X", sym_section_index);
                     return false;
                 }
                 // DEBUG_FUNCTION_LINE_VERBOSE("sym_value %08X adjusted_sym_value %08X offset %08X adjusted_offset %08X", (uint32_t) sym_value, adjusted_sym_value, (uint32_t) offset, adjusted_offset);
 
                 if (!ElfUtils::elfLinkOne(type, adjusted_offset, addend, destination, adjusted_sym_value, trampoline_data, trampoline_data_length, RELOC_TYPE_FIXED, trampolineId)) {
-                    DEBUG_FUNCTION_LINE("Link failed");
+                    DEBUG_FUNCTION_LINE_ERR("Link failed");
                     return false;
                 }
             }
@@ -380,6 +380,6 @@ bool PluginInformationFactory::linkSection(const elfio &reader, uint32_t section
             return true;
         }
     }
-    DEBUG_FUNCTION_LINE_VERBOSE("Failed to find relocation section");
+    DEBUG_FUNCTION_LINE_ERR("Failed to find relocation section");
     return true;
 }

@@ -100,12 +100,12 @@ void CallHookEx(plugin_information_t *pluginInformation, wups_loader_hook_type_t
                         ((void(*)(wups_loader_init_storage_args_t))((uint32_t *) func_ptr))(args);
                         // clang-format on
                     } else {
-                        DEBUG_FUNCTION_LINE("######################################");
-                        DEBUG_FUNCTION_LINE("Hook is not implemented %s [%d]", hook_names[hook_type], hook_type);
-                        DEBUG_FUNCTION_LINE("######################################");
+                        DEBUG_FUNCTION_LINE_ERR("######################################");
+                        DEBUG_FUNCTION_LINE_ERR("Hook is not implemented %s [%d]", hook_names[hook_type], hook_type);
+                        DEBUG_FUNCTION_LINE_ERR("######################################");
                     }
                 } else {
-                    DEBUG_FUNCTION_LINE("Failed to call hook. It was not defined");
+                    DEBUG_FUNCTION_LINE_ERR("Failed to call hook. It was not defined");
                 }
             }
         }

@@ -48,13 +48,13 @@ bool PluginManagement::doRelocation(const std::vector<std::shared_ptr<Relocation
         }
 
         if (functionAddress == 0) {
-            DEBUG_FUNCTION_LINE("Failed to find export for %s", functionName.c_str());
+            DEBUG_FUNCTION_LINE_ERR("Failed to find export for %s", functionName.c_str());
             return false;
         } else {
             //DEBUG_FUNCTION_LINE("Found export for %s %s", rplName.c_str(), functionName.c_str());
         }
         if (!ElfUtils::elfLinkOne(cur->getType(), cur->getOffset(), cur->getAddend(), (uint32_t) cur->getDestination(), functionAddress, tramp_data, tramp_length, RELOC_TYPE_IMPORT, trampolineID)) {
-            DEBUG_FUNCTION_LINE("Relocation failed");
+            DEBUG_FUNCTION_LINE_ERR("Relocation failed");
             return false;
         }
     }
@@ -70,7 +70,7 @@ void PluginManagement::doRelocations(const std::vector<std::shared_ptr<PluginCon
         DEBUG_FUNCTION_LINE_VERBOSE("Doing relocations for plugin: %s", pluginContainer->getMetaInformation()->getName().c_str());
 
         if (!PluginManagement::doRelocation(pluginContainer->getPluginInformation()->getRelocationDataList(), trampData, tramp_size, pluginContainer->getPluginInformation()->getTrampolineId())) {
-            DEBUG_FUNCTION_LINE("Relocation failed");
+            DEBUG_FUNCTION_LINE_ERR("Relocation failed");
         }
     }
 }
@@ -113,14 +113,14 @@ void PluginManagement::unloadPlugins(plugin_information_t *pluginInformation, ME
                     DEBUG_FUNCTION_LINE_VERBOSE("Free plugin data buffer for %s [%08X on heap %08X]", plugin->meta.name, plugin->data.buffer, plugin->data.heapHandle);
                     MEMFreeToExpHeap((MEMHeapHandle) plugin->data.heapHandle, plugin->data.buffer);
                 } else {
-                    DEBUG_FUNCTION_LINE("########################");
-                    DEBUG_FUNCTION_LINE("Failed to free memory from plugin");
-                    DEBUG_FUNCTION_LINE("########################");
+                    DEBUG_FUNCTION_LINE_ERR("########################");
+                    DEBUG_FUNCTION_LINE_ERR("Failed to free memory from plugin");
+                    DEBUG_FUNCTION_LINE_ERR("########################");
                 }
                 plugin->data.buffer       = nullptr;
                 plugin->data.bufferLength = 0;
             } else {
-                DEBUG_FUNCTION_LINE("Plugin has no copy of elf saved in memory, can't free it");
+                DEBUG_FUNCTION_LINE_ERR("Plugin has no copy of elf saved in memory, can't free it");
             }
         }
         if (plugin->info.allocatedTextMemoryAddress != nullptr) {

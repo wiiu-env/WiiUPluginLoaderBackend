@@ -1,5 +1,6 @@
 #pragma once
 
+#include <coreinit/debug.h>
 #include <string.h>
 #include <whb/log.h>
 
@@ -31,6 +32,11 @@ extern "C" {
         WHBLogWritef("[%23s]%30s@L%04d: " FMT "", __FILENAME__, __FUNCTION__, __LINE__, ##ARGS); \
     } while (0)
 
+#define DEBUG_FUNCTION_LINE_ERR(FMT, ARGS...)                                                                \
+    do {                                                                                                     \
+        WHBLogPrintf("[%23s]%30s@L%04d: ##ERROR## " FMT "\n", __FILENAME__, __FUNCTION__, __LINE__, ##ARGS); \
+    } while (0)
+
 #else
 
 #define DEBUG_FUNCTION_LINE_VERBOSE(FMT, ARGS...) while (0)
@@ -38,6 +44,11 @@ extern "C" {
 #define DEBUG_FUNCTION_LINE(FMT, ARGS...)         while (0)
 
 #define DEBUG_FUNCTION_LINE_WRITE(FMT, ARGS...)   while (0)
+
+#define DEBUG_FUNCTION_LINE_ERR(FMT, ARGS...)                                                            \
+    do {                                                                                                 \
+        OSReport("[%23s]%30s@L%04d: ##ERROR## " FMT "\n", __FILENAME__, __FUNCTION__, __LINE__, ##ARGS); \
+    } while (0)
 
 #endif
 

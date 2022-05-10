@@ -1,4 +1,5 @@
 #include <coreinit/cache.h>
+#include <cstdlib>
 #include <cstring>
 
 #include "ElfUtils.h"
@@ -99,9 +100,16 @@ bool ElfUtils::elfLinkOne(char type, size_t offset, int32_t addend, uint32_t des
                         DEBUG_FUNCTION_LINE_ERR("***value %08X - target %08X = distance %08X", value, target, target - (uint32_t) & (freeSlot->trampoline[0]));
                         return false;
                     }
-                    if (target - (uint32_t) & (freeSlot->trampoline[0]) > 0x1FFFFFC) {
+                    auto symbolValue = (uint32_t) & (freeSlot->trampoline[0]);
+                    auto newValue    = symbolValue + addend;
+                    auto newDistance = static_cast<int32_t>(newValue) - static_cast<int32_t>(target);
+                    if (newDistance > 0x1FFFFFC || newDistance < -0x1FFFFFC) {
                         DEBUG_FUNCTION_LINE_ERR("**Cannot link 24-bit jump (too far to tramp buffer).");
-                        DEBUG_FUNCTION_LINE_ERR("***value %08X - target %08X = distance %08X", value, target, (target - (uint32_t) & (freeSlot->trampoline[0])));
+                        if (newDistance < 0) {
+                            DEBUG_FUNCTION_LINE_ERR("***value %08X - target %08X = distance -%08X", newValue, target, abs(newDistance));
+                        } else {
+                            DEBUG_FUNCTION_LINE_ERR("***value %08X - target %08X = distance  %08X", newValue, target, newDistance);
+                        }
                         return false;
                     }
 
@@ -122,9 +130,7 @@ bool ElfUtils::elfLinkOne(char type, size_t offset, int32_t addend, uint32_t des
                         // Relocations for the imports may be overridden
                         freeSlot->status = RELOC_TRAMP_IMPORT_DONE;
                     }
-                    auto symbolValue = (uint32_t) & (freeSlot->trampoline[0]);
-                    value            = symbolValue + addend;
-                    distance         = static_cast<int32_t>(value) - static_cast<int32_t>(target);
+                    distance = newDistance;
                 }
             }
 
@@ -150,5 +156,7 @@ bool ElfUtils::elfLinkOne(char type, size_t offset, int32_t addend, uint32_t des
             DEBUG_FUNCTION_LINE_ERR("***ERROR: Unsupported Relocation_Add Type (%08X):", type);
             return false;
     }
+    ICInvalidateRange(reinterpret_cast<void *>(target), 4);
+    DCFlushRange(reinterpret_cast<void *>(target), 4);
     return true;
 }

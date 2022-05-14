@@ -1,26 +1,22 @@
 #pragma once
 
 #include "plugin/PluginContainer.h"
-#include <common/plugin_defines.h>
+#include <forward_list>
 #include <memory>
 #include <vector>
+#include <wums/defines/relocation_defines.h>
 
 class PluginManagement {
 public:
-    static void doRelocations(const std::vector<std::shared_ptr<PluginContainer>> &plugins, relocation_trampoline_entry_t *trampData, uint32_t tramp_size);
+    static std::vector<std::unique_ptr<PluginContainer>> loadPlugins(const std::forward_list<std::shared_ptr<PluginData>> &pluginList, relocation_trampoline_entry_t *trampoline_data, uint32_t trampoline_data_length);
 
-    static void memsetBSS(const std::vector<std::shared_ptr<PluginContainer>> &plugins);
+    static void callInitHooks(const std::vector<std::unique_ptr<PluginContainer>> &plugins);
 
-    static void callInitHooks(plugin_information_t *pluginInformation);
+    static bool doRelocations(const std::vector<std::unique_ptr<PluginContainer>> &plugins, relocation_trampoline_entry_t *trampData, uint32_t tramp_size);
 
-    static void PatchFunctionsAndCallHooks(plugin_information_t *gPluginInformation);
+    static bool doRelocation(const std::vector<std::unique_ptr<RelocationData>> &relocData, relocation_trampoline_entry_t *tramp_data, uint32_t tramp_length, uint32_t trampolineID);
 
-    static bool doRelocation(const std::vector<std::shared_ptr<RelocationData>> &relocData, relocation_trampoline_entry_t *tramp_data, uint32_t tramp_length, uint32_t trampolineID);
+    static bool DoFunctionPatches(const std::vector<std::unique_ptr<PluginContainer>> &plugins);
 
-    static void unloadPlugins(plugin_information_t *pluginInformation, MEMHeapHandle pluginHeap, BOOL freePluginData);
-
-    static std::vector<std::shared_ptr<PluginContainer>>
-    loadPlugins(const std::vector<std::shared_ptr<PluginData>> &pluginList, MEMHeapHandle pHeader, relocation_trampoline_entry_t *trampoline_data, uint32_t trampoline_data_length);
-
-    static void RestorePatches(plugin_information_t *pluginInformation, BOOL pluginOnly);
+    static bool RestoreFunctionPatches(const std::vector<std::unique_ptr<PluginContainer>> &plugins);
 };

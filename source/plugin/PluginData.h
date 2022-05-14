@@ -19,41 +19,18 @@
 
 #include <coreinit/memexpheap.h>
 #include <malloc.h>
+#include <memory>
 #include <optional>
 #include <vector>
 
-#include "../elfio/elfio.hpp"
-
-using namespace ELFIO;
-
-enum eMemoryTypes {
-    eMemTypeMEM2,
-    eMemTypeExpHeap
-};
-
 class PluginData {
 public:
-    ~PluginData() = default;
-
-    void freeMemory();
-
-    PluginData(const PluginData &obj);
-
-    PluginData() = default;
-
-    void *buffer = nullptr;
-    MEMHeapHandle heapHandle{};
-    eMemoryTypes memoryType{};
-    size_t length = 0;
-
-private:
     explicit PluginData(const std::vector<uint8_t> &buffer);
 
-    PluginData(const std::vector<uint8_t> &input, MEMHeapHandle heapHandle, eMemoryTypes memoryType);
+    uint32_t getHandle() {
+        return (uint32_t) this;
+    }
 
-    friend class PluginDataFactory;
-
-    friend class PluginContainer;
-
-    friend class PluginDataPersistence;
+    size_t length = 0;
+    std::unique_ptr<uint8_t[]> buffer;
 };

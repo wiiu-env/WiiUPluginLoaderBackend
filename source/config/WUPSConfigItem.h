@@ -69,7 +69,7 @@ public:
             if (res == 0) {
                 return buf;
             } else {
-                return StringTools::strfmt("[ERROR %d]", res);
+                return string_format("[ERROR %d]", res);
             }
         }
         DEBUG_FUNCTION_LINE_ERR("NOT IMPLEMENTED");
@@ -87,7 +87,7 @@ public:
             if (res == 0) {
                 return buf;
             } else {
-                return StringTools::strfmt("[ERROR %d]", res);
+                return string_format("[ERROR %d]", res);
             }
         }
         DEBUG_FUNCTION_LINE_ERR("NOT IMPLEMENTED");

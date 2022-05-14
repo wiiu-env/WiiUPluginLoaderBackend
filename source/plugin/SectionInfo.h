@@ -22,17 +22,10 @@
 class SectionInfo {
 
 public:
-    SectionInfo(std::string &name, uint32_t address, uint32_t sectionSize) : name(name),
-                                                                             address(address),
-                                                                             sectionSize(sectionSize) {
+    SectionInfo(std::string name, uint32_t address, uint32_t sectionSize) : name(std::move(name)),
+                                                                            address(address),
+                                                                            sectionSize(sectionSize) {
     }
-
-    SectionInfo() = default;
-
-    SectionInfo(const SectionInfo &o2) = default;
-
-
-    virtual ~SectionInfo() = default;
 
     [[nodiscard]] const std::string &getName() const {
         return name;
@@ -44,6 +37,10 @@ public:
 
     [[nodiscard]] uint32_t getSize() const {
         return sectionSize;
+    }
+
+    [[nodiscard]] uint32_t isInSection(uint32_t addr) const {
+        return addr >= address && addr < address + sectionSize;
     }
 
 private:

@@ -3,6 +3,7 @@
 #include "../config/WUPSConfig.h"
 #include "../globals.h"
 #include "DrawUtils.h"
+#include "hooks.h"
 #include "logger.h"
 
 #include <coreinit/screen.h>
@@ -118,24 +119,20 @@ static uint32_t remapClassicButtons(uint32_t buttons) {
 
 void ConfigUtils::displayMenu() {
     std::vector<ConfigDisplayItem> configs;
-    for (int32_t plugin_index = 0; plugin_index < gPluginInformation->number_used_plugins; plugin_index++) {
-        plugin_information_single_t *plugin_data = &gPluginInformation->plugin_data[plugin_index];
-        if (plugin_data == nullptr) {
-            continue;
-        }
+    for (auto &plugin : gLoadedPlugins) {
         ConfigDisplayItem cfg;
-        cfg.name    = std::string(plugin_data->meta.name);
-        cfg.author  = std::string(plugin_data->meta.author);
-        cfg.version = std::string(plugin_data->meta.version);
+        cfg.name    = plugin->metaInformation->getName();
+        cfg.author  = plugin->metaInformation->getAuthor();
+        cfg.version = plugin->metaInformation->getVersion();
         cfg.enabled = true;
 
-        for (uint32_t j = 0; j < plugin_data->info.number_used_hooks; j++) {
-            replacement_data_hook_t *hook_data = &plugin_data->info.hooks[j];
-            if (hook_data->type == WUPS_LOADER_HOOK_GET_CONFIG /*WUPS_LOADER_HOOK_GET_CONFIG*/) {
-                if (hook_data->func_pointer == nullptr) {
+        for (auto &hook : plugin->getPluginInformation()->getHookDataList()) {
+
+            if (hook->getType() == WUPS_LOADER_HOOK_GET_CONFIG /*WUPS_LOADER_HOOK_GET_CONFIG*/) {
+                if (hook->getFunctionPointer() == nullptr) {
                     break;
                 }
-                auto *cur_config = reinterpret_cast<WUPSConfig *>(((WUPSConfigHandle(*)())((uint32_t *) hook_data->func_pointer))());
+                auto *cur_config = reinterpret_cast<WUPSConfig *>(((WUPSConfigHandle(*)())((uint32_t *) hook->getFunctionPointer()))());
                 if (cur_config == nullptr) {
                     break;
                 }
@@ -509,8 +506,7 @@ void ConfigUtils::displayMenu() {
 
             DrawUtils::setFontColor(COLOR_TEXT);
 
-            std::string headline;
-            StringTools::strprintf(headline, "%s - %s", currentConfig->config->getName().c_str(), currentCategory->getName().c_str());
+            auto headline = string_format("%s - %s", currentConfig->config->getName().c_str(), currentCategory->getName().c_str());
             // draw top bar
             DrawUtils::setFontSize(24);
             DrawUtils::print(16, 6 + 24, headline.c_str());
@@ -553,25 +549,7 @@ void ConfigUtils::displayMenu() {
         }
     }
 
-    for (int32_t plugin_index = 0; plugin_index < gPluginInformation->number_used_plugins; plugin_index++) {
-        plugin_information_single_t *plugin_data = &gPluginInformation->plugin_data[plugin_index];
-        if (plugin_data == nullptr) {
-            continue;
-        }
-
-        for (uint32_t j = 0; j < plugin_data->info.number_used_hooks; j++) {
-            replacement_data_hook_t *hook_data = &plugin_data->info.hooks[j];
-            if (hook_data->type == WUPS_LOADER_HOOK_CONFIG_CLOSED) {
-                if (hook_data->func_pointer == nullptr) {
-                    break;
-                }
-                // clang-format off
-                ((void(*)())((uint32_t *) hook_data->func_pointer))();
-                // clang-format on
-                break;
-            }
-        }
-    }
+    CallHook(gLoadedPlugins, WUPS_LOADER_HOOK_CONFIG_CLOSED);
 
     for (const auto &element : configs) {
         DEBUG_FUNCTION_LINE("Delete %08X", element.config);
@@ -594,15 +572,15 @@ void ConfigUtils::openConfigMenu() {
 
     if (!screenbuffer0 || !screenbuffer1) {
         if (screenbuffer0 == nullptr) {
-            if (storedTVBuffer.buffer_size >= screen_buf0_size) {
-                screenbuffer0   = storedTVBuffer.buffer;
+            if (gStoredTVBuffer.buffer_size >= screen_buf0_size) {
+                screenbuffer0   = gStoredTVBuffer.buffer;
                 skipScreen0Free = true;
                 DEBUG_FUNCTION_LINE_VERBOSE("Use storedTVBuffer");
             }
         }
         if (screenbuffer1 == nullptr) {
-            if (storedDRCBuffer.buffer_size >= screen_buf1_size) {
-                screenbuffer1   = storedDRCBuffer.buffer;
+            if (gStoredDRCBuffer.buffer_size >= screen_buf1_size) {
+                screenbuffer1   = gStoredDRCBuffer.buffer;
                 skipScreen1Free = true;
                 DEBUG_FUNCTION_LINE_VERBOSE("Use storedDRCBuffer");
             }
@@ -641,14 +619,14 @@ void ConfigUtils::openConfigMenu() {
 
 error_exit:
 
-    if (storedTVBuffer.buffer != nullptr) {
-        GX2SetTVBuffer(storedTVBuffer.buffer, storedTVBuffer.buffer_size, static_cast<GX2TVRenderMode>(storedTVBuffer.mode),
-                       storedTVBuffer.surface_format, storedTVBuffer.buffering_mode);
+    if (gStoredTVBuffer.buffer != nullptr) {
+        GX2SetTVBuffer(gStoredTVBuffer.buffer, gStoredTVBuffer.buffer_size, static_cast<GX2TVRenderMode>(gStoredTVBuffer.mode),
+                       gStoredTVBuffer.surface_format, gStoredTVBuffer.buffering_mode);
     }
 
-    if (storedDRCBuffer.buffer != nullptr) {
-        GX2SetDRCBuffer(storedDRCBuffer.buffer, storedDRCBuffer.buffer_size, static_cast<GX2DrcRenderMode>(storedDRCBuffer.mode),
-                        storedDRCBuffer.surface_format, storedDRCBuffer.buffering_mode);
+    if (gStoredDRCBuffer.buffer != nullptr) {
+        GX2SetDRCBuffer(gStoredDRCBuffer.buffer, gStoredDRCBuffer.buffer_size, static_cast<GX2DrcRenderMode>(gStoredDRCBuffer.mode),
+                        gStoredDRCBuffer.surface_format, gStoredDRCBuffer.buffering_mode);
     }
     if (!skipScreen0Free && screenbuffer0) {
         MEMFreeToMappedMemory(screenbuffer0);

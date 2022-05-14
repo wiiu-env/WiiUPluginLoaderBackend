@@ -19,6 +19,7 @@
 
 #include "PluginData.h"
 #include "PluginMetaInformation.h"
+#include "elfio/elfio.hpp"
 #include <memory>
 #include <optional>
 #include <string>
@@ -26,11 +27,11 @@
 
 class PluginMetaInformationFactory {
 public:
-    static std::optional<std::shared_ptr<PluginMetaInformation>> loadPlugin(const std::shared_ptr<PluginData> &pluginData);
+    static std::optional<std::unique_ptr<PluginMetaInformation>> loadPlugin(const std::shared_ptr<PluginData> &pluginData);
 
-    static std::optional<std::shared_ptr<PluginMetaInformation>> loadPlugin(std::string &filePath);
+    static std::optional<std::unique_ptr<PluginMetaInformation>> loadPlugin(const std::string &filePath);
 
-    static std::optional<std::shared_ptr<PluginMetaInformation>> loadPlugin(char *buffer, size_t size);
+    static std::optional<std::unique_ptr<PluginMetaInformation>> loadPlugin(char *buffer, size_t size);
 
-    static std::optional<std::shared_ptr<PluginMetaInformation>> loadPlugin(const elfio &reader);
+    static std::optional<std::unique_ptr<PluginMetaInformation>> loadPlugin(const ELFIO::elfio &reader);
 };

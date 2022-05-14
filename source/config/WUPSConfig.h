@@ -39,7 +39,7 @@ public:
     /**
         \return Returns the name of this WUPSConfig
     **/
-    std::string getName() {
+    [[nodiscard]] const std::string &getName() const {
         return this->name;
     }
 
@@ -53,7 +53,7 @@ public:
         \return On success, the created and inserted category will be returned.
     **/
     std::optional<WUPSConfigCategory *> addCategory(const std::string &categoryName) {
-        auto curCat = new WUPSConfigCategory(categoryName);
+        auto curCat = new (std::nothrow) WUPSConfigCategory(categoryName);
         if (curCat == nullptr) {
             return {};
         }

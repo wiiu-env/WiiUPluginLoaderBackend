@@ -72,7 +72,7 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, re
             } else if ((address >= 0x10000000) && address < 0xC0000000) {
                 data_size += sectionSize;
             }
-            if (psec->get_name().rfind(".wups.", 0) == 0) {
+            if (psec->get_name().starts_with(".wups.")) {
                 data_size += sectionSize;
             }
         }
@@ -96,7 +96,7 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, re
 
     for (uint32_t i = 0; i < sec_num; ++i) {
         section *psec = reader.sections[i];
-        if (psec->get_type() == 0x80000002) {
+        if (psec->get_type() == 0x80000002 || psec->get_name() == ".wut_load_bounds") {
             continue;
         }
 
@@ -109,15 +109,23 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, re
                 destination += (uint32_t) text_data.get();
                 destination -= 0x02000000;
                 destinations[psec->get_index()] = (uint8_t *) text_data.get();
+
+                if (destination + sectionSize > (uint32_t) text_data.get() + text_size) {
+                    DEBUG_FUNCTION_LINE_ERR("Tried to overflow .text buffer. %08X > %08X", destination + sectionSize, (uint32_t) text_data.get() + text_size);
+                    OSFatal("WUPSLoader: Tried to overflow buffer");
+                }
             } else if ((address >= 0x10000000) && address < 0xC0000000) {
                 destination += (uint32_t) data_data.get();
                 destination -= 0x10000000;
                 destinations[psec->get_index()] = (uint8_t *) data_data.get();
+
+                if (destination + sectionSize > (uint32_t) data_data.get() + data_size) {
+                    DEBUG_FUNCTION_LINE_ERR("Tried to overflow .data buffer. %08X > %08X", destination + sectionSize, (uint32_t) data_data.get() + data_size);
+                    OSFatal("WUPSLoader: Tried to overflow buffer");
+                }
             } else if (address >= 0xC0000000) {
-                destination += (uint32_t) data_data.get();
-                destination -= 0xC0000000;
-                //destinations[psec->get_index()] = (uint8_t *) data_data;
-                //destinations[psec->get_index()] -= 0xC0000000;
+                DEBUG_FUNCTION_LINE_ERR("Loading section from 0xC0000000 is NOT supported");
+                return std::nullopt;
             } else {
                 DEBUG_FUNCTION_LINE_ERR("Unhandled case");
                 return std::nullopt;

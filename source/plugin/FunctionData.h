@@ -16,17 +16,19 @@
  ****************************************************************************/
 #pragma once
 
+#include "utils/logger.h"
 #include <function_patcher/fpatching_defines.h>
+#include <function_patcher/function_patching.h>
 #include <string>
 
 class FunctionData {
 
 public:
-    FunctionData(void *paddress, void *vaddress, const std::string &name, function_replacement_library_type_t library, void *replaceAddr, void *replaceCall,
+    FunctionData(void *paddress, void *vaddress, std::string name, function_replacement_library_type_t library, void *replaceAddr, void *replaceCall,
                  FunctionPatcherTargetProcess targetProcess) {
         this->paddress      = paddress;
         this->vaddress      = vaddress;
-        this->name          = name;
+        this->name          = std::move(name);
         this->library       = library;
         this->targetProcess = targetProcess;
         this->replaceAddr   = replaceAddr;
@@ -63,6 +65,42 @@ public:
         return targetProcess;
     }
 
+    bool patch() {
+        if (handle == 0) {
+            function_replacement_data_t functionData = {
+                    .VERSION       = FUNCTION_REPLACEMENT_DATA_STRUCT_VERSION,
+                    .physicalAddr  = reinterpret_cast<uint32_t>(this->paddress),
+                    .virtualAddr   = reinterpret_cast<uint32_t>(this->vaddress),
+                    .replaceAddr   = reinterpret_cast<uint32_t>(this->replaceAddr),
+                    .replaceCall   = static_cast<uint32_t *>(this->replaceCall),
+                    .library       = this->library,
+                    .function_name = this->name.c_str(),
+                    .targetProcess = this->targetProcess};
+
+            if (!FunctionPatcherPatchFunction(&functionData, &handle)) {
+                DEBUG_FUNCTION_LINE_ERR("Failed to patch function");
+                return false;
+            }
+        } else {
+            DEBUG_FUNCTION_LINE("Function is already patched");
+        }
+        return true;
+    }
+
+    bool restore() {
+        if (handle != 0) {
+            if (!FunctionPatcherRestoreFunction(handle)) {
+                DEBUG_FUNCTION_LINE_ERR("Failed to restore function patch");
+                return false;
+            }
+            handle = 0;
+        } else {
+            DEBUG_FUNCTION_LINE("Was not patched.");
+        }
+
+        return true;
+    }
+
 private:
     void *paddress = nullptr;
     void *vaddress = nullptr;
@@ -71,4 +109,6 @@ private:
     FunctionPatcherTargetProcess targetProcess;
     void *replaceAddr = nullptr;
     void *replaceCall = nullptr;
+
+    PatchedFunctionHandle handle = 0;
 };

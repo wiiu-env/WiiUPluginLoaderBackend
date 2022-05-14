@@ -16,27 +16,25 @@
  ****************************************************************************/
 
 #include "PluginMetaInformationFactory.h"
-#include "../fs/FSUtils.h"
-#include "../utils/StringTools.h"
+#include "elfio/elfio.hpp"
+#include "fs/FSUtils.h"
 #include <memory>
 
-using namespace ELFIO;
-
-std::optional<std::shared_ptr<PluginMetaInformation>> PluginMetaInformationFactory::loadPlugin(const std::shared_ptr<PluginData> &pluginData) {
-    if (pluginData->buffer == nullptr) {
-        DEBUG_FUNCTION_LINE_ERR("Buffer was nullptr");
-        return std::nullopt;
+std::optional<std::unique_ptr<PluginMetaInformation>> PluginMetaInformationFactory::loadPlugin(const std::shared_ptr<PluginData> &pluginData) {
+    if (!pluginData->buffer) {
+        DEBUG_FUNCTION_LINE_ERR("Buffer is empty");
+        return {};
     }
-    elfio reader;
-    if (!reader.load((char *) pluginData->buffer, pluginData->length)) {
+    ELFIO::elfio reader;
+    if (!reader.load((char *) pluginData->buffer.get(), pluginData->length)) {
         DEBUG_FUNCTION_LINE_ERR("Can't process PluginData in elfio");
         return {};
     }
     return loadPlugin(reader);
 }
 
-std::optional<std::shared_ptr<PluginMetaInformation>> PluginMetaInformationFactory::loadPlugin(std::string &filePath) {
-    elfio reader;
+std::optional<std::unique_ptr<PluginMetaInformation>> PluginMetaInformationFactory::loadPlugin(const std::string &filePath) {
+    ELFIO::elfio reader;
 
     uint8_t *buffer = nullptr;
     uint32_t length = 0;
@@ -54,8 +52,8 @@ std::optional<std::shared_ptr<PluginMetaInformation>> PluginMetaInformationFacto
     return res;
 }
 
-std::optional<std::shared_ptr<PluginMetaInformation>> PluginMetaInformationFactory::loadPlugin(char *buffer, size_t size) {
-    elfio reader;
+std::optional<std::unique_ptr<PluginMetaInformation>> PluginMetaInformationFactory::loadPlugin(char *buffer, size_t size) {
+    ELFIO::elfio reader;
     if (!reader.load(buffer, size)) {
         DEBUG_FUNCTION_LINE_ERR("Can't find or process ELF file");
         return std::nullopt;
@@ -64,15 +62,15 @@ std::optional<std::shared_ptr<PluginMetaInformation>> PluginMetaInformationFacto
     return loadPlugin(reader);
 }
 
-std::optional<std::shared_ptr<PluginMetaInformation>> PluginMetaInformationFactory::loadPlugin(const elfio &reader) {
+std::optional<std::unique_ptr<PluginMetaInformation>> PluginMetaInformationFactory::loadPlugin(const ELFIO::elfio &reader) {
     size_t pluginSize = 0;
 
-    auto pluginInfo = std::shared_ptr<PluginMetaInformation>(new PluginMetaInformation);
+    auto pluginInfo = std::unique_ptr<PluginMetaInformation>(new PluginMetaInformation);
 
     uint32_t sec_num = reader.sections.size();
 
     for (uint32_t i = 0; i < sec_num; ++i) {
-        section *psec = reader.sections[i];
+        ELFIO::section *psec = reader.sections[i];
 
         // Calculate total size:
         if ((psec->get_type() == SHT_PROGBITS || psec->get_type() == SHT_NOBITS) && (psec->get_flags() & SHF_ALLOC)) {
@@ -118,7 +116,7 @@ std::optional<std::shared_ptr<PluginMetaInformation>> PluginMetaInformationFacto
                     } else if (key == "storage_id") {
                         pluginInfo->setStorageId(value);
                     } else if (key == "wups") {
-                        if (value != "0.7.0") {
+                        if (value != "0.7.1") {
                             DEBUG_FUNCTION_LINE_ERR("Warning: Ignoring plugin - Unsupported WUPS version: %s.", value.c_str());
                             return std::nullopt;
                         }

@@ -1,22 +1,19 @@
 #pragma once
-
-#include <wums.h>
-
-#include "common/plugin_defines.h"
 #include "plugin/PluginContainer.h"
 #include "utils/ConfigUtils.h"
+#include <forward_list>
+#include <memory>
+#include <mutex>
+#include <vector>
+#include <wums/defines/relocation_defines.h>
 
-extern plugin_information_t *gPluginInformation;
-extern MEMHeapHandle gPluginDataHeap;
-extern MEMHeapHandle gPluginInformationHeap;
-extern uint32_t gPluginDataHeapSize;
-extern uint32_t gPluginInformationHeapSize;
-extern plugin_information_on_reload_t gLinkOnReload;
-extern module_information_t *gModuleData;
-extern relocation_trampoline_entry_t *gTrampolineData;
-extern uint32_t gTrampolineDataSize;
-extern StoredBuffer storedTVBuffer;
-extern StoredBuffer storedDRCBuffer;
+extern StoredBuffer gStoredTVBuffer;
+extern StoredBuffer gStoredDRCBuffer;
 
-#define PLUGIN_DATA_HEAP_SIZE (8 * 1024 * 1024)
-#define NUMBER_OF_TRAMPS      1024
+#define TRAMP_DATA_SIZE 1024
+extern relocation_trampoline_entry_t *gTrampData;
+extern std::vector<std::unique_ptr<PluginContainer>> gLoadedPlugins;
+
+extern std::forward_list<std::shared_ptr<PluginData>> gLoadedData;
+extern std::forward_list<std::shared_ptr<PluginData>> gLoadOnNextLaunch;
+extern std::mutex gLoadedDataMutex;

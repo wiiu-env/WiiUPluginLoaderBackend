@@ -59,36 +59,36 @@ public:
 private:
     PluginMetaInformation() = default;
 
-    void setName(const std::string &_name) {
-        this->name = _name;
+    void setName(std::string _name) {
+        this->name = std::move(_name);
     }
 
-    void setAuthor(const std::string &_author) {
-        this->author = _author;
+    void setAuthor(std::string _author) {
+        this->author = std::move(_author);
     }
 
-    void setVersion(const std::string &_version) {
-        this->version = _version;
+    void setVersion(std::string _version) {
+        this->version = std::move(_version);
     }
 
-    void setLicense(const std::string &_license) {
-        this->license = _license;
+    void setLicense(std::string _license) {
+        this->license = std::move(_license);
     }
 
-    void setBuildTimestamp(const std::string &_buildtimestamp) {
-        this->buildtimestamp = _buildtimestamp;
+    void setBuildTimestamp(std::string _buildtimestamp) {
+        this->buildtimestamp = std::move(_buildtimestamp);
     }
 
-    void setDescription(const std::string &_description) {
-        this->description = _description;
+    void setDescription(std::string _description) {
+        this->description = std::move(_description);
     }
 
     void setSize(size_t _size) {
         this->size = _size;
     }
 
-    void setStorageId(const std::string &_storageId) {
-        this->storageId = _storageId;
+    void setStorageId(std::string _storageId) {
+        this->storageId = std::move(_storageId);
     }
 
     std::string name;
@@ -101,8 +101,6 @@ private:
     size_t size{};
 
     friend class PluginMetaInformationFactory;
-
-    friend class PluginContainerPersistence;
 
     friend class PluginContainer;
 };

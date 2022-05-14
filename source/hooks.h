@@ -1,10 +1,10 @@
 #pragma once
 
-#include "common/plugin_defines.h"
+#include "plugin/PluginContainer.h"
+#include <memory>
+#include <vector>
 #include <wups/hooks.h>
 
-void CallHook(plugin_information_t *pluginInformation, wups_loader_hook_type_t hook_type);
+void CallHook(const std::vector<std::unique_ptr<PluginContainer>> &plugins, wups_loader_hook_type_t hook_type);
 
-void CallHookEx(plugin_information_t *pluginInformation, wups_loader_hook_type_t hook_type, int32_t plugin_index_needed);
-
-bool HasHookCallHook(plugin_information_t *pluginInformation, wups_loader_hook_type_t hook_type);
+void CallHook(const std::unique_ptr<PluginContainer> &plugin, wups_loader_hook_type_t hook_type);

@@ -6,7 +6,6 @@
 
 #include "../globals.h"
 #include "../hooks.h"
-#include "../utils/ConfigUtils.h"
 
 uint8_t vpadPressCooldown  = 0xFF;
 bool configMenuOpened      = false;
@@ -24,21 +23,21 @@ DECL_FUNCTION(void, GX2SwapScanBuffers, void) {
 }
 
 DECL_FUNCTION(void, GX2SetTVBuffer, void *buffer, uint32_t buffer_size, int32_t tv_render_mode, GX2SurfaceFormat format, GX2BufferingMode buffering_mode) {
-    storedTVBuffer.buffer         = buffer;
-    storedTVBuffer.buffer_size    = buffer_size;
-    storedTVBuffer.mode           = tv_render_mode;
-    storedTVBuffer.surface_format = format;
-    storedTVBuffer.buffering_mode = buffering_mode;
+    gStoredTVBuffer.buffer         = buffer;
+    gStoredTVBuffer.buffer_size    = buffer_size;
+    gStoredTVBuffer.mode           = tv_render_mode;
+    gStoredTVBuffer.surface_format = format;
+    gStoredTVBuffer.buffering_mode = buffering_mode;
 
     return real_GX2SetTVBuffer(buffer, buffer_size, tv_render_mode, format, buffering_mode);
 }
 
 DECL_FUNCTION(void, GX2SetDRCBuffer, void *buffer, uint32_t buffer_size, uint32_t drc_mode, GX2SurfaceFormat surface_format, GX2BufferingMode buffering_mode) {
-    storedDRCBuffer.buffer         = buffer;
-    storedDRCBuffer.buffer_size    = buffer_size;
-    storedDRCBuffer.mode           = drc_mode;
-    storedDRCBuffer.surface_format = surface_format;
-    storedDRCBuffer.buffering_mode = buffering_mode;
+    gStoredDRCBuffer.buffer         = buffer;
+    gStoredDRCBuffer.buffer_size    = buffer_size;
+    gStoredDRCBuffer.mode           = drc_mode;
+    gStoredDRCBuffer.surface_format = surface_format;
+    gStoredDRCBuffer.buffering_mode = buffering_mode;
 
     return real_GX2SetDRCBuffer(buffer, buffer_size, drc_mode, surface_format, buffering_mode);
 }
@@ -51,7 +50,7 @@ DECL_FUNCTION(uint32_t, OSReceiveMessage, OSMessageQueue *queue, OSMessage *mess
         if (message != nullptr && res) {
             if (lastData0 != message->args[0]) {
                 if (message->args[0] == 0xFACEF000) {
-                    CallHook(gPluginInformation, WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND);
+                    CallHook(gLoadedPlugins, WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND);
                 } else if (message->args[0] == 0xD1E0D1E0) {
                     // Implemented via WUMS Hook
                 }
@@ -64,7 +63,7 @@ DECL_FUNCTION(uint32_t, OSReceiveMessage, OSMessageQueue *queue, OSMessage *mess
 
 DECL_FUNCTION(void, OSReleaseForeground) {
     if (OSGetCoreId() == 1) {
-        CallHook(gPluginInformation, WUPS_LOADER_HOOK_RELEASE_FOREGROUND);
+        CallHook(gLoadedPlugins, WUPS_LOADER_HOOK_RELEASE_FOREGROUND);
     }
     real_OSReleaseForeground();
 }
@@ -115,45 +114,34 @@ DECL_FUNCTION(uint32_t, SC17_FindClosestSymbol,
               uint32_t symbolNameBufferLength,
               char *moduleNameBuffer,
               uint32_t moduleNameBufferLength) {
-    for (int32_t plugin_index = 0; plugin_index < gPluginInformation->number_used_plugins; plugin_index++) {
-        plugin_information_single_t *plugin = &(gPluginInformation->plugin_data[plugin_index]);
-        plugin_section_info_t *section      = nullptr;
-
-        for (auto &sectionInfo : plugin->info.sectionInfos) {
-            if (sectionInfo.addr == 0 && sectionInfo.size == 0) {
-                break;
-            }
-            if (strncmp(sectionInfo.name, ".text", sizeof(sectionInfo.name)) == 0) {
-                section = &sectionInfo;
-                break;
-            }
-        }
-        if (section == nullptr) {
-            continue;
-        }
-        if (addr < section->addr || addr >= (section->addr + section->size)) {
+    for (auto &plugin : gLoadedPlugins) {
+        auto sectionInfoOpt = plugin->getPluginInformation()->getSectionInfo(".text");
+        if (!sectionInfoOpt) {
             continue;
         }
 
-        strncpy(moduleNameBuffer, plugin->meta.name, moduleNameBufferLength);
-        if (plugin->info.function_symbol_data != nullptr && plugin->info.number_function_symbol_data > 1) {
-            for (uint32_t i = 0; i < plugin->info.number_function_symbol_data - 1; i++) {
-                auto symbolData     = &plugin->info.function_symbol_data[i];
-                auto symbolDataNext = &plugin->info.function_symbol_data[i + 1];
-                if (i == plugin->info.number_function_symbol_data - 2 || (addr >= (uint32_t) symbolData->address && addr < (uint32_t) symbolDataNext->address)) {
-                    strncpy(symbolNameBuffer, symbolData->name, moduleNameBufferLength);
-                    if (outDistance) {
-                        *outDistance = addr - (uint32_t) symbolData->address;
-                    }
-                    return 0;
-                }
+        auto &sectionInfo = sectionInfoOpt.value();
+
+        if (!sectionInfo->isInSection(addr)) {
+            continue;
+        }
+
+        strncpy(moduleNameBuffer, plugin->getMetaInformation()->getName().c_str(), moduleNameBufferLength - 1);
+        auto functionSymbolDataOpt = plugin->getPluginInformation()->getNearestFunctionSymbolData(addr);
+        if (functionSymbolDataOpt) {
+            auto &functionSymbolData = functionSymbolDataOpt.value();
+
+            strncpy(symbolNameBuffer, functionSymbolData->getName().c_str(), moduleNameBufferLength);
+            if (outDistance) {
+                *outDistance = addr - (uint32_t) functionSymbolData->getAddress();
             }
+            return 0;
         }
 
         strncpy(symbolNameBuffer, ".text", symbolNameBufferLength);
 
         if (outDistance) {
-            *outDistance = addr - (uint32_t) section->addr;
+            *outDistance = addr - (uint32_t) sectionInfo->getAddress();
         }
 
         return 0;
@@ -163,48 +151,34 @@ DECL_FUNCTION(uint32_t, SC17_FindClosestSymbol,
 }
 
 DECL_FUNCTION(uint32_t, KiGetAppSymbolName, uint32_t addr, char *buffer, int32_t bufSize) {
-    for (int32_t plugin_index = 0; plugin_index < gPluginInformation->number_used_plugins; plugin_index++) {
-        plugin_information_single_t *plugin = &(gPluginInformation->plugin_data[plugin_index]);
-        plugin_section_info_t *section      = nullptr;
-
-        for (auto &sectionInfo : plugin->info.sectionInfos) {
-            if (sectionInfo.addr == 0 && sectionInfo.size == 0) {
-                break;
-            }
-            if (strncmp(sectionInfo.name, ".text", sizeof(sectionInfo.name)) == 0) {
-                section = &sectionInfo;
-                break;
-            }
-        }
-        if (section == nullptr) {
-            continue;
-        }
-        if (addr < section->addr || addr >= (section->addr + section->size)) {
+    for (auto &plugin : gLoadedPlugins) {
+        auto sectionInfoOpt = plugin->getPluginInformation()->getSectionInfo(".text");
+        if (!sectionInfoOpt) {
             continue;
         }
 
-        auto pluginNameLen        = strlen(plugin->meta.name);
+        auto &sectionInfo = sectionInfoOpt.value();
+
+        if (!sectionInfo->isInSection(addr)) {
+            continue;
+        }
+
+        auto pluginNameLen        = strlen(plugin->getMetaInformation()->getName().c_str());
         int32_t spaceLeftInBuffer = (int32_t) bufSize - (int32_t) pluginNameLen - 1;
         if (spaceLeftInBuffer < 0) {
             spaceLeftInBuffer = 0;
         }
-        strncpy(buffer, plugin->meta.name, bufSize);
+        strncpy(buffer, plugin->getMetaInformation()->getName().c_str(), bufSize - 1);
 
-        if (plugin->info.function_symbol_data != nullptr && plugin->info.number_function_symbol_data > 1) {
-            for (uint32_t i = 0; i < plugin->info.number_function_symbol_data - 1; i++) {
-                auto symbolData     = &plugin->info.function_symbol_data[i];
-                auto symbolDataNext = &plugin->info.function_symbol_data[i + 1];
-                if (i == plugin->info.number_function_symbol_data - 2 || (addr >= (uint32_t) symbolData->address && addr < (uint32_t) symbolDataNext->address)) {
-                    if (spaceLeftInBuffer > 2) {
-                        buffer[pluginNameLen]     = '|';
-                        buffer[pluginNameLen + 1] = '\0';
-                        strncpy(buffer + pluginNameLen + 1, symbolData->name, spaceLeftInBuffer - 1);
-                    }
-                    return (uint32_t) symbolData->address;
-                }
-            }
+        auto functionSymbolDataOpt = plugin->getPluginInformation()->getNearestFunctionSymbolData(addr);
+        if (functionSymbolDataOpt) {
+            auto &functionSymbolData  = functionSymbolDataOpt.value();
+            buffer[pluginNameLen]     = '|';
+            buffer[pluginNameLen + 1] = '\0';
+            strncpy(buffer + pluginNameLen + 1, functionSymbolData->getName().c_str(), spaceLeftInBuffer - 1);
         }
-        return addr;
+
+        return 0;
     }
 
     return real_KiGetAppSymbolName(addr, buffer, bufSize);
@@ -212,7 +186,7 @@ DECL_FUNCTION(uint32_t, KiGetAppSymbolName, uint32_t addr, char *buffer, int32_t
 
 #pragma GCC pop_options
 
-function_replacement_data_t method_hooks_hooks_static[] __attribute__((section(".data"))) = {
+function_replacement_data_t method_hooks_static[] __attribute__((section(".data"))) = {
         REPLACE_FUNCTION(GX2SwapScanBuffers, LIBRARY_GX2, GX2SwapScanBuffers),
         REPLACE_FUNCTION(GX2SetTVBuffer, LIBRARY_GX2, GX2SetTVBuffer),
         REPLACE_FUNCTION(GX2SetDRCBuffer, LIBRARY_GX2, GX2SetDRCBuffer),
@@ -225,4 +199,4 @@ function_replacement_data_t method_hooks_hooks_static[] __attribute__((section("
 
 };
 
-uint32_t method_hooks_size_hooks_static __attribute__((section(".data"))) = sizeof(method_hooks_hooks_static) / sizeof(function_replacement_data_t);
+uint32_t method_hooks_static_size __attribute__((section(".data"))) = sizeof(method_hooks_static) / sizeof(function_replacement_data_t);

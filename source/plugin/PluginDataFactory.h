@@ -19,6 +19,7 @@
 
 #include "PluginData.h"
 #include <coreinit/memexpheap.h>
+#include <forward_list>
 #include <memory>
 #include <optional>
 #include <string>
@@ -26,9 +27,9 @@
 
 class PluginDataFactory {
 public:
-    static std::vector<std::shared_ptr<PluginData>> loadDir(const std::string &path, MEMHeapHandle heapHandle);
+    static std::forward_list<std::shared_ptr<PluginData>> loadDir(const std::string &path);
 
-    static std::optional<std::shared_ptr<PluginData>> load(const std::string &path, MEMHeapHandle heapHandle);
+    static std::optional<std::unique_ptr<PluginData>> load(const std::string &path);
 
-    static std::optional<std::shared_ptr<PluginData>> load(std::vector<uint8_t> &buffer, MEMHeapHandle heapHandle);
+    static std::optional<std::unique_ptr<PluginData>> load(const std::vector<uint8_t> &buffer);
 };

@@ -17,7 +17,7 @@ std::string getPluginPath() {
 
         IOS_Close(handle);
     }
-    return std::string(environmentPath) + "/plugins";
+    return std::string(environmentPath).append("/plugins");
 }
 
 // https://gist.github.com/ccbrown/9722406

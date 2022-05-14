@@ -15,33 +15,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
 #include "PluginDataFactory.h"
-#include "../fs/FSUtils.h"
-#include "../utils/StringTools.h"
+#include "fs/FSUtils.h"
+#include "utils/StringTools.h"
+#include "utils/logger.h"
+#include "utils/utils.h"
 #include <dirent.h>
+#include <forward_list>
 #include <memory>
 #include <sys/stat.h>
 
-std::vector<std::shared_ptr<PluginData>> PluginDataFactory::loadDir(const std::string &path, MEMHeapHandle heapHandle) {
-    std::vector<std::shared_ptr<PluginData>> result;
+std::forward_list<std::shared_ptr<PluginData>> PluginDataFactory::loadDir(const std::string &path) {
+    std::forward_list<std::shared_ptr<PluginData>> result;
     struct dirent *dp;
     DIR *dfd;
 
     if (path.empty()) {
-        DEBUG_FUNCTION_LINE_VERBOSE("Path was empty");
+        DEBUG_FUNCTION_LINE_ERR("Failed to load Plugins from dir: Path was empty");
         return result;
     }
 
     if ((dfd = opendir(path.c_str())) == nullptr) {
-        DEBUG_FUNCTION_LINE_VERBOSE("Couldn't open dir %s", path.c_str());
+        DEBUG_FUNCTION_LINE_ERR("Couldn't open dir %s", path.c_str());
         return result;
     }
 
     while ((dp = readdir(dfd)) != nullptr) {
         struct stat stbuf {};
-        std::string full_file_path = StringTools::strfmt("%s/%s", path.c_str(), dp->d_name);
-        StringTools::RemoveDoubleSlashs(full_file_path);
+        auto full_file_path = string_format("%s/%s", path.c_str(), dp->d_name);
         if (stat(full_file_path.c_str(), &stbuf) == -1) {
-            DEBUG_FUNCTION_LINE_VERBOSE("Unable to stat file: %s", full_file_path.c_str());
+            DEBUG_FUNCTION_LINE_ERR("Unable to stat file: %s", full_file_path.c_str());
             continue;
         }
 
@@ -49,24 +51,25 @@ std::vector<std::shared_ptr<PluginData>> PluginDataFactory::loadDir(const std::s
             continue;
         } else {
             DEBUG_FUNCTION_LINE("Loading plugin: %s", full_file_path.c_str());
-            auto pluginData = load(full_file_path, heapHandle);
+            auto pluginData = load(full_file_path);
             if (pluginData) {
-                result.push_back(pluginData.value());
+                result.push_front(std::move(pluginData.value()));
+            } else {
+                DEBUG_FUNCTION_LINE_ERR("Failed to load plugin: %s", full_file_path.c_str());
             }
         }
     }
-    if (dfd != nullptr) {
-        closedir(dfd);
-    }
+
+    closedir(dfd);
 
     return result;
 }
 
-std::optional<std::shared_ptr<PluginData>> PluginDataFactory::load(const std::string &filename, MEMHeapHandle heapHandle) {
+std::optional<std::unique_ptr<PluginData>> PluginDataFactory::load(const std::string &filename) {
     uint8_t *buffer = nullptr;
     uint32_t fsize  = 0;
     if (FSUtils::LoadFileToMem(filename.c_str(), &buffer, &fsize) < 0) {
-        DEBUG_FUNCTION_LINE_VERBOSE("Failed to load file");
+        DEBUG_FUNCTION_LINE_ERR("Failed to load %s into memory", filename.c_str());
         return {};
     }
 
@@ -77,13 +80,18 @@ std::optional<std::shared_ptr<PluginData>> PluginDataFactory::load(const std::st
 
     DEBUG_FUNCTION_LINE_VERBOSE("Loaded file!");
 
-    return load(result, heapHandle);
+    return load(result);
 }
 
-std::optional<std::shared_ptr<PluginData>> PluginDataFactory::load(std::vector<uint8_t> &buffer, MEMHeapHandle heapHandle) {
+std::optional<std::unique_ptr<PluginData>> PluginDataFactory::load(const std::vector<uint8_t> &buffer) {
     if (buffer.empty()) {
-        return std::nullopt;
+        return {};
     }
 
-    return std::shared_ptr<PluginData>(new PluginData(buffer, heapHandle, eMemoryTypes::eMemTypeMEM2));
+    auto res = make_unique_nothrow<PluginData>(buffer);
+    if (!res) {
+        return {};
+    }
+
+    return res;
 }

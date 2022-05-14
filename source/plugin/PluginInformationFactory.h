@@ -27,15 +27,17 @@
 #include <vector>
 #include <wums/defines/relocation_defines.h>
 
+
 class PluginInformationFactory {
 public:
-    static std::optional<std::shared_ptr<PluginInformation>>
-    load(const std::shared_ptr<PluginData> &pluginData, MEMHeapHandle heaphandle, relocation_trampoline_entry_t *trampoline_data, uint32_t trampoline_data_length, uint8_t trampolineId);
+    static std::optional<std::unique_ptr<PluginInformation>>
+    load(const std::shared_ptr<PluginData> &pluginData, relocation_trampoline_entry_t *trampoline_data, uint32_t trampoline_data_length,
+         uint8_t trampolineId);
 
     static bool
-    linkSection(const elfio &reader, uint32_t section_index, uint32_t destination, uint32_t base_text, uint32_t base_data, relocation_trampoline_entry_t *trampoline_data,
+    linkSection(const ELFIO::elfio &reader, uint32_t section_index, uint32_t destination, uint32_t base_text, uint32_t base_data, relocation_trampoline_entry_t *trampoline_data,
                 uint32_t trampoline_data_length,
                 uint8_t trampolineId);
 
-    static std::vector<std::shared_ptr<RelocationData>> getImportRelocationData(const elfio &reader, uint8_t **destinations);
+    static bool addImportRelocationData(const std::unique_ptr<PluginInformation> &pluginInfo, const ELFIO::elfio &reader, const std::unique_ptr<uint8_t *[]> &destinations);
 };

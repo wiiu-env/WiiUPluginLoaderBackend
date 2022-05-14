@@ -1,15 +1,11 @@
 #include "globals.h"
 
-MEMHeapHandle gPluginDataHeap __attribute__((section(".data")))            = nullptr;
-MEMHeapHandle gPluginInformationHeap __attribute__((section(".data")))     = nullptr;
-plugin_information_t *gPluginInformation __attribute__((section(".data"))) = nullptr;
-plugin_information_on_reload_t gLinkOnReload __attribute__((section(".data")));
-module_information_t *gModuleData __attribute__((section(".data")))              = nullptr;
-relocation_trampoline_entry_t *gTrampolineData __attribute__((section(".data"))) = nullptr;
+StoredBuffer gStoredTVBuffer __attribute__((section(".data")))  = {};
+StoredBuffer gStoredDRCBuffer __attribute__((section(".data"))) = {};
 
-uint32_t gPluginDataHeapSize __attribute__((section(".data")))        = 0;
-uint32_t gPluginInformationHeapSize __attribute__((section(".data"))) = 0;
-uint32_t gTrampolineDataSize __attribute__((section(".data")))        = 0;
+std::vector<std::unique_ptr<PluginContainer>> gLoadedPlugins __attribute__((section(".data")));
+relocation_trampoline_entry_t *gTrampData __attribute__((section(".data"))) = nullptr;
 
-StoredBuffer storedTVBuffer __attribute__((section(".data")))  = {};
-StoredBuffer storedDRCBuffer __attribute__((section(".data"))) = {};
+std::forward_list<std::shared_ptr<PluginData>> gLoadedData __attribute__((section(".data")));
+std::forward_list<std::shared_ptr<PluginData>> gLoadOnNextLaunch __attribute__((section(".data")));
+std::mutex gLoadedDataMutex __attribute__((section(".data")));

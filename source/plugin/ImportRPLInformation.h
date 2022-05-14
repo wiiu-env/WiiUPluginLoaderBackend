@@ -24,22 +24,24 @@
 class ImportRPLInformation {
 
 public:
-    explicit ImportRPLInformation(std::string name, bool isData = false) {
-        this->name    = std::move(name);
-        this->_isData = isData;
+    explicit ImportRPLInformation(std::string name) {
+        this->name = std::move(name);
     }
 
     ~ImportRPLInformation() = default;
 
-    [[nodiscard]] std::string getName() const {
+    [[nodiscard]] const std::string &getName() const {
         return name;
     }
 
+    [[nodiscard]] std::string getRPLName() const {
+        return name.substr(strlen(".dimport_"));
+    }
+
     [[nodiscard]] bool isData() const {
-        return _isData;
+        return name.starts_with(".dimport_");
     }
 
 private:
     std::string name;
-    bool _isData = false;
 };

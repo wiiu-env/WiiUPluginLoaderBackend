@@ -20,8 +20,13 @@ int32_t FSUtils::LoadFileToMem(const char *filepath, uint8_t **inbuffer, uint32_
         return -1;
     }
 
-    uint32_t filesize = lseek(iFd, 0, SEEK_END);
-    lseek(iFd, 0, SEEK_SET);
+    struct stat file_stat;
+    int rc = fstat(iFd, &file_stat);
+    if (rc < 0) {
+        close(iFd);
+        return -4;
+    }
+    uint32_t filesize = file_stat.st_size;
 
     auto *buffer = (uint8_t *) memalign(0x40, ROUNDUP(filesize, 0x40));
     if (buffer == nullptr) {
@@ -29,17 +34,18 @@ int32_t FSUtils::LoadFileToMem(const char *filepath, uint8_t **inbuffer, uint32_
         return -2;
     }
 
-    uint32_t blocksize = 0x20000;
+    uint32_t blocksize = 0x80000;
     uint32_t done      = 0;
-    int32_t readBytes  = 0;
+    int32_t readBytes;
 
     while (done < filesize) {
         if (done + blocksize > filesize) {
             blocksize = filesize - done;
         }
         readBytes = read(iFd, buffer + done, blocksize);
-        if (readBytes <= 0)
+        if (readBytes <= 0) {
             break;
+        }
         done += readBytes;
     }
 

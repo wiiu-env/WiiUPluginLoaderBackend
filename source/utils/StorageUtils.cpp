@@ -66,7 +66,7 @@ WUPSStorageError StorageUtils::OpenStorage(const char *plugin_id, wups_storage_i
         file.close();
 
         j = nlohmann::json::parse(json_data, nullptr, false);
-        delete[] json_data;
+        free(json_data);
 
         if (j == nlohmann::detail::value_t::discarded || j.empty() || !j.is_object()) {
             return WUPS_STORAGE_ERROR_INVALID_JSON;
@@ -127,11 +127,13 @@ WUPSStorageError StorageUtils::CloseStorage(const char *plugin_id, wups_storage_
     j["storageitems"] = processItems(items);
 
     std::string jsonString = j.dump(4);
-    auto writeSize         = jsonString.size();
-    auto *data             = (uint8_t *) memalign(0x40, ROUNDUP(writeSize, 0x40));
-    memcpy(data, jsonString.c_str(), writeSize);
-    file.write(data, writeSize);
+    auto writeResult       = file.write((const uint8_t *) jsonString.c_str(), jsonString.size());
+
     file.close();
+
+    if (writeResult != (int32_t) jsonString.size()) {
+        return WUPS_STORAGE_ERROR_IO;
+    }
 
     return WUPS_STORAGE_ERROR_SUCCESS;
 }

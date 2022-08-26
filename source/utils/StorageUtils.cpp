@@ -49,7 +49,7 @@ static void processJson(wups_storage_item_t *items, nlohmann::json json) {
     }
 }
 
-int StorageUtils::OpenStorage(const char *plugin_id, wups_storage_item_t *items) {
+WUPSStorageError StorageUtils::OpenStorage(const char *plugin_id, wups_storage_item_t *items) {
     if (!plugin_id || !items) {
         return WUPS_STORAGE_ERROR_INVALID_BACKEND_PARAMS;
     }
@@ -107,7 +107,7 @@ static nlohmann::json processItems(wups_storage_item_t *items) {
     return json;
 }
 
-int StorageUtils::CloseStorage(const char *plugin_id, wups_storage_item_t *items) {
+WUPSStorageError StorageUtils::CloseStorage(const char *plugin_id, wups_storage_item_t *items) {
     if (!plugin_id || !items) {
         return WUPS_STORAGE_ERROR_INVALID_BACKEND_PARAMS;
     }

@@ -535,7 +535,7 @@ void ConfigUtils::displayMenu() {
             DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHint) / 2, SCREEN_HEIGHT - 8, exitHint, true);
 
             DrawUtils::endDraw();
-            redraw = false;
+            redraw = pressedButtons != WUPS_CONFIG_BUTTON_NONE;
         }
     }
 

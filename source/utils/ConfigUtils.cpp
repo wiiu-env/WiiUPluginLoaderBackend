@@ -28,7 +28,6 @@ struct ConfigDisplayItem {
     std::string name;
     std::string author;
     std::string version;
-    bool enabled{};
 };
 
 #define MAX_BUTTONS_ON_SCREEN 8
@@ -124,7 +123,6 @@ void ConfigUtils::displayMenu() {
         cfg.name    = plugin->metaInformation->getName();
         cfg.author  = plugin->metaInformation->getAuthor();
         cfg.version = plugin->metaInformation->getVersion();
-        cfg.enabled = true;
 
         for (auto &hook : plugin->getPluginInformation()->getHookDataList()) {
 
@@ -191,7 +189,6 @@ void ConfigUtils::displayMenu() {
         }
 
         if (buttonsTriggered & VPAD_BUTTON_HOME) {
-
             break;
         }
 
@@ -207,10 +204,7 @@ void ConfigUtils::displayMenu() {
                     redraw = true;
                 }
             }
-            if (buttonsTriggered & VPAD_BUTTON_X) {
-                configs[selectedBtn].enabled = !configs[selectedBtn].enabled;
-                redraw                       = true;
-            } else if (buttonsTriggered & VPAD_BUTTON_A) {
+            if (buttonsTriggered & VPAD_BUTTON_A) {
                 currentConfig = &configs[selectedBtn];
                 if (currentConfig == nullptr) {
                     break;
@@ -244,16 +238,12 @@ void ConfigUtils::displayMenu() {
                 // draw buttons
                 uint32_t index = 8 + 24 + 8 + 4;
                 for (uint32_t i = start; i < end; i++) {
-                    if (configs[i].enabled) {
-                        DrawUtils::setFontColor(COLOR_TEXT);
-                    } else {
-                        DrawUtils::setFontColor(COLOR_DISABLED);
-                    }
+                    DrawUtils::setFontColor(COLOR_TEXT);
 
                     if (i == selectedBtn) {
                         DrawUtils::drawRect(16, index, SCREEN_WIDTH - 16 * 2, 44, 4, COLOR_BORDER_HIGHLIGHTED);
                     } else {
-                        DrawUtils::drawRect(16, index, SCREEN_WIDTH - 16 * 2, 44, 2, configs[i].enabled ? COLOR_BORDER : COLOR_DISABLED);
+                        DrawUtils::drawRect(16, index, SCREEN_WIDTH - 16 * 2, 44, 2, COLOR_BORDER);
                     }
 
                     DrawUtils::setFontSize(24);
@@ -278,11 +268,6 @@ void ConfigUtils::displayMenu() {
                 DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
                 DrawUtils::setFontSize(18);
                 DrawUtils::print(16, SCREEN_HEIGHT - 8, "\ue07d Navigate ");
-                if (configs[selectedBtn].enabled) {
-                    DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 8, "\ue002 Disable / \ue000 Select", true);
-                } else {
-                    DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 8, "\ue002 Enable / \ue000 Select", true);
-                }
 
                 // draw scroll indicator
                 DrawUtils::setFontSize(24);
@@ -390,11 +375,6 @@ void ConfigUtils::displayMenu() {
                 DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
                 DrawUtils::setFontSize(18);
                 DrawUtils::print(16, SCREEN_HEIGHT - 8, "\ue07d Navigate ");
-                if (configs[selectedBtn].enabled) {
-                    DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 8, "\ue002 Disable / \ue000 Select", true);
-                } else {
-                    DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 8, "\ue002 Enable / \ue000 Select", true);
-                }
 
                 // draw scroll indicator
                 DrawUtils::setFontSize(24);
@@ -552,7 +532,6 @@ void ConfigUtils::displayMenu() {
     CallHook(gLoadedPlugins, WUPS_LOADER_HOOK_CONFIG_CLOSED);
 
     for (const auto &element : configs) {
-        DEBUG_FUNCTION_LINE("Delete %08X", element.config);
         delete element.config;
     }
 }

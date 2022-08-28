@@ -16,4 +16,5 @@ public:
 
 private:
     static void displayMenu();
+    static void renderNoConfigFoundScreen();
 };

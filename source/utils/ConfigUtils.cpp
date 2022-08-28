@@ -141,10 +141,6 @@ void ConfigUtils::displayMenu() {
         }
     }
 
-    if (configs.empty()) {
-        return;
-    }
-
     ConfigDisplayItem *currentConfig    = nullptr;
     WUPSConfigCategory *currentCategory = nullptr;
 
@@ -190,6 +186,11 @@ void ConfigUtils::displayMenu() {
 
         if (buttonsTriggered & VPAD_BUTTON_HOME) {
             break;
+        }
+
+        if (configs.empty()) {
+            renderNoConfigFoundScreen();
+            continue;
         }
 
         if (!currentConfig || !currentConfig->config) {
@@ -614,4 +615,34 @@ error_exit:
     if (!skipScreen1Free && screenbuffer1) {
         MEMFreeToMappedMemory(screenbuffer1);
     }
+}
+void ConfigUtils::renderNoConfigFoundScreen() {
+    DrawUtils::beginDraw();
+    DrawUtils::clear(COLOR_BACKGROUND);
+    DrawUtils::setFontColor(COLOR_TEXT);
+
+    // draw top bar
+    DrawUtils::setFontSize(24);
+    DrawUtils::print(16, 6 + 24, "Wii U Plugin System Config Menu");
+    DrawUtils::setFontSize(18);
+    DrawUtils::print(SCREEN_WIDTH - 16, 8 + 24, "v1.0", true);
+    DrawUtils::drawRectFilled(8, 8 + 24 + 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
+
+    // draw bottom bar
+    DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
+    DrawUtils::setFontSize(18);
+    DrawUtils::print(16, SCREEN_HEIGHT - 8, "\ue07d Navigate ");
+
+    const char *noConfigFoundText = "No configurable plugins loaded";
+    DrawUtils::setFontSize(24);
+    uint32_t sz = DrawUtils::getTextWidth(noConfigFoundText);
+
+    DrawUtils::print((SCREEN_WIDTH / 2) - (sz / 2), (SCREEN_HEIGHT / 2), noConfigFoundText);
+
+    // draw home button
+    DrawUtils::setFontSize(18);
+    const char *exitHint = "\ue044 Exit";
+    DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHint) / 2, SCREEN_HEIGHT - 8, exitHint, true);
+
+    DrawUtils::endDraw();
 }

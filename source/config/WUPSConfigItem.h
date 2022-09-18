@@ -64,7 +64,7 @@ public:
     **/
     [[nodiscard]] std::string getCurrentValueDisplay() const {
         if (this->callbacks.getCurrentValueDisplay != nullptr) {
-            char buf[256];
+            char buf[80];
             int res = this->callbacks.getCurrentValueDisplay(context, buf, sizeof(buf));
             if (res == 0) {
                 return buf;
@@ -82,7 +82,7 @@ public:
     **/
     [[nodiscard]] std::string getCurrentValueSelectedDisplay() const {
         if (this->callbacks.getCurrentValueSelectedDisplay != nullptr) {
-            char buf[256];
+            char buf[80];
             int res = this->callbacks.getCurrentValueSelectedDisplay(context, buf, sizeof(buf));
             if (res == 0) {
                 return buf;

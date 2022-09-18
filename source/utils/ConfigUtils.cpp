@@ -537,6 +537,8 @@ void ConfigUtils::displayMenu() {
     }
 }
 
+#define __SetDCPitchReg ((void (*)(uint32_t, uint32_t))(0x101C400 + 0x1e714))
+
 void ConfigUtils::openConfigMenu() {
     bool wasHomeButtonMenuEnabled = OSIsHomeButtonMenuEnabled();
 
@@ -546,6 +548,11 @@ void ConfigUtils::openConfigMenu() {
     uint32_t screen_buf1_size = OSScreenGetBufferSizeEx(SCREEN_DRC);
     void *screenbuffer0       = MEMAllocFromMappedMemoryForGX2Ex(screen_buf0_size, 0x100);
     void *screenbuffer1       = MEMAllocFromMappedMemoryForGX2Ex(screen_buf1_size, 0x100);
+
+    // Fix the TV buffer pitch if a 1080p buffer is used.
+    if (screen_buf0_size == 0x00FD2000) {
+        __SetDCPitchReg(SCREEN_TV, 1920);
+    }
 
     bool skipScreen0Free = false;
     bool skipScreen1Free = false;

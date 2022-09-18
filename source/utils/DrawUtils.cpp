@@ -78,10 +78,17 @@ void DrawUtils::drawPixel(uint32_t x, uint32_t y, uint8_t r, uint8_t g, uint8_t 
         }
     }
 
+    uint32_t USED_TV_WIDTH = TV_WIDTH;
+    float scale            = 1.5f;
+    if (DrawUtils::tvSize == 0x00FD2000) {
+        USED_TV_WIDTH = 1920;
+        scale         = 2.25f;
+    }
+
     // scale and put pixel in the tv buffer
-    for (uint32_t yy = (y * 1.5); yy < ((y * 1.5) + 1); yy++) {
-        for (uint32_t xx = (x * 1.5); xx < ((x * 1.5) + 1); xx++) {
-            uint32_t i = (xx + yy * TV_WIDTH) * 4;
+    for (uint32_t yy = (y * scale); yy < ((y * scale) + (uint32_t) scale); yy++) {
+        for (uint32_t xx = (x * scale); xx < ((x * scale) + (uint32_t) scale); xx++) {
+            uint32_t i = (xx + yy * USED_TV_WIDTH) * 4;
             if (i + 3 < tvSize / 2) {
                 if (isBackBuffer) {
                     i += tvSize / 2;

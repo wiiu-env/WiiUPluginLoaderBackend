@@ -5,7 +5,7 @@
 typedef uint32_t WUPSConfigItemHandle;
 
 int32_t WUPSConfigItem_Create(WUPSConfigItemHandle *out, const char *configID, const char *displayName, WUPSConfigCallbacks_t callbacks, void *context) {
-    if (configID == nullptr || displayName == nullptr) {
+    if (out == nullptr || configID == nullptr || displayName == nullptr) {
         return -1;
     }
 
@@ -27,7 +27,7 @@ int32_t WUPSConfigItem_Destroy(WUPSConfigItemHandle handle) {
 }
 
 int32_t WUPSConfigItem_SetDisplayName(WUPSConfigItemHandle handle, const char *displayName) {
-    if (displayName == nullptr) {
+    if (displayName == nullptr || handle == 0) {
         return -1;
     }
 
@@ -37,7 +37,7 @@ int32_t WUPSConfigItem_SetDisplayName(WUPSConfigItemHandle handle, const char *d
 }
 
 int32_t WUPSConfigItem_GetDisplayName(WUPSConfigItemHandle handle, char *out_buf, int32_t out_len) {
-    if (out_buf == nullptr) {
+    if (out_buf == nullptr || handle == 0) {
         return -1;
     }
     auto *config = reinterpret_cast<WUPSConfigItem *>(handle);
@@ -46,7 +46,7 @@ int32_t WUPSConfigItem_GetDisplayName(WUPSConfigItemHandle handle, char *out_buf
 }
 
 int32_t WUPSConfigItem_SetConfigID(WUPSConfigItemHandle handle, const char *configID) {
-    if (configID == nullptr) {
+    if (configID == nullptr || handle == 0) {
         return -1;
     }
 
@@ -56,7 +56,7 @@ int32_t WUPSConfigItem_SetConfigID(WUPSConfigItemHandle handle, const char *conf
 }
 
 int32_t WUPSConfigItem_GetConfigID(WUPSConfigItemHandle handle, char *out_buf, int32_t out_len) {
-    if (out_buf == nullptr) {
+    if (out_buf == nullptr || handle == 0) {
         return -1;
     }
     auto *config = reinterpret_cast<WUPSConfigItem *>(handle);

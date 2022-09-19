@@ -172,7 +172,7 @@ void ConfigUtils::displayMenu() {
 
         for (int i = 0; i < 4; i++) {
             if (KPADReadEx((KPADChan) i, &kpad_data, 1, &kpad_error) > 0) {
-                if (kpad_error == KPAD_ERROR_OK) {
+                if (kpad_error == KPAD_ERROR_OK && kpad_data.extensionType != 0xFF) {
                     if (kpad_data.extensionType == WPAD_EXT_CORE || kpad_data.extensionType == WPAD_EXT_NUNCHUK) {
                         buttonsTriggered |= remapWiiMoteButtons(kpad_data.trigger);
                         buttonsReleased |= remapWiiMoteButtons(kpad_data.release);

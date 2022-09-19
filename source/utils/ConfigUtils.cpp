@@ -262,7 +262,7 @@ void ConfigUtils::displayMenu() {
                 DrawUtils::setFontSize(24);
                 DrawUtils::print(16, 6 + 24, "Wii U Plugin System Config Menu");
                 DrawUtils::setFontSize(18);
-                DrawUtils::print(SCREEN_WIDTH - 16, 8 + 24, "v1.0", true);
+                DrawUtils::print(SCREEN_WIDTH - 16, 8 + 24, VERSION_FULL, true);
                 DrawUtils::drawRectFilled(8, 8 + 24 + 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
 
                 // draw bottom bar

@@ -184,7 +184,7 @@ void ConfigUtils::displayMenu() {
             }
         }
 
-        if (buttonsTriggered & VPAD_BUTTON_HOME) {
+        if (buttonsReleased & VPAD_BUTTON_HOME) {
             break;
         }
 

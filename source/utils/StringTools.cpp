@@ -30,6 +30,17 @@
 #include <utils/StringTools.h>
 #include <wut_types.h>
 
+std::string StringTools::truncate(const std::string &str, size_t width, bool show_ellipsis) {
+    if (str.length() > width - 3) {
+        if (show_ellipsis) {
+            return str.substr(0, width - 3) + "...";
+        } else {
+            return str.substr(0, width - 3);
+        }
+    }
+    return str;
+}
+
 int32_t StringTools::strtokcmp(const char *string, const char *compare, const char *separator) {
     if (!string || !compare)
         return -1;

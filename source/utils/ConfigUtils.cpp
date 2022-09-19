@@ -367,7 +367,7 @@ void ConfigUtils::displayMenu() {
 
                 // draw top bar
                 DrawUtils::setFontSize(24);
-                DrawUtils::print(16, 6 + 24, currentConfig->config->getName().c_str());
+                DrawUtils::print(16, 6 + 24, StringTools::truncate(currentConfig->config->getName(), 45).c_str());
                 DrawUtils::setFontSize(18);
                 DrawUtils::print(SCREEN_WIDTH - 16, 8 + 24, currentConfig->version.c_str(), true);
                 DrawUtils::drawRectFilled(8, 8 + 24 + 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
@@ -490,7 +490,7 @@ void ConfigUtils::displayMenu() {
             auto headline = string_format("%s - %s", currentConfig->config->getName().c_str(), currentCategory->getName().c_str());
             // draw top bar
             DrawUtils::setFontSize(24);
-            DrawUtils::print(16, 6 + 24, headline.c_str());
+            DrawUtils::print(16, 6 + 24, StringTools::truncate(headline, 45).c_str());
             DrawUtils::drawRectFilled(8, 8 + 24 + 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
             DrawUtils::setFontSize(18);
             DrawUtils::print(SCREEN_WIDTH - 16, 8 + 24, currentConfig->version.c_str(), true);

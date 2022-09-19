@@ -50,8 +50,9 @@ std::string string_format(const std::string &format, Args... args) {
 
 class StringTools {
 public:
-    static int32_t strtokcmp(const char *string, const char *compare, const char *separator);
+    static std::string truncate(const std::string &str, size_t width, bool show_ellipsis = true);
 
+    static int32_t strtokcmp(const char *string, const char *compare, const char *separator);
 
     static const char *FullpathToFilename(const char *path) {
         if (!path)

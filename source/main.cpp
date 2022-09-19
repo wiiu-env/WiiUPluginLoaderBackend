@@ -48,6 +48,7 @@ WUMS_APPLICATION_STARTS() {
     if (upid != 2 && upid != 15) {
         return;
     }
+    OSReport("Running WiiUPluginLoaderBackend " VERSION_FULL "\n");
     initLogging();
     bool initNeeded = false;
 

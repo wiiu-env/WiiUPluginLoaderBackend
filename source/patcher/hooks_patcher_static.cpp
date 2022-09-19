@@ -71,7 +71,7 @@ DECL_FUNCTION(void, OSReleaseForeground) {
 DECL_FUNCTION(int32_t, VPADRead, int32_t chan, VPADStatus *buffer, uint32_t buffer_size, int32_t *error) {
     int32_t result = real_VPADRead(chan, buffer, buffer_size, error);
 
-    if (result > 0 && (buffer[0].hold == (VPAD_BUTTON_L | VPAD_BUTTON_DOWN | VPAD_BUTTON_MINUS)) && vpadPressCooldown == 0 && !configMenuOpened) {
+    if (result > 0 && ((buffer[0].hold & 0xFFFFF) == (VPAD_BUTTON_L | VPAD_BUTTON_DOWN | VPAD_BUTTON_MINUS)) && vpadPressCooldown == 0 && !configMenuOpened) {
         wantsToOpenConfigMenu = true;
         vpadPressCooldown     = 0x3C;
     }

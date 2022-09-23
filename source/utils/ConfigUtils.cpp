@@ -445,6 +445,25 @@ void ConfigUtils::displayMenu() {
         if (buttonsTriggered & VPAD_BUTTON_ZR) {
             pressedButtons |= WUPS_CONFIG_BUTTON_ZR;
         }
+        if (buttonsTriggered & VPAD_BUTTON_X) {
+            pressedButtons |= WUPS_CONFIG_BUTTON_Y;
+        }
+        if (buttonsTriggered & VPAD_BUTTON_Y) {
+            pressedButtons |= WUPS_CONFIG_BUTTON_X;
+        }
+        if (buttonsTriggered & VPAD_BUTTON_STICK_L) {
+            pressedButtons |= WUPS_CONFIG_BUTTON_STICK_L;
+        }
+        if (buttonsTriggered & VPAD_BUTTON_STICK_R) {
+            pressedButtons |= WUPS_CONFIG_BUTTON_STICK_R;
+        }
+        if (buttonsTriggered & VPAD_BUTTON_PLUS) {
+            pressedButtons |= WUPS_CONFIG_BUTTON_PLUS;
+        }
+        if (buttonsTriggered & VPAD_BUTTON_MINUS) {
+            pressedButtons |= WUPS_CONFIG_BUTTON_MINUS;
+        }
+
         if (pressedButtons != WUPS_CONFIG_BUTTON_NONE) {
             redraw = true;
         }

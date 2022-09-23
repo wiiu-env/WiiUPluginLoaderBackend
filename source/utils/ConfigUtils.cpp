@@ -503,6 +503,10 @@ void ConfigUtils::displayMenu() {
                 prevSelectedItem = (int32_t) selectedBtn;
             }
 
+            if (pressedButtons != WUPS_CONFIG_BUTTON_NONE) {
+                config_items[selectedBtn]->onButtonPressed(pressedButtons);
+            }
+
             DrawUtils::beginDraw();
             DrawUtils::clear(COLOR_BACKGROUND);
 
@@ -520,9 +524,6 @@ void ConfigUtils::displayMenu() {
                 DrawUtils::setFontSize(24);
                 DrawUtils::print(16 * 2, index + 8 + 24, config_items[i]->getDisplayName().c_str());
                 if (i == selectedBtn) {
-                    if (pressedButtons != WUPS_CONFIG_BUTTON_NONE) {
-                        config_items[i]->onButtonPressed(pressedButtons);
-                    }
                     DrawUtils::print(SCREEN_WIDTH - 16 * 2, index + 8 + 24, config_items[i]->getCurrentValueSelectedDisplay().c_str(), true);
                 } else {
                     DrawUtils::print(SCREEN_WIDTH - 16 * 2, index + 8 + 24, config_items[i]->getCurrentValueDisplay().c_str(), true);

@@ -160,6 +160,7 @@ void ConfigUtils::displayMenu() {
     KPADStatus kpad_data{};
     KPADError kpad_error;
 
+    int32_t prevSelectedItem   = -1;
     bool isItemMovementAllowed = true;
 
     while (true) {
@@ -313,9 +314,10 @@ void ConfigUtils::displayMenu() {
                     break;
                 }
 
-                selectedBtn = 0;
-                start       = 0;
-                end         = MAX_BUTTONS_ON_SCREEN;
+                selectedBtn      = 0;
+                start            = 0;
+                end              = MAX_BUTTONS_ON_SCREEN;
+                prevSelectedItem = -1;
 
                 auto items = currentCategory->getItems();
                 if (items.size() < MAX_BUTTONS_ON_SCREEN) {
@@ -493,6 +495,14 @@ void ConfigUtils::displayMenu() {
         }
 
         if (redraw) {
+            if (prevSelectedItem != (int32_t) selectedBtn) {
+                if (prevSelectedItem >= 0) {
+                    config_items[prevSelectedItem]->onSelected(false);
+                }
+                config_items[selectedBtn]->onSelected(true);
+                prevSelectedItem = (int32_t) selectedBtn;
+            }
+
             DrawUtils::beginDraw();
             DrawUtils::clear(COLOR_BACKGROUND);
 

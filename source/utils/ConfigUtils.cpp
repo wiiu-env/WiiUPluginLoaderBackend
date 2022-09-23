@@ -160,6 +160,8 @@ void ConfigUtils::displayMenu() {
     KPADStatus kpad_data{};
     KPADError kpad_error;
 
+    bool isItemMovementAllowed = true;
+
     while (true) {
         buttonsTriggered = 0;
         buttonsReleased  = 0;
@@ -400,27 +402,29 @@ void ConfigUtils::displayMenu() {
 
         const std::vector<WUPSConfigItem *> config_items = currentCategory->getItems();
 
-        if (buttonsTriggered & VPAD_BUTTON_DOWN) {
-            if (selectedBtn < config_items.size() - 1) {
-                selectedBtn++;
+        if (isItemMovementAllowed) {
+            if (buttonsTriggered & VPAD_BUTTON_DOWN) {
+                if (selectedBtn < config_items.size() - 1) {
+                    selectedBtn++;
+                    redraw = true;
+                }
+            } else if (buttonsTriggered & VPAD_BUTTON_UP) {
+                if (selectedBtn > 0) {
+                    selectedBtn--;
+                    redraw = true;
+                }
+            } else if (buttonsTriggered & VPAD_BUTTON_B) {
+                currentCategory = nullptr;
+                selectedBtn     = 0;
+                start           = 0;
+                end             = MAX_BUTTONS_ON_SCREEN;
+                auto catSize    = currentConfig->config->getCategories().size();
+                if (catSize < MAX_BUTTONS_ON_SCREEN) {
+                    end = catSize;
+                }
                 redraw = true;
+                continue;
             }
-        } else if (buttonsTriggered & VPAD_BUTTON_UP) {
-            if (selectedBtn > 0) {
-                selectedBtn--;
-                redraw = true;
-            }
-        } else if (buttonsTriggered & VPAD_BUTTON_B) {
-            currentCategory = nullptr;
-            selectedBtn     = 0;
-            start           = 0;
-            end             = MAX_BUTTONS_ON_SCREEN;
-            auto catSize    = currentConfig->config->getCategories().size();
-            if (catSize < MAX_BUTTONS_ON_SCREEN) {
-                end = catSize;
-            }
-            redraw = true;
-            continue;
         }
 
         WUPSConfigButtons pressedButtons = WUPS_CONFIG_BUTTON_NONE;
@@ -462,6 +466,18 @@ void ConfigUtils::displayMenu() {
         }
         if (buttonsTriggered & VPAD_BUTTON_MINUS) {
             pressedButtons |= WUPS_CONFIG_BUTTON_MINUS;
+        }
+
+        if (!isItemMovementAllowed) {
+            if (buttonsTriggered & VPAD_BUTTON_B) {
+                pressedButtons |= WUPS_CONFIG_BUTTON_B;
+            }
+            if (buttonsTriggered & VPAD_BUTTON_UP) {
+                pressedButtons |= WUPS_CONFIG_BUTTON_UP;
+            }
+            if (buttonsTriggered & VPAD_BUTTON_DOWN) {
+                pressedButtons |= WUPS_CONFIG_BUTTON_UP;
+            }
         }
 
         if (pressedButtons != WUPS_CONFIG_BUTTON_NONE) {
@@ -536,6 +552,8 @@ void ConfigUtils::displayMenu() {
 
             DrawUtils::endDraw();
             redraw = pressedButtons != WUPS_CONFIG_BUTTON_NONE;
+
+            isItemMovementAllowed = config_items[selectedBtn]->isMovementAllowed();
         }
     }
 

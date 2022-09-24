@@ -40,23 +40,21 @@ std::forward_list<std::shared_ptr<PluginData>> PluginDataFactory::loadDir(const 
     }
 
     while ((dp = readdir(dfd)) != nullptr) {
-        struct stat stbuf {};
-        auto full_file_path = string_format("%s/%s", path.c_str(), dp->d_name);
-        if (stat(full_file_path.c_str(), &stbuf) == -1) {
-            DEBUG_FUNCTION_LINE_ERR("Unable to stat file: %s", full_file_path.c_str());
+        if (dp->d_type == DT_DIR) {
+            continue;
+        }
+        if (std::string_view(dp->d_name).starts_with('.') || std::string_view(dp->d_name).starts_with('_') || !std::string_view(dp->d_name).ends_with(".wps")) {
+            DEBUG_FUNCTION_LINE_WARN("Skip file %s/%s", path.c_str(), dp->d_name);
             continue;
         }
 
-        if ((stbuf.st_mode & S_IFMT) == S_IFDIR) { // Skip directories
-            continue;
+        auto full_file_path = string_format("%s/%s", path.c_str(), dp->d_name);
+        DEBUG_FUNCTION_LINE("Loading plugin: %s", full_file_path.c_str());
+        auto pluginData = load(full_file_path);
+        if (pluginData) {
+            result.push_front(std::move(pluginData.value()));
         } else {
-            DEBUG_FUNCTION_LINE("Loading plugin: %s", full_file_path.c_str());
-            auto pluginData = load(full_file_path);
-            if (pluginData) {
-                result.push_front(std::move(pluginData.value()));
-            } else {
-                DEBUG_FUNCTION_LINE_ERR("Failed to load plugin: %s", full_file_path.c_str());
-            }
+            DEBUG_FUNCTION_LINE_ERR("Failed to load plugin: %s", full_file_path.c_str());
         }
     }
 

@@ -38,6 +38,7 @@ extern "C" {
 #define DEBUG_FUNCTION_LINE_WRITE(FMT, ARGS...)                                LOG(WHBLogWritef, FMT, ##ARGS)
 
 #define DEBUG_FUNCTION_LINE_ERR(FMT, ARGS...)                                  LOG_EX_DEFAULT(WHBLogPrintf, "##ERROR## ", "", FMT, ##ARGS)
+#define DEBUG_FUNCTION_LINE_WARN(FMT, ARGS...)                                 LOG_EX_DEFAULT(WHBLogPrintf, "##WARN ## ", "", FMT, ##ARGS)
 
 #define DEBUG_FUNCTION_LINE_ERR_LAMBDA(FILENAME, FUNCTION, LINE, FMT, ARGS...) LOG_EX(FILENAME, FUNCTION, LINE, WHBLogPrintf, "##ERROR## ", "", FMT, ##ARGS);
 
@@ -52,6 +53,7 @@ extern "C" {
 #define DEBUG_FUNCTION_LINE_WRITE(FMT, ARGS...)                                while (0)
 
 #define DEBUG_FUNCTION_LINE_ERR(FMT, ARGS...)                                  LOG_EX_DEFAULT(OSReport, "##ERROR## ", "\n", FMT, ##ARGS)
+#define DEBUG_FUNCTION_LINE_WARN(FMT, ARGS...)                                 LOG_EX_DEFAULT(OSReport, "##WARN ## ", "\n", FMT, ##ARGS)
 
 #define DEBUG_FUNCTION_LINE_ERR_LAMBDA(FILENAME, FUNCTION, LINE, FMT, ARGS...) LOG_EX(FILENAME, FUNCTION, LINE, OSReport, "##ERROR## ", "\n", FMT, ##ARGS);
 

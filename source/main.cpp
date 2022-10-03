@@ -48,6 +48,7 @@ WUMS_APPLICATION_STARTS() {
     if (upid != 2 && upid != 15) {
         return;
     }
+
     OSReport("Running WiiUPluginLoaderBackend " VERSION_FULL "\n");
     initLogging();
     bool initNeeded = false;
@@ -60,6 +61,7 @@ WUMS_APPLICATION_STARTS() {
             DEBUG_FUNCTION_LINE_ERR("Failed to allocated the memory for the trampoline data");
             OSFatal("Failed to allocated the memory for the trampoline data");
         }
+        memset(gTrampData, 0, sizeof(relocation_trampoline_entry_t) * TRAMP_DATA_SIZE);
     }
 
     if (gLoadedPlugins.empty()) {
@@ -68,8 +70,7 @@ WUMS_APPLICATION_STARTS() {
         DEBUG_FUNCTION_LINE("Load plugins from %s", pluginPath.c_str());
 
         auto pluginData = PluginDataFactory::loadDir(pluginPath);
-
-        gLoadedPlugins = PluginManagement::loadPlugins(pluginData, gTrampData, TRAMP_DATA_SIZE);
+        gLoadedPlugins  = PluginManagement::loadPlugins(pluginData, gTrampData, TRAMP_DATA_SIZE);
 
         initNeeded = true;
     }
@@ -80,8 +81,9 @@ WUMS_APPLICATION_STARTS() {
         CallHook(gLoadedPlugins, WUPS_LOADER_HOOK_DEINIT_PLUGIN);
         DEBUG_FUNCTION_LINE("Unload existing plugins.");
         gLoadedPlugins.clear();
-        DEBUG_FUNCTION_LINE("Load new plugins");
+        memset(gTrampData, 0, sizeof(relocation_trampoline_entry_t) * TRAMP_DATA_SIZE);
 
+        DEBUG_FUNCTION_LINE("Load new plugins");
         gLoadedPlugins = PluginManagement::loadPlugins(gLoadOnNextLaunch, gTrampData, TRAMP_DATA_SIZE);
         initNeeded     = true;
     }

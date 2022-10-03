@@ -1,4 +1,5 @@
-#include "utils/logger.h"
+#include "utils.h"
+#include "logger.h"
 #include <coreinit/ios.h>
 #include <cstring>
 #include <malloc.h>
@@ -52,4 +53,26 @@ void dumpHex(const void *data, size_t size) {
             }
         }
     }
+}
+
+OSDynLoad_Error CustomDynLoadAlloc(int32_t size, int32_t align, void **outAddr) {
+    if (!outAddr) {
+        return OS_DYNLOAD_INVALID_ALLOCATOR_PTR;
+    }
+
+    if (align >= 0 && align < 4) {
+        align = 4;
+    } else if (align < 0 && align > -4) {
+        align = -4;
+    }
+
+    if (!(*outAddr = memalign(align, size))) {
+        return OS_DYNLOAD_OUT_OF_MEMORY;
+    }
+
+    return OS_DYNLOAD_OK;
+}
+
+void CustomDynLoadFree(void *addr) {
+    free(addr);
 }

@@ -52,6 +52,7 @@ bool PluginManagement::doRelocation(const std::vector<std::unique_ptr<Relocation
         } else {
             //DEBUG_FUNCTION_LINE("Found export for %s %s", rplName.c_str(), functionName.c_str());
         }
+
         if (!ElfUtils::elfLinkOne(cur->getType(), cur->getOffset(), cur->getAddend(), (uint32_t) cur->getDestination(), functionAddress, tramp_data, tramp_length, RELOC_TYPE_IMPORT, trampolineID)) {
             DEBUG_FUNCTION_LINE_ERR("elfLinkOne failed");
             return false;
@@ -73,19 +74,28 @@ bool PluginManagement::doRelocation(const std::vector<std::unique_ptr<Relocation
     return true;
 }
 
-
 bool PluginManagement::doRelocations(const std::vector<std::unique_ptr<PluginContainer>> &plugins, relocation_trampoline_entry_t *trampData, uint32_t tramp_size) {
     for (uint32_t i = 0; i < tramp_size; i++) {
         if (trampData[i].status == RELOC_TRAMP_IMPORT_DONE) {
             trampData[i].status = RELOC_TRAMP_FREE;
         }
     }
+
+    OSDynLoadAllocFn prevDynLoadAlloc = nullptr;
+    OSDynLoadFreeFn prevDynLoadFree   = nullptr;
+
+    OSDynLoad_GetAllocator(&prevDynLoadAlloc, &prevDynLoadFree);
+    OSDynLoad_SetAllocator(CustomDynLoadAlloc, CustomDynLoadFree);
+
     for (auto &pluginContainer : plugins) {
         DEBUG_FUNCTION_LINE_VERBOSE("Doing relocations for plugin: %s", pluginContainer->getMetaInformation()->getName().c_str());
         if (!PluginManagement::doRelocation(pluginContainer->getPluginInformation()->getRelocationDataList(), trampData, tramp_size, pluginContainer->getPluginInformation()->getTrampolineId())) {
             return false;
         }
     }
+
+    OSDynLoad_SetAllocator(prevDynLoadAlloc, prevDynLoadFree);
+
     return true;
 }
 

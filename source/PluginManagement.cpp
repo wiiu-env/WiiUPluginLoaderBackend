@@ -75,6 +75,11 @@ bool PluginManagement::doRelocation(const std::vector<std::unique_ptr<Relocation
 
 
 bool PluginManagement::doRelocations(const std::vector<std::unique_ptr<PluginContainer>> &plugins, relocation_trampoline_entry_t *trampData, uint32_t tramp_size) {
+    for (uint32_t i = 0; i < tramp_size; i++) {
+        if (trampData[i].status == RELOC_TRAMP_IMPORT_DONE) {
+            trampData[i].status = RELOC_TRAMP_FREE;
+        }
+    }
     for (auto &pluginContainer : plugins) {
         DEBUG_FUNCTION_LINE_VERBOSE("Doing relocations for plugin: %s", pluginContainer->getMetaInformation()->getName().c_str());
         if (!PluginManagement::doRelocation(pluginContainer->getPluginInformation()->getRelocationDataList(), trampData, tramp_size, pluginContainer->getPluginInformation()->getTrampolineId())) {

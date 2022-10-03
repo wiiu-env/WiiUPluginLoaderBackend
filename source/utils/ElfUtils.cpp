@@ -89,8 +89,7 @@ bool ElfUtils::elfLinkOne(char type, size_t offset, int32_t addend, uint32_t des
                         // so they can be overridden/updated/reused on the next application launch.
                         //
                         // Relocations that won't change will have the status RELOC_TRAMP_FIXED and are set to free when the module is unloaded.
-                        if (trampoline_data[i].status == RELOC_TRAMP_FREE ||
-                            trampoline_data[i].status == RELOC_TRAMP_IMPORT_DONE) {
+                        if (trampoline_data[i].status == RELOC_TRAMP_FREE) {
                             freeSlot = &(trampoline_data[i]);
                             break;
                         }
@@ -117,11 +116,9 @@ bool ElfUtils::elfLinkOne(char type, size_t offset, int32_t addend, uint32_t des
                     freeSlot->trampoline[1] = 0x616B0000 | (((uint32_t) value) & 0x0000ffff);         // ori r11, r11, real_addr@l
                     freeSlot->trampoline[2] = 0x7D6903A6;                                             // mtctr   r11
                     freeSlot->trampoline[3] = 0x4E800420;                                             // bctr
-                    DCFlushRange((void *) freeSlot->trampoline, sizeof(freeSlot->trampoline));
                     ICInvalidateRange((unsigned char *) freeSlot->trampoline, sizeof(freeSlot->trampoline));
 
                     freeSlot->id = trampolineId;
-                    DCFlushRange((void *) &freeSlot->id, sizeof(freeSlot->id));
                     ICInvalidateRange((unsigned char *) &freeSlot->id, sizeof(freeSlot->id));
 
                     if (reloc_type == RELOC_TYPE_FIXED) {

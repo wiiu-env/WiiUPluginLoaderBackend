@@ -77,6 +77,7 @@ WUMS_APPLICATION_STARTS() {
     if (!gLoadOnNextLaunch.empty()) {
         DEBUG_FUNCTION_LINE("Restore function patches of currently loaded plugins.");
         PluginManagement::RestoreFunctionPatches(gLoadedPlugins);
+        CallHook(gLoadedPlugins, WUPS_LOADER_HOOK_DEINIT_PLUGIN);
         DEBUG_FUNCTION_LINE("Unload existing plugins.");
         gLoadedPlugins.clear();
         DEBUG_FUNCTION_LINE("Load new plugins");

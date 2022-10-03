@@ -1,5 +1,6 @@
 #pragma once
 
+#include <coreinit/dynload.h>
 #include <cstdint>
 #include <forward_list>
 #include <malloc.h>
@@ -74,3 +75,7 @@ bool remove_locked_first_if(std::mutex &mutex, std::forward_list<T, Allocator> &
 }
 
 std::string getPluginPath();
+
+OSDynLoad_Error CustomDynLoadAlloc(int32_t size, int32_t align, void **outAddr);
+
+void CustomDynLoadFree(void *addr);

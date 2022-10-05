@@ -2,6 +2,7 @@
 #include "plugin/PluginContainer.h"
 #include "utils/ConfigUtils.h"
 #include "version.h"
+#include <coreinit/dynload.h>
 #include <forward_list>
 #include <memory>
 #include <mutex>
@@ -21,3 +22,5 @@ extern std::vector<std::unique_ptr<PluginContainer>> gLoadedPlugins;
 extern std::forward_list<std::shared_ptr<PluginData>> gLoadedData;
 extern std::forward_list<std::shared_ptr<PluginData>> gLoadOnNextLaunch;
 extern std::mutex gLoadedDataMutex;
+extern std::map<std::string, OSDynLoad_Module> gUsedRPLs;
+extern std::vector<void *> gAllocatedAddresses;

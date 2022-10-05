@@ -39,6 +39,11 @@ WUMS_APPLICATION_ENDS() {
     CallHook(gLoadedPlugins, WUPS_LOADER_HOOK_FINI_WUT_SOCKETS);
     CallHook(gLoadedPlugins, WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB);
 
+    for (auto &pair : gUsedRPLs) {
+        OSDynLoad_Release(pair.second);
+    }
+    gUsedRPLs.clear();
+
     deinitLogging();
 }
 
@@ -50,6 +55,17 @@ WUMS_APPLICATION_STARTS() {
     }
 
     OSReport("Running WiiUPluginLoaderBackend " VERSION_FULL "\n");
+
+    gUsedRPLs.clear();
+
+    // If an allocated rpl was not released properly (e.g. if something else calls OSDynload_Acquire without releasing it) memory get leaked.
+    // Let's clean this up!
+    for (auto &addr : gAllocatedAddresses) {
+        DEBUG_FUNCTION_LINE_WARN("Memory allocated by OSDynload was not freed properly, let's clean it up! (%08X)", addr);
+        free((void *) addr);
+    }
+    gAllocatedAddresses.clear();
+
     initLogging();
     bool initNeeded = false;
 
@@ -93,7 +109,7 @@ WUMS_APPLICATION_STARTS() {
     gLoadedData.clear();
 
     if (!gLoadedPlugins.empty()) {
-        if (!PluginManagement::doRelocations(gLoadedPlugins, gTrampData, TRAMP_DATA_SIZE)) {
+        if (!PluginManagement::doRelocations(gLoadedPlugins, gTrampData, TRAMP_DATA_SIZE, gUsedRPLs)) {
             DEBUG_FUNCTION_LINE_ERR("Relocations failed");
             OSFatal("Relocations failed");
         }

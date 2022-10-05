@@ -13,8 +13,11 @@
 #include <memory>
 #include <ranges>
 
-bool PluginManagement::doRelocation(const std::vector<std::unique_ptr<RelocationData>> &relocData, relocation_trampoline_entry_t *tramp_data, uint32_t tramp_length, uint32_t trampolineID) {
-    std::map<std::string, OSDynLoad_Module> moduleHandleCache;
+bool PluginManagement::doRelocation(const std::vector<std::unique_ptr<RelocationData>> &relocData,
+                                    relocation_trampoline_entry_t *tramp_data,
+                                    uint32_t tramp_length,
+                                    uint32_t trampolineID,
+                                    std::map<std::string, OSDynLoad_Module> &usedRPls) {
     for (auto const &cur : relocData) {
         uint32_t functionAddress        = 0;
         const std::string &functionName = cur->getName();
@@ -37,12 +40,22 @@ bool PluginManagement::doRelocation(const std::vector<std::unique_ptr<Relocation
             auto rplName               = cur->getImportRPLInformation()->getRPLName();
             int32_t isData             = cur->getImportRPLInformation()->isData();
             OSDynLoad_Module rplHandle = nullptr;
-            if (moduleHandleCache.count(rplName) > 0) {
-                rplHandle = moduleHandleCache[rplName];
+
+            if (!usedRPls.contains(rplName)) {
+                DEBUG_FUNCTION_LINE_VERBOSE("Acquire %s", rplName.c_str());
+                // Always acquire to increase refcount and make sure it won't get unloaded while we're using it.
+                OSDynLoad_Error err = OSDynLoad_Acquire(rplName.c_str(), &rplHandle);
+                if (err != OS_DYNLOAD_OK) {
+                    DEBUG_FUNCTION_LINE_ERR("Failed to acquire %s", rplName.c_str());
+                    return false;
+                }
+                // Keep track RPLs we are using.
+                // They will be released on exit
+                usedRPls[rplName] = rplHandle;
             } else {
-                OSDynLoad_Acquire(rplName.c_str(), &rplHandle);
-                moduleHandleCache[rplName] = rplHandle;
+                rplHandle = usedRPls[rplName];
             }
+
             OSDynLoad_FindExport(rplHandle, isData, functionName.c_str(), (void **) &functionAddress);
         }
 
@@ -74,7 +87,9 @@ bool PluginManagement::doRelocation(const std::vector<std::unique_ptr<Relocation
     return true;
 }
 
-bool PluginManagement::doRelocations(const std::vector<std::unique_ptr<PluginContainer>> &plugins, relocation_trampoline_entry_t *trampData, uint32_t tramp_size) {
+bool PluginManagement::doRelocations(const std::vector<std::unique_ptr<PluginContainer>> &plugins,
+                                     relocation_trampoline_entry_t *trampData, uint32_t tramp_size,
+                                     std::map<std::string, OSDynLoad_Module> &usedRPls) {
     for (uint32_t i = 0; i < tramp_size; i++) {
         if (trampData[i].status == RELOC_TRAMP_IMPORT_DONE) {
             trampData[i].status = RELOC_TRAMP_FREE;
@@ -89,7 +104,11 @@ bool PluginManagement::doRelocations(const std::vector<std::unique_ptr<PluginCon
 
     for (auto &pluginContainer : plugins) {
         DEBUG_FUNCTION_LINE_VERBOSE("Doing relocations for plugin: %s", pluginContainer->getMetaInformation()->getName().c_str());
-        if (!PluginManagement::doRelocation(pluginContainer->getPluginInformation()->getRelocationDataList(), trampData, tramp_size, pluginContainer->getPluginInformation()->getTrampolineId())) {
+        if (!PluginManagement::doRelocation(pluginContainer->getPluginInformation()->getRelocationDataList(),
+                                            trampData,
+                                            tramp_size,
+                                            pluginContainer->getPluginInformation()->getTrampolineId(),
+                                            usedRPls)) {
             return false;
         }
     }

@@ -1,8 +1,8 @@
 #include "utils.h"
+#include "globals.h"
 #include "logger.h"
+#include <algorithm>
 #include <coreinit/ios.h>
-#include <cstring>
-#include <malloc.h>
 #include <string>
 
 std::string getPluginPath() {
@@ -69,10 +69,18 @@ OSDynLoad_Error CustomDynLoadAlloc(int32_t size, int32_t align, void **outAddr) 
     if (!(*outAddr = memalign(align, size))) {
         return OS_DYNLOAD_OUT_OF_MEMORY;
     }
+    // keep track of allocated memory to clean it up if RPLs won't get unloaded properly
+    gAllocatedAddresses.push_back(*outAddr);
 
     return OS_DYNLOAD_OK;
 }
 
 void CustomDynLoadFree(void *addr) {
     free(addr);
+
+    // Remove from list
+    auto it = std::find(gAllocatedAddresses.begin(), gAllocatedAddresses.end(), addr);
+    if (it != gAllocatedAddresses.end()) {
+        gAllocatedAddresses.erase(it);
+    }
 }

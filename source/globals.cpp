@@ -9,3 +9,5 @@ relocation_trampoline_entry_t *gTrampData __attribute__((section(".data"))) = nu
 std::forward_list<std::shared_ptr<PluginData>> gLoadedData __attribute__((section(".data")));
 std::forward_list<std::shared_ptr<PluginData>> gLoadOnNextLaunch __attribute__((section(".data")));
 std::mutex gLoadedDataMutex __attribute__((section(".data")));
+std::map<std::string, OSDynLoad_Module> gUsedRPLs __attribute__((section(".data")));
+std::vector<void *> gAllocatedAddresses __attribute__((section(".data")));

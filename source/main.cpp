@@ -92,9 +92,9 @@ WUMS_APPLICATION_STARTS() {
     }
 
     if (!gLoadOnNextLaunch.empty()) {
+        CallHook(gLoadedPlugins, WUPS_LOADER_HOOK_DEINIT_PLUGIN);
         DEBUG_FUNCTION_LINE("Restore function patches of currently loaded plugins.");
         PluginManagement::RestoreFunctionPatches(gLoadedPlugins);
-        CallHook(gLoadedPlugins, WUPS_LOADER_HOOK_DEINIT_PLUGIN);
         DEBUG_FUNCTION_LINE("Unload existing plugins.");
         gLoadedPlugins.clear();
         memset(gTrampData, 0, sizeof(relocation_trampoline_entry_t) * TRAMP_DATA_SIZE);

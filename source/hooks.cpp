@@ -91,6 +91,7 @@ void CallHook(const std::unique_ptr<PluginContainer> &plugin, wups_loader_hook_t
             } else {
                 DEBUG_FUNCTION_LINE_ERR("Failed to call hook. It was not defined");
             }
+            break;
         }
     }
 }

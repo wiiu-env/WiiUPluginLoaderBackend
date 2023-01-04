@@ -68,9 +68,6 @@ class section
     virtual bool load( std::istream&  stream,
                        std::streampos header_offset,
                        bool           is_lazy )               = 0;
-    virtual void save( std::ostream&  stream,
-                       std::streampos header_offset,
-                       std::streampos data_offset ) = 0;
     virtual bool is_address_initialized() const     = 0;
 };
 
@@ -302,50 +299,8 @@ template <class T> class section_impl : public section
     }
 
     //------------------------------------------------------------------------------
-    void save( std::ostream&  stream,
-               std::streampos header_offset,
-               std::streampos data_offset ) override
-    {
-        if ( 0 != get_index() ) {
-            header.sh_offset = decltype( header.sh_offset )( data_offset );
-            header.sh_offset = ( *convertor )( header.sh_offset );
-        }
-
-        save_header( stream, header_offset );
-        if ( get_type() != SHT_NOBITS && get_type() != SHT_NULL &&
-             get_size() != 0 && data != nullptr ) {
-            save_data( stream, data_offset );
-        }
-    }
-
-    //------------------------------------------------------------------------------
   private:
-    //------------------------------------------------------------------------------
-    void save_header( std::ostream& stream, std::streampos header_offset ) const
-    {
-        adjust_stream_size( stream, header_offset );
-        stream.write( reinterpret_cast<const char*>( &header ),
-                      sizeof( header ) );
-    }
-
-    //------------------------------------------------------------------------------
-    void save_data( std::ostream& stream, std::streampos data_offset )
-    {
-        adjust_stream_size( stream, data_offset );
-
-        if ( ( ( get_flags() & SHF_COMPRESSED ) ||
-               ( get_flags() & SHF_RPX_DEFLATE ) ) &&
-             compression != nullptr ) {
-            Elf_Xword decompressed_size = get_size();
-            Elf_Xword compressed_size   = 0;
-            auto      compressed_ptr    = compression->deflate(
-                data.get(), convertor, decompressed_size, compressed_size );
-            stream.write( compressed_ptr.get(), compressed_size );
-        }
-        else {
-            stream.write( get_data(), get_size() );
-        }
-    }
+  private:
 
     //------------------------------------------------------------------------------
   private:

@@ -24,8 +24,6 @@ THE SOFTWARE.
 #define ELFIO_HPP
 
 #include <string>
-#include <iostream>
-#include <fstream>
 #include <functional>
 #include <algorithm>
 #include <array>
@@ -131,38 +129,21 @@ class elfio
     }
 
     //------------------------------------------------------------------------------
-    bool load( const std::string& file_name, bool is_lazy = false )
-    {
-        pstream = std::make_unique<std::ifstream>();
-        pstream->open( file_name.c_str(), std::ios::in | std::ios::binary );
-        if ( pstream == nullptr || !*pstream ) {
-            return false;
-        }
-
-        bool ret = load( *pstream, is_lazy );
-
-        if ( !is_lazy ) {
-            pstream.release();
-        }
-
-        return ret;
-    }
-
-    //------------------------------------------------------------------------------
-    bool load( std::istream& stream, bool is_lazy = false )
+    bool load(const char * pBuffer, size_t pBufferSize)
     {
         sections_.clear();
         segments_.clear();
 
-        std::array<char, EI_NIDENT> e_ident = { 0 };
+        std::array<char, EI_NIDENT> e_ident = { };
         // Read ELF file signature
-        stream.seekg( 0 );
-        stream.read( e_ident.data(), sizeof( e_ident ) );
+        if(sizeof( e_ident ) > pBufferSize) {
+            return false;
+        }
+        memcpy( e_ident.data(), pBuffer, sizeof( e_ident ) );
 
         // Is it ELF file?
-        if ( stream.gcount() != sizeof( e_ident ) ||
-             e_ident[EI_MAG0] != ELFMAG0 || e_ident[EI_MAG1] != ELFMAG1 ||
-             e_ident[EI_MAG2] != ELFMAG2 || e_ident[EI_MAG3] != ELFMAG3 ) {
+        if (e_ident[EI_MAG0] != ELFMAG0 || e_ident[EI_MAG1] != ELFMAG1 ||
+            e_ident[EI_MAG2] != ELFMAG2 || e_ident[EI_MAG3] != ELFMAG3 ) {
             return false;
         }
 
@@ -181,12 +162,12 @@ class elfio
         if ( nullptr == header ) {
             return false;
         }
-        if ( !header->load( stream ) ) {
+        if ( !header->load( pBuffer, pBufferSize ) ) {
             return false;
         }
 
-        load_sections( stream, is_lazy );
-        bool is_still_good = load_segments( stream, is_lazy );
+        load_sections( pBuffer, pBufferSize );
+        bool is_still_good = load_segments( pBuffer, pBufferSize );
         return is_still_good;
     }
 
@@ -313,7 +294,7 @@ class elfio
     }
 
     //------------------------------------------------------------------------------
-    bool load_sections( std::istream& stream, bool is_lazy )
+    bool load_sections( const char * pBuffer, size_t pBufferSize )
     {
         unsigned char file_class = header->get_class();
         Elf_Half      entry_size = header->get_section_entry_size();
@@ -329,10 +310,9 @@ class elfio
 
         for ( Elf_Half i = 0; i < num; ++i ) {
             section* sec = create_section();
-            sec->load( stream,
-                       static_cast<std::streamoff>( offset ) +
-                           static_cast<std::streampos>( i ) * entry_size,
-                       is_lazy );
+            sec->load( pBuffer, pBufferSize,
+                       static_cast<off_t>( offset ) +
+                           static_cast<off_t>( i ) * entry_size);
             // To mark that the section is not permitted to reassign address
             // during layout calculation
             sec->set_address( sec->get_address() );
@@ -372,7 +352,7 @@ class elfio
     }
 
     //------------------------------------------------------------------------------
-    bool load_segments( std::istream& stream, bool is_lazy )
+    bool load_segments( const char * pBuffer, size_t pBufferSize )
     {
         unsigned char file_class = header->get_class();
         Elf_Half      entry_size = header->get_segment_entry_size();
@@ -404,11 +384,9 @@ class elfio
 
             segment* seg = segments_.back().get();
 
-            if ( !seg->load( stream,
-                             static_cast<std::streamoff>( offset ) +
-                                 static_cast<std::streampos>( i ) * entry_size,
-                             is_lazy ) ||
-                 stream.fail() ) {
+            if ( !seg->load( pBuffer, pBufferSize,
+                             static_cast<off_t>( offset ) +
+                                 static_cast<off_t>( i ) * entry_size)) {
                 segments_.pop_back();
                 return false;
             }
@@ -580,7 +558,6 @@ class elfio
 
     //------------------------------------------------------------------------------
   private:
-    std::unique_ptr<std::ifstream>         pstream = nullptr;
     std::unique_ptr<elf_header>            header  = nullptr;
     std::vector<std::unique_ptr<section>>  sections_;
     std::vector<std::unique_ptr<segment>>  segments_;

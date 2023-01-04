@@ -24,7 +24,6 @@ THE SOFTWARE.
 #define ELFIO_SECTION_HPP
 
 #include <string>
-#include <iostream>
 #include <new>
 #include <limits>
 
@@ -58,16 +57,13 @@ class section
     virtual void
     insert_data( Elf_Xword pos, const char* raw_data, Elf_Word size )    = 0;
     virtual void   insert_data( Elf_Xword pos, const std::string& data ) = 0;
-    virtual size_t get_stream_size() const                               = 0;
-    virtual void   set_stream_size( size_t value )                       = 0;
 
   protected:
     ELFIO_SET_ACCESS_DECL( Elf64_Off, offset );
     ELFIO_SET_ACCESS_DECL( Elf_Half, index );
 
-    virtual bool load( std::istream&  stream,
-                       std::streampos header_offset,
-                       bool           is_lazy )               = 0;
+    virtual bool load( const char * pBuffer, size_t pBufferSize,
+                       off_t header_offset)               = 0;
     virtual bool is_address_initialized() const     = 0;
 };
 
@@ -118,9 +114,6 @@ template <class T> class section_impl : public section
     //------------------------------------------------------------------------------
     const char* get_data() const override
     {
-        if ( is_lazy ) {
-            load_data();
-        }
         return data.get();
     }
 
@@ -198,11 +191,6 @@ template <class T> class section_impl : public section
         return insert_data( pos, str_data.c_str(), (Elf_Word)str_data.size() );
     }
 
-    size_t get_stream_size() const override { return stream_size; }
-
-    //------------------------------------------------------------------------------
-    void set_stream_size( size_t value ) override { stream_size = value; }
-
     //------------------------------------------------------------------------------
   protected:
     //------------------------------------------------------------------------------
@@ -219,53 +207,46 @@ template <class T> class section_impl : public section
     }
 
     //------------------------------------------------------------------------------
-    bool load( std::istream&  stream,
-               std::streampos header_offset,
-               bool           is_lazy_ ) override
+    bool load( const char * pBuffer, size_t pBufferSize,
+               off_t header_offset) override
     {
-        pstream = &stream;
-        is_lazy = is_lazy_;
-        header  = { 0 };
+        header  = { };
 
-        stream.seekg( header_offset);
-        stream.read( reinterpret_cast<char*>( &header ), sizeof( header ) );
+        if( header_offset + sizeof( header ) > pBufferSize ) {
+            return false;
+        }
+        memcpy( reinterpret_cast<char*>( &header ), pBuffer + header_offset, sizeof( header ) );
 
-        if ( !is_lazy || is_compressed() ) {
+        bool ret = load_data(pBuffer, pBufferSize);
 
-            bool ret = load_data();
-
-            if ( is_compressed() ) {
-                Elf_Xword size              = get_size();
-                Elf_Xword uncompressed_size = 0;
-                auto      decompressed_data = compression->inflate(
-                    data.get(), convertor, size, uncompressed_size );
-                if ( decompressed_data != nullptr ) {
-                    set_size( uncompressed_size );
-                    data = std::move( decompressed_data );
-                }
+        if (ret && is_compressed() ) {
+            Elf_Xword size              = get_size();
+            Elf_Xword uncompressed_size = 0;
+            auto      decompressed_data = compression->inflate(
+                data.get(), convertor, size, uncompressed_size );
+            if ( decompressed_data != nullptr ) {
+                set_size( uncompressed_size );
+                data = std::move( decompressed_data );
             }
-
-            return ret;
         }
 
-        return true;
+        return ret;
     }
 
-    bool load_data() const
+    bool load_data(const char * pBuffer, size_t pBufferSize) const
     {
-        is_lazy        = false;
         Elf_Xword size = get_size();
         if ( nullptr == data && SHT_NULL != get_type() &&
-             SHT_NOBITS != get_type() && size < get_stream_size() ) {
+             SHT_NOBITS != get_type() && size < pBufferSize ) {
             data.reset( new ( std::nothrow ) char[size_t( size ) + 1] );
 
             if ( ( 0 != size ) && ( nullptr != data ) ) {
-                pstream->seekg(( *convertor )( header.sh_offset ));
-                pstream->read( data.get(), size );
-                if ( static_cast<Elf_Xword>( pstream->gcount() ) != size ) {
+                auto offset = ( *convertor )( header.sh_offset );
+                if(offset + size > pBufferSize) {
                     data = nullptr;
                     return false;
                 }
+                memcpy( data.get(), pBuffer + offset, size );
 
                 // refresh size because it may have changed if we had to decompress data
                 size = get_size();
@@ -287,7 +268,6 @@ template <class T> class section_impl : public section
 
     //------------------------------------------------------------------------------
   private:
-    mutable std::istream*                        pstream = nullptr;
     T                                            header  = {};
     Elf_Half                                     index   = 0;
     std::string                                  name;
@@ -296,8 +276,6 @@ template <class T> class section_impl : public section
     const endianess_convertor*                   convertor      = nullptr;
     const std::shared_ptr<compression_interface> compression    = nullptr;
     bool                                         is_address_set = false;
-    size_t                                       stream_size    = 0;
-    mutable bool                                 is_lazy        = false;
 };
 
 } // namespace ELFIO

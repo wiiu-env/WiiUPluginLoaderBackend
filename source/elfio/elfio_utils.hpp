@@ -24,7 +24,6 @@ THE SOFTWARE.
 #define ELFIO_UTILS_HPP
 
 #include <cstdint>
-#include <ostream>
 
 #define ELFIO_GET_ACCESS_DECL( TYPE, NAME ) virtual TYPE get_##NAME() const = 0
 

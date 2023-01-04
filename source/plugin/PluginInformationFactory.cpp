@@ -18,7 +18,6 @@
 #include "PluginInformationFactory.h"
 #include "../utils/ElfUtils.h"
 #include "../utils/utils.h"
-#include "utils/membuf.hpp"
 #include "utils/wiiu_zlib.hpp"
 #include <coreinit/cache.h>
 #include <map>
@@ -36,10 +35,8 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, re
         return {};
     }
     elfio reader(new wiiu_zlib);
-    membuf sbuf((char *) pluginData->buffer.get(), (char *) pluginData->buffer.get() + pluginData->length);
-    std::istream in(&sbuf);
 
-    if (!reader.load(in)) {
+    if (!reader.load(reinterpret_cast<const char *>(pluginData->buffer.get()), pluginData->length)) {
         DEBUG_FUNCTION_LINE_ERR("Can't process PluginData in elfio");
         return {};
     }

@@ -54,8 +54,7 @@ template <class S> class symbol_section_accessor_template
             return nRet;
         }
 
-        if ( symbol_section->get_entry_size() >= minimum_symbol_size &&
-             symbol_section->get_size() <= symbol_section->get_stream_size() ) {
+        if ( symbol_section->get_entry_size() >= minimum_symbol_size ) {
             nRet =
                 symbol_section->get_size() / symbol_section->get_entry_size();
         }

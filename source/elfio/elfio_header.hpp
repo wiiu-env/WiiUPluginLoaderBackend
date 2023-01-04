@@ -23,7 +23,7 @@ THE SOFTWARE.
 #ifndef ELF_HEADER_HPP
 #define ELF_HEADER_HPP
 
-#include <iostream>
+#include <cstring>
 
 namespace ELFIO {
 
@@ -32,7 +32,7 @@ class elf_header
   public:
     virtual ~elf_header() = default;
 
-    virtual bool load( std::istream& stream )       = 0;
+    virtual bool load( const char * pBuffer, size_t pBufferSize )       = 0;
 
     // ELF header functions
     ELFIO_GET_ACCESS_DECL( unsigned char, class );
@@ -98,12 +98,14 @@ template <class T> class elf_header_impl : public elf_header
     }
 
     //------------------------------------------------------------------------------
-    bool load( std::istream& stream ) override
+    bool load( const char * pBuffer, size_t pBufferSize ) override
     {
-        stream.seekg(0);
-        stream.read( reinterpret_cast<char*>( &header ), sizeof( header ) );
+        if(sizeof( header ) > pBufferSize) {
+            return false;
+        }
+        memcpy( reinterpret_cast<char*>( &header ), pBuffer, sizeof( header ));
 
-        return ( stream.gcount() == sizeof( header ) );
+        return true;
     }
 
     //------------------------------------------------------------------------------

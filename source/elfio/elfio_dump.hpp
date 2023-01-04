@@ -25,8 +25,6 @@ THE SOFTWARE.
 
 #include <algorithm>
 #include <string>
-#include <ostream>
-#include <sstream>
 #include <iomanip>
 #include <elfio/elfio.hpp>
 

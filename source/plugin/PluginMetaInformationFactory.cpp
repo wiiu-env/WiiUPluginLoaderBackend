@@ -19,7 +19,6 @@
 #include "elfio/elfio.hpp"
 #include "fs/FSUtils.h"
 #include "utils/logger.h"
-#include "utils/membuf.hpp"
 #include "utils/wiiu_zlib.hpp"
 #include <memory>
 
@@ -29,9 +28,7 @@ std::optional<std::unique_ptr<PluginMetaInformation>> PluginMetaInformationFacto
         return {};
     }
     ELFIO::elfio reader(new wiiu_zlib);
-    membuf sbuf((char *) pluginData->buffer.get(), (char *) pluginData->buffer.get() + pluginData->length);
-    std::istream in(&sbuf);
-    if (!reader.load(in)) {
+    if (!reader.load(reinterpret_cast<const char *>(pluginData->buffer.get()), pluginData->length)) {
         DEBUG_FUNCTION_LINE_ERR("Can't process PluginData in elfio");
         return {};
     }
@@ -48,10 +45,7 @@ std::optional<std::unique_ptr<PluginMetaInformation>> PluginMetaInformationFacto
         return {};
     }
 
-    membuf sbuf((char *) buffer, (char *) buffer + length);
-    std::istream in(&sbuf);
-
-    if (!reader.load(in)) {
+    if (!reader.load(reinterpret_cast<const char *>(buffer), length)) {
         DEBUG_FUNCTION_LINE_ERR("Can't process PluginData in elfio");
         return {};
     }
@@ -63,10 +57,7 @@ std::optional<std::unique_ptr<PluginMetaInformation>> PluginMetaInformationFacto
 std::optional<std::unique_ptr<PluginMetaInformation>> PluginMetaInformationFactory::loadPlugin(char *buffer, size_t size) {
     ELFIO::elfio reader(new wiiu_zlib);
 
-    membuf sbuf((char *) buffer, (char *) buffer + size);
-    std::istream in(&sbuf);
-
-    if (!reader.load(in)) {
+    if (!reader.load(reinterpret_cast<const char *>(buffer), size)) {
         DEBUG_FUNCTION_LINE_ERR("Can't find or process ELF file");
         return std::nullopt;
     }

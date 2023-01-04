@@ -23,7 +23,6 @@ THE SOFTWARE.
 #ifndef ELFIO_SEGMENT_HPP
 #define ELFIO_SEGMENT_HPP
 
-#include <iostream>
 #include <vector>
 #include <new>
 #include <limits>
@@ -62,9 +61,8 @@ class segment
 
     virtual const std::vector<Elf_Half>& get_sections() const = 0;
 
-    virtual bool load( std::istream&  stream,
-                       std::streampos header_offset,
-                       bool           is_lazy )               = 0;
+    virtual bool load( const char * pBuffer, size_t pBufferSize,
+                       off_t header_offset )               = 0;
 };
 
 //------------------------------------------------------------------------------
@@ -94,9 +92,6 @@ template <class T> class segment_impl : public segment
     //------------------------------------------------------------------------------
     const char* get_data() const override
     {
-        if ( is_lazy ) {
-            load_data();
-        }
         return data.get();
     }
 
@@ -159,43 +154,35 @@ template <class T> class segment_impl : public segment
     void set_index( const Elf_Half& value ) override { index = value; }
 
     //------------------------------------------------------------------------------
-    bool load( std::istream&  stream,
-               std::streampos header_offset,
-               bool           is_lazy_ ) override
+    bool load( const char * pBuffer, size_t pBufferSize,
+               off_t header_offset) override
     {
-        pstream = &stream;
-        is_lazy = is_lazy_;
-
-        stream.seekg( header_offset);
-        stream.read( reinterpret_cast<char*>( &ph ), sizeof( ph ) );
+        if( header_offset + sizeof( ph ) > pBufferSize ) {
+            return false;
+        }
+        memcpy( reinterpret_cast<char*>( &ph ), pBuffer + header_offset, sizeof( ph ) );
         is_offset_set = true;
 
-        if ( !is_lazy ) {
-            return load_data();
-        }
-
-        return true;
+        return load_data(pBuffer, pBufferSize);
     }
 
     //------------------------------------------------------------------------------
-    bool load_data() const
+    bool load_data(const char * pBuffer, size_t pBufferSize) const
     {
-        is_lazy = false;
         if ( PT_NULL == get_type() || 0 == get_file_size() ) {
             return true;
         }
-
-        pstream->seekg(( *convertor )( ph.p_offset ));
+        auto offset = ( *convertor )( ph.p_offset );
         Elf_Xword size = get_file_size();
 
-        if ( size > get_stream_size() ) {
+        if ( size > pBufferSize ) {
             data = nullptr;
         }
         else {
             data.reset( new ( std::nothrow ) char[(size_t)size + 1] );
 
-            if ( nullptr != data.get() && pstream->read( data.get(), size ) ) {
-                data.get()[size] = 0;
+            if ( nullptr != data.get()) {
+                memcpy(data.get(), pBuffer + offset, size);
             }
             else {
                 data = nullptr;
@@ -207,22 +194,13 @@ template <class T> class segment_impl : public segment
     }
 
     //------------------------------------------------------------------------------
-    size_t get_stream_size() const { return stream_size; }
-
-    //------------------------------------------------------------------------------
-    void set_stream_size( size_t value ) { stream_size = value; }
-
-    //------------------------------------------------------------------------------
   private:
-    mutable std::istream*           pstream = nullptr;
     T                               ph      = {};
     Elf_Half                        index   = 0;
     mutable std::unique_ptr<char[]> data;
     std::vector<Elf_Half>           sections;
     const endianess_convertor*      convertor     = nullptr;
-    size_t                          stream_size   = 0;
     bool                            is_offset_set = false;
-    mutable bool                    is_lazy       = false;
 };
 
 } // namespace ELFIO

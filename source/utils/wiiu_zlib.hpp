@@ -34,7 +34,7 @@ public:
         }
 
         int z_ret;
-        z_stream s = {nullptr};
+        z_stream s = {};
 
         s.zalloc = Z_NULL;
         s.zfree  = Z_NULL;
@@ -66,8 +66,8 @@ public:
             return nullptr;
         }
 
-        int z_ret  = 0;
-        z_stream s = {nullptr};
+        int z_ret;
+        z_stream s = {};
 
         s.zalloc = Z_NULL;
         s.zfree  = Z_NULL;

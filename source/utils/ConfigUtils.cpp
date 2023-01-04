@@ -641,7 +641,10 @@ void ConfigUtils::openConfigMenu() {
     OSScreenFlipBuffersEx(SCREEN_DRC);
 
     DrawUtils::initBuffers(screenbuffer0, screen_buf0_size, screenbuffer1, screen_buf1_size);
-    DrawUtils::initFont();
+    if (!DrawUtils::initFont()) {
+        DEBUG_FUNCTION_LINE_ERR("Failed to init Font");
+        goto error_exit;
+    }
 
     // disable the home button menu to prevent opening it when exiting
     OSEnableHomeButtonMenu(false);

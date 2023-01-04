@@ -18,6 +18,8 @@
 #include "PluginInformationFactory.h"
 #include "../utils/ElfUtils.h"
 #include "../utils/utils.h"
+#include "utils/membuf.hpp"
+#include "utils/wiiu_zlib.hpp"
 #include <coreinit/cache.h>
 #include <map>
 #include <memory>
@@ -33,8 +35,11 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, re
         DEBUG_FUNCTION_LINE_ERR("Buffer was nullptr");
         return {};
     }
-    elfio reader;
-    if (!reader.load((char *) pluginData->buffer.get(), pluginData->length)) {
+    elfio reader(new wiiu_zlib);
+    membuf sbuf((char *) pluginData->buffer.get(), (char *) pluginData->buffer.get() + pluginData->length);
+    std::istream in(&sbuf);
+
+    if (!reader.load(in)) {
         DEBUG_FUNCTION_LINE_ERR("Can't process PluginData in elfio");
         return {};
     }
@@ -302,15 +307,29 @@ bool PluginInformationFactory::addImportRelocationData(const std::unique_ptr<Plu
             DEBUG_FUNCTION_LINE_VERBOSE("Found relocation section %s", psec->get_name().c_str());
             relocation_section_accessor rel(reader, psec);
             for (uint32_t j = 0; j < (uint32_t) rel.get_entries_num(); ++j) {
+                Elf_Word symbol = 0;
                 Elf64_Addr offset;
                 Elf_Word type;
                 Elf_Sxword addend;
                 std::string sym_name;
                 Elf64_Addr sym_value;
-                Elf_Half sym_section_index;
 
-                if (!rel.get_entry(j, offset, sym_value, sym_name, type, addend, sym_section_index)) {
+                if (!rel.get_entry(j, offset, symbol, type, addend)) {
                     DEBUG_FUNCTION_LINE_ERR("Failed to get relocation");
+                    return false;
+                }
+                symbol_section_accessor symbols(reader, reader.sections[(Elf_Half) psec->get_link()]);
+
+                // Find the symbol
+                Elf_Xword size;
+                unsigned char bind;
+                unsigned char symbolType;
+                Elf_Half sym_section_index;
+                unsigned char other;
+
+                if (!symbols.get_symbol(symbol, sym_name, sym_value, size,
+                                        bind, symbolType, sym_section_index, other)) {
+                    DEBUG_FUNCTION_LINE_ERR("Failed to get symbol");
                     return false;
                 }
 
@@ -354,16 +373,30 @@ bool PluginInformationFactory::linkSection(const elfio &reader, uint32_t section
             DEBUG_FUNCTION_LINE_VERBOSE("Found relocation section %s", psec->get_name().c_str());
             relocation_section_accessor rel(reader, psec);
             for (uint32_t j = 0; j < (uint32_t) rel.get_entries_num(); ++j) {
+                Elf_Word symbol = 0;
                 Elf64_Addr offset;
                 Elf_Word type;
                 Elf_Sxword addend;
                 std::string sym_name;
                 Elf64_Addr sym_value;
-                Elf_Half sym_section_index;
 
-                if (!rel.get_entry(j, offset, sym_value, sym_name, type, addend, sym_section_index)) {
+                if (!rel.get_entry(j, offset, symbol, type, addend)) {
                     DEBUG_FUNCTION_LINE_ERR("Failed to get relocation");
-                    break;
+                    return false;
+                }
+                symbol_section_accessor symbols(reader, reader.sections[(Elf_Half) psec->get_link()]);
+
+                // Find the symbol
+                Elf_Xword size;
+                unsigned char bind;
+                unsigned char symbolType;
+                Elf_Half sym_section_index;
+                unsigned char other;
+
+                if (!symbols.get_symbol(symbol, sym_name, sym_value, size,
+                                        bind, symbolType, sym_section_index, other)) {
+                    DEBUG_FUNCTION_LINE_ERR("Failed to get symbol");
+                    return false;
                 }
 
                 auto adjusted_sym_value = (uint32_t) sym_value;

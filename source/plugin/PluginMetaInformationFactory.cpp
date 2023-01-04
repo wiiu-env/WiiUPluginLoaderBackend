@@ -18,6 +18,9 @@
 #include "PluginMetaInformationFactory.h"
 #include "elfio/elfio.hpp"
 #include "fs/FSUtils.h"
+#include "utils/logger.h"
+#include "utils/membuf.hpp"
+#include "utils/wiiu_zlib.hpp"
 #include <memory>
 
 std::optional<std::unique_ptr<PluginMetaInformation>> PluginMetaInformationFactory::loadPlugin(const std::shared_ptr<PluginData> &pluginData) {
@@ -25,8 +28,10 @@ std::optional<std::unique_ptr<PluginMetaInformation>> PluginMetaInformationFacto
         DEBUG_FUNCTION_LINE_ERR("Buffer is empty");
         return {};
     }
-    ELFIO::elfio reader;
-    if (!reader.load((char *) pluginData->buffer.get(), pluginData->length)) {
+    ELFIO::elfio reader(new wiiu_zlib);
+    membuf sbuf((char *) pluginData->buffer.get(), (char *) pluginData->buffer.get() + pluginData->length);
+    std::istream in(&sbuf);
+    if (!reader.load(in)) {
         DEBUG_FUNCTION_LINE_ERR("Can't process PluginData in elfio");
         return {};
     }
@@ -34,7 +39,7 @@ std::optional<std::unique_ptr<PluginMetaInformation>> PluginMetaInformationFacto
 }
 
 std::optional<std::unique_ptr<PluginMetaInformation>> PluginMetaInformationFactory::loadPlugin(const std::string &filePath) {
-    ELFIO::elfio reader;
+    ELFIO::elfio reader(new wiiu_zlib);
 
     uint8_t *buffer = nullptr;
     uint32_t length = 0;
@@ -43,7 +48,10 @@ std::optional<std::unique_ptr<PluginMetaInformation>> PluginMetaInformationFacto
         return {};
     }
 
-    if (!reader.load((char *) buffer, length)) {
+    membuf sbuf((char *) buffer, (char *) buffer + length);
+    std::istream in(&sbuf);
+
+    if (!reader.load(in)) {
         DEBUG_FUNCTION_LINE_ERR("Can't process PluginData in elfio");
         return {};
     }
@@ -53,8 +61,12 @@ std::optional<std::unique_ptr<PluginMetaInformation>> PluginMetaInformationFacto
 }
 
 std::optional<std::unique_ptr<PluginMetaInformation>> PluginMetaInformationFactory::loadPlugin(char *buffer, size_t size) {
-    ELFIO::elfio reader;
-    if (!reader.load(buffer, size)) {
+    ELFIO::elfio reader(new wiiu_zlib);
+
+    membuf sbuf((char *) buffer, (char *) buffer + size);
+    std::istream in(&sbuf);
+
+    if (!reader.load(in)) {
         DEBUG_FUNCTION_LINE_ERR("Can't find or process ELF file");
         return std::nullopt;
     }
@@ -73,7 +85,7 @@ std::optional<std::unique_ptr<PluginMetaInformation>> PluginMetaInformationFacto
         ELFIO::section *psec = reader.sections[i];
 
         // Calculate total size:
-        if ((psec->get_type() == SHT_PROGBITS || psec->get_type() == SHT_NOBITS) && (psec->get_flags() & SHF_ALLOC)) {
+        if ((psec->get_type() == ELFIO::SHT_PROGBITS || psec->get_type() == ELFIO::SHT_NOBITS) && (psec->get_flags() & ELFIO::SHF_ALLOC)) {
             uint32_t sectionSize = psec->get_size();
             auto address         = (uint32_t) psec->get_address();
             if ((address >= 0x02000000) && address < 0x10000000) {

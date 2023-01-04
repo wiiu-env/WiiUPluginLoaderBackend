@@ -65,9 +65,6 @@ class segment
     virtual bool load( std::istream&  stream,
                        std::streampos header_offset,
                        bool           is_lazy )               = 0;
-    virtual void save( std::ostream&  stream,
-                       std::streampos header_offset,
-                       std::streampos data_offset ) = 0;
 };
 
 //------------------------------------------------------------------------------
@@ -216,17 +213,6 @@ template <class T> class segment_impl : public segment
         }
 
         return true;
-    }
-
-    //------------------------------------------------------------------------------
-    void save( std::ostream&  stream,
-               std::streampos header_offset,
-               std::streampos data_offset ) override
-    {
-        ph.p_offset = decltype( ph.p_offset )( data_offset );
-        ph.p_offset = ( *convertor )( ph.p_offset );
-        adjust_stream_size( stream, header_offset );
-        stream.write( reinterpret_cast<const char*>( &ph ), sizeof( ph ) );
     }
 
     //------------------------------------------------------------------------------

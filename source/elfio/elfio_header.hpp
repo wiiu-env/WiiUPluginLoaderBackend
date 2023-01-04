@@ -33,7 +33,6 @@ class elf_header
     virtual ~elf_header() = default;
 
     virtual bool load( std::istream& stream )       = 0;
-    virtual bool save( std::ostream& stream ) const = 0;
 
     // ELF header functions
     ELFIO_GET_ACCESS_DECL( unsigned char, class );
@@ -106,16 +105,6 @@ template <class T> class elf_header_impl : public elf_header
         stream.read( reinterpret_cast<char*>( &header ), sizeof( header ) );
 
         return ( stream.gcount() == sizeof( header ) );
-    }
-
-    //------------------------------------------------------------------------------
-    bool save( std::ostream& stream ) const override
-    {
-        stream.seekp( ( *translator )[0] );
-        stream.write( reinterpret_cast<const char*>( &header ),
-                      sizeof( header ) );
-
-        return stream.good();
     }
 
     //------------------------------------------------------------------------------

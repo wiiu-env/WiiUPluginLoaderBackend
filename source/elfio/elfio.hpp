@@ -86,7 +86,6 @@ class elfio
         sections_       = std::move( other.sections_ );
         segments_       = std::move( other.segments_ );
         convertor       = std::move( other.convertor );
-        addr_translator = std::move( other.addr_translator );
         compression     = std::move( other.compression );
 
         other.header = nullptr;
@@ -102,7 +101,6 @@ class elfio
             sections_        = std::move( other.sections_ );
             segments_        = std::move( other.segments_ );
             convertor        = std::move( other.convertor );
-            addr_translator  = std::move( other.addr_translator );
             current_file_pos = other.current_file_pos;
             compression      = std::move( other.compression );
 
@@ -132,11 +130,6 @@ class elfio
         create_mandatory_sections();
     }
 
-    void set_address_translation( std::vector<address_translation>& addr_trans )
-    {
-        addr_translator.set_address_translation( addr_trans );
-    }
-
     //------------------------------------------------------------------------------
     bool load( const std::string& file_name, bool is_lazy = false )
     {
@@ -163,7 +156,7 @@ class elfio
 
         std::array<char, EI_NIDENT> e_ident = { 0 };
         // Read ELF file signature
-        stream.seekg( addr_translator[0] );
+        stream.seekg( 0 );
         stream.read( e_ident.data(), sizeof( e_ident ) );
 
         // Is it ELF file?
@@ -237,12 +230,12 @@ class elfio
         if ( file_class == ELFCLASS64 ) {
             new_header = std::unique_ptr<elf_header>(
                 new ( std::nothrow ) elf_header_impl<Elf64_Ehdr>(
-                    &convertor, encoding, &addr_translator ) );
+                    &convertor, encoding ) );
         }
         else if ( file_class == ELFCLASS32 ) {
             new_header = std::unique_ptr<elf_header>(
                 new ( std::nothrow ) elf_header_impl<Elf32_Ehdr>(
-                    &convertor, encoding, &addr_translator ) );
+                    &convertor, encoding ) );
         }
         else {
             return nullptr;
@@ -259,12 +252,12 @@ class elfio
         if ( file_class == ELFCLASS64 ) {
             sections_.emplace_back(
                 new ( std::nothrow ) section_impl<Elf64_Shdr>(
-                    &convertor, &addr_translator, compression ) );
+                    &convertor, compression ) );
         }
         else if ( file_class == ELFCLASS32 ) {
             sections_.emplace_back(
                 new ( std::nothrow ) section_impl<Elf32_Shdr>(
-                    &convertor, &addr_translator, compression ) );
+                    &convertor, compression ) );
         }
         else {
             sections_.pop_back();
@@ -285,12 +278,12 @@ class elfio
         if ( file_class == ELFCLASS64 ) {
             segments_.emplace_back(
                 new ( std::nothrow )
-                    segment_impl<Elf64_Phdr>( &convertor, &addr_translator ) );
+                    segment_impl<Elf64_Phdr>( &convertor ) );
         }
         else if ( file_class == ELFCLASS32 ) {
             segments_.emplace_back(
                 new ( std::nothrow )
-                    segment_impl<Elf32_Phdr>( &convertor, &addr_translator ) );
+                    segment_impl<Elf32_Phdr>( &convertor ) );
         }
         else {
             segments_.pop_back();
@@ -397,12 +390,12 @@ class elfio
             if ( file_class == ELFCLASS64 ) {
                 segments_.emplace_back(
                     new ( std::nothrow ) segment_impl<Elf64_Phdr>(
-                        &convertor, &addr_translator ) );
+                        &convertor) );
             }
             else if ( file_class == ELFCLASS32 ) {
                 segments_.emplace_back(
                     new ( std::nothrow ) segment_impl<Elf32_Phdr>(
-                        &convertor, &addr_translator ) );
+                        &convertor ) );
             }
             else {
                 segments_.pop_back();
@@ -592,7 +585,6 @@ class elfio
     std::vector<std::unique_ptr<section>>  sections_;
     std::vector<std::unique_ptr<segment>>  segments_;
     endianess_convertor                    convertor;
-    address_translator                     addr_translator;
     std::shared_ptr<compression_interface> compression = nullptr;
 
     Elf_Xword current_file_pos = 0;

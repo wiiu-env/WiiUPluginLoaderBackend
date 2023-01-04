@@ -159,54 +159,6 @@ class endianess_convertor
 };
 
 //------------------------------------------------------------------------------
-struct address_translation
-{
-    address_translation( uint64_t start, uint64_t size, uint64_t mapped_to )
-        : start( start ), size( size ), mapped_to( mapped_to ){};
-    std::streampos start;
-    std::streampos size;
-    std::streampos mapped_to;
-};
-
-//------------------------------------------------------------------------------
-class address_translator
-{
-  public:
-    //------------------------------------------------------------------------------
-    void set_address_translation( std::vector<address_translation>& addr_trans )
-    {
-        addr_translations = addr_trans;
-
-        std::sort(
-            addr_translations.begin(), addr_translations.end(),
-            []( address_translation& a, address_translation& b ) -> bool {
-                return a.start < b.start;
-            } );
-    }
-
-    //------------------------------------------------------------------------------
-    std::streampos operator[]( std::streampos value ) const
-    {
-        if ( addr_translations.empty() ) {
-            return value;
-        }
-
-        for ( auto& t : addr_translations ) {
-            if ( ( t.start <= value ) && ( ( value - t.start ) < t.size ) ) {
-                return value - t.start + t.mapped_to;
-            }
-        }
-
-        return value;
-    }
-
-    bool empty() const { return addr_translations.empty(); }
-
-  private:
-    std::vector<address_translation> addr_translations;
-};
-
-//------------------------------------------------------------------------------
 inline uint32_t elf_hash( const unsigned char* name )
 {
     uint32_t h = 0;

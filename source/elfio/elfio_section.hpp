@@ -76,10 +76,8 @@ template <class T> class section_impl : public section
   public:
     //------------------------------------------------------------------------------
     section_impl( const endianess_convertor*                    convertor,
-                  const address_translator*                     translator,
                   const std::shared_ptr<compression_interface>& compression )
-        : convertor( convertor ), translator( translator ),
-          compression( compression )
+        : convertor( convertor ), compression( compression )
     {
     }
 
@@ -141,9 +139,6 @@ template <class T> class section_impl : public section
         }
 
         set_size( data_size );
-        if ( translator->empty() ) {
-            set_stream_size( data_size );
-        }
     }
 
     //------------------------------------------------------------------------------
@@ -194,9 +189,6 @@ template <class T> class section_impl : public section
                 }
             }
             set_size( get_size() + size );
-            if ( translator->empty() ) {
-                set_stream_size( get_stream_size() + size );
-            }
         }
     }
 
@@ -235,15 +227,7 @@ template <class T> class section_impl : public section
         is_lazy = is_lazy_;
         header  = { 0 };
 
-        if ( translator->empty() ) {
-            stream.seekg( 0, std::istream::end );
-            set_stream_size( size_t( stream.tellg() ) );
-        }
-        else {
-            set_stream_size( std::numeric_limits<size_t>::max() );
-        }
-
-        stream.seekg( ( *translator )[header_offset] );
+        stream.seekg( header_offset);
         stream.read( reinterpret_cast<char*>( &header ), sizeof( header ) );
 
         if ( !is_lazy || is_compressed() ) {
@@ -276,8 +260,7 @@ template <class T> class section_impl : public section
             data.reset( new ( std::nothrow ) char[size_t( size ) + 1] );
 
             if ( ( 0 != size ) && ( nullptr != data ) ) {
-                pstream->seekg(
-                    ( *translator )[( *convertor )( header.sh_offset )] );
+                pstream->seekg(( *convertor )( header.sh_offset ));
                 pstream->read( data.get(), size );
                 if ( static_cast<Elf_Xword>( pstream->gcount() ) != size ) {
                     data = nullptr;
@@ -311,7 +294,6 @@ template <class T> class section_impl : public section
     mutable std::unique_ptr<char[]>              data;
     mutable Elf_Word                             data_size      = 0;
     const endianess_convertor*                   convertor      = nullptr;
-    const address_translator*                    translator     = nullptr;
     const std::shared_ptr<compression_interface> compression    = nullptr;
     bool                                         is_address_set = false;
     size_t                                       stream_size    = 0;

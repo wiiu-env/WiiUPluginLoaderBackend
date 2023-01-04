@@ -72,9 +72,8 @@ template <class T> class segment_impl : public segment
 {
   public:
     //------------------------------------------------------------------------------
-    segment_impl( const endianess_convertor* convertor,
-                  const address_translator*  translator )
-        : convertor( convertor ), translator( translator )
+    segment_impl( const endianess_convertor* convertor )
+        : convertor( convertor )
     {
     }
 
@@ -167,15 +166,7 @@ template <class T> class segment_impl : public segment
         pstream = &stream;
         is_lazy = is_lazy_;
 
-        if ( translator->empty() ) {
-            stream.seekg( 0, std::istream::end );
-            set_stream_size( size_t( stream.tellg() ) );
-        }
-        else {
-            set_stream_size( std::numeric_limits<size_t>::max() );
-        }
-
-        stream.seekg( ( *translator )[header_offset] );
+        stream.seekg( header_offset);
         stream.read( reinterpret_cast<char*>( &ph ), sizeof( ph ) );
         is_offset_set = true;
 
@@ -194,7 +185,7 @@ template <class T> class segment_impl : public segment
             return true;
         }
 
-        pstream->seekg( ( *translator )[( *convertor )( ph.p_offset )] );
+        pstream->seekg(( *convertor )( ph.p_offset ));
         Elf_Xword size = get_file_size();
 
         if ( size > get_stream_size() ) {
@@ -229,7 +220,6 @@ template <class T> class segment_impl : public segment
     mutable std::unique_ptr<char[]> data;
     std::vector<Elf_Half>           sections;
     const endianess_convertor*      convertor     = nullptr;
-    const address_translator*       translator    = nullptr;
     size_t                          stream_size   = 0;
     bool                            is_offset_set = false;
     mutable bool                    is_lazy       = false;

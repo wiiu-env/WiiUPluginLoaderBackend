@@ -75,9 +75,8 @@ template <class T> class elf_header_impl : public elf_header
   public:
     //------------------------------------------------------------------------------
     elf_header_impl( endianess_convertor*      convertor,
-                     unsigned char             encoding,
-                     const address_translator* translator )
-        : convertor( convertor ), translator( translator )
+                     unsigned char             encoding )
+        : convertor( convertor )
     {
         header.e_ident[EI_MAG0]    = ELFMAG0;
         header.e_ident[EI_MAG1]    = ELFMAG1;
@@ -101,7 +100,7 @@ template <class T> class elf_header_impl : public elf_header
     //------------------------------------------------------------------------------
     bool load( std::istream& stream ) override
     {
-        stream.seekg( ( *translator )[0] );
+        stream.seekg(0);
         stream.read( reinterpret_cast<char*>( &header ), sizeof( header ) );
 
         return ( stream.gcount() == sizeof( header ) );
@@ -134,7 +133,6 @@ template <class T> class elf_header_impl : public elf_header
   private:
     T                         header     = {};
     endianess_convertor*      convertor  = nullptr;
-    const address_translator* translator = nullptr;
 };
 
 } // namespace ELFIO

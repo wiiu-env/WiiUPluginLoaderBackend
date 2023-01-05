@@ -271,7 +271,8 @@ void ConfigUtils::displayMenu() {
                 // draw bottom bar
                 DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
                 DrawUtils::setFontSize(18);
-                DrawUtils::print(16, SCREEN_HEIGHT - 8, "\ue07d Navigate ");
+                DrawUtils::print(16, SCREEN_HEIGHT - 10, "\ue07d Navigate ");
+                DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Select", true);
 
                 // draw scroll indicator
                 DrawUtils::setFontSize(24);
@@ -285,7 +286,7 @@ void ConfigUtils::displayMenu() {
                 // draw home button
                 DrawUtils::setFontSize(18);
                 const char *exitHint = "\ue044 Exit";
-                DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHint) / 2, SCREEN_HEIGHT - 8, exitHint, true);
+                DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHint) / 2, SCREEN_HEIGHT - 10, exitHint, true);
 
                 DrawUtils::endDraw();
                 redraw = false;
@@ -379,7 +380,8 @@ void ConfigUtils::displayMenu() {
                 // draw bottom bar
                 DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
                 DrawUtils::setFontSize(18);
-                DrawUtils::print(16, SCREEN_HEIGHT - 8, "\ue07d Navigate ");
+                DrawUtils::print(16, SCREEN_HEIGHT - 10, "\ue07d Navigate ");
+                DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Select", true);
 
                 // draw scroll indicator
                 DrawUtils::setFontSize(24);
@@ -392,8 +394,8 @@ void ConfigUtils::displayMenu() {
 
                 // draw home button
                 DrawUtils::setFontSize(18);
-                const char *exitHint = "\ue044 Exit";
-                DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHint) / 2, SCREEN_HEIGHT - 8, exitHint, true);
+                const char *exitHint = "\ue001 Back";
+                DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHint) / 2, SCREEN_HEIGHT - 10, exitHint, true);
 
                 DrawUtils::endDraw();
                 redraw = false;
@@ -544,9 +546,8 @@ void ConfigUtils::displayMenu() {
             // draw bottom bar
             DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
             DrawUtils::setFontSize(18);
-            DrawUtils::print(16, SCREEN_HEIGHT - 8, "\ue07d Navigate ");
-            DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 8, "\ue001 Back", true);
-
+            DrawUtils::print(16, SCREEN_HEIGHT - 10, "\ue07d Navigate ");
+            DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 / \ue07e  Toggle", true);
             // draw scroll indicator
             DrawUtils::setFontSize(24);
             if (end < configs.size()) {
@@ -558,8 +559,8 @@ void ConfigUtils::displayMenu() {
 
             // draw home button
             DrawUtils::setFontSize(18);
-            const char *exitHint = "\ue044 Exit";
-            DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHint) / 2, SCREEN_HEIGHT - 8, exitHint, true);
+            const char *exitHint = "\ue001 Back";
+            DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHint) / 2, SCREEN_HEIGHT - 10, exitHint, true);
 
             DrawUtils::endDraw();
             redraw = pressedButtons != WUPS_CONFIG_BUTTON_NONE;
@@ -689,7 +690,7 @@ void ConfigUtils::renderNoConfigFoundScreen() {
     // draw bottom bar
     DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
     DrawUtils::setFontSize(18);
-    DrawUtils::print(16, SCREEN_HEIGHT - 8, "\ue07d Navigate ");
+    DrawUtils::print(16, SCREEN_HEIGHT - 10, "\ue07d Navigate ");
 
     const char *noConfigFoundText = "No configurable plugins loaded";
     DrawUtils::setFontSize(24);
@@ -700,7 +701,7 @@ void ConfigUtils::renderNoConfigFoundScreen() {
     // draw home button
     DrawUtils::setFontSize(18);
     const char *exitHint = "\ue044 Exit";
-    DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHint) / 2, SCREEN_HEIGHT - 8, exitHint, true);
+    DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHint) / 2, SCREEN_HEIGHT - 10, exitHint, true);
 
     DrawUtils::endDraw();
 }

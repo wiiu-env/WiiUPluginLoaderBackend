@@ -117,6 +117,8 @@ static uint32_t remapClassicButtons(uint32_t buttons) {
 }
 
 void ConfigUtils::displayMenu() {
+    renderBasicScreen("Loading configs...");
+
     std::vector<ConfigDisplayItem> configs;
     for (auto &plugin : gLoadedPlugins) {
         ConfigDisplayItem cfg;
@@ -194,7 +196,7 @@ void ConfigUtils::displayMenu() {
         }
 
         if (configs.empty()) {
-            renderNoConfigFoundScreen();
+            renderBasicScreen("No configurable plugins loaded");
             continue;
         }
 
@@ -679,7 +681,8 @@ error_exit:
         MEMFreeToMappedMemory(screenbuffer1);
     }
 }
-void ConfigUtils::renderNoConfigFoundScreen() {
+
+void ConfigUtils::renderBasicScreen(std::string_view text) {
     DrawUtils::beginDraw();
     DrawUtils::clear(COLOR_BACKGROUND);
     DrawUtils::setFontColor(COLOR_TEXT);
@@ -688,19 +691,19 @@ void ConfigUtils::renderNoConfigFoundScreen() {
     DrawUtils::setFontSize(24);
     DrawUtils::print(16, 6 + 24, "Wii U Plugin System Config Menu");
     DrawUtils::setFontSize(18);
-    DrawUtils::print(SCREEN_WIDTH - 16, 8 + 24, "v1.0", true);
+    DrawUtils::print(SCREEN_WIDTH - 16, 8 + 24, VERSION_FULL, true);
     DrawUtils::drawRectFilled(8, 8 + 24 + 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
 
     // draw bottom bar
     DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
     DrawUtils::setFontSize(18);
     DrawUtils::print(16, SCREEN_HEIGHT - 10, "\ue07d Navigate ");
+    DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Select", true);
 
-    const char *noConfigFoundText = "No configurable plugins loaded";
     DrawUtils::setFontSize(24);
-    uint32_t sz = DrawUtils::getTextWidth(noConfigFoundText);
+    uint32_t sz = DrawUtils::getTextWidth(text.data());
 
-    DrawUtils::print((SCREEN_WIDTH / 2) - (sz / 2), (SCREEN_HEIGHT / 2), noConfigFoundText);
+    DrawUtils::print((SCREEN_WIDTH / 2) - (sz / 2), (SCREEN_HEIGHT / 2), text.data());
 
     // draw home button
     DrawUtils::setFontSize(18);

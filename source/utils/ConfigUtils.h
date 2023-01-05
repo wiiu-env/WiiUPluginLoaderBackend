@@ -1,6 +1,7 @@
 #pragma once
 
 #include <gx2/enum.h>
+#include <string>
 
 struct StoredBuffer {
     void *buffer;
@@ -16,5 +17,5 @@ public:
 
 private:
     static void displayMenu();
-    static void renderNoConfigFoundScreen();
+    static void renderBasicScreen(std::string_view text);
 };

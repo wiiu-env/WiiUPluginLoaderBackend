@@ -385,7 +385,7 @@ void ConfigUtils::displayMenu() {
 
                 // draw scroll indicator
                 DrawUtils::setFontSize(24);
-                if (end < configs.size()) {
+                if (end < cats.size()) {
                     DrawUtils::print(SCREEN_WIDTH / 2 + 12, SCREEN_HEIGHT - 32, "\ufe3e", true);
                 }
                 if (start > 0) {
@@ -550,7 +550,7 @@ void ConfigUtils::displayMenu() {
             DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 / \ue07e  Toggle", true);
             // draw scroll indicator
             DrawUtils::setFontSize(24);
-            if (end < configs.size()) {
+            if (end < config_items.size()) {
                 DrawUtils::print(SCREEN_WIDTH / 2 + 12, SCREEN_HEIGHT - 32, "\ufe3e", true);
             }
             if (start > 0) {

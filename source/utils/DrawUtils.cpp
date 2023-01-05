@@ -1,6 +1,7 @@
 #include "DrawUtils.h"
 
 #include "logger.h"
+#include "utils.h"
 #include <coreinit/cache.h>
 #include <coreinit/memory.h>
 #include <coreinit/screen.h>
@@ -313,11 +314,12 @@ void DrawUtils::print(uint32_t x, uint32_t y, const wchar_t *string, bool alignR
                 textureHeight = 4;
             }
 
-            img.pixels = malloc(img.width * img.height);
-            if (!img.pixels) {
+            auto buffer = make_unique_nothrow<uint8_t[]>((uint32_t) (img.width * img.height));
+            if (!buffer) {
                 DEBUG_FUNCTION_LINE_ERR("Failed to allocate memory for glyph");
                 return;
             }
+            img.pixels = buffer.get();
             if (sft_render(&pFont, gid, img) < 0) {
                 DEBUG_FUNCTION_LINE_ERR("Failed to render glyph");
                 return;
@@ -325,7 +327,6 @@ void DrawUtils::print(uint32_t x, uint32_t y, const wchar_t *string, bool alignR
                 draw_freetype_bitmap(&img, (int32_t) (penX + mtx.leftSideBearing), (int32_t) (penY + mtx.yOffset));
                 penX += (int32_t) mtx.advanceWidth;
             }
-            free(img.pixels);
         }
     }
 }

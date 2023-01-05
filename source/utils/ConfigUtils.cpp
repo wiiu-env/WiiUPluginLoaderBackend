@@ -144,9 +144,11 @@ void ConfigUtils::displayMenu() {
     ConfigDisplayItem *currentConfig    = nullptr;
     WUPSConfigCategory *currentCategory = nullptr;
 
-    uint32_t selectedBtn = 0;
-    uint32_t start       = 0;
-    uint32_t end         = MAX_BUTTONS_ON_SCREEN;
+    uint32_t selectedConfig = 0;
+    uint32_t selectedCat    = 0;
+    uint32_t selectedItem   = 0;
+    uint32_t start          = 0;
+    uint32_t end            = MAX_BUTTONS_ON_SCREEN;
     if (configs.size() < MAX_BUTTONS_ON_SCREEN) {
         end = configs.size();
     }
@@ -198,25 +200,27 @@ void ConfigUtils::displayMenu() {
 
         if (!currentConfig || !currentConfig->config) {
             if (buttonsTriggered & VPAD_BUTTON_DOWN) {
-                if (selectedBtn < configs.size() - 1) {
-                    selectedBtn++;
+                if (selectedConfig < configs.size() - 1) {
+                    selectedCat = 0;
+                    selectedConfig++;
                     redraw = true;
                 }
             } else if (buttonsTriggered & VPAD_BUTTON_UP) {
-                if (selectedBtn > 0) {
-                    selectedBtn--;
+                if (selectedConfig > 0) {
+                    selectedCat = 0;
+                    selectedConfig--;
                     redraw = true;
                 }
             }
             if (buttonsTriggered & VPAD_BUTTON_A) {
-                currentConfig = &configs[selectedBtn];
+                currentConfig = &configs[selectedConfig];
                 if (currentConfig == nullptr) {
                     break;
                 }
 
-                selectedBtn = 0;
-                start       = 0;
-                end         = MAX_BUTTONS_ON_SCREEN;
+                selectedItem = 0;
+                start        = 0;
+                end          = MAX_BUTTONS_ON_SCREEN;
 
                 auto cats = currentConfig->config->getCategories();
                 if (cats.size() < MAX_BUTTONS_ON_SCREEN) {
@@ -227,11 +231,11 @@ void ConfigUtils::displayMenu() {
                 continue;
             }
 
-            if (selectedBtn >= end) {
-                end   = selectedBtn + 1;
+            if (selectedConfig >= end) {
+                end   = selectedConfig + 1;
                 start = end - MAX_BUTTONS_ON_SCREEN;
-            } else if (selectedBtn < start) {
-                start = selectedBtn;
+            } else if (selectedConfig < start) {
+                start = selectedConfig;
                 end   = start + MAX_BUTTONS_ON_SCREEN;
             }
 
@@ -244,7 +248,7 @@ void ConfigUtils::displayMenu() {
                 for (uint32_t i = start; i < end; i++) {
                     DrawUtils::setFontColor(COLOR_TEXT);
 
-                    if (i == selectedBtn) {
+                    if (i == selectedConfig) {
                         DrawUtils::drawRect(16, index, SCREEN_WIDTH - 16 * 2, 44, 4, COLOR_BORDER_HIGHLIGHTED);
                     } else {
                         DrawUtils::drawRect(16, index, SCREEN_WIDTH - 16 * 2, 44, 2, COLOR_BORDER);
@@ -299,23 +303,25 @@ void ConfigUtils::displayMenu() {
         if (!currentCategory) {
             auto cats = currentConfig->config->getCategories();
             if (buttonsTriggered & VPAD_BUTTON_DOWN) {
-                if (selectedBtn < cats.size() - 1) {
-                    selectedBtn++;
+                if (selectedCat < cats.size() - 1) {
+                    selectedCat++;
                     redraw = true;
                 }
             } else if (buttonsTriggered & VPAD_BUTTON_UP) {
-                if (selectedBtn > 0) {
-                    selectedBtn--;
+                if (selectedCat > 0) {
+                    selectedCat--;
                     redraw = true;
                 }
             } else if (buttonsTriggered & VPAD_BUTTON_A) {
-                currentCategory = cats[selectedBtn];
+                if (!cats.empty() && selectedCat > cats.size() - 1) {
+                    selectedCat = 0;
+                }
+                currentCategory = cats[selectedCat];
                 if (currentCategory == nullptr) {
                     DEBUG_FUNCTION_LINE_ERR("currentCategory was NULL");
                     break;
                 }
 
-                selectedBtn      = 0;
                 start            = 0;
                 end              = MAX_BUTTONS_ON_SCREEN;
                 prevSelectedItem = -1;
@@ -330,7 +336,6 @@ void ConfigUtils::displayMenu() {
             } else if (buttonsTriggered & VPAD_BUTTON_B) {
                 currentConfig   = nullptr;
                 currentCategory = nullptr;
-                selectedBtn     = 0;
                 start           = 0;
                 end             = MAX_BUTTONS_ON_SCREEN;
                 if (configs.size() < MAX_BUTTONS_ON_SCREEN) {
@@ -340,11 +345,11 @@ void ConfigUtils::displayMenu() {
                 continue;
             }
 
-            if (selectedBtn >= end) {
-                end   = selectedBtn + 1;
+            if (selectedCat >= end) {
+                end   = selectedCat + 1;
                 start = end - MAX_BUTTONS_ON_SCREEN;
-            } else if (selectedBtn < start) {
-                start = selectedBtn;
+            } else if (selectedCat < start) {
+                start = selectedCat;
                 end   = start + MAX_BUTTONS_ON_SCREEN;
             }
 
@@ -357,7 +362,7 @@ void ConfigUtils::displayMenu() {
                 for (uint32_t i = start; i < end; i++) {
                     DrawUtils::setFontColor(COLOR_TEXT);
 
-                    if (i == selectedBtn) {
+                    if (i == selectedCat) {
                         DrawUtils::drawRect(16, index, SCREEN_WIDTH - 16 * 2, 44, 4, COLOR_BORDER_HIGHLIGHTED);
                     } else {
                         DrawUtils::drawRect(16, index, SCREEN_WIDTH - 16 * 2, 44, 2, COLOR_BORDER);
@@ -408,18 +413,17 @@ void ConfigUtils::displayMenu() {
 
         if (isItemMovementAllowed) {
             if (buttonsTriggered & VPAD_BUTTON_DOWN) {
-                if (selectedBtn < config_items.size() - 1) {
-                    selectedBtn++;
+                if (selectedItem < config_items.size() - 1) {
+                    selectedItem++;
                     redraw = true;
                 }
             } else if (buttonsTriggered & VPAD_BUTTON_UP) {
-                if (selectedBtn > 0) {
-                    selectedBtn--;
+                if (selectedItem > 0) {
+                    selectedItem--;
                     redraw = true;
                 }
             } else if (buttonsTriggered & VPAD_BUTTON_B) {
                 currentCategory = nullptr;
-                selectedBtn     = 0;
                 start           = 0;
                 end             = MAX_BUTTONS_ON_SCREEN;
                 auto catSize    = currentConfig->config->getCategories().size();
@@ -488,25 +492,25 @@ void ConfigUtils::displayMenu() {
             redraw = true;
         }
 
-        if (selectedBtn >= end) {
-            end   = selectedBtn + 1;
-            start = end - MAX_BUTTONS_ON_SCREEN;
-        } else if (selectedBtn < start) {
-            start = selectedBtn;
+        if (selectedItem >= end) {
+            end   = selectedItem + 1;
+            start = selectedItem - MAX_BUTTONS_ON_SCREEN;
+        } else if (selectedItem < start) {
+            start = selectedItem;
             end   = start + MAX_BUTTONS_ON_SCREEN;
         }
 
         if (redraw) {
-            if (prevSelectedItem != (int32_t) selectedBtn) {
+            if (prevSelectedItem != (int32_t) selectedItem) {
                 if (prevSelectedItem >= 0) {
                     config_items[prevSelectedItem]->onSelected(false);
                 }
-                config_items[selectedBtn]->onSelected(true);
-                prevSelectedItem = (int32_t) selectedBtn;
+                config_items[selectedItem]->onSelected(true);
+                prevSelectedItem = (int32_t) selectedItem;
             }
 
             if (pressedButtons != WUPS_CONFIG_BUTTON_NONE) {
-                config_items[selectedBtn]->onButtonPressed(pressedButtons);
+                config_items[selectedItem]->onButtonPressed(pressedButtons);
             }
 
             DrawUtils::beginDraw();
@@ -517,7 +521,7 @@ void ConfigUtils::displayMenu() {
             for (uint32_t i = start; i < end; i++) {
                 DrawUtils::setFontColor(COLOR_TEXT);
 
-                if (i == selectedBtn) {
+                if (i == selectedItem) {
                     DrawUtils::drawRect(16, index, SCREEN_WIDTH - 16 * 2, 44, 4, COLOR_BORDER_HIGHLIGHTED);
                 } else {
                     DrawUtils::drawRect(16, index, SCREEN_WIDTH - 16 * 2, 44, 2, COLOR_BORDER);
@@ -525,7 +529,7 @@ void ConfigUtils::displayMenu() {
 
                 DrawUtils::setFontSize(24);
                 DrawUtils::print(16 * 2, index + 8 + 24, config_items[i]->getDisplayName().c_str());
-                if (i == selectedBtn) {
+                if (i == selectedItem) {
                     DrawUtils::print(SCREEN_WIDTH - 16 * 2, index + 8 + 24, config_items[i]->getCurrentValueSelectedDisplay().c_str(), true);
                 } else {
                     DrawUtils::print(SCREEN_WIDTH - 16 * 2, index + 8 + 24, config_items[i]->getCurrentValueDisplay().c_str(), true);
@@ -565,7 +569,7 @@ void ConfigUtils::displayMenu() {
             DrawUtils::endDraw();
             redraw = pressedButtons != WUPS_CONFIG_BUTTON_NONE;
 
-            isItemMovementAllowed = config_items[selectedBtn]->isMovementAllowed();
+            isItemMovementAllowed = config_items[selectedItem]->isMovementAllowed();
         }
     }
 

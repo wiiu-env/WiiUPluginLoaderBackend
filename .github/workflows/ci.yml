@@ -51,7 +51,7 @@ jobs:
       uses: "softprops/action-gh-release@v1"
       with:
         tag_name: ${{ env.REPOSITORY_NAME }}-${{ env.DATETIME }}
-        draft: falsee
+        draft: false
         prerelease: true
         generate_release_notes: true
         name: Nightly-${{ env.REPOSITORY_NAME }}-${{ env.DATETIME }}

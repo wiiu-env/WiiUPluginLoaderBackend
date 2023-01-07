@@ -14,10 +14,15 @@ WUMS_DEPENDS_ON(homebrew_memorymapping);
 
 WUMS_INITIALIZE() {
     initLogging();
+
+    if (FunctionPatcher_InitLibrary() != FUNCTION_PATCHER_RESULT_SUCCESS) {
+        OSFatal("homebrew_wupsbackend: FunctionPatcher_InitLibrary failed");
+    }
+
     DEBUG_FUNCTION_LINE("Patching functions");
     for (uint32_t i = 0; i < method_hooks_static_size; i++) {
-        if (!FunctionPatcherPatchFunction(&method_hooks_static[i], nullptr)) {
-            OSFatal("homebrew_wupsbackend: Failed to patch function");
+        if (FunctionPatcher_AddFunctionPatch(&method_hooks_static[i], nullptr, nullptr) != FUNCTION_PATCHER_RESULT_SUCCESS) {
+            OSFatal("homebrew_wupsbackend: Failed to AddPatch function");
         }
     }
     deinitLogging();

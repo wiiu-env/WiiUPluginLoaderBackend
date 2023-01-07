@@ -8,8 +8,9 @@
 #include <wums.h>
 
 WUMS_MODULE_EXPORT_NAME("homebrew_wupsbackend");
-
 WUMS_USE_WUT_DEVOPTAB();
+WUMS_DEPENDS_ON(homebrew_functionpatcher);
+WUMS_DEPENDS_ON(homebrew_memorymapping);
 
 WUMS_INITIALIZE() {
     initLogging();

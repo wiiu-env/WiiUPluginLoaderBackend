@@ -65,7 +65,7 @@ public:
         return targetProcess;
     }
 
-    bool patch() {
+    bool AddPatch() {
         if (handle == 0) {
             function_replacement_data_t functionData = {
                     .VERSION       = FUNCTION_REPLACEMENT_DATA_STRUCT_VERSION,
@@ -77,25 +77,25 @@ public:
                     .function_name = this->name.c_str(),
                     .targetProcess = this->targetProcess};
 
-            if (!FunctionPatcherPatchFunction(&functionData, &handle)) {
-                DEBUG_FUNCTION_LINE_ERR("Failed to patch function");
+            if (FunctionPatcher_AddFunctionPatch(&functionData, &handle, nullptr) != FUNCTION_PATCHER_RESULT_SUCCESS) {
+                DEBUG_FUNCTION_LINE_ERR("Failed to add patch for function");
                 return false;
             }
         } else {
-            DEBUG_FUNCTION_LINE("Function is already patched");
+            DEBUG_FUNCTION_LINE("Function patch has already been added.");
         }
         return true;
     }
 
-    bool restore() {
+    bool RemovePatch() {
         if (handle != 0) {
-            if (!FunctionPatcherRestoreFunction(handle)) {
-                DEBUG_FUNCTION_LINE_ERR("Failed to restore function patch");
+            if (FunctionPatcher_RemoveFunctionPatch(handle) != FUNCTION_PATCHER_RESULT_SUCCESS) {
+                DEBUG_FUNCTION_LINE_ERR("Failed to remove patch for function");
                 return false;
             }
             handle = 0;
         } else {
-            DEBUG_FUNCTION_LINE("Was not patched.");
+            DEBUG_FUNCTION_LINE_VERBOSE("Was not patched.");
         }
 
         return true;

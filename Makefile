@@ -43,7 +43,7 @@ CFLAGS	+=	$(INCLUDE) -D__WIIU__ -D__WUT__
 CXXFLAGS	:= $(CFLAGS) -std=c++20  -fno-exceptions -fno-rtti
 
 ASFLAGS	:=	-g $(ARCH)
-LDFLAGS	=	-g $(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map) -T$(WUMS_ROOT)/share/libfunctionpatcher.ld -T$(WUMS_ROOT)/share/libmappedmemory.ld $(WUMSSPECS) 
+LDFLAGS	=	-g $(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map) -T$(WUMS_ROOT)/share/libmappedmemory.ld $(WUMSSPECS)
 
 ifeq ($(DEBUG),1)
 CXXFLAGS += -DDEBUG -g

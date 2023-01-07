@@ -121,7 +121,7 @@ bool PluginManagement::doRelocations(const std::vector<std::unique_ptr<PluginCon
 bool PluginManagement::RestoreFunctionPatches(const std::vector<std::unique_ptr<PluginContainer>> &plugins) {
     for (const auto &cur : std::ranges::reverse_view(plugins)) {
         for (const auto &curFunction : std::ranges::reverse_view(cur->getPluginInformation()->getFunctionDataList())) {
-            if (!curFunction->restore()) {
+            if (!curFunction->RemovePatch()) {
                 return false;
             }
         }
@@ -132,7 +132,7 @@ bool PluginManagement::RestoreFunctionPatches(const std::vector<std::unique_ptr<
 bool PluginManagement::DoFunctionPatches(const std::vector<std::unique_ptr<PluginContainer>> &plugins) {
     for (const auto &cur : plugins) {
         for (const auto &curFunction : cur->getPluginInformation()->getFunctionDataList()) {
-            if (!curFunction->patch()) {
+            if (!curFunction->AddPatch()) {
                 return false;
             }
         }

@@ -19,7 +19,7 @@ static void processJson(wups_storage_item_t *items, nlohmann::json json) {
     for (auto it = json.begin(); it != json.end(); ++it) {
         wups_storage_item_t *item = &((wups_storage_item_t *) items->data)[index];
         item->type                = WUPS_STORAGE_TYPE_INVALID;
-        item->pending_delete      = false;
+        item->deleted             = false;
         item->data                = nullptr;
         item->key                 = nullptr;
 
@@ -90,7 +90,7 @@ static nlohmann::json processItems(wups_storage_item_t *items) {
     for (uint32_t i = 0; i < items->data_size; i++) {
         wups_storage_item_t *item = &((wups_storage_item_t *) items->data)[i];
 
-        if (item->pending_delete || item->type == WUPS_STORAGE_TYPE_INVALID || !item->data || !item->key) {
+        if (item->deleted || item->type == WUPS_STORAGE_TYPE_INVALID || !item->data || !item->key) {
             continue;
         }
 

@@ -68,14 +68,17 @@ public:
     bool AddPatch() {
         if (handle == 0) {
             function_replacement_data_t functionData = {
-                    .VERSION       = FUNCTION_REPLACEMENT_DATA_STRUCT_VERSION,
+                    .version       = FUNCTION_REPLACEMENT_DATA_STRUCT_VERSION,
+                    .type          = FUNCTION_PATCHER_REPLACE_BY_LIB_OR_ADDRESS,
                     .physicalAddr  = reinterpret_cast<uint32_t>(this->paddress),
                     .virtualAddr   = reinterpret_cast<uint32_t>(this->vaddress),
                     .replaceAddr   = reinterpret_cast<uint32_t>(this->replaceAddr),
                     .replaceCall   = static_cast<uint32_t *>(this->replaceCall),
-                    .library       = this->library,
-                    .function_name = this->name.c_str(),
-                    .targetProcess = this->targetProcess};
+                    .targetProcess = this->targetProcess,
+                    .ReplaceInRPL  = {
+                             .function_name = this->name.c_str(),
+                             .library       = this->library,
+                    }};
 
             if (FunctionPatcher_AddFunctionPatch(&functionData, &handle, nullptr) != FUNCTION_PATCHER_RESULT_SUCCESS) {
                 DEBUG_FUNCTION_LINE_ERR("Failed to add patch for function");

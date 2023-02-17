@@ -116,6 +116,14 @@ public:
         return {};
     }
 
+    void *getTextMemoryAddress() {
+        return allocatedTextMemoryAddress.get();
+    }
+
+    void *getDataMemoryAddress() {
+        return allocatedDataMemoryAddress.get();
+    }
+
 private:
     std::vector<std::unique_ptr<HookData>> hook_data_list;
     std::vector<std::unique_ptr<FunctionData>> function_data_list;

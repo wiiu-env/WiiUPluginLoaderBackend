@@ -222,3 +222,87 @@ WUMS_EXPORT_FUNCTION(WUPSGetPluginMetaInformationByBuffer);
 WUMS_EXPORT_FUNCTION(WUPSGetMetaInformation);
 WUMS_EXPORT_FUNCTION(WUPSGetLoadedPlugins);
 WUMS_EXPORT_FUNCTION(WUPSGetPluginDataForContainerHandles);
+
+// API 2.0
+extern "C" PluginBackendApiErrorType WUPSGetAPIVersion(WUPSBackendAPIVersion *outVersion) {
+    if (outVersion == nullptr) {
+        return PLUGIN_BACKEND_API_ERROR_INVALID_ARG;
+    }
+    *outVersion = 2;
+    return PLUGIN_BACKEND_API_ERROR_NONE;
+}
+
+extern "C" PluginBackendApiErrorType WUPSGetNumberOfLoadedPlugins(uint32_t *outCount) {
+    if (outCount == nullptr) {
+        return PLUGIN_BACKEND_API_ERROR_INVALID_ARG;
+    }
+    *outCount = gLoadedPlugins.size();
+    return PLUGIN_BACKEND_API_ERROR_NONE;
+}
+
+extern "C" PluginBackendApiErrorType WUPSGetSectionInformationForPlugin(const plugin_container_handle handle, plugin_section_info *plugin_section_list, uint32_t buffer_size, uint32_t *out_count) {
+    PluginBackendApiErrorType res = PLUGIN_BACKEND_API_ERROR_NONE;
+    if (out_count != nullptr) {
+        *out_count = 0;
+    }
+    if (handle != 0 && plugin_section_list != nullptr && buffer_size != 0) {
+        bool found = false;
+        for (auto &curContainer : gLoadedPlugins) {
+            if (curContainer->getHandle() == handle) {
+                found                 = true;
+                auto &sectionInfoList = curContainer->getPluginInformation()->getSectionInfoList();
+
+                uint32_t offset = 0;
+                for (auto const &[key, sectionInfo] : sectionInfoList) {
+                    if (offset >= buffer_size) {
+                        break;
+                    }
+                    plugin_section_list[offset].plugin_section_info_version = PLUGIN_SECTION_INFORMATION_VERSION;
+                    strncpy(plugin_section_list[offset].name, sectionInfo->getName().c_str(), sizeof(plugin_section_list[offset].name) - 1);
+                    plugin_section_list[offset].address = (void *) sectionInfo->getAddress();
+                    plugin_section_list[offset].size    = sectionInfo->getSize();
+                    offset++;
+                }
+                if (out_count != nullptr) {
+                    *out_count = offset;
+                }
+                break;
+            }
+        }
+        if (!found) {
+            res = PLUGIN_BACKEND_API_INVALID_HANDLE;
+        }
+    } else {
+        res = PLUGIN_BACKEND_API_ERROR_INVALID_ARG;
+    }
+    return res;
+}
+
+extern "C" PluginBackendApiErrorType WUPSWillReloadPluginsOnNextLaunch(bool *out) {
+    if (out == nullptr) {
+        return PLUGIN_BACKEND_API_ERROR_INVALID_ARG;
+    }
+    std::lock_guard<std::mutex> lock(gLoadedDataMutex);
+    *out = !gLoadOnNextLaunch.empty();
+    return PLUGIN_BACKEND_API_ERROR_NONE;
+}
+
+extern "C" PluginBackendApiErrorType WUPSGetSectionMemoryAddresses(plugin_container_handle handle, void **textAddress, void **dataAddress) {
+    if (handle == 0 || textAddress == nullptr || dataAddress == nullptr) {
+        return PLUGIN_BACKEND_API_ERROR_INVALID_ARG;
+    }
+    for (auto &curContainer : gLoadedPlugins) {
+        if (curContainer->getHandle() == handle) {
+            *textAddress = curContainer->getPluginInformation()->getTextMemoryAddress();
+            *dataAddress = curContainer->getPluginInformation()->getDataMemoryAddress();
+            return PLUGIN_BACKEND_API_ERROR_NONE;
+        }
+    }
+    return PLUGIN_BACKEND_API_INVALID_HANDLE;
+}
+
+WUMS_EXPORT_FUNCTION(WUPSGetAPIVersion);
+WUMS_EXPORT_FUNCTION(WUPSGetNumberOfLoadedPlugins);
+WUMS_EXPORT_FUNCTION(WUPSGetSectionInformationForPlugin);
+WUMS_EXPORT_FUNCTION(WUPSWillReloadPluginsOnNextLaunch);
+WUMS_EXPORT_FUNCTION(WUPSGetSectionMemoryAddresses);

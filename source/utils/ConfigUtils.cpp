@@ -306,11 +306,15 @@ void ConfigUtils::displayMenu() {
             auto cats = currentConfig->config->getCategories();
             if (buttonsTriggered & VPAD_BUTTON_DOWN) {
                 if (selectedCat < cats.size() - 1) {
+                    selectedItem     = 0;
+                    prevSelectedItem = 0;
                     selectedCat++;
                     redraw = true;
                 }
             } else if (buttonsTriggered & VPAD_BUTTON_UP) {
                 if (selectedCat > 0) {
+                    selectedItem     = 0;
+                    prevSelectedItem = 0;
                     selectedCat--;
                     redraw = true;
                 }
@@ -336,10 +340,12 @@ void ConfigUtils::displayMenu() {
                 redraw = true;
                 continue;
             } else if (buttonsTriggered & VPAD_BUTTON_B) {
-                currentConfig   = nullptr;
-                currentCategory = nullptr;
-                start           = 0;
-                end             = MAX_BUTTONS_ON_SCREEN;
+                currentConfig    = nullptr;
+                currentCategory  = nullptr;
+                start            = 0;
+                selectedItem     = 0;
+                prevSelectedItem = 0;
+                end              = MAX_BUTTONS_ON_SCREEN;
                 if (configs.size() < MAX_BUTTONS_ON_SCREEN) {
                     end = configs.size();
                 }

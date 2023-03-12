@@ -418,6 +418,49 @@ void ConfigUtils::displayMenu() {
         }
 
         const std::vector<WUPSConfigItem *> config_items = currentCategory->getItems();
+        if (config_items.empty()) {
+            if (buttonsTriggered & VPAD_BUTTON_B) {
+                currentCategory = nullptr;
+                start           = 0;
+                end             = MAX_BUTTONS_ON_SCREEN;
+                auto catSize    = currentConfig->config->getCategories().size();
+                if (catSize < MAX_BUTTONS_ON_SCREEN) {
+                    end = catSize;
+                }
+                redraw = true;
+                continue;
+            }
+            DrawUtils::beginDraw();
+            DrawUtils::clear(COLOR_BACKGROUND);
+
+            DrawUtils::setFontSize(24);
+            uint32_t sz = DrawUtils::getTextWidth("This category has no items");
+
+            DrawUtils::print((SCREEN_WIDTH / 2) - (sz / 2), (SCREEN_HEIGHT / 2), "This category has no items");
+
+
+            auto headline = string_format("%s - %s", currentConfig->config->getName().c_str(), currentCategory->getName().c_str());
+            // draw top bar
+            DrawUtils::setFontSize(24);
+            DrawUtils::print(16, 6 + 24, StringTools::truncate(headline, 45).c_str());
+            DrawUtils::drawRectFilled(8, 8 + 24 + 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
+            DrawUtils::setFontSize(18);
+            DrawUtils::print(SCREEN_WIDTH - 16, 8 + 24, currentConfig->version.c_str(), true);
+
+            // draw bottom bar
+            DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
+            DrawUtils::setFontSize(18);
+            DrawUtils::print(16, SCREEN_HEIGHT - 10, "\ue07d Navigate ");
+            // draw scroll indicator
+            DrawUtils::setFontSize(24);
+
+            DrawUtils::setFontSize(18);
+            const char *exitHint = "\ue001 Back";
+            DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHint) / 2, SCREEN_HEIGHT - 10, exitHint, true);
+
+            DrawUtils::endDraw();
+            continue;
+        }
 
         if (isItemMovementAllowed) {
             if (buttonsTriggered & VPAD_BUTTON_DOWN) {

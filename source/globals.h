@@ -9,7 +9,7 @@
 #include <vector>
 #include <wums/defines/relocation_defines.h>
 
-#define VERSION      "v0.2.2"
+#define VERSION      "v0.2.3"
 #define VERSION_FULL VERSION VERSION_EXTRA
 
 extern StoredBuffer gStoredTVBuffer;

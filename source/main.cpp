@@ -1,4 +1,6 @@
 #include "PluginManagement.h"
+#include "coreinit/interrupts.h"
+#include "coreinit/scheduler.h"
 #include "globals.h"
 #include "hooks.h"
 #include "patcher/hooks_patcher_static.h"
@@ -53,6 +55,7 @@ WUMS_APPLICATION_ENDS() {
     deinitLogging();
 }
 
+void CheckCleanupCallbackUsage(const std::vector<std::unique_ptr<PluginContainer>> &plugins);
 
 WUMS_APPLICATION_STARTS() {
     uint32_t upid = OSGetUPID();
@@ -98,7 +101,23 @@ WUMS_APPLICATION_STARTS() {
     }
 
     if (!gLoadOnNextLaunch.empty()) {
+        auto *currentThread        = OSGetCurrentThread();
+        auto saved_reent           = currentThread->reserved[4];
+        auto saved_cleanupCallback = currentThread->cleanupCallback;
+
+        currentThread->reserved[4] = 0;
+
         CallHook(gLoadedPlugins, WUPS_LOADER_HOOK_DEINIT_PLUGIN);
+
+        CheckCleanupCallbackUsage(gLoadedPlugins);
+
+        if (currentThread->cleanupCallback != saved_cleanupCallback) {
+            DEBUG_FUNCTION_LINE_WARN("WUPS_LOADER_HOOK_DEINIT_PLUGIN overwrote the ThreadCleanupCallback, we need to restore it!\n");
+            OSSetThreadCleanupCallback(OSGetCurrentThread(), saved_cleanupCallback);
+        }
+
+        currentThread->reserved[4] = saved_reent;
+
         DEBUG_FUNCTION_LINE("Restore function patches of currently loaded plugins.");
         PluginManagement::RestoreFunctionPatches(gLoadedPlugins);
         DEBUG_FUNCTION_LINE("Unload existing plugins.");
@@ -138,5 +157,32 @@ WUMS_APPLICATION_STARTS() {
         }
 
         CallHook(gLoadedPlugins, WUPS_LOADER_HOOK_APPLICATION_STARTS);
+    }
+}
+
+void CheckCleanupCallbackUsage(const std::vector<std::unique_ptr<PluginContainer>> &plugins) {
+    auto *curThread = OSGetCurrentThread();
+    for (const auto &cur : plugins) {
+        auto textSection = cur->getPluginInformation()->getSectionInfo(".text");
+        if (!textSection.has_value()) {
+            continue;
+        }
+        uint32_t startAddress = textSection.value()->getAddress();
+        uint32_t endAddress   = textSection.value()->getAddress() + textSection.value()->getSize();
+        auto *pluginName      = cur->getMetaInformation()->getName().c_str();
+        {
+            __OSLockScheduler(curThread);
+            int state   = OSDisableInterrupts();
+            OSThread *t = *((OSThread **) 0x100567F8);
+            while (t) {
+                auto address = reinterpret_cast<uint32_t>(t->cleanupCallback);
+                if (address != 0 && address >= startAddress && address <= endAddress) {
+                    OSReport("[WARN] PluginBackend: Thread 0x%08X is using a function from plugin %s for the threadCleanupCallback\n", t, pluginName);
+                }
+                t = t->activeLink.next;
+            }
+            OSRestoreInterrupts(state);
+            __OSUnlockScheduler(curThread);
+        }
     }
 }

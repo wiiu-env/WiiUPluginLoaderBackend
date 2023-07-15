@@ -25,15 +25,15 @@ bool PluginManagement::doRelocation(const std::vector<std::unique_ptr<Relocation
         if (functionName == "MEMAllocFromDefaultHeap") {
             OSDynLoad_Module rplHandle;
             OSDynLoad_Acquire("homebrew_memorymapping", &rplHandle);
-            OSDynLoad_FindExport(rplHandle, 1, "MEMAllocFromMappedMemory", (void **) &functionAddress);
+            OSDynLoad_FindExport(rplHandle, OS_DYNLOAD_EXPORT_DATA, "MEMAllocFromMappedMemory", (void **) &functionAddress);
         } else if (functionName == "MEMAllocFromDefaultHeapEx") {
             OSDynLoad_Module rplHandle;
             OSDynLoad_Acquire("homebrew_memorymapping", &rplHandle);
-            OSDynLoad_FindExport(rplHandle, 1, "MEMAllocFromMappedMemoryEx", (void **) &functionAddress);
+            OSDynLoad_FindExport(rplHandle, OS_DYNLOAD_EXPORT_DATA, "MEMAllocFromMappedMemoryEx", (void **) &functionAddress);
         } else if (functionName == "MEMFreeToDefaultHeap") {
             OSDynLoad_Module rplHandle;
             OSDynLoad_Acquire("homebrew_memorymapping", &rplHandle);
-            OSDynLoad_FindExport(rplHandle, 1, "MEMFreeToMappedMemory", (void **) &functionAddress);
+            OSDynLoad_FindExport(rplHandle, OS_DYNLOAD_EXPORT_DATA, "MEMFreeToMappedMemory", (void **) &functionAddress);
         }
 
         if (functionAddress == 0) {
@@ -56,7 +56,7 @@ bool PluginManagement::doRelocation(const std::vector<std::unique_ptr<Relocation
                 rplHandle = usedRPls[rplName];
             }
 
-            OSDynLoad_FindExport(rplHandle, isData, functionName.c_str(), (void **) &functionAddress);
+            OSDynLoad_FindExport(rplHandle, (OSDynLoad_ExportType) isData, functionName.c_str(), (void **) &functionAddress);
         }
 
         if (functionAddress == 0) {

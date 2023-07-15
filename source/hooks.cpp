@@ -2,8 +2,6 @@
 #include "plugin/PluginContainer.h"
 #include "utils/StorageUtils.h"
 #include "utils/logger.h"
-#include <memory>
-#include <vector>
 
 static const char **hook_names = (const char *[]){
         "WUPS_LOADER_HOOK_INIT_WUT_MALLOC",

@@ -1,6 +1,5 @@
 #include "StorageUtils.h"
-#include <string>
-
+#include "StringTools.h"
 #include "fs/CFile.hpp"
 #include "fs/FSUtils.h"
 #include "utils.h"
@@ -69,7 +68,11 @@ WUPSStorageError StorageUtils::OpenStorage(const char *plugin_id, wups_storage_i
         free(json_data);
 
         if (j == nlohmann::detail::value_t::discarded || j.empty() || !j.is_object()) {
-            return WUPS_STORAGE_ERROR_INVALID_JSON;
+            std::string errorMessage = string_format("Corrupted plugin storage detected: \"%s\". You have to reconfigure the plugin.", plugin_id);
+            DEBUG_FUNCTION_LINE_ERR("%s", errorMessage.c_str());
+            remove(filePath.c_str());
+
+            return WUPS_STORAGE_ERROR_SUCCESS;
         }
     } else { // empty or no config exists yet
         return WUPS_STORAGE_ERROR_SUCCESS;
@@ -126,7 +129,7 @@ WUPSStorageError StorageUtils::CloseStorage(const char *plugin_id, wups_storage_
     nlohmann::json j;
     j["storageitems"] = processItems(items);
 
-    std::string jsonString = j.dump(4);
+    std::string jsonString = j.dump(4, ' ', false, nlohmann::json::error_handler_t::ignore);
     auto writeResult       = file.write((const uint8_t *) jsonString.c_str(), jsonString.size());
 
     file.close();

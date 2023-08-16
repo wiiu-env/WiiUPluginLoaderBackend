@@ -1,10 +1,12 @@
 #include "PluginManagement.h"
+#include "NotificationsUtils.h"
 #include "hooks.h"
 #include "patcher/hooks_patcher_static.h"
 #include "plugin/PluginContainer.h"
 #include "plugin/PluginInformationFactory.h"
 #include "plugin/PluginMetaInformationFactory.h"
 #include "utils/ElfUtils.h"
+#include "utils/StringTools.h"
 #include "utils/utils.h"
 #include <coreinit/cache.h>
 #include <coreinit/dynload.h>
@@ -152,8 +154,10 @@ PluginManagement::loadPlugins(const std::forward_list<std::shared_ptr<PluginData
 
     uint32_t trampolineID = 0;
     for (auto &pluginData : pluginList) {
-        auto metaInfo = PluginMetaInformationFactory::loadPlugin(pluginData);
-        if (metaInfo) {
+        PluginParseErrors error = PLUGIN_PARSE_ERROR_UNKNOWN;
+
+        auto metaInfo = PluginMetaInformationFactory::loadPlugin(pluginData, error);
+        if (metaInfo && error == PLUGIN_PARSE_ERROR_NONE) {
             auto info = PluginInformationFactory::load(pluginData, trampoline_data, trampoline_data_length, trampolineID++);
             if (!info) {
                 auto errMsg = string_format("Failed to load plugin: %s", metaInfo.value()->getName().c_str());
@@ -168,7 +172,12 @@ PluginManagement::loadPlugins(const std::forward_list<std::shared_ptr<PluginData
             }
             plugins.push_back(std::move(container));
         } else {
-            DEBUG_FUNCTION_LINE_ERR("Failed to get meta information");
+            auto errMsg = string_format("Failed to load plugin: %s", pluginData->mSource.c_str());
+            if (error == PLUGIN_PARSE_ERROR_INCOMPATIBLE_VERSION) {
+                errMsg += ". Incompatible version.";
+            }
+            DEBUG_FUNCTION_LINE_ERR("%s", errMsg.c_str());
+            DisplayErrorNotificationMessage(errMsg, 15.0f);
         }
     }
 

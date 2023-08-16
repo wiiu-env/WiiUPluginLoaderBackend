@@ -25,7 +25,7 @@
 
 class PluginData {
 public:
-    explicit PluginData(const std::vector<uint8_t> &buffer);
+    explicit PluginData(const std::vector<uint8_t> &buffer, std::string source);
 
     uint32_t getHandle() {
         return (uint32_t) this;
@@ -33,4 +33,5 @@ public:
 
     size_t length = 0;
     std::unique_ptr<uint8_t[]> buffer;
+    std::string mSource;
 };

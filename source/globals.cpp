@@ -11,3 +11,5 @@ std::forward_list<std::shared_ptr<PluginData>> gLoadOnNextLaunch __attribute__((
 std::mutex gLoadedDataMutex __attribute__((section(".data")));
 std::map<std::string, OSDynLoad_Module> gUsedRPLs __attribute__((section(".data")));
 std::vector<void *> gAllocatedAddresses __attribute__((section(".data")));
+
+bool gNotificationModuleLoaded __attribute__((section(".data"))) = false;

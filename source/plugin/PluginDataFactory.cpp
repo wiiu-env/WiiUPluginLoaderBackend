@@ -15,6 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
 #include "PluginDataFactory.h"
+#include "NotificationsUtils.h"
 #include "fs/FSUtils.h"
 #include "utils/StringTools.h"
 #include "utils/logger.h"
@@ -54,7 +55,9 @@ std::forward_list<std::shared_ptr<PluginData>> PluginDataFactory::loadDir(const 
         if (pluginData) {
             result.push_front(std::move(pluginData.value()));
         } else {
-            DEBUG_FUNCTION_LINE_ERR("Failed to load plugin: %s", full_file_path.c_str());
+            auto errMsg = string_format("Failed to load plugin: %s", full_file_path.c_str());
+            DEBUG_FUNCTION_LINE_ERR("%s", errMsg.c_str());
+            DisplayErrorNotificationMessage(errMsg, 15.0f);
         }
     }
 

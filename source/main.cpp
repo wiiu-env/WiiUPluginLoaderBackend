@@ -1,3 +1,4 @@
+#include "NotificationsUtils.h"
 #include "PluginManagement.h"
 #include "coreinit/interrupts.h"
 #include "coreinit/scheduler.h"
@@ -7,18 +8,28 @@
 #include "plugin/PluginDataFactory.h"
 #include "utils/utils.h"
 #include <coreinit/debug.h>
+#include <notifications/notifications.h>
 #include <wums.h>
 
 WUMS_MODULE_EXPORT_NAME("homebrew_wupsbackend");
 WUMS_USE_WUT_DEVOPTAB();
 WUMS_DEPENDS_ON(homebrew_functionpatcher);
 WUMS_DEPENDS_ON(homebrew_memorymapping);
+WUMS_DEPENDS_ON(homebrew_notifications);
 
 WUMS_INITIALIZE() {
     initLogging();
 
     if (FunctionPatcher_InitLibrary() != FUNCTION_PATCHER_RESULT_SUCCESS) {
         OSFatal("homebrew_wupsbackend: FunctionPatcher_InitLibrary failed");
+    }
+
+    NotificationModuleStatus res;
+    if ((res = NotificationModule_InitLibrary()) != NOTIFICATION_MODULE_RESULT_SUCCESS) {
+        DEBUG_FUNCTION_LINE_ERR("Failed to init NotificationModule");
+        gNotificationModuleLoaded = false;
+    } else {
+        gNotificationModuleLoaded = true;
     }
 
     DEBUG_FUNCTION_LINE("Patching functions");
@@ -43,6 +54,7 @@ WUMS_APPLICATION_ENDS() {
     if (upid != 2 && upid != 15) {
         return;
     }
+
     CallHook(gLoadedPlugins, WUPS_LOADER_HOOK_APPLICATION_ENDS);
     CallHook(gLoadedPlugins, WUPS_LOADER_HOOK_FINI_WUT_SOCKETS);
     CallHook(gLoadedPlugins, WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB);
@@ -51,6 +63,8 @@ WUMS_APPLICATION_ENDS() {
         OSDynLoad_Release(pair.second);
     }
     gUsedRPLs.clear();
+
+    StopNotificationThread();
 
     deinitLogging();
 }
@@ -64,6 +78,8 @@ WUMS_APPLICATION_STARTS() {
     }
 
     OSReport("Running WiiUPluginLoaderBackend " VERSION_FULL "\n");
+
+    StartNotificationThread();
 
     gUsedRPLs.clear();
 

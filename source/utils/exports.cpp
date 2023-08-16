@@ -67,7 +67,7 @@ extern "C" PluginBackendApiErrorType WUPSLoadPluginAsData(GetPluginInformationIn
     } else if (inputType == PLUGIN_INFORMATION_INPUT_TYPE_BUFFER && buffer != nullptr && size > 0) {
         std::vector<uint8_t> data(size);
         memcpy(&data[0], buffer, size);
-        pluginData = PluginDataFactory::load(data);
+        pluginData = PluginDataFactory::load(data, "<UNKNOWN>");
     } else {
         return PLUGIN_BACKEND_API_ERROR_INVALID_ARG;
     }
@@ -95,11 +95,12 @@ extern "C" PluginBackendApiErrorType WUPSLoadPluginAsDataByBuffer(plugin_data_ha
 
 extern "C" PluginBackendApiErrorType WUPSGetPluginMetaInformation(GetPluginInformationInputType inputType, const char *path, char *buffer, size_t size, plugin_information *output) {
     std::optional<std::unique_ptr<PluginMetaInformation>> pluginInfo;
+    PluginParseErrors error = PLUGIN_PARSE_ERROR_UNKNOWN;
     if (inputType == PLUGIN_INFORMATION_INPUT_TYPE_PATH && path != nullptr) {
         std::string pathStr(path);
-        pluginInfo = PluginMetaInformationFactory::loadPlugin(pathStr);
+        pluginInfo = PluginMetaInformationFactory::loadPlugin(pathStr, error);
     } else if (inputType == PLUGIN_INFORMATION_INPUT_TYPE_BUFFER && buffer != nullptr && size > 0) {
-        pluginInfo = PluginMetaInformationFactory::loadPlugin(buffer, size);
+        pluginInfo = PluginMetaInformationFactory::loadPlugin(buffer, size, error);
     } else {
         DEBUG_FUNCTION_LINE_ERR("PLUGIN_BACKEND_API_ERROR_INVALID_ARG");
         return PLUGIN_BACKEND_API_ERROR_INVALID_ARG;

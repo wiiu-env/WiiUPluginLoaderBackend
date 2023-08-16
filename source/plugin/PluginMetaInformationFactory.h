@@ -25,13 +25,22 @@
 #include <string>
 #include <vector>
 
+enum PluginParseErrors {
+    PLUGIN_PARSE_ERROR_NONE,
+    PLUGIN_PARSE_ERROR_UNKNOWN,
+    PLUGIN_PARSE_ERROR_INCOMPATIBLE_VERSION,
+    PLUGIN_PARSE_ERROR_BUFFER_EMPTY,
+    PLUGIN_PARSE_ERROR_ELFIO_PARSE_FAILED,
+    PLUGIN_PARSE_ERROR_IO_ERROR,
+};
+
 class PluginMetaInformationFactory {
 public:
-    static std::optional<std::unique_ptr<PluginMetaInformation>> loadPlugin(const std::shared_ptr<PluginData> &pluginData);
+    static std::optional<std::unique_ptr<PluginMetaInformation>> loadPlugin(const std::shared_ptr<PluginData> &pluginData, PluginParseErrors &error);
 
-    static std::optional<std::unique_ptr<PluginMetaInformation>> loadPlugin(const std::string &filePath);
+    static std::optional<std::unique_ptr<PluginMetaInformation>> loadPlugin(const std::string &filePath, PluginParseErrors &error);
 
-    static std::optional<std::unique_ptr<PluginMetaInformation>> loadPlugin(char *buffer, size_t size);
+    static std::optional<std::unique_ptr<PluginMetaInformation>> loadPlugin(char *buffer, size_t size, PluginParseErrors &error);
 
-    static std::optional<std::unique_ptr<PluginMetaInformation>> loadPlugin(const ELFIO::elfio &reader);
+    static std::optional<std::unique_ptr<PluginMetaInformation>> loadPlugin(const ELFIO::elfio &reader, PluginParseErrors &error);
 };

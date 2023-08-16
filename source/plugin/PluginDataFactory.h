@@ -31,5 +31,5 @@ public:
 
     static std::optional<std::unique_ptr<PluginData>> load(const std::string &path);
 
-    static std::optional<std::unique_ptr<PluginData>> load(const std::vector<uint8_t> &buffer);
+    static std::optional<std::unique_ptr<PluginData>> load(const std::vector<uint8_t> &buffer, const std::string &source);
 };

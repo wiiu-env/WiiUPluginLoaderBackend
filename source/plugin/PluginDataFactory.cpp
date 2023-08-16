@@ -81,15 +81,15 @@ std::optional<std::unique_ptr<PluginData>> PluginDataFactory::load(const std::st
 
     DEBUG_FUNCTION_LINE_VERBOSE("Loaded file!");
 
-    return load(result);
+    return load(result, filename);
 }
 
-std::optional<std::unique_ptr<PluginData>> PluginDataFactory::load(const std::vector<uint8_t> &buffer) {
+std::optional<std::unique_ptr<PluginData>> PluginDataFactory::load(const std::vector<uint8_t> &buffer, const std::string &source) {
     if (buffer.empty()) {
         return {};
     }
 
-    auto res = make_unique_nothrow<PluginData>(buffer);
+    auto res = make_unique_nothrow<PluginData>(buffer, source);
     if (!res) {
         return {};
     }

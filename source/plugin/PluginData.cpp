@@ -2,7 +2,7 @@
 #include "utils/logger.h"
 #include "utils/utils.h"
 
-PluginData::PluginData(const std::vector<uint8_t> &input) : length(input.size()) {
+PluginData::PluginData(const std::vector<uint8_t> &input, std::string source) : length(input.size()), mSource(std::move(source)) {
     auto data_copy = make_unique_nothrow<uint8_t[]>(length);
     if (!data_copy) {
         DEBUG_FUNCTION_LINE_ERR("Failed to allocate space on default heap");

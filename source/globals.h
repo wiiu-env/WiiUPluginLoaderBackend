@@ -24,3 +24,5 @@ extern std::forward_list<std::shared_ptr<PluginData>> gLoadOnNextLaunch;
 extern std::mutex gLoadedDataMutex;
 extern std::map<std::string, OSDynLoad_Module> gUsedRPLs;
 extern std::vector<void *> gAllocatedAddresses;
+
+extern bool gNotificationModuleLoaded;

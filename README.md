@@ -10,6 +10,7 @@ This is the backend for the [WiiUPluginSystem](https://github.com/wiiu-env/WiiUP
 2. Requires the [WUMSLoader](https://github.com/wiiu-env/WUMSLoader) in `sd:/wiiu/environments/[ENVIRONMENT]/modules/setup`.
 3. Requires the [FunctionPatcherModule](https://github.com/wiiu-env/FunctionPatcherModule) in `sd:/wiiu/environments/[ENVIRONMENT]/modules`.
 4. Requires the [MemoryMappingModule](https://github.com/wiiu-env/MemoryMappingModule) in `sd:/wiiu/environments/[ENVIRONMENT]/modules`.
+5. Requires the [NotificationModule](https://github.com/wiiu-env/NotificationModule) in `sd:/wiiu/environments/[ENVIRONMENT]/modules`.
 
 Plugins needs to be placed into the following directory:
 
@@ -32,7 +33,7 @@ DEVKITPRO=/opt/devkitpro
 DEVKITPPC=/opt/devkitpro/devkitPPC
 ```
 
-Also make sure to install [wut](https://github.com/decaf-emu/wut), [WiiUPluginSystem](https://github.com/wiiu-env/WiiUPluginSystem), [WiiUModuleSystem](https://github.com/wiiu-env/WiiUModuleSystem), [libfunctionpatcher](https://github.com/wiiu-env/libfunctionpatcher) and [libmappedmemory](https://github.com/wiiu-env/libmappedmemory).
+Also make sure to install [wut](https://github.com/decaf-emu/wut), [WiiUPluginSystem](https://github.com/wiiu-env/WiiUPluginSystem), [WiiUModuleSystem](https://github.com/wiiu-env/WiiUModuleSystem), [libfunctionpatcher](https://github.com/wiiu-env/libfunctionpatcher), [libnotifications](https://github.com/wiiu-env/libnotifications) and [libmappedmemory](https://github.com/wiiu-env/libmappedmemory).
 
 ## Buildflags
 

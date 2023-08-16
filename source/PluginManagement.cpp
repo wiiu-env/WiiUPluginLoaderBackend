@@ -156,7 +156,9 @@ PluginManagement::loadPlugins(const std::forward_list<std::shared_ptr<PluginData
         if (metaInfo) {
             auto info = PluginInformationFactory::load(pluginData, trampoline_data, trampoline_data_length, trampolineID++);
             if (!info) {
-                DEBUG_FUNCTION_LINE_ERR("Failed to load Plugin %s", metaInfo.value()->getName().c_str());
+                auto errMsg = string_format("Failed to load plugin: %s", metaInfo.value()->getName().c_str());
+                DEBUG_FUNCTION_LINE_ERR("%s", errMsg.c_str());
+                DisplayErrorNotificationMessage(errMsg, 15.0f);
                 continue;
             }
             auto container = make_unique_nothrow<PluginContainer>(std::move(metaInfo.value()), std::move(info.value()), pluginData);

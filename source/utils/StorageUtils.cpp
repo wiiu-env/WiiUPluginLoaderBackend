@@ -1,10 +1,12 @@
 #include "StorageUtils.h"
+#include "NotificationsUtils.h"
 #include "StringTools.h"
 #include "fs/CFile.hpp"
 #include "fs/FSUtils.h"
 #include "utils.h"
 #include "utils/json.hpp"
 #include "utils/logger.h"
+#include <notifications/notifications.h>
 
 static void processJson(wups_storage_item_t *items, nlohmann::json json) {
     if (items == nullptr) {
@@ -71,6 +73,8 @@ WUPSStorageError StorageUtils::OpenStorage(const char *plugin_id, wups_storage_i
             std::string errorMessage = string_format("Corrupted plugin storage detected: \"%s\". You have to reconfigure the plugin.", plugin_id);
             DEBUG_FUNCTION_LINE_ERR("%s", errorMessage.c_str());
             remove(filePath.c_str());
+
+            DisplayErrorNotificationMessage(errorMessage, 10.0f);
 
             return WUPS_STORAGE_ERROR_SUCCESS;
         }

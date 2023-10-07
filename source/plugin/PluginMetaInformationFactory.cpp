@@ -105,6 +105,8 @@ std::unique_ptr<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(
                     } else if (key == "wups") {
                         if (value == "0.7.1") {
                             pluginInfo->setWUPSVersion(0, 7, 1);
+                        } else if (value == "0.7.2") {
+                            pluginInfo->setWUPSVersion(0, 7, 2);
                         } else {
                             error = PLUGIN_PARSE_ERROR_INCOMPATIBLE_VERSION;
                             DEBUG_FUNCTION_LINE_ERR("Warning: Ignoring plugin - Unsupported WUPS version: %s.", value.c_str());

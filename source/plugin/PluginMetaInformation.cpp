@@ -9,4 +9,5 @@ PluginMetaInformation::PluginMetaInformation(const PluginMetaInformation &other)
     this->description    = other.description;
     this->size           = other.size;
     this->storageId      = other.storageId;
+    this->wupsversion    = other.wupsversion;
 }

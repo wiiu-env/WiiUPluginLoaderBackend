@@ -2,6 +2,8 @@
 #include "plugin/PluginContainer.h"
 #include "utils/StorageUtilsDeprecated.h"
 #include "utils/logger.h"
+#include "utils/storage/StorageUtils.h"
+#include <wups/storage.h>
 
 static const char **hook_names = (const char *[]){
         "WUPS_LOADER_HOOK_INIT_WUT_MALLOC",
@@ -21,7 +23,7 @@ static const char **hook_names = (const char *[]){
         "WUPS_LOADER_HOOK_GET_CONFIG",
         "WUPS_LOADER_HOOK_CONFIG_CLOSED",
 
-        "WUPS_LOADER_HOOK_INIT_STORAGE",
+        "WUPS_LOADER_HOOK_INIT_STORAGE_DEPRECATED",
 
         "WUPS_LOADER_HOOK_INIT_PLUGIN",
         "WUPS_LOADER_HOOK_DEINIT_PLUGIN",
@@ -29,7 +31,8 @@ static const char **hook_names = (const char *[]){
         "WUPS_LOADER_HOOK_RELEASE_FOREGROUND",
         "WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND",
         "WUPS_LOADER_HOOK_APPLICATION_REQUESTS_EXIT",
-        "WUPS_LOADER_HOOK_APPLICATION_ENDS"};
+        "WUPS_LOADER_HOOK_APPLICATION_ENDS",
+        "WUPS_LOADER_HOOK_INIT_STORAGE"};
 
 void CallHook(const std::vector<std::unique_ptr<PluginContainer>> &plugins, wups_loader_hook_type_t hook_type) {
     DEBUG_FUNCTION_LINE_VERBOSE("Calling hook of type %s [%d]", hook_names[hook_type], hook_type);
@@ -70,20 +73,38 @@ void CallHook(const PluginContainer &plugin, wups_loader_hook_type_t hook_type) 
                         ((void(*)())((uint32_t *) func_ptr))();
                         // clang-format on
                         break;
-                    case WUPS_LOADER_HOOK_INIT_STORAGE: {
+                    case WUPS_LOADER_HOOK_INIT_STORAGE:
+                    case WUPS_LOADER_HOOK_INIT_STORAGE_DEPRECATED: {
                         if (plugin.getMetaInformation().getWUPSVersion() < WUPSVersion(0, 7, 2)) {
-                            WUPSStorageDeprecated::wups_loader_init_storage_args_t args;
+                            WUPSStorageDeprecated::wups_loader_init_storage_args_t_ args{};
                             args.open_storage_ptr  = &WUPSStorageDeprecated::StorageUtils::OpenStorage;
                             args.close_storage_ptr = &WUPSStorageDeprecated::StorageUtils::CloseStorage;
                             args.plugin_id         = plugin.getMetaInformation().getStorageId().c_str();
                             // clang-format off
-                        ((void(*)(WUPSStorageDeprecated::wups_loader_init_storage_args_t))((uint32_t *) func_ptr))(args);
+
+                            ((void(*)(WUPSStorageDeprecated::wups_loader_init_storage_args_t_))((uint32_t *) func_ptr))(args);
                             // clang-format on
                             break;
-                        } else {
-                            DEBUG_FUNCTION_LINE_ERR("WUPS_LOADER_HOOK_INIT_STORAGE hook for WUPSVersion 0.7.2 or higher not implemented");
-                            break;
                         }
+                        wups_loader_init_storage_args_t_ args{};
+                        args.version                      = WUPS_STORAGE_CUR_API_VERSION;
+                        args.open_storage_ptr             = &StorageUtils::API::OpenStorage;
+                        args.close_storage_ptr            = &StorageUtils::API::CloseStorage;
+                        args.delete_item_function_ptr     = &StorageUtils::API::DeleteItem;
+                        args.create_sub_item_function_ptr = &StorageUtils::API::CreateSubItem;
+                        args.get_sub_item_function_ptr    = &StorageUtils::API::GetSubItem;
+                        args.store_item_function_ptr      = &StorageUtils::API::StoreItem;
+                        args.get_item_function_ptr        = &StorageUtils::API::GetItem;
+                        args.get_item_size_function_ptr   = &StorageUtils::API::GetItemSize;
+                        args.plugin_id                    = plugin.getMetaInformation().getStorageId().c_str();
+                        // clang-format off
+                        auto res = ((WUPSStorageError(*)(wups_loader_init_storage_args_t_))((uint32_t *) func_ptr))(args);
+                        // clang-format on
+                        if (res == WUPS_STORAGE_ERROR_INVALID_VERSION) {
+                            // TODO: More error handling? Notification?
+                            DEBUG_FUNCTION_LINE_ERR("WUPS_LOADER_HOOK_INIT_STORAGE failed for plugin %s: WUPS_STORAGE_ERROR_INVALID_VERSION", plugin.getMetaInformation().getName().c_str());
+                        }
+                        break;
                     }
                     default: {
                         DEBUG_FUNCTION_LINE_ERR("######################################");

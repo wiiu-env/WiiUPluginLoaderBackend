@@ -28,7 +28,8 @@ SOURCES		:=	source \
                 source/elfio \
                 source/patcher \
                 source/plugin \
-                source/utils
+                source/utils \
+                source/utils/storage
 DATA		:=	data
 INCLUDES	:=	source
 

@@ -1,6 +1,6 @@
 #include "hooks.h"
 #include "plugin/PluginContainer.h"
-#include "utils/StorageUtils.h"
+#include "utils/StorageUtilsDeprecated.h"
 #include "utils/logger.h"
 
 static const char **hook_names = (const char *[]){
@@ -71,14 +71,19 @@ void CallHook(const PluginContainer &plugin, wups_loader_hook_type_t hook_type) 
                         // clang-format on
                         break;
                     case WUPS_LOADER_HOOK_INIT_STORAGE: {
-                        wups_loader_init_storage_args_t args;
-                        args.open_storage_ptr  = &StorageUtils::OpenStorage;
-                        args.close_storage_ptr = &StorageUtils::CloseStorage;
-                        args.plugin_id         = plugin.getMetaInformation().getStorageId().c_str();
-                        // clang-format off
-                        ((void(*)(wups_loader_init_storage_args_t))((uint32_t *) func_ptr))(args);
-                        // clang-format on
-                        break;
+                        if (plugin.getMetaInformation().getWUPSVersion() < WUPSVersion(0, 7, 2)) {
+                            WUPSStorageDeprecated::wups_loader_init_storage_args_t args;
+                            args.open_storage_ptr  = &WUPSStorageDeprecated::StorageUtils::OpenStorage;
+                            args.close_storage_ptr = &WUPSStorageDeprecated::StorageUtils::CloseStorage;
+                            args.plugin_id         = plugin.getMetaInformation().getStorageId().c_str();
+                            // clang-format off
+                        ((void(*)(WUPSStorageDeprecated::wups_loader_init_storage_args_t))((uint32_t *) func_ptr))(args);
+                            // clang-format on
+                            break;
+                        } else {
+                            DEBUG_FUNCTION_LINE_ERR("WUPS_LOADER_HOOK_INIT_STORAGE hook for WUPSVersion 0.7.2 or higher not implemented");
+                            break;
+                        }
                     }
                     default: {
                         DEBUG_FUNCTION_LINE_ERR("######################################");

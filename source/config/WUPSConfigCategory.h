@@ -24,12 +24,12 @@
 
 class WUPSConfigCategory {
 public:
-    explicit WUPSConfigCategory(const std::string &name) {
+    explicit WUPSConfigCategory(std::string_view name) {
         this->name = name;
     }
 
     ~WUPSConfigCategory() {
-        for (auto &element : items) {
+        for (const auto &element : items) {
             delete element;
         }
     }

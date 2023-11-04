@@ -122,12 +122,11 @@ void ConfigUtils::displayMenu() {
     std::vector<ConfigDisplayItem> configs;
     for (auto &plugin : gLoadedPlugins) {
         ConfigDisplayItem cfg;
-        cfg.name    = plugin->metaInformation->getName();
-        cfg.author  = plugin->metaInformation->getAuthor();
-        cfg.version = plugin->metaInformation->getVersion();
+        cfg.name    = plugin->getMetaInformation().getName();
+        cfg.author  = plugin->getMetaInformation().getAuthor();
+        cfg.version = plugin->getMetaInformation().getVersion();
 
-        for (auto &hook : plugin->getPluginInformation()->getHookDataList()) {
-
+        for (const auto &hook : plugin->getPluginInformation().getHookDataList()) {
             if (hook->getType() == WUPS_LOADER_HOOK_GET_CONFIG /*WUPS_LOADER_HOOK_GET_CONFIG*/) {
                 if (hook->getFunctionPointer() == nullptr) {
                     break;

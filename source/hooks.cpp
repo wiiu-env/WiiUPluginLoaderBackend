@@ -33,15 +33,15 @@ static const char **hook_names = (const char *[]){
 
 void CallHook(const std::vector<std::unique_ptr<PluginContainer>> &plugins, wups_loader_hook_type_t hook_type) {
     DEBUG_FUNCTION_LINE_VERBOSE("Calling hook of type %s [%d]", hook_names[hook_type], hook_type);
-    for (auto &plugin : plugins) {
-        CallHook(plugin, hook_type);
+    for (const auto &plugin : plugins) {
+        CallHook(*plugin, hook_type);
     }
 }
 
-void CallHook(const std::unique_ptr<PluginContainer> &plugin, wups_loader_hook_type_t hook_type) {
-    for (const auto &hook : plugin->getPluginInformation()->getHookDataList()) {
+void CallHook(const PluginContainer &plugin, wups_loader_hook_type_t hook_type) {
+    for (const auto &hook : plugin.getPluginInformation().getHookDataList()) {
         if (hook->getType() == hook_type) {
-            DEBUG_FUNCTION_LINE_VERBOSE("Calling hook of type %s for plugin %s [%d]", hook_names[hook->getType()], plugin->metaInformation->getName().c_str(), hook_type);
+            DEBUG_FUNCTION_LINE_VERBOSE("Calling hook of type %s for plugin %s [%d]", hook_names[hook->getType()], plugin.getMetaInformation().getName().c_str(), hook_type);
             void *func_ptr = hook->getFunctionPointer();
             if (func_ptr != nullptr) {
                 switch (hook_type) {
@@ -74,7 +74,7 @@ void CallHook(const std::unique_ptr<PluginContainer> &plugin, wups_loader_hook_t
                         wups_loader_init_storage_args_t args;
                         args.open_storage_ptr  = &StorageUtils::OpenStorage;
                         args.close_storage_ptr = &StorageUtils::CloseStorage;
-                        args.plugin_id         = plugin->getMetaInformation()->getStorageId().c_str();
+                        args.plugin_id         = plugin.getMetaInformation().getStorageId().c_str();
                         // clang-format off
                         ((void(*)(wups_loader_init_storage_args_t))((uint32_t *) func_ptr))(args);
                         // clang-format on

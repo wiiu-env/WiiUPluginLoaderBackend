@@ -30,7 +30,7 @@ public:
         Sets the display name of this WUPSConfigItem
         This is the value which will be shown in the configuration menu.
     **/
-    virtual void setDisplayName(const std::string &_displayName) {
+    virtual void setDisplayName(std::string_view _displayName) {
         this->displayName = _displayName;
     }
 
@@ -47,7 +47,7 @@ public:
         to be unique in the context of this WUPSConfig.
         Items in different categories are NOT allowed to have the config ID.
     **/
-    virtual void setConfigID(const std::string &_configID) {
+    virtual void setConfigID(std::string_view _configID) {
         this->configID = _configID;
     }
 
@@ -162,7 +162,7 @@ public:
         return defaultValue != getCurrentValueDisplay();
     }
 
-    WUPSConfigItem(const std::string &_configID, const std::string &_displayName, WUPSConfigCallbacks_t callbacks, void *_context) {
+    WUPSConfigItem(std::string_view _configID, std::string_view _displayName, WUPSConfigCallbacks_t callbacks, void *_context) {
         this->configID     = _configID;
         this->displayName  = _displayName;
         this->context      = _context;

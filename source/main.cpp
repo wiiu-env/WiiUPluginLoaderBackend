@@ -26,7 +26,7 @@ WUMS_INITIALIZE() {
 
     NotificationModuleStatus res;
     if ((res = NotificationModule_InitLibrary()) != NOTIFICATION_MODULE_RESULT_SUCCESS) {
-        DEBUG_FUNCTION_LINE_ERR("Failed to init NotificationModule");
+        DEBUG_FUNCTION_LINE_ERR("Failed to init NotificationModule: %s (%d)", NotificationModule_GetStatusStr(res), res);
         gNotificationModuleLoaded = false;
     } else {
         gNotificationModuleLoaded = true;
@@ -38,6 +38,7 @@ WUMS_INITIALIZE() {
             OSFatal("homebrew_wupsbackend: Failed to AddPatch function");
         }
     }
+
     deinitLogging();
 }
 
@@ -59,7 +60,7 @@ WUMS_APPLICATION_ENDS() {
     CallHook(gLoadedPlugins, WUPS_LOADER_HOOK_FINI_WUT_SOCKETS);
     CallHook(gLoadedPlugins, WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB);
 
-    for (auto &pair : gUsedRPLs) {
+    for (const auto &pair : gUsedRPLs) {
         OSDynLoad_Release(pair.second);
     }
     gUsedRPLs.clear();
@@ -85,7 +86,7 @@ WUMS_APPLICATION_STARTS() {
 
     // If an allocated rpl was not released properly (e.g. if something else calls OSDynload_Acquire without releasing it) memory get leaked.
     // Let's clean this up!
-    for (auto &addr : gAllocatedAddresses) {
+    for (const auto &addr : gAllocatedAddresses) {
         DEBUG_FUNCTION_LINE_WARN("Memory allocated by OSDynload was not freed properly, let's clean it up! (%08X)", addr);
         free((void *) addr);
     }
@@ -96,13 +97,11 @@ WUMS_APPLICATION_STARTS() {
 
     std::lock_guard<std::mutex> lock(gLoadedDataMutex);
 
-    if (gTrampData == nullptr) {
-        gTrampData = (relocation_trampoline_entry_t *) memalign(0x4, sizeof(relocation_trampoline_entry_t) * TRAMP_DATA_SIZE);
-        if (gTrampData == nullptr) {
-            DEBUG_FUNCTION_LINE_ERR("Failed to allocated the memory for the trampoline data");
-            OSFatal("Failed to allocated the memory for the trampoline data");
+    if (gTrampData.empty()) {
+        gTrampData = std::vector<relocation_trampoline_entry_t>(TRAMP_DATA_SIZE);
+        for (auto &cur : gTrampData) {
+            cur.status = RELOC_TRAMP_FREE;
         }
-        memset(gTrampData, 0, sizeof(relocation_trampoline_entry_t) * TRAMP_DATA_SIZE);
     }
 
     if (gLoadedPlugins.empty()) {
@@ -111,7 +110,7 @@ WUMS_APPLICATION_STARTS() {
         DEBUG_FUNCTION_LINE("Load plugins from %s", pluginPath.c_str());
 
         auto pluginData = PluginDataFactory::loadDir(pluginPath);
-        gLoadedPlugins  = PluginManagement::loadPlugins(pluginData, gTrampData, TRAMP_DATA_SIZE);
+        gLoadedPlugins  = PluginManagement::loadPlugins(pluginData, gTrampData);
 
         initNeeded = true;
     }
@@ -138,10 +137,12 @@ WUMS_APPLICATION_STARTS() {
         PluginManagement::RestoreFunctionPatches(gLoadedPlugins);
         DEBUG_FUNCTION_LINE("Unload existing plugins.");
         gLoadedPlugins.clear();
-        memset(gTrampData, 0, sizeof(relocation_trampoline_entry_t) * TRAMP_DATA_SIZE);
+        for (auto &cur : gTrampData) {
+            cur.status = RELOC_TRAMP_FREE;
+        }
 
         DEBUG_FUNCTION_LINE("Load new plugins");
-        gLoadedPlugins = PluginManagement::loadPlugins(gLoadOnNextLaunch, gTrampData, TRAMP_DATA_SIZE);
+        gLoadedPlugins = PluginManagement::loadPlugins(gLoadOnNextLaunch, gTrampData);
         initNeeded     = true;
     }
 
@@ -150,9 +151,9 @@ WUMS_APPLICATION_STARTS() {
     gLoadedData.clear();
 
     if (!gLoadedPlugins.empty()) {
-        if (!PluginManagement::doRelocations(gLoadedPlugins, gTrampData, TRAMP_DATA_SIZE, gUsedRPLs)) {
+        if (!PluginManagement::doRelocations(gLoadedPlugins, gTrampData, gUsedRPLs)) {
             DEBUG_FUNCTION_LINE_ERR("Relocations failed");
-            OSFatal("Relocations failed");
+            OSFatal("WiiUPluginLoaderBackend: Relocations failed.\n See crash logs for more information.");
         }
         // PluginManagement::memsetBSS(plugins);
 
@@ -179,13 +180,13 @@ WUMS_APPLICATION_STARTS() {
 void CheckCleanupCallbackUsage(const std::vector<std::unique_ptr<PluginContainer>> &plugins) {
     auto *curThread = OSGetCurrentThread();
     for (const auto &cur : plugins) {
-        auto textSection = cur->getPluginInformation()->getSectionInfo(".text");
-        if (!textSection.has_value()) {
+        auto textSection = cur->getPluginInformation().getSectionInfo(".text");
+        if (!textSection) {
             continue;
         }
-        uint32_t startAddress = textSection.value()->getAddress();
-        uint32_t endAddress   = textSection.value()->getAddress() + textSection.value()->getSize();
-        auto *pluginName      = cur->getMetaInformation()->getName().c_str();
+        uint32_t startAddress = textSection->getAddress();
+        uint32_t endAddress   = textSection->getAddress() + textSection->getSize();
+        auto *pluginName      = cur->getMetaInformation().getName().c_str();
         {
             __OSLockScheduler(curThread);
             int state   = OSDisableInterrupts();

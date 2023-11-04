@@ -57,7 +57,7 @@ void NotificationMainLoop() {
     }
 }
 
-bool DisplayNotificationMessage(std::string &text, NotificationModuleNotificationType type, float duration) {
+bool DisplayNotificationMessage(std::string_view text, NotificationModuleNotificationType type, float duration) {
     if (!gNotificationModuleLoaded) {
         return false;
     }
@@ -68,7 +68,7 @@ bool DisplayNotificationMessage(std::string &text, NotificationModuleNotificatio
     if (!param) {
         return false;
     }
-    strncpy(param->text, text.c_str(), sizeof(param->text) - 1);
+    strncpy(param->text, text.data(), sizeof(param->text) - 1);
     param->type     = type;
     param->duration = duration;
 
@@ -84,11 +84,11 @@ bool DisplayNotificationMessage(std::string &text, NotificationModuleNotificatio
     return true;
 }
 
-bool DisplayInfoNotificationMessage(std::string &text, float duration) {
+bool DisplayInfoNotificationMessage(std::string_view text, float duration) {
     return DisplayNotificationMessage(text, NOTIFICATION_MODULE_NOTIFICATION_TYPE_INFO, duration);
 }
 
-bool DisplayErrorNotificationMessage(std::string &text, float duration) {
+bool DisplayErrorNotificationMessage(std::string_view text, float duration) {
     return DisplayNotificationMessage(text, NOTIFICATION_MODULE_NOTIFICATION_TYPE_ERROR, duration);
 }
 
@@ -101,7 +101,7 @@ void StartNotificationThread() {
 
     constexpr int32_t messageSize = sizeof(sNotificationMessages) / sizeof(sNotificationMessages[0]);
     OSInitMessageQueue(&sNotificationQueue, sNotificationMessages, messageSize);
-    sNotificationsThread = std::make_unique<std::thread>(NotificationMainLoop);
+    sNotificationsThread = make_unique_nothrow<std::thread>(NotificationMainLoop);
 }
 
 void StopNotificationThread() {

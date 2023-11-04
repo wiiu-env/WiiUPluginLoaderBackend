@@ -22,55 +22,34 @@
 #include "utils/wiiu_zlib.hpp"
 #include <memory>
 
-std::optional<std::unique_ptr<PluginMetaInformation>> PluginMetaInformationFactory::loadPlugin(const std::shared_ptr<PluginData> &pluginData, PluginParseErrors &error) {
-    if (!pluginData->buffer) {
+std::unique_ptr<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(const PluginData &pluginData, PluginParseErrors &error) {
+    return loadPlugin(pluginData.getBuffer(), error);
+}
+
+std::unique_ptr<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(std::string_view filePath, PluginParseErrors &error) {
+    std::vector<uint8_t> buffer;
+    if (FSUtils::LoadFileToMem(filePath, buffer) < 0) {
+        DEBUG_FUNCTION_LINE_ERR("Failed to load file to memory");
+        error = PLUGIN_PARSE_ERROR_IO_ERROR;
+        return {};
+    }
+    return loadPlugin(buffer, error);
+}
+
+std::unique_ptr<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(std::span<const uint8_t> buffer, PluginParseErrors &error) {
+    if (buffer.empty()) {
         error = PLUGIN_PARSE_ERROR_BUFFER_EMPTY;
         DEBUG_FUNCTION_LINE_ERR("Buffer is empty");
         return {};
     }
     ELFIO::elfio reader(new wiiu_zlib);
-    if (!reader.load(reinterpret_cast<const char *>(pluginData->buffer.get()), pluginData->length)) {
-        error = PLUGIN_PARSE_ERROR_ELFIO_PARSE_FAILED;
-        DEBUG_FUNCTION_LINE_ERR("Can't process PluginData in elfio");
-        return {};
-    }
-    return loadPlugin(reader, error);
-}
 
-std::optional<std::unique_ptr<PluginMetaInformation>> PluginMetaInformationFactory::loadPlugin(const std::string &filePath, PluginParseErrors &error) {
-    ELFIO::elfio reader(new wiiu_zlib);
-
-    uint8_t *buffer = nullptr;
-    uint32_t length = 0;
-    if (FSUtils::LoadFileToMem(filePath.c_str(), &buffer, &length) < 0) {
-        DEBUG_FUNCTION_LINE_ERR("Failed to load file to memory");
-        error = PLUGIN_PARSE_ERROR_IO_ERROR;
-        return {};
-    }
-
-    if (!reader.load(reinterpret_cast<const char *>(buffer), length)) {
-        error = PLUGIN_PARSE_ERROR_ELFIO_PARSE_FAILED;
-        DEBUG_FUNCTION_LINE_ERR("Can't process PluginData in elfio");
-        return {};
-    }
-    auto res = loadPlugin(reader, error);
-    free(buffer);
-    return res;
-}
-
-std::optional<std::unique_ptr<PluginMetaInformation>> PluginMetaInformationFactory::loadPlugin(char *buffer, size_t size, PluginParseErrors &error) {
-    ELFIO::elfio reader(new wiiu_zlib);
-
-    if (!reader.load(reinterpret_cast<const char *>(buffer), size)) {
+    if (!reader.load(reinterpret_cast<const char *>(buffer.data()), buffer.size())) {
         error = PLUGIN_PARSE_ERROR_ELFIO_PARSE_FAILED;
         DEBUG_FUNCTION_LINE_ERR("Can't find or process ELF file");
-        return std::nullopt;
+        return nullptr;
     }
 
-    return loadPlugin(reader, error);
-}
-
-std::optional<std::unique_ptr<PluginMetaInformation>> PluginMetaInformationFactory::loadPlugin(const ELFIO::elfio &reader, PluginParseErrors &error) {
     size_t pluginSize = 0;
 
     auto pluginInfo = std::unique_ptr<PluginMetaInformation>(new PluginMetaInformation);
@@ -127,7 +106,7 @@ std::optional<std::unique_ptr<PluginMetaInformation>> PluginMetaInformationFacto
                         if (value != "0.7.1") {
                             error = PLUGIN_PARSE_ERROR_INCOMPATIBLE_VERSION;
                             DEBUG_FUNCTION_LINE_ERR("Warning: Ignoring plugin - Unsupported WUPS version: %s.", value.c_str());
-                            return std::nullopt;
+                            return nullptr;
                         }
                     }
                 }

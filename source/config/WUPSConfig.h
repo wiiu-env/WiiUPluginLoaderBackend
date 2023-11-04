@@ -26,12 +26,12 @@
 
 class WUPSConfig {
 public:
-    explicit WUPSConfig(const std::string &name) {
+    explicit WUPSConfig(std::string_view name) {
         this->name = name;
     }
 
     ~WUPSConfig() {
-        for (auto &element : categories) {
+        for (const auto &element : categories) {
             delete element;
         }
     }
@@ -52,7 +52,7 @@ public:
 
         \return On success, the created and inserted category will be returned.
     **/
-    std::optional<WUPSConfigCategory *> addCategory(const std::string &categoryName) {
+    std::optional<WUPSConfigCategory *> addCategory(std::string_view categoryName) {
         auto curCat = new (std::nothrow) WUPSConfigCategory(categoryName);
         if (curCat == nullptr) {
             return {};

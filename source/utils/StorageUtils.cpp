@@ -122,7 +122,7 @@ WUPSStorageError StorageUtils::CloseStorage(const char *plugin_id, wups_storage_
     std::string folderPath = getPluginPath() + "/config/";
     std::string filePath   = folderPath + plugin_id + ".json";
 
-    FSUtils::CreateSubfolder(folderPath.c_str());
+    FSUtils::CreateSubfolder(folderPath);
 
     CFile file(filePath, CFile::WriteOnly);
     if (!file.isOpen()) {

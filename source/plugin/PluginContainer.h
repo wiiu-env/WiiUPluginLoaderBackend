@@ -26,28 +26,29 @@
 class PluginContainer {
 public:
     PluginContainer(std::unique_ptr<PluginMetaInformation> metaInformation, std::unique_ptr<PluginInformation> pluginInformation, std::shared_ptr<PluginData> pluginData)
-        : metaInformation(std::move(metaInformation)),
-          pluginInformation(std::move(pluginInformation)),
-          pluginData(std::move(pluginData)) {
+        : mMetaInformation(std::move(metaInformation)),
+          mPluginInformation(std::move(pluginInformation)),
+          mPluginData(std::move(pluginData)) {
     }
 
-    [[nodiscard]] const std::unique_ptr<PluginMetaInformation> &getMetaInformation() const {
-        return this->metaInformation;
+    [[nodiscard]] const PluginMetaInformation &getMetaInformation() const {
+        return *this->mMetaInformation;
     }
 
-    [[nodiscard]] const std::unique_ptr<PluginInformation> &getPluginInformation() const {
-        return pluginInformation;
+    [[nodiscard]] const PluginInformation &getPluginInformation() const {
+        return *this->mPluginInformation;
     }
 
-    [[nodiscard]] const std::shared_ptr<PluginData> &getPluginData() const {
-        return pluginData;
+    [[nodiscard]] std::shared_ptr<PluginData> getPluginDataCopy() const {
+        return mPluginData;
     }
 
     uint32_t getHandle() {
         return (uint32_t) this;
     }
 
-    const std::unique_ptr<PluginMetaInformation> metaInformation;
-    const std::unique_ptr<PluginInformation> pluginInformation;
-    const std::shared_ptr<PluginData> pluginData;
+private:
+    const std::unique_ptr<PluginMetaInformation> mMetaInformation;
+    const std::unique_ptr<PluginInformation> mPluginInformation;
+    const std::shared_ptr<PluginData> mPluginData;
 };

@@ -1,7 +1,6 @@
 #include "PluginManagement.h"
 #include "NotificationsUtils.h"
 #include "hooks.h"
-#include "patcher/hooks_patcher_static.h"
 #include "plugin/PluginContainer.h"
 #include "plugin/PluginInformationFactory.h"
 #include "plugin/PluginMetaInformationFactory.h"
@@ -10,19 +9,58 @@
 #include "utils/utils.h"
 #include <coreinit/cache.h>
 #include <coreinit/dynload.h>
-#include <forward_list>
 #include <memory.h>
 #include <memory>
-#include <ranges>
+
+std::vector<std::unique_ptr<PluginContainer>>
+PluginManagement::loadPlugins(const std::set<std::shared_ptr<PluginData>> &pluginDataList, std::vector<relocation_trampoline_entry_t> &trampolineData) {
+    std::vector<std::unique_ptr<PluginContainer>> plugins;
+
+    uint32_t trampolineID = 0;
+    for (const auto &pluginData : pluginDataList) {
+        PluginParseErrors error = PLUGIN_PARSE_ERROR_UNKNOWN;
+
+        auto metaInfo = PluginMetaInformationFactory::loadPlugin(*pluginData, error);
+        if (metaInfo && error == PLUGIN_PARSE_ERROR_NONE) {
+            auto info = PluginInformationFactory::load(*pluginData, trampolineData, trampolineID++);
+            if (!info) {
+                auto errMsg = string_format("Failed to load plugin: %s", metaInfo->getName().c_str());
+                DEBUG_FUNCTION_LINE_ERR("%s", errMsg.c_str());
+                DisplayErrorNotificationMessage(errMsg, 15.0f);
+                continue;
+            }
+            std::string nameCpy = metaInfo->getName();
+            auto container      = make_unique_nothrow<PluginContainer>(std::move(metaInfo), std::move(info), pluginData);
+            if (!container) {
+                DEBUG_FUNCTION_LINE_ERR("Failed to create PluginContainer, skipping  %s", nameCpy.c_str());
+                continue;
+            }
+            plugins.push_back(std::move(container));
+        } else {
+            auto errMsg = string_format("Failed to load plugin: %s", pluginData->getSource().c_str());
+            if (error == PLUGIN_PARSE_ERROR_INCOMPATIBLE_VERSION) {
+                errMsg += ". Incompatible version.";
+            }
+            DEBUG_FUNCTION_LINE_ERR("%s", errMsg.c_str());
+            DisplayErrorNotificationMessage(errMsg, 15.0f);
+        }
+    }
+
+    if (!PluginManagement::DoFunctionPatches(plugins)) {
+        DEBUG_FUNCTION_LINE_ERR("Failed to patch functions");
+        OSFatal("Failed to patch functions");
+    }
+
+    return plugins;
+}
 
 bool PluginManagement::doRelocation(const std::vector<std::unique_ptr<RelocationData>> &relocData,
-                                    relocation_trampoline_entry_t *tramp_data,
-                                    uint32_t tramp_length,
+                                    std::vector<relocation_trampoline_entry_t> &trampData,
                                     uint32_t trampolineID,
                                     std::map<std::string, OSDynLoad_Module> &usedRPls) {
     for (auto const &cur : relocData) {
-        uint32_t functionAddress        = 0;
-        const std::string &functionName = cur->getName();
+        uint32_t functionAddress = 0;
+        auto &functionName       = cur->getName();
 
         if (functionName == "MEMAllocFromDefaultHeap") {
             OSDynLoad_Module rplHandle;
@@ -39,8 +77,8 @@ bool PluginManagement::doRelocation(const std::vector<std::unique_ptr<Relocation
         }
 
         if (functionAddress == 0) {
-            auto rplName               = cur->getImportRPLInformation()->getRPLName();
-            int32_t isData             = cur->getImportRPLInformation()->isData();
+            auto rplName               = cur->getImportRPLInformation().getRPLName();
+            int32_t isData             = cur->getImportRPLInformation().isData();
             OSDynLoad_Module rplHandle = nullptr;
 
             if (!usedRPls.contains(rplName)) {
@@ -68,7 +106,7 @@ bool PluginManagement::doRelocation(const std::vector<std::unique_ptr<Relocation
             //DEBUG_FUNCTION_LINE("Found export for %s %s", rplName.c_str(), functionName.c_str());
         }
 
-        if (!ElfUtils::elfLinkOne(cur->getType(), cur->getOffset(), cur->getAddend(), (uint32_t) cur->getDestination(), functionAddress, tramp_data, tramp_length, RELOC_TYPE_IMPORT, trampolineID)) {
+        if (!ElfUtils::elfLinkOne(cur->getType(), cur->getOffset(), cur->getAddend(), (uint32_t) cur->getDestination(), functionAddress, trampData, RELOC_TYPE_IMPORT, trampolineID)) {
             DEBUG_FUNCTION_LINE_ERR("elfLinkOne failed");
             return false;
         }
@@ -83,18 +121,18 @@ bool PluginManagement::doRelocation(const std::vector<std::unique_ptr<Relocation
         }
     } */
 
-    DCFlushRange(tramp_data, tramp_length * sizeof(relocation_trampoline_entry_t));
-    ICInvalidateRange(tramp_data, tramp_length * sizeof(relocation_trampoline_entry_t));
+    DCFlushRange((void *) trampData.data(), trampData.size() * sizeof(relocation_trampoline_entry_t));
+    ICInvalidateRange((void *) trampData.data(), trampData.size() * sizeof(relocation_trampoline_entry_t));
     OSMemoryBarrier();
     return true;
 }
 
 bool PluginManagement::doRelocations(const std::vector<std::unique_ptr<PluginContainer>> &plugins,
-                                     relocation_trampoline_entry_t *trampData, uint32_t tramp_size,
+                                     std::vector<relocation_trampoline_entry_t> &trampData,
                                      std::map<std::string, OSDynLoad_Module> &usedRPls) {
-    for (uint32_t i = 0; i < tramp_size; i++) {
-        if (trampData[i].status == RELOC_TRAMP_IMPORT_DONE) {
-            trampData[i].status = RELOC_TRAMP_FREE;
+    for (auto &cur : trampData) {
+        if (cur.status == RELOC_TRAMP_IMPORT_DONE) {
+            cur.status = RELOC_TRAMP_FREE;
         }
     }
 
@@ -104,12 +142,11 @@ bool PluginManagement::doRelocations(const std::vector<std::unique_ptr<PluginCon
     OSDynLoad_GetAllocator(&prevDynLoadAlloc, &prevDynLoadFree);
     OSDynLoad_SetAllocator(CustomDynLoadAlloc, CustomDynLoadFree);
 
-    for (auto &pluginContainer : plugins) {
-        DEBUG_FUNCTION_LINE_VERBOSE("Doing relocations for plugin: %s", pluginContainer->getMetaInformation()->getName().c_str());
-        if (!PluginManagement::doRelocation(pluginContainer->getPluginInformation()->getRelocationDataList(),
+    for (const auto &pluginContainer : plugins) {
+        DEBUG_FUNCTION_LINE_VERBOSE("Doing relocations for plugin: %s", pluginContainer->getMetaInformation().getName().c_str());
+        if (!PluginManagement::doRelocation(pluginContainer->getPluginInformation().getRelocationDataList(),
                                             trampData,
-                                            tramp_size,
-                                            pluginContainer->getPluginInformation()->getTrampolineId(),
+                                            pluginContainer->getPluginInformation().getTrampolineId(),
                                             usedRPls)) {
             return false;
         }
@@ -122,7 +159,7 @@ bool PluginManagement::doRelocations(const std::vector<std::unique_ptr<PluginCon
 
 bool PluginManagement::RestoreFunctionPatches(const std::vector<std::unique_ptr<PluginContainer>> &plugins) {
     for (const auto &cur : std::ranges::reverse_view(plugins)) {
-        for (const auto &curFunction : std::ranges::reverse_view(cur->getPluginInformation()->getFunctionDataList())) {
+        for (const auto &curFunction : std::ranges::reverse_view(cur->getPluginInformation().getFunctionDataList())) {
             if (!curFunction->RemovePatch()) {
                 return false;
             }
@@ -133,8 +170,9 @@ bool PluginManagement::RestoreFunctionPatches(const std::vector<std::unique_ptr<
 
 bool PluginManagement::DoFunctionPatches(const std::vector<std::unique_ptr<PluginContainer>> &plugins) {
     for (const auto &cur : plugins) {
-        for (const auto &curFunction : cur->getPluginInformation()->getFunctionDataList()) {
+        for (const auto &curFunction : cur->getPluginInformation().getFunctionDataList()) {
             if (!curFunction->AddPatch()) {
+                DEBUG_FUNCTION_LINE_ERR("Failed to add function patch for: plugin %s", cur->getMetaInformation().getName().c_str());
                 return false;
             }
         }
@@ -146,45 +184,4 @@ void PluginManagement::callInitHooks(const std::vector<std::unique_ptr<PluginCon
     CallHook(plugins, WUPS_LOADER_HOOK_INIT_STORAGE);
     CallHook(plugins, WUPS_LOADER_HOOK_INIT_PLUGIN);
     DEBUG_FUNCTION_LINE_VERBOSE("Done calling init hooks");
-}
-
-std::vector<std::unique_ptr<PluginContainer>>
-PluginManagement::loadPlugins(const std::forward_list<std::shared_ptr<PluginData>> &pluginList, relocation_trampoline_entry_t *trampoline_data, uint32_t trampoline_data_length) {
-    std::vector<std::unique_ptr<PluginContainer>> plugins;
-
-    uint32_t trampolineID = 0;
-    for (auto &pluginData : pluginList) {
-        PluginParseErrors error = PLUGIN_PARSE_ERROR_UNKNOWN;
-
-        auto metaInfo = PluginMetaInformationFactory::loadPlugin(pluginData, error);
-        if (metaInfo && error == PLUGIN_PARSE_ERROR_NONE) {
-            auto info = PluginInformationFactory::load(pluginData, trampoline_data, trampoline_data_length, trampolineID++);
-            if (!info) {
-                auto errMsg = string_format("Failed to load plugin: %s", metaInfo.value()->getName().c_str());
-                DEBUG_FUNCTION_LINE_ERR("%s", errMsg.c_str());
-                DisplayErrorNotificationMessage(errMsg, 15.0f);
-                continue;
-            }
-            auto container = make_unique_nothrow<PluginContainer>(std::move(metaInfo.value()), std::move(info.value()), pluginData);
-            if (!container) {
-                DEBUG_FUNCTION_LINE_ERR("Failed to create PluginContainer, skipping  %s", metaInfo.value()->getName().c_str());
-                continue;
-            }
-            plugins.push_back(std::move(container));
-        } else {
-            auto errMsg = string_format("Failed to load plugin: %s", pluginData->mSource.c_str());
-            if (error == PLUGIN_PARSE_ERROR_INCOMPATIBLE_VERSION) {
-                errMsg += ". Incompatible version.";
-            }
-            DEBUG_FUNCTION_LINE_ERR("%s", errMsg.c_str());
-            DisplayErrorNotificationMessage(errMsg, 15.0f);
-        }
-    }
-
-    if (!PluginManagement::DoFunctionPatches(plugins)) {
-        DEBUG_FUNCTION_LINE_ERR("Failed to patch functions");
-        OSFatal("Failed to patch functions");
-    }
-
-    return plugins;
 }

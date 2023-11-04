@@ -57,8 +57,8 @@ public:
         return name;
     }
 
-    [[nodiscard]] const std::shared_ptr<ImportRPLInformation> &getImportRPLInformation() const {
-        return rplInfo;
+    [[nodiscard]] const ImportRPLInformation &getImportRPLInformation() const {
+        return *rplInfo;
     }
 
 private:

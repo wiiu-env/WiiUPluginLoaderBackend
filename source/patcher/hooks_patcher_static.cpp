@@ -120,24 +120,20 @@ DECL_FUNCTION(uint32_t, SC17_FindClosestSymbol,
               uint32_t symbolNameBufferLength,
               char *moduleNameBuffer,
               uint32_t moduleNameBufferLength) {
-    for (auto &plugin : gLoadedPlugins) {
-        auto sectionInfoOpt = plugin->getPluginInformation()->getSectionInfo(".text");
-        if (!sectionInfoOpt) {
+    for (const auto &plugin : gLoadedPlugins) {
+        auto sectionInfo = plugin->getPluginInformation().getSectionInfo(".text");
+        if (!sectionInfo) {
             continue;
         }
-
-        auto &sectionInfo = sectionInfoOpt.value();
 
         if (!sectionInfo->isInSection(addr)) {
             continue;
         }
 
-        strncpy(moduleNameBuffer, plugin->getMetaInformation()->getName().c_str(), moduleNameBufferLength - 1);
-        auto functionSymbolDataOpt = plugin->getPluginInformation()->getNearestFunctionSymbolData(addr);
-        if (functionSymbolDataOpt) {
-            auto &functionSymbolData = functionSymbolDataOpt.value();
-
-            strncpy(symbolNameBuffer, functionSymbolData->getName().c_str(), moduleNameBufferLength);
+        strncpy(moduleNameBuffer, plugin->getMetaInformation().getName().c_str(), moduleNameBufferLength - 1);
+        auto functionSymbolData = plugin->getPluginInformation().getNearestFunctionSymbolData(addr);
+        if (functionSymbolData) {
+            strncpy(symbolNameBuffer, functionSymbolData->getName().c_str(), moduleNameBufferLength - 1);
             if (outDistance) {
                 *outDistance = addr - (uint32_t) functionSymbolData->getAddress();
             }
@@ -157,28 +153,25 @@ DECL_FUNCTION(uint32_t, SC17_FindClosestSymbol,
 }
 
 DECL_FUNCTION(uint32_t, KiGetAppSymbolName, uint32_t addr, char *buffer, int32_t bufSize) {
-    for (auto &plugin : gLoadedPlugins) {
-        auto sectionInfoOpt = plugin->getPluginInformation()->getSectionInfo(".text");
-        if (!sectionInfoOpt) {
+    for (const auto &plugin : gLoadedPlugins) {
+        auto sectionInfo = plugin->getPluginInformation().getSectionInfo(".text");
+        if (!sectionInfo) {
             continue;
         }
-
-        auto &sectionInfo = sectionInfoOpt.value();
 
         if (!sectionInfo->isInSection(addr)) {
             continue;
         }
 
-        auto pluginNameLen        = strlen(plugin->getMetaInformation()->getName().c_str());
+        auto pluginNameLen        = strlen(plugin->getMetaInformation().getName().c_str());
         int32_t spaceLeftInBuffer = (int32_t) bufSize - (int32_t) pluginNameLen - 1;
         if (spaceLeftInBuffer < 0) {
             spaceLeftInBuffer = 0;
         }
-        strncpy(buffer, plugin->getMetaInformation()->getName().c_str(), bufSize - 1);
+        strncpy(buffer, plugin->getMetaInformation().getName().c_str(), bufSize - 1);
 
-        auto functionSymbolDataOpt = plugin->getPluginInformation()->getNearestFunctionSymbolData(addr);
-        if (functionSymbolDataOpt) {
-            auto &functionSymbolData  = functionSymbolDataOpt.value();
+        auto functionSymbolData = plugin->getPluginInformation().getNearestFunctionSymbolData(addr);
+        if (functionSymbolData) {
             buffer[pluginNameLen]     = '|';
             buffer[pluginNameLen + 1] = '\0';
             strncpy(buffer + pluginNameLen + 1, functionSymbolData->getName().c_str(), spaceLeftInBuffer - 1);

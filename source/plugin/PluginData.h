@@ -21,17 +21,31 @@
 #include <malloc.h>
 #include <memory>
 #include <optional>
+#include <span>
+#include <utility>
 #include <vector>
 
 class PluginData {
 public:
-    explicit PluginData(const std::vector<uint8_t> &buffer, std::string source);
+    explicit PluginData(std::vector<uint8_t> &&buffer, std::string_view source) : mBuffer(std::move(buffer)), mSource(source) {
+    }
 
-    uint32_t getHandle() {
+    explicit PluginData(std::span<uint8_t> buffer, std::string_view source) : mBuffer(buffer.begin(), buffer.end()), mSource(source) {
+    }
+
+    [[nodiscard]] uint32_t getHandle() const {
         return (uint32_t) this;
     }
 
-    size_t length = 0;
-    std::unique_ptr<uint8_t[]> buffer;
+    [[nodiscard]] std::span<uint8_t const> getBuffer() const {
+        return mBuffer;
+    }
+
+    [[nodiscard]] const std::string &getSource() const {
+        return mSource;
+    }
+
+private:
+    std::vector<uint8_t> mBuffer;
     std::string mSource;
 };

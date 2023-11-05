@@ -78,11 +78,11 @@ public:
         return mSectionInfoList;
     }
 
-    [[nodiscard]] SectionInfo *getSectionInfo(const std::string &sectionName) const {
+    [[nodiscard]] std::optional<SectionInfo> getSectionInfo(const std::string &sectionName) const {
         if (getSectionInfoList().contains(sectionName)) {
-            return mSectionInfoList.at(sectionName).get();
+            return *mSectionInfoList.at(sectionName);
         }
-        return nullptr;
+        return std::nullopt;
     }
 
     void setTrampolineId(uint8_t trampolineId) {
@@ -93,7 +93,7 @@ public:
         return mTrampolineId;
     }
 
-    [[nodiscard]] FunctionSymbolData *getNearestFunctionSymbolData(uint32_t address) const {
+    [[nodiscard]] std::optional<FunctionSymbolData> getNearestFunctionSymbolData(uint32_t address) const {
         FunctionSymbolData *result = nullptr;
 
         bool foundHit = false;
@@ -106,8 +106,11 @@ public:
                 foundHit = true;
             }
         }
+        if (!foundHit) {
+            return std::nullopt;
+        }
 
-        return result;
+        return *result;
     }
 
     [[nodiscard]] const HeapMemoryFixedSize &getTextMemory() const {

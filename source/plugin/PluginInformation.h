@@ -93,7 +93,7 @@ public:
         return mTrampolineId;
     }
 
-    [[nodiscard]] std::optional<FunctionSymbolData> getNearestFunctionSymbolData(uint32_t address) const {
+    [[nodiscard]] FunctionSymbolData *getNearestFunctionSymbolData(uint32_t address) const {
         FunctionSymbolData *result = nullptr;
 
         bool foundHit = false;
@@ -107,10 +107,10 @@ public:
             }
         }
         if (!foundHit) {
-            return std::nullopt;
+            return nullptr;
         }
 
-        return *result;
+        return result;
     }
 
     [[nodiscard]] const HeapMemoryFixedSize &getTextMemory() const {

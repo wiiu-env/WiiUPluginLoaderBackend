@@ -17,11 +17,13 @@
 
 #pragma once
 
+#include "PluginConfigData.h"
 #include "PluginData.h"
 #include "PluginInformation.h"
 #include "PluginMetaInformation.h"
 #include <memory>
 #include <utility>
+#include <wups/config_api.h>
 
 class PluginContainer {
 public:
@@ -43,12 +45,21 @@ public:
         return mPluginData;
     }
 
-    uint32_t getHandle() {
+    uint32_t getHandle() const {
         return (uint32_t) this;
+    }
+
+    [[nodiscard]] const std::optional<PluginConfigData> &getConfigData() const {
+        return mPluginConfigData;
+    }
+
+    void setConfigData(const PluginConfigData &pluginConfigData) {
+        mPluginConfigData = pluginConfigData;
     }
 
 private:
     const std::unique_ptr<PluginMetaInformation> mMetaInformation;
     const std::unique_ptr<PluginInformation> mPluginInformation;
     const std::shared_ptr<PluginData> mPluginData;
+    std::optional<PluginConfigData> mPluginConfigData;
 };

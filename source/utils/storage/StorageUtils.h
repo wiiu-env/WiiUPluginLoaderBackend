@@ -3,8 +3,15 @@
 #include <wups/storage.h>
 
 namespace StorageUtils::API {
-    WUPSStorageError OpenStorage(const char *plugin_id, wups_storage_root_item *item);
-    WUPSStorageError CloseStorage(const char *plugin_id);
+    namespace Internal {
+        WUPSStorageError OpenStorage(std::string_view plugin_id, wups_storage_root_item &outItem);
+        WUPSStorageError CloseStorage(wups_storage_root_item item);
+    } // namespace Internal
+
+    WUPSStorageError SaveStorage(wups_storage_root_item root, bool force);
+    WUPSStorageError ForceReloadStorage(wups_storage_root_item root);
+    WUPSStorageError WipeStorage(wups_storage_root_item root);
+
     WUPSStorageError DeleteItem(wups_storage_root_item root, wups_storage_item parent, const char *key);
     WUPSStorageError CreateSubItem(wups_storage_root_item root, wups_storage_item parent, const char *key, wups_storage_item *outItem);
     WUPSStorageError GetSubItem(wups_storage_root_item root, wups_storage_item parent, const char *key, wups_storage_item *outItem);

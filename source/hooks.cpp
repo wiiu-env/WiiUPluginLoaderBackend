@@ -89,21 +89,22 @@ void CallHook(const PluginContainer &plugin, wups_loader_hook_type_t hook_type) 
                         }
                         wups_loader_init_storage_args_t_ args{};
                         args.version                      = WUPS_STORAGE_CUR_API_VERSION;
-                        args.open_storage_ptr             = &StorageUtils::API::OpenStorage;
-                        args.close_storage_ptr            = &StorageUtils::API::CloseStorage;
+                        args.root_item                    = plugin.getStorageRootItem();
+                        args.save_function_ptr            = &StorageUtils::API::SaveStorage;
+                        args.force_reload_function_ptr    = &StorageUtils::API::ForceReloadStorage;
+                        args.wipe_storage_function_ptr    = &StorageUtils::API::WipeStorage;
                         args.delete_item_function_ptr     = &StorageUtils::API::DeleteItem;
                         args.create_sub_item_function_ptr = &StorageUtils::API::CreateSubItem;
                         args.get_sub_item_function_ptr    = &StorageUtils::API::GetSubItem;
                         args.store_item_function_ptr      = &StorageUtils::API::StoreItem;
                         args.get_item_function_ptr        = &StorageUtils::API::GetItem;
                         args.get_item_size_function_ptr   = &StorageUtils::API::GetItemSize;
-                        args.plugin_id                    = plugin.getMetaInformation().getStorageId().c_str();
                         // clang-format off
                         auto res = ((WUPSStorageError(*)(wups_loader_init_storage_args_t_))((uint32_t *) func_ptr))(args);
                         // clang-format on
                         if (res != WUPS_STORAGE_ERROR_SUCCESS) {
                             // TODO: More error handling? Notification?
-                            DEBUG_FUNCTION_LINE_ERR("WUPS_LOADER_HOOK_INIT_STORAGE failed for plugin %s: %s", plugin.getMetaInformation().getName().c_str(), WUPS_GetStorageStatusStr(res));
+                            DEBUG_FUNCTION_LINE_ERR("WUPS_LOADER_HOOK_INIT_STORAGE failed for plugin %s: %s", plugin.getMetaInformation().getName().c_str(), WUPSStorageAPI_GetStatusStr(res));
                         }
                         break;
                     }

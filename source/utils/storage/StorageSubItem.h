@@ -17,10 +17,10 @@ public:
         STORAGE_SUB_ITEM_KEY_ALREADY_IN_USE  = 2,
     };
 
-    explicit StorageSubItem(const std::string &key) : StorageItem(key) {
+    explicit StorageSubItem(std::string_view key) : StorageItem(key) {
     }
 
-    StorageSubItem *getSubItem(wups_storage_item item) const;
+    StorageSubItem *getSubItem(wups_storage_item item);
 
     const StorageSubItem *getSubItem(const char *key) const;
 
@@ -32,15 +32,15 @@ public:
 
     StorageItem *getItem(const char *name);
 
-    [[nodiscard]] const std::forward_list<std::unique_ptr<StorageSubItem>> &getSubItems() const {
+    [[nodiscard]] const std::forward_list<StorageSubItem> &getSubItems() const {
         return mSubCategories;
     }
 
-    [[nodiscard]] const std::map<std::string, std::unique_ptr<StorageItem>> &getItems() const {
+    [[nodiscard]] const std::map<std::string, StorageItem> &getItems() const {
         return mItems;
     }
 
-private:
-    std::forward_list<std::unique_ptr<StorageSubItem>> mSubCategories;
-    std::map<std::string, std::unique_ptr<StorageItem>> mItems;
+protected:
+    std::forward_list<StorageSubItem> mSubCategories;
+    std::map<std::string, StorageItem> mItems;
 };

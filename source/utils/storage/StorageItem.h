@@ -19,7 +19,7 @@ enum class StorageItemType { None,
 
 class StorageItem {
 public:
-    explicit StorageItem(std::string key) : mData(std::monostate{}), mType(StorageItemType::None), mKey(std::move(key)) {
+    explicit StorageItem(std::string_view key) : mData(std::monostate{}), mType(StorageItemType::None), mKey(key) {
     }
 
     [[nodiscard]] uint32_t getHandle() const {
@@ -63,7 +63,7 @@ public:
 
     bool getValue(std::string &result) const;
 
-    bool getValue(std::vector<uint8_t> &result);
+    bool getValue(std::vector<uint8_t> &result) const;
 
     [[nodiscard]] StorageItemType getType() const {
         return mType;

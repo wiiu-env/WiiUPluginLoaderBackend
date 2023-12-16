@@ -1,16 +1,16 @@
 #include "StorageSubItem.h"
 
-StorageSubItem *StorageSubItem::getSubItem(wups_storage_item item) const {
+StorageSubItem *StorageSubItem::getSubItem(wups_storage_item item) {
     // Try to find the sub-item based on item handle.
-    for (const auto &cur : mSubCategories) {
-        if (cur->getHandle() == (uint32_t) item) {
-            return cur.get();
+    for (auto &cur : mSubCategories) {
+        if (cur.getHandle() == (uint32_t) item) {
+            return &cur;
         }
     }
 
     // If not found in current category, recursively search in sub-categories.
-    for (const auto &cur : mSubCategories) {
-        auto res = cur->getSubItem(item);
+    for (auto &cur : mSubCategories) {
+        auto res = cur.getSubItem(item);
         if (res) {
             return res;
         }
@@ -22,8 +22,8 @@ StorageSubItem *StorageSubItem::getSubItem(wups_storage_item item) const {
 const StorageSubItem *StorageSubItem::getSubItem(const char *key) const {
     // Try to find the sub-item based on key.
     for (const auto &cur : mSubCategories) {
-        if (cur->getKey() == key) {
-            return cur.get();
+        if (cur.getKey() == key) {
+            return &cur;
         }
     }
 
@@ -31,7 +31,7 @@ const StorageSubItem *StorageSubItem::getSubItem(const char *key) const {
 }
 
 bool StorageSubItem::deleteItem(const char *key) {
-    if (remove_first_if(mSubCategories, [key](auto &cur) { return cur->getKey() == key; })) {
+    if (remove_first_if(mSubCategories, [key](auto &cur) { return cur.getKey() == key; })) {
         return true;
     }
 
@@ -45,20 +45,17 @@ bool StorageSubItem::deleteItem(const char *key) {
 
 StorageItem *StorageSubItem::createItem(const char *key, StorageSubItem::StorageSubItemError &error) {
     for (const auto &cur : mSubCategories) {
-        if (cur->getKey() == key) {
+        if (cur.getKey() == key) {
             error = STORAGE_SUB_ITEM_KEY_ALREADY_IN_USE;
             return nullptr;
         }
     }
 
-    auto res = make_unique_nothrow<StorageItem>(key);
-    if (!res) {
-        error = STORAGE_SUB_ITEM_ERROR_MALLOC_FAILED;
-        return nullptr;
+    auto result = mItems.insert({key, StorageItem(key)});
+    if (result.second) {
+        return &result.first->second;
     }
-    auto *result = res.get();
-    mItems[key]  = std::move(res);
-    return result;
+    return nullptr;
 }
 
 StorageSubItem *StorageSubItem::createSubItem(const char *key, StorageSubItem::StorageSubItemError &error) {
@@ -68,26 +65,20 @@ StorageSubItem *StorageSubItem::createSubItem(const char *key, StorageSubItem::S
         return nullptr;
     }
     for (const auto &cur : mSubCategories) {
-        if (cur->getKey() == key) {
+        if (cur.getKey() == key) {
             error = STORAGE_SUB_ITEM_KEY_ALREADY_IN_USE;
             return nullptr;
         }
     }
 
-    auto res = make_unique_nothrow<StorageSubItem>(key);
-    if (!res) {
-        error = STORAGE_SUB_ITEM_ERROR_MALLOC_FAILED;
-        return nullptr;
-    }
-    auto *result = res.get();
-    mSubCategories.push_front(std::move(res));
-    return result;
+    mSubCategories.emplace_front(key);
+    return &mSubCategories.front();
 }
 
 StorageItem *StorageSubItem::getItem(const char *name) {
     auto resItr = mItems.find(name);
     if (resItr != mItems.end()) {
-        return resItr->second.get();
+        return &resItr->second;
     }
     return nullptr;
 }

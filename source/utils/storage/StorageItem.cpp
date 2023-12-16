@@ -83,7 +83,7 @@ bool StorageItem::getValue(int32_t &result) const {
     return false;
 }
 
-bool StorageItem::getValue(std::vector<uint8_t> &result) {
+bool StorageItem::getValue(std::vector<uint8_t> &result) const {
     if (mType == StorageItemType::Binary) {
         result = std::get<std::vector<uint8_t>>(mData);
         return true;
@@ -174,7 +174,7 @@ bool StorageItem::attemptBinaryConversion() {
                 }
                 free(dec);
             } else {
-                DEBUG_FUNCTION_LINE_ERR("Malloc failed for string->binary parsing");
+                DEBUG_FUNCTION_LINE_WARN("Malloc failed for string->binary parsing");
                 return false;
             }
         }

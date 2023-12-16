@@ -1,6 +1,6 @@
 #pragma once
 #include "plugin/PluginContainer.h"
-#include "utils/ConfigUtils.h"
+#include "utils/config/ConfigUtils.h"
 #include "version.h"
 #include <coreinit/dynload.h>
 #include <forward_list>

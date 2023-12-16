@@ -8,6 +8,7 @@
 #include <memory>
 #include <mutex>
 #include <set>
+#include <vector>
 
 #ifdef __cplusplus
 extern "C" {
@@ -92,9 +93,41 @@ remove_first_if(Container &container, Predicate pred) {
 }
 
 template<typename Container, typename Predicate>
+typename std::enable_if<std::is_same<Container, std::vector<typename Container::value_type>>::value, bool>::type
+remove_first_if(Container &container, Predicate pred) {
+    auto it = container.begin();
+    while (it != container.end()) {
+        if (pred(*it)) {
+            container.erase(it);
+            return true;
+        }
+        ++it;
+    }
+
+    return false;
+}
+
+template<typename Container, typename Predicate>
 bool remove_locked_first_if(std::mutex &mutex, Container &container, Predicate pred) {
     std::lock_guard<std::mutex> lock(mutex);
     return remove_first_if(container, pred);
+}
+
+template<typename T, typename Predicate>
+T pop_locked_first_if(std::mutex &mutex, std::vector<T> &container, Predicate pred) {
+    std::lock_guard<std::mutex> lock(mutex);
+    T result;
+    auto it = container.begin();
+    while (it != container.end()) {
+        if (pred(*it)) {
+            result = std::move(*it);
+            container.erase(it);
+            return result;
+        }
+        ++it;
+    }
+
+    return result;
 }
 
 std::string getPluginPath();

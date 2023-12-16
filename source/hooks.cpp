@@ -20,8 +20,8 @@ static const char **hook_names = (const char *[]){
         "WUPS_LOADER_HOOK_INIT_WRAPPER",
         "WUPS_LOADER_HOOK_FINI_WRAPPER",
 
-        "WUPS_LOADER_HOOK_GET_CONFIG",
-        "WUPS_LOADER_HOOK_CONFIG_CLOSED",
+        "WUPS_LOADER_HOOK_GET_CONFIG_DEPRECATED",
+        "WUPS_LOADER_HOOK_CONFIG_CLOSED_DEPRECATED",
 
         "WUPS_LOADER_HOOK_INIT_STORAGE_DEPRECATED",
 
@@ -32,7 +32,8 @@ static const char **hook_names = (const char *[]){
         "WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND",
         "WUPS_LOADER_HOOK_APPLICATION_REQUESTS_EXIT",
         "WUPS_LOADER_HOOK_APPLICATION_ENDS",
-        "WUPS_LOADER_HOOK_INIT_STORAGE"};
+        "WUPS_LOADER_HOOK_INIT_STORAGE",
+        "WUPS_LOADER_HOOK_INIT_CONFIG"};
 
 void CallHook(const std::vector<std::unique_ptr<PluginContainer>> &plugins, wups_loader_hook_type_t hook_type) {
     DEBUG_FUNCTION_LINE_VERBOSE("Calling hook of type %s [%d]", hook_names[hook_type], hook_type);
@@ -60,8 +61,8 @@ void CallHook(const PluginContainer &plugin, wups_loader_hook_type_t hook_type) 
                     case WUPS_LOADER_HOOK_FINI_WUT_SOCKETS:
                     case WUPS_LOADER_HOOK_INIT_WRAPPER:
                     case WUPS_LOADER_HOOK_FINI_WRAPPER:
-                    case WUPS_LOADER_HOOK_GET_CONFIG:
-                    case WUPS_LOADER_HOOK_CONFIG_CLOSED:
+                    case WUPS_LOADER_HOOK_GET_CONFIG_DEPRECATED:
+                    case WUPS_LOADER_HOOK_CONFIG_CLOSED_DEPRECATED:
                     case WUPS_LOADER_HOOK_INIT_PLUGIN:
                     case WUPS_LOADER_HOOK_DEINIT_PLUGIN:
                     case WUPS_LOADER_HOOK_APPLICATION_STARTS:
@@ -75,7 +76,7 @@ void CallHook(const PluginContainer &plugin, wups_loader_hook_type_t hook_type) 
                         break;
                     case WUPS_LOADER_HOOK_INIT_STORAGE:
                     case WUPS_LOADER_HOOK_INIT_STORAGE_DEPRECATED: {
-                        if (plugin.getMetaInformation().getWUPSVersion() < WUPSVersion(0, 7, 2)) {
+                        if (plugin.getMetaInformation().getWUPSVersion() <= WUPSVersion(0, 7, 1)) {
                             WUPSStorageDeprecated::wups_loader_init_storage_args_t_ args{};
                             args.open_storage_ptr  = &WUPSStorageDeprecated::StorageUtils::OpenStorage;
                             args.close_storage_ptr = &WUPSStorageDeprecated::StorageUtils::CloseStorage;
@@ -100,9 +101,19 @@ void CallHook(const PluginContainer &plugin, wups_loader_hook_type_t hook_type) 
                         // clang-format off
                         auto res = ((WUPSStorageError(*)(wups_loader_init_storage_args_t_))((uint32_t *) func_ptr))(args);
                         // clang-format on
-                        if (res == WUPS_STORAGE_ERROR_INVALID_VERSION) {
+                        if (res != WUPS_STORAGE_ERROR_SUCCESS) {
                             // TODO: More error handling? Notification?
-                            DEBUG_FUNCTION_LINE_ERR("WUPS_LOADER_HOOK_INIT_STORAGE failed for plugin %s: WUPS_STORAGE_ERROR_INVALID_VERSION", plugin.getMetaInformation().getName().c_str());
+                            DEBUG_FUNCTION_LINE_ERR("WUPS_LOADER_HOOK_INIT_STORAGE failed for plugin %s: %s", plugin.getMetaInformation().getName().c_str(), WUPS_GetStorageStatusStr(res));
+                        }
+                        break;
+                    }
+                    case WUPS_LOADER_HOOK_INIT_CONFIG: {
+                        wups_loader_init_config_args_t args{.arg_version = 1, .plugin_identifier = plugin.getHandle()};
+                        auto res = ((WUPSConfigAPIStatus(*)(wups_loader_init_config_args_t))((uint32_t *) func_ptr))(args);
+                        // clang-format on
+                        if (res != WUPSCONFIG_API_RESULT_SUCCESS) {
+                            // TODO: More error handling? Notification?
+                            DEBUG_FUNCTION_LINE_ERR("WUPS_LOADER_HOOK_INIT_CONFIG failed for plugin %s: %s", plugin.getMetaInformation().getName().c_str(), WUPSConfigAPI_GetStatusStr(res));
                         }
                         break;
                     }

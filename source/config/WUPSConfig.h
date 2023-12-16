@@ -18,73 +18,14 @@
 #pragma once
 
 #include "WUPSConfigCategory.h"
-#include "utils/logger.h"
 #include <optional>
 #include <string>
 #include <vector>
-#include <wups/config.h>
 
-class WUPSConfig {
-public:
-    explicit WUPSConfig(std::string_view name) {
-        this->name = name;
-    }
-
-    ~WUPSConfig() {
-        for (const auto &element : categories) {
-            delete element;
+namespace WUPSConfigAPIBackend {
+    class WUPSConfig : public WUPSConfigCategory {
+    public:
+        explicit WUPSConfig(std::string_view name) : WUPSConfigCategory(name) {
         }
-    }
-
-    /**
-        \return Returns the name of this WUPSConfig
-    **/
-    [[nodiscard]] const std::string &getName() const {
-        return this->name;
-    }
-
-    /**
-        \brief  Creates a new WUPSCategory add its to this WUPSConfig.
-                The category will be added to the end of the list.
-                This class holds responsibility for deleting the created instance.
-
-        \param categoryName: The name of the category that will be created.
-
-        \return On success, the created and inserted category will be returned.
-    **/
-    std::optional<WUPSConfigCategory *> addCategory(std::string_view categoryName) {
-        auto curCat = new (std::nothrow) WUPSConfigCategory(categoryName);
-        if (curCat == nullptr) {
-            return {};
-        }
-        categories.push_back(curCat);
-        return curCat;
-    }
-
-    /**
-        \brief  Adds a given WUPSConfigCategory to this WUPSConfig.
-                The category will be added to the end of the list.
-                This class holds responsibility for deleting the created instance.
-
-        \param category: The category that will be added to this config.
-
-        \return On success, the inserted category will be returned.
-                On error nullptr will be returned. In this case the caller still has the responsibility
-                for deleting the WUPSConfigCategory instance.
-    **/
-    WUPSConfigCategory *addCategory(WUPSConfigCategory *category) {
-        categories.push_back(category);
-        return category;
-    }
-
-    /**
-        \return Returns a vector with all categories.
-    **/
-    const std::vector<WUPSConfigCategory *> &getCategories() {
-        return this->categories;
-    }
-
-private:
-    std::string name;
-    std::vector<WUPSConfigCategory *> categories = {};
-};
+    };
+} // namespace WUPSConfigAPIBackend

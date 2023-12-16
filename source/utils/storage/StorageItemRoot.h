@@ -12,11 +12,16 @@
 
 class StorageItemRoot : public StorageSubItem {
 public:
-    explicit StorageItemRoot(const std::string &plugin_name) : StorageSubItem(plugin_name), mPluginName(plugin_name) {
+    explicit StorageItemRoot(std::string_view plugin_name) : StorageSubItem(plugin_name), mPluginName(plugin_name) {
     }
 
     [[nodiscard]] const std::string &getPluginId() const {
         return mPluginName;
+    }
+
+    void wipe() {
+        mSubCategories.clear();
+        mItems.clear();
     }
 
 private:

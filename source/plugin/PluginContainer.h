@@ -21,6 +21,7 @@
 #include "PluginData.h"
 #include "PluginInformation.h"
 #include "PluginMetaInformation.h"
+#include "utils/storage/StorageUtils.h"
 #include <memory>
 #include <utility>
 #include <wups/config_api.h>
@@ -45,7 +46,7 @@ public:
         return mPluginData;
     }
 
-    uint32_t getHandle() const {
+    [[nodiscard]] uint32_t getHandle() const {
         return (uint32_t) this;
     }
 
@@ -57,9 +58,40 @@ public:
         mPluginConfigData = pluginConfigData;
     }
 
+    WUPSStorageError OpenStorage() {
+        if (getMetaInformation().getWUPSVersion() < WUPSVersion(0, 8, 0)) {
+            return WUPS_STORAGE_ERROR_SUCCESS;
+        }
+        auto &storageId = getMetaInformation().getStorageId();
+        if (storageId.empty()) {
+            return WUPS_STORAGE_ERROR_SUCCESS;
+        }
+        auto res = StorageUtils::API::Internal::OpenStorage(storageId, storageRootItem);
+        if (res != WUPS_STORAGE_ERROR_SUCCESS) {
+            storageRootItem = nullptr;
+        }
+        return res;
+    }
+
+    WUPSStorageError CloseStorage() {
+        if (getMetaInformation().getWUPSVersion() < WUPSVersion(0, 8, 0)) {
+            return WUPS_STORAGE_ERROR_SUCCESS;
+        }
+        if (storageRootItem == nullptr) {
+            return WUPS_STORAGE_ERROR_SUCCESS;
+        }
+        return StorageUtils::API::Internal::CloseStorage(storageRootItem);
+    }
+
+    [[nodiscard]] wups_storage_root_item getStorageRootItem() const {
+        return storageRootItem;
+    }
+
 private:
     const std::unique_ptr<PluginMetaInformation> mMetaInformation;
     const std::unique_ptr<PluginInformation> mPluginInformation;
     const std::shared_ptr<PluginData> mPluginData;
+
     std::optional<PluginConfigData> mPluginConfigData;
+    wups_storage_root_item storageRootItem = nullptr;
 };

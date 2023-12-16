@@ -43,7 +43,6 @@ namespace StorageUtils {
                         }
                     }
                 } else {
-
                     auto res = item.createItem(it.key().c_str(), subItemError);
 
                     if (!res) {
@@ -73,7 +72,7 @@ namespace StorageUtils {
             return true;
         }
 
-        static std::unique_ptr<StorageItemRoot> deserializeFromJson(const nlohmann::json &json, const std::string &key) {
+        static std::unique_ptr<StorageItemRoot> deserializeFromJson(const nlohmann::json &json, std::string_view key) {
             if (json.empty() || !json.is_object()) {
                 return nullptr;
             }
@@ -90,49 +89,49 @@ namespace StorageUtils {
             nlohmann::json json = nlohmann::json::object();
 
             for (const auto &curSubItem : baseItem.getSubItems()) {
-                json[curSubItem->getKey()] = serializeToJson(*curSubItem);
+                json[curSubItem.getKey()] = serializeToJson(curSubItem);
             }
 
             for (const auto &[key, value] : baseItem.getItems()) {
-                switch ((StorageItemType) value->getType()) {
+                switch ((StorageItemType) value.getType()) {
                     case StorageItemType::String: {
                         std::string res;
-                        if (value->getValue(res)) {
+                        if (value.getValue(res)) {
                             json[key] = res;
                         }
                         break;
                     }
                     case StorageItemType::Boolean: {
                         bool res;
-                        if (value->getValue(res)) {
+                        if (value.getValue(res)) {
                             json[key] = res;
                         }
                         break;
                     }
                     case StorageItemType::S64: {
                         int64_t res;
-                        if (value->getValue(res)) {
+                        if (value.getValue(res)) {
                             json[key] = res;
                         }
                         break;
                     }
                     case StorageItemType::U64: {
                         uint64_t res;
-                        if (value->getValue(res)) {
+                        if (value.getValue(res)) {
                             json[key] = res;
                         }
                         break;
                     }
                     case StorageItemType::Double: {
                         double res;
-                        if (value->getValue(res)) {
+                        if (value.getValue(res)) {
                             json[key] = res;
                         }
                         break;
                     }
                     case StorageItemType::Binary: {
                         std::vector<uint8_t> tmp;
-                        if (value->getValue(tmp)) {
+                        if (value.getValue(tmp)) {
                             auto *enc = b64_encode(tmp.data(), tmp.size());
                             if (enc) {
                                 json[key] = enc;
@@ -152,7 +151,7 @@ namespace StorageUtils {
             return json;
         }
 
-        static StorageSubItem *getRootItem(wups_storage_root_item root) {
+        static StorageItemRoot *getRootItem(wups_storage_root_item root) {
             for (const auto &cur : gStorage) {
                 if (cur->getHandle() == (uint32_t) root) {
                     return cur.get();
@@ -173,32 +172,92 @@ namespace StorageUtils {
             return nullptr;
         }
 
+        WUPSStorageError LoadFromFile(std::string_view plugin_id, nlohmann::json &outJson) {
+            std::string filePath = getPluginPath() + "/config/" + plugin_id.data() + ".json";
+            CFile file(filePath, CFile::ReadOnly);
+            if (!file.isOpen() || file.size() == 0) {
+                return WUPS_STORAGE_ERROR_IO_ERROR;
+            }
+            auto *json_data = (uint8_t *) memalign(0x40, ROUNDUP(file.size() + 1, 0x40));
+            if (!json_data) {
+                return WUPS_STORAGE_ERROR_MALLOC_FAILED;
+            }
+            WUPSStorageError result = WUPS_STORAGE_ERROR_SUCCESS;
+            uint64_t readRes        = file.read(json_data, file.size());
+            if (readRes == file.size()) {
+                json_data[file.size()] = '\0';
+                outJson                = nlohmann::json::parse(json_data, nullptr, false);
+            } else {
+                result = WUPS_STORAGE_ERROR_IO_ERROR;
+            }
+            file.close();
+            free(json_data);
+            return result;
+        }
 
-        static WUPSStorageError WriteStorageToSD(const char *plugin_id) {
+        WUPSStorageError LoadFromFile(std::string_view plugin_id, StorageItemRoot &rootItem) {
+            nlohmann::json j;
+            WUPSStorageError err;
+
+            if ((err = LoadFromFile(plugin_id, j)) != WUPS_STORAGE_ERROR_SUCCESS) {
+                return err;
+            }
+
+            std::unique_ptr<StorageItemRoot> storage;
+            if (j.empty() || !j.is_object() || !j.contains("storageitems") || j["storageitems"].empty() || !j["storageitems"].is_object()) {
+                storage = make_unique_nothrow<StorageItemRoot>(plugin_id);
+            } else {
+                storage = StorageUtils::Helper::deserializeFromJson(j["storageitems"], plugin_id);
+                if (!storage) {
+                    storage = make_unique_nothrow<StorageItemRoot>(plugin_id);
+                }
+            }
+            rootItem = *storage;
+            return WUPS_STORAGE_ERROR_SUCCESS;
+        }
+
+        static WUPSStorageError WriteStorageToSD(wups_storage_root_item root, bool forceSave) {
             std::shared_ptr<StorageItemRoot> rootItem;
             for (const auto &cur : gStorage) {
-                if (cur->getPluginId() == plugin_id) {
+                if (cur->getHandle() == (uint32_t) root) {
                     rootItem = cur;
                     break;
                 }
             }
             if (!rootItem) {
-                return WUPS_STORAGE_ERROR_NOT_FOUND;
+                return WUPS_STORAGE_ERROR_INTERNAL_NOT_INITIALIZED;
             }
 
             std::string folderPath = getPluginPath() + "/config/";
             std::string filePath   = folderPath + rootItem->getPluginId() + ".json";
 
-            FSUtils::CreateSubfolder(folderPath);
+            nlohmann::json j;
+            j["storageitems"] = serializeToJson(*rootItem);
+
+            if (!forceSave) {
+                nlohmann::json jsonFromFile;
+                if (Helper::LoadFromFile(rootItem->getPluginId(), jsonFromFile) == WUPS_STORAGE_ERROR_SUCCESS) {
+                    if (j == jsonFromFile) {
+                        DEBUG_FUNCTION_LINE_VERBOSE("Storage has no changes, avoid saving \"%s.json\"", rootItem->getPluginId().c_str());
+                        return WUPS_STORAGE_ERROR_SUCCESS;
+                    }
+                } else {
+                    DEBUG_FUNCTION_LINE_WARN("Failed to load \"%s.json\"", rootItem->getPluginId().c_str());
+                }
+                DEBUG_FUNCTION_LINE_VERBOSE("Saving \"%s.json\"...", rootItem->getPluginId().c_str());
+            } else {
+                DEBUG_FUNCTION_LINE_VERBOSE("Force saving \"%s.json\"...", rootItem->getPluginId().c_str());
+            }
+
+            if (!FSUtils::CreateSubfolder(folderPath)) {
+                return WUPS_STORAGE_ERROR_IO_ERROR;
+            }
 
             CFile file(filePath, CFile::WriteOnly);
             if (!file.isOpen()) {
                 DEBUG_FUNCTION_LINE_ERR("Cannot create file %s", filePath.c_str());
-                return WUPS_STORAGE_ERROR_SUCCESS;
+                return WUPS_STORAGE_ERROR_IO_ERROR;
             }
-
-            nlohmann::json j;
-            j["storageitems"] = serializeToJson(*rootItem);
 
             std::string jsonString = j.dump(4, ' ', false, nlohmann::json::error_handler_t::ignore);
             auto writeResult       = file.write((const uint8_t *) jsonString.c_str(), jsonString.size());
@@ -206,7 +265,7 @@ namespace StorageUtils {
             file.close();
 
             if (writeResult != (int32_t) jsonString.size()) {
-                return WUPS_STORAGE_ERROR_SUCCESS;
+                return WUPS_STORAGE_ERROR_IO_ERROR;
             }
             return WUPS_STORAGE_ERROR_SUCCESS;
         }
@@ -252,14 +311,13 @@ namespace StorageUtils {
                 if (item->getValue(result)) {
                     return WUPS_STORAGE_ERROR_SUCCESS;
                 }
-                DEBUG_FUNCTION_LINE_ERR("GetValue failed? %s", key);
                 return WUPS_STORAGE_ERROR_UNEXPECTED_DATA_TYPE;
             }
             return WUPS_STORAGE_ERROR_NOT_FOUND;
         }
 
         template<typename T>
-        WUPSStorageError GetItemGeneric(wups_storage_root_item root, wups_storage_item parent, const char *key, T *result) {
+        WUPSStorageError GetItemGeneric(wups_storage_root_item root, wups_storage_item parent, const char *key, T *result, uint32_t *outSize) {
             if (!result) {
                 return WUPS_STORAGE_ERROR_INVALID_ARGS;
             }
@@ -267,6 +325,9 @@ namespace StorageUtils {
             auto res = GetItemEx<T>(root, parent, key, tmp);
             if (res == WUPS_STORAGE_ERROR_SUCCESS) {
                 *result = tmp;
+                if (outSize) {
+                    *outSize = sizeof(T);
+                }
             }
             return res;
         }
@@ -330,78 +391,72 @@ namespace StorageUtils {
     } // namespace Helper
 
     namespace API {
-        WUPSStorageError OpenStorage(const char *plugin_id, wups_storage_root_item *item) {
+        namespace Internal {
+            WUPSStorageError OpenStorage(std::string_view plugin_id, wups_storage_root_item &outItem) {
+                std::unique_ptr<StorageItemRoot> root = make_unique_nothrow<StorageItemRoot>(plugin_id);
+                if (!root) {
+                    return WUPS_STORAGE_ERROR_MALLOC_FAILED;
+                }
+
+                WUPSStorageError err;
+                if ((err = Helper::LoadFromFile(plugin_id, *root)) != WUPS_STORAGE_ERROR_SUCCESS) {
+                    return err;
+                }
+
+                outItem = (wups_storage_root_item) root->getHandle();
+                {
+                    std::lock_guard lock(gStorageMutex);
+                    gStorage.push_front(std::move(root));
+                }
+
+                return WUPS_STORAGE_ERROR_SUCCESS;
+            }
+
+            WUPSStorageError CloseStorage(wups_storage_root_item root) {
+                std::lock_guard lock(gStorageMutex);
+
+                auto res = StorageUtils::Helper::WriteStorageToSD(root, false);
+                // TODO: handle write error?
+
+                if (!remove_locked_first_if(gStorageMutex, gStorage, [root](auto &cur) { return cur->getHandle() == (uint32_t) root; })) {
+                    DEBUG_FUNCTION_LINE_WARN("Failed to close storage: Not opened (\"%08X\")", root);
+                    return WUPS_STORAGE_ERROR_NOT_FOUND;
+                }
+                return res;
+            }
+        } // namespace Internal
+
+        WUPSStorageError SaveStorage(wups_storage_root_item root, bool force) {
             std::lock_guard lock(gStorageMutex);
-            // Check if we already have a storage with the given plugin id
-            for (const auto &cur : gStorage) {
-                if (cur->getPluginId() == plugin_id) {
-                    *item = (wups_storage_root_item) cur->getHandle();
-                    return WUPS_STORAGE_ERROR_ALREADY_OPENED;
-                }
-            }
-
-
-            std::string filePath = getPluginPath() + "/config/" + plugin_id + ".json";
-            nlohmann::json j;
-            {
-                CFile file(filePath, CFile::ReadOnly);
-                if (file.isOpen() && file.size() > 0) {
-                    auto *json_data = (uint8_t *) memalign(0x40, ROUNDUP(file.size() + 1, 0x40));
-                    if (!json_data) {
-                        DEBUG_FUNCTION_LINE_WARN("Failed to create StorageItem: Malloc failed");
-                        return WUPS_STORAGE_ERROR_MALLOC_FAILED;
-                    }
-
-                    file.read(json_data, file.size());
-
-                    json_data[file.size()] = '\0';
-
-                    file.close();
-                    j = nlohmann::json::parse(json_data, nullptr, false);
-                    free(json_data);
-
-                    if (j == nlohmann::detail::value_t::discarded || j.empty() || !j.is_object()) {
-                        std::string errorMessage = string_format("Corrupted plugin storage detected: \"%s\". You have to reconfigure the plugin.", plugin_id);
-                        DEBUG_FUNCTION_LINE_ERR("%s", errorMessage.c_str());
-                        remove(filePath.c_str());
-
-                        DisplayErrorNotificationMessage(errorMessage, 10.0f);
-                    }
-                }
-            }
-
-
-            std::unique_ptr<StorageItemRoot> storage;
-            if (j.empty() || !j.is_object() || !j.contains("storageitems") || j["storageitems"].empty() || !j["storageitems"].is_object()) {
-                storage = make_unique_nothrow<StorageItemRoot>(plugin_id);
-            } else {
-                storage = StorageUtils::Helper::deserializeFromJson(j["storageitems"], plugin_id);
-                if (!storage) {
-                    storage = make_unique_nothrow<StorageItemRoot>(plugin_id);
-                }
-            }
-
-            if (!storage) {
-                return WUPS_STORAGE_ERROR_MALLOC_FAILED;
-            }
-
-            *item = (wups_storage_root_item) storage->getHandle();
-            gStorage.push_front(std::move(storage));
-
-            return WUPS_STORAGE_ERROR_SUCCESS;
+            return StorageUtils::Helper::WriteStorageToSD(root, force);
         }
 
-        WUPSStorageError CloseStorage(const char *plugin_id) {
+        WUPSStorageError ForceReloadStorage(wups_storage_root_item root) {
             std::lock_guard lock(gStorageMutex);
 
-            auto res = StorageUtils::Helper::WriteStorageToSD(plugin_id);
-            // TODO: handle write error?
+            auto rootItem = Helper::getRootItem(root);
+            if (!rootItem) {
+                return WUPS_STORAGE_ERROR_INTERNAL_NOT_INITIALIZED;
+            }
 
-            if (!remove_locked_first_if(gStorageMutex, gStorage, [plugin_id](auto &cur) { return cur->getPluginId() == plugin_id; })) {
-                DEBUG_FUNCTION_LINE_WARN("Failed to close storage: Not opened (\"%s\")", plugin_id);
+            WUPSStorageError result;
+            if ((result = Helper::LoadFromFile(rootItem->getPluginId(), *rootItem)) != WUPS_STORAGE_ERROR_SUCCESS) {
+                return result;
+            }
+            return result;
+        }
+
+        WUPSStorageError WipeStorage(wups_storage_root_item root) {
+            std::lock_guard lock(gStorageMutex);
+
+            auto rootItem = Helper::getRootItem(root);
+            if (!rootItem) {
                 return WUPS_STORAGE_ERROR_NOT_FOUND;
             }
-            return res;
+
+            rootItem->wipe();
+
+            return WUPS_STORAGE_ERROR_SUCCESS;
         }
 
         WUPSStorageError CreateSubItem(wups_storage_root_item root, wups_storage_item parent, const char *key, wups_storage_item *outItem) {
@@ -554,6 +609,9 @@ namespace StorageUtils {
 
         WUPSStorageError GetItem(wups_storage_root_item root, wups_storage_item parent, const char *key, WUPSStorageItemType itemType, void *data, uint32_t maxSize, uint32_t *outSize) {
             std::lock_guard lock(gStorageMutex);
+            if (outSize) {
+                *outSize = 0;
+            }
             switch ((WUPSStorageItemTypes) itemType) {
                 case WUPS_STORAGE_ITEM_STRING: {
                     if (!data || maxSize == 0) {
@@ -571,43 +629,43 @@ namespace StorageUtils {
                     if (!data || maxSize != sizeof(bool)) {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
                     }
-                    return StorageUtils::Helper::GetItemGeneric<bool>(root, parent, key, (bool *) data);
+                    return StorageUtils::Helper::GetItemGeneric<bool>(root, parent, key, (bool *) data, outSize);
                 }
                 case WUPS_STORAGE_ITEM_S32: {
                     if (!data || maxSize != sizeof(int32_t)) {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
                     }
-                    return StorageUtils::Helper::GetItemGeneric<int32_t>(root, parent, key, (int32_t *) data);
+                    return StorageUtils::Helper::GetItemGeneric<int32_t>(root, parent, key, (int32_t *) data, outSize);
                 }
                 case WUPS_STORAGE_ITEM_S64: {
                     if (!data || maxSize != sizeof(int64_t)) {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
                     }
-                    return StorageUtils::Helper::GetItemGeneric<int64_t>(root, parent, key, (int64_t *) data);
+                    return StorageUtils::Helper::GetItemGeneric<int64_t>(root, parent, key, (int64_t *) data, outSize);
                 }
                 case WUPS_STORAGE_ITEM_U32: {
                     if (!data || maxSize != sizeof(uint32_t)) {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
                     }
-                    return StorageUtils::Helper::GetItemGeneric<uint32_t>(root, parent, key, (uint32_t *) data);
+                    return StorageUtils::Helper::GetItemGeneric<uint32_t>(root, parent, key, (uint32_t *) data, outSize);
                 }
                 case WUPS_STORAGE_ITEM_U64: {
                     if (!data || maxSize != sizeof(uint64_t)) {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
                     }
-                    return StorageUtils::Helper::GetItemGeneric<uint64_t>(root, parent, key, (uint64_t *) data);
+                    return StorageUtils::Helper::GetItemGeneric<uint64_t>(root, parent, key, (uint64_t *) data, outSize);
                 }
                 case WUPS_STORAGE_ITEM_FLOAT: {
                     if (!data || maxSize != sizeof(float)) {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
                     }
-                    return StorageUtils::Helper::GetItemGeneric<float>(root, parent, key, (float *) data);
+                    return StorageUtils::Helper::GetItemGeneric<float>(root, parent, key, (float *) data, outSize);
                 }
                 case WUPS_STORAGE_ITEM_DOUBLE: {
                     if (!data || maxSize != sizeof(double)) {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
                     }
-                    return StorageUtils::Helper::GetItemGeneric<double>(root, parent, key, (double *) data);
+                    return StorageUtils::Helper::GetItemGeneric<double>(root, parent, key, (double *) data, outSize);
                 }
             }
             return WUPS_STORAGE_ERROR_NOT_FOUND;

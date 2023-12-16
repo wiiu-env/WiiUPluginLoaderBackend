@@ -135,6 +135,14 @@ WUMS_APPLICATION_STARTS() {
 
         DEBUG_FUNCTION_LINE("Restore function patches of currently loaded plugins.");
         PluginManagement::RestoreFunctionPatches(gLoadedPlugins);
+
+        for (auto &plugin : gLoadedPlugins) {
+            WUPSStorageError err = plugin->CloseStorage();
+            if (err != WUPS_STORAGE_ERROR_SUCCESS) {
+                DEBUG_FUNCTION_LINE_ERR("Failed to close storage for plugin: %s", plugin->getMetaInformation().getName().c_str());
+            }
+        }
+
         DEBUG_FUNCTION_LINE("Unload existing plugins.");
         gLoadedPlugins.clear();
         for (auto &cur : gTrampData) {
@@ -170,6 +178,12 @@ WUMS_APPLICATION_STARTS() {
         }
 
         if (initNeeded) {
+            for (auto &plugin : gLoadedPlugins) {
+                WUPSStorageError err = plugin->OpenStorage();
+                if (err != WUPS_STORAGE_ERROR_SUCCESS) {
+                    DEBUG_FUNCTION_LINE_ERR("Failed to open storage for plugin: %s. (%s)", plugin->getMetaInformation().getName().c_str(), WUPSStorageAPI_GetStatusStr(err));
+                }
+            }
             PluginManagement::callInitHooks(gLoadedPlugins);
         }
 

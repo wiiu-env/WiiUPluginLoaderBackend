@@ -176,7 +176,7 @@ namespace StorageUtils {
             std::string filePath = getPluginPath() + "/config/" + plugin_id.data() + ".json";
             CFile file(filePath, CFile::ReadOnly);
             if (!file.isOpen() || file.size() == 0) {
-                return WUPS_STORAGE_ERROR_IO_ERROR;
+                return WUPS_STORAGE_ERROR_NOT_FOUND;
             }
             auto *json_data = (uint8_t *) memalign(0x40, ROUNDUP(file.size() + 1, 0x40));
             if (!json_data) {
@@ -236,12 +236,13 @@ namespace StorageUtils {
 
             if (!forceSave) {
                 nlohmann::json jsonFromFile;
-                if (Helper::LoadFromFile(rootItem->getPluginId(), jsonFromFile) == WUPS_STORAGE_ERROR_SUCCESS) {
+                WUPSStorageError loadErr;
+                if ((loadErr = Helper::LoadFromFile(rootItem->getPluginId(), jsonFromFile)) == WUPS_STORAGE_ERROR_SUCCESS) {
                     if (j == jsonFromFile) {
                         DEBUG_FUNCTION_LINE_VERBOSE("Storage has no changes, avoid saving \"%s.json\"", rootItem->getPluginId().c_str());
                         return WUPS_STORAGE_ERROR_SUCCESS;
                     }
-                } else {
+                } else if (loadErr != WUPS_STORAGE_ERROR_NOT_FOUND) {
                     DEBUG_FUNCTION_LINE_WARN("Failed to load \"%s.json\"", rootItem->getPluginId().c_str());
                 }
                 DEBUG_FUNCTION_LINE_VERBOSE("Saving \"%s.json\"...", rootItem->getPluginId().c_str());
@@ -398,8 +399,12 @@ namespace StorageUtils {
                     return WUPS_STORAGE_ERROR_MALLOC_FAILED;
                 }
 
-                WUPSStorageError err;
-                if ((err = Helper::LoadFromFile(plugin_id, *root)) != WUPS_STORAGE_ERROR_SUCCESS) {
+                WUPSStorageError err = Helper::LoadFromFile(plugin_id, *root);
+                if(err == WUPS_STORAGE_ERROR_NOT_FOUND) {
+                    // Create new clean StorageItemRoot if no existing storage was found
+                    root = make_unique_nothrow<StorageItemRoot>(plugin_id);
+                } else if (err != WUPS_STORAGE_ERROR_SUCCESS) {
+                    // Return on any other error
                     return err;
                 }
 

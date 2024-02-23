@@ -148,11 +148,16 @@ bool StorageItem::getValue(int64_t &result) const {
     return false;
 }
 
-bool StorageItem::getItemSize(uint32_t &outSize) const {
+bool StorageItem::getItemSizeString(uint32_t &outSize) const {
     if (mType == StorageItemType::String) {
         outSize = (std::get<std::string>(mData).length() + 1);
         return true;
-    } else if (mType == StorageItemType::Binary) {
+    }
+    return false;
+}
+
+bool StorageItem::getItemSizeBinary(uint32_t &outSize) const {
+    if (mType == StorageItemType::Binary) {
         outSize = std::get<std::vector<uint8_t>>(mData).size();
         return true;
     }

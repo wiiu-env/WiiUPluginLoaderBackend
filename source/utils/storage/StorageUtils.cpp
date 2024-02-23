@@ -400,7 +400,7 @@ namespace StorageUtils {
                 }
 
                 WUPSStorageError err = Helper::LoadFromFile(plugin_id, *root);
-                if(err == WUPS_STORAGE_ERROR_NOT_FOUND) {
+                if (err == WUPS_STORAGE_ERROR_NOT_FOUND) {
                     // Create new clean StorageItemRoot if no existing storage was found
                     root = make_unique_nothrow<StorageItemRoot>(plugin_id);
                 } else if (err != WUPS_STORAGE_ERROR_SUCCESS) {
@@ -512,9 +512,12 @@ namespace StorageUtils {
             return WUPS_STORAGE_ERROR_NOT_FOUND;
         }
 
-        WUPSStorageError GetItemSize(wups_storage_root_item root, wups_storage_item parent, const char *key, uint32_t *outSize) {
+        WUPSStorageError GetItemSize(wups_storage_root_item root, wups_storage_item parent, const char *key, WUPSStorageItemType itemType, uint32_t *outSize) {
             if (!outSize) {
                 return WUPS_STORAGE_ERROR_INVALID_ARGS;
+            }
+            if (itemType != WUPS_STORAGE_ITEM_STRING && itemType != WUPS_STORAGE_ITEM_BINARY) {
+                return WUPS_STORAGE_ERROR_UNEXPECTED_DATA_TYPE;
             }
             std::lock_guard lock(gStorageMutex);
             auto subItem = StorageUtils::Helper::getSubItem(root, parent);
@@ -523,15 +526,24 @@ namespace StorageUtils {
             }
             auto item = subItem->getItem(key);
             if (item) {
-                // Trigger potential string -> binary conversion.
-                if (!item->attemptBinaryConversion()) {
-                    return WUPS_STORAGE_ERROR_MALLOC_FAILED;
+                if (itemType == WUPS_STORAGE_ITEM_BINARY) {
+                    // Trigger potential string -> binary conversion.
+                    if (!item->attemptBinaryConversion()) {
+                        return WUPS_STORAGE_ERROR_MALLOC_FAILED;
+                    }
                 }
                 uint32_t tmp = 0;
-                if (item->getItemSize(tmp)) {
+                bool res     = false;
+                if (itemType == WUPS_STORAGE_ITEM_STRING) {
+                    res = item->getItemSizeString(tmp);
+                } else if (itemType == WUPS_STORAGE_ITEM_BINARY) {
+                    res = item->getItemSizeBinary(tmp);
+                }
+                if (res) {
                     *outSize = tmp;
                     return WUPS_STORAGE_ERROR_SUCCESS;
                 }
+                DEBUG_FUNCTION_LINE_ERR("Failed to get size for item %s", key);
                 return WUPS_STORAGE_ERROR_UNEXPECTED_DATA_TYPE;
             }
             return WUPS_STORAGE_ERROR_NOT_FOUND;

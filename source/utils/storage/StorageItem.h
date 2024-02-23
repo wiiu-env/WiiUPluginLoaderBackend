@@ -73,7 +73,9 @@ public:
         return mKey;
     }
 
-    bool getItemSize(uint32_t &outSize) const;
+    bool getItemSizeString(uint32_t &outSize) const;
+
+    bool getItemSizeBinary(uint32_t &outSize) const;
 
     bool attemptBinaryConversion();
 

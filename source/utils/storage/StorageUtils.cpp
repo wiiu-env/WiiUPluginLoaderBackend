@@ -378,6 +378,12 @@ namespace StorageUtils {
             std::vector<uint8_t> tmp;
             auto res = GetAndFixBinaryItem(root, parent, key, tmp);
             if (res == WUPS_STORAGE_ERROR_SUCCESS) {
+                if (tmp.empty()) { // we need this to support getting empty std::vector
+                    return WUPS_STORAGE_ERROR_SUCCESS;
+                }
+                if (data == nullptr) {
+                    return WUPS_STORAGE_ERROR_INVALID_ARGS;
+                }
                 if (maxSize < tmp.size()) {
                     return WUPS_STORAGE_ERROR_BUFFER_TOO_SMALL;
                 }
@@ -581,19 +587,19 @@ namespace StorageUtils {
                     return StorageUtils::Helper::StoreItemGeneric<uint64_t>(root, parent, key, *(uint64_t *) data);
                 }
                 case WUPS_STORAGE_ITEM_STRING: {
-                    if (data == nullptr || length == 0) {
+                    if (data == nullptr) {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
                     }
-                    std::string tmp((const char *) data, length);
+                    std::string tmp = length > 0 ? std::string((const char *) data, length) : std::string();
 
                     DEBUG_FUNCTION_LINE_VERBOSE("Store %s as string: %s", key, tmp.c_str());
                     return StorageUtils::Helper::StoreItemGeneric<std::string>(root, parent, key, tmp);
                 }
                 case WUPS_STORAGE_ITEM_BINARY: {
-                    if (data == nullptr || length == 0) {
+                    if (data == nullptr && length > 0) {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
                     }
-                    std::vector<uint8_t> tmp((uint8_t *) data, ((uint8_t *) data) + length);
+                    std::vector<uint8_t> tmp = (data != nullptr && length > 0) ? std::vector<uint8_t>((uint8_t *) data, ((uint8_t *) data) + length) : std::vector<uint8_t>();
 
                     DEBUG_FUNCTION_LINE_VERBOSE("Store %s as binary: size %d", key, tmp.size());
                     return StorageUtils::Helper::StoreItemGeneric<std::vector<uint8_t>>(root, parent, key, tmp);
@@ -637,9 +643,6 @@ namespace StorageUtils {
                     return StorageUtils::Helper::GetStringItem(root, parent, key, data, maxSize, outSize);
                 }
                 case WUPS_STORAGE_ITEM_BINARY: {
-                    if (!data || maxSize == 0) {
-                        return WUPS_STORAGE_ERROR_INVALID_ARGS;
-                    }
                     return StorageUtils::Helper::GetBinaryItem(root, parent, key, data, maxSize, outSize);
                 }
                 case WUPS_STORAGE_ITEM_BOOL: {

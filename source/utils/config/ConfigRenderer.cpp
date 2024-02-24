@@ -84,7 +84,7 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
     } else if (input.data.buttons_d & (Input::eButtons::BUTTON_B | Input::eButtons::BUTTON_HOME)) {
         mCategoryRenderer.reset();
         for (const auto &element : mConfigs) {
-            CallOnCloseCallback(element.getConfigInformation(), element.getConfig().getCategories());
+            CallOnCloseCallback(element.getConfigInformation(), element.getConfig());
         }
         return SUB_STATE_RETURN;
     }
@@ -150,5 +150,12 @@ void ConfigRenderer::CallOnCloseCallback(const GeneralConfigInformation &info, c
         for (const auto &item : cat->getItems()) {
             item->onCloseCallback();
         }
+    }
+}
+
+void ConfigRenderer::CallOnCloseCallback(const GeneralConfigInformation &info, const WUPSConfigAPIBackend::WUPSConfig &config) {
+    CallOnCloseCallback(info, config.getCategories());
+    for (const auto &item : config.getItems()) {
+        item->onCloseCallback();
     }
 }

@@ -39,4 +39,5 @@ private:
     int32_t mRenderOffset = 0;
     int32_t mCurrentOpen  = -1;
     void CallOnCloseCallback(const GeneralConfigInformation &info, const std::vector<std::unique_ptr<WUPSConfigAPIBackend::WUPSConfigCategory>> &categories);
+    void CallOnCloseCallback(const GeneralConfigInformation &info, const WUPSConfigAPIBackend::WUPSConfig &config);
 };

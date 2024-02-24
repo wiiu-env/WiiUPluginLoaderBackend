@@ -24,7 +24,6 @@ namespace WUPSConfigAPIBackend {
         this->mCallbacks.onSelected(mContext, isSelected);
     }
 
-
     std::string WUPSConfigItemV2::getCurrentValueDisplay() const {
         if (this->mCallbacks.getCurrentValueDisplay == nullptr) {
             DEBUG_FUNCTION_LINE_ERR("getCurrentValueDisplay callback not implemented. [%s]", mDisplayName.c_str());

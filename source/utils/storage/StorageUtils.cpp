@@ -549,7 +549,7 @@ namespace StorageUtils {
                     *outSize = tmp;
                     return WUPS_STORAGE_ERROR_SUCCESS;
                 }
-                DEBUG_FUNCTION_LINE_ERR("Failed to get size for item %s", key);
+                DEBUG_FUNCTION_LINE_WARN("Failed to get size for item %s", key);
                 return WUPS_STORAGE_ERROR_UNEXPECTED_DATA_TYPE;
             }
             return WUPS_STORAGE_ERROR_NOT_FOUND;

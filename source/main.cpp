@@ -1,4 +1,3 @@
-#include "NotificationsUtils.h"
 #include "PluginManagement.h"
 #include "coreinit/interrupts.h"
 #include "coreinit/scheduler.h"
@@ -65,8 +64,6 @@ WUMS_APPLICATION_ENDS() {
     }
     gUsedRPLs.clear();
 
-    StopNotificationThread();
-
     deinitLogging();
 }
 
@@ -79,8 +76,6 @@ WUMS_APPLICATION_STARTS() {
     }
 
     OSReport("Running WiiUPluginLoaderBackend " VERSION_FULL "\n");
-
-    StartNotificationThread();
 
     gUsedRPLs.clear();
 

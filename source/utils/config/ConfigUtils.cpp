@@ -90,6 +90,8 @@ void ConfigUtils::displayMenu() {
                 } else if (callbackResult != WUPSCONFIG_API_RESULT_SUCCESS) {
                     DEBUG_FUNCTION_LINE_ERR("Callback failed for %s: %s", info.name.c_str(), WUPSConfigAPI_GetStatusStr(callbackResult));
                     config.reset();
+                } else {
+                    info.name = config->getName();
                 }
             } else {
                 DEBUG_FUNCTION_LINE_ERR("Failed to create config for plugin: \"%s\"", info.name.c_str());
@@ -115,7 +117,7 @@ void ConfigUtils::displayMenu() {
             }
         }
         if (!config) {
-            config = make_unique_nothrow<WUPSConfigAPIBackend::WUPSConfig>("DUMMY");
+            config = make_unique_nothrow<WUPSConfigAPIBackend::WUPSConfig>(info.name);
         }
 
         configs.emplace_back(info, std::move(config));

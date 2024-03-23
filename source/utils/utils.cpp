@@ -5,7 +5,11 @@
 #include <coreinit/ios.h>
 #include <string>
 
+static std::string sPluginPath;
 std::string getPluginPath() {
+    if (!sPluginPath.empty()) {
+        return sPluginPath;
+    }
     char environmentPath[0x100];
     memset(environmentPath, 0, sizeof(environmentPath));
 
@@ -18,7 +22,8 @@ std::string getPluginPath() {
 
         IOS_Close(handle);
     }
-    return std::string(environmentPath).append("/plugins");
+    sPluginPath = std::string(environmentPath).append("/plugins");
+    return sPluginPath;
 }
 
 // https://gist.github.com/ccbrown/9722406

@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "WUPSVersion.h"
 #include <string>
 #include <vector>
 
@@ -46,6 +47,10 @@ public:
 
     [[nodiscard]] const std::string &getDescription() const {
         return this->description;
+    }
+
+    [[nodiscard]] const WUPSVersion &getWUPSVersion() const {
+        return this->wupsversion;
     }
 
     [[nodiscard]] const std::string &getStorageId() const {
@@ -83,6 +88,14 @@ private:
         this->description = std::move(_description);
     }
 
+    void setWUPSVersion(uint16_t major, uint16_t minor, uint16_t revision) {
+        this->wupsversion = WUPSVersion(major, minor, revision);
+    }
+
+    void setWUPSVersion(WUPSVersion &_wupsversion) {
+        this->wupsversion = _wupsversion;
+    }
+
     void setSize(size_t _size) {
         this->size = _size;
     }
@@ -99,6 +112,7 @@ private:
     std::string description;
     std::string storageId;
     size_t size{};
+    WUPSVersion wupsversion = WUPSVersion(0, 0, 0);
 
     friend class PluginMetaInformationFactory;
 

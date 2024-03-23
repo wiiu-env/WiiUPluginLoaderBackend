@@ -22,14 +22,15 @@
 #include <forward_list>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 #include <vector>
 
 class PluginDataFactory {
 public:
-    static std::forward_list<std::shared_ptr<PluginData>> loadDir(const std::string &path);
+    static std::set<std::shared_ptr<PluginData>> loadDir(std::string_view path);
 
-    static std::optional<std::unique_ptr<PluginData>> load(const std::string &path);
+    static std::unique_ptr<PluginData> load(std::string_view path);
 
-    static std::optional<std::unique_ptr<PluginData>> load(const std::vector<uint8_t> &buffer, const std::string &source);
+    static std::unique_ptr<PluginData> load(std::vector<uint8_t> &&buffer, std::string_view source);
 };

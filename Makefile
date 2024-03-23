@@ -28,7 +28,10 @@ SOURCES		:=	source \
                 source/elfio \
                 source/patcher \
                 source/plugin \
-                source/utils
+                source/utils \
+                source/utils/config \
+                source/utils/storage \
+                source/uitls/input
 DATA		:=	data
 INCLUDES	:=	source
 
@@ -40,7 +43,7 @@ CFLAGS	:=	-Wall -Wextra -Os -ffunction-sections -fdata-sections\
 
 CFLAGS	+=	$(INCLUDE) -D__WIIU__ -D__WUT__ 
 
-CXXFLAGS	:= $(CFLAGS) -std=c++20  -fno-exceptions -fno-rtti
+CXXFLAGS	:= $(CFLAGS) -std=c++20 -fno-exceptions -fno-rtti
 
 ASFLAGS	:=	-g $(ARCH)
 LDFLAGS	=	-g $(ARCH) $(RPXSPECS) -Wl,-Map,$(notdir $*.map) -T$(WUMS_ROOT)/share/libmappedmemory.ld $(WUMSSPECS)
@@ -55,7 +58,7 @@ CXXFLAGS += -DDEBUG -DVERBOSE_DEBUG -g
 CFLAGS += -DDEBUG -DVERBOSE_DEBUG -g
 endif
 
-LIBS	:= -lwums -lwut -lwups -lfunctionpatcher -lmappedmemory -lz -lnotifications
+LIBS	:= -lwums -lwups -lwut -lfunctionpatcher -lmappedmemory -lz -lnotifications
 
 #-------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level

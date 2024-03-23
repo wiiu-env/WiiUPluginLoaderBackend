@@ -17,37 +17,81 @@
 
 #pragma once
 
+#include "PluginConfigData.h"
 #include "PluginData.h"
 #include "PluginInformation.h"
 #include "PluginMetaInformation.h"
+#include "utils/storage/StorageUtils.h"
 #include <memory>
 #include <utility>
+#include <wups/config_api.h>
 
 class PluginContainer {
 public:
     PluginContainer(std::unique_ptr<PluginMetaInformation> metaInformation, std::unique_ptr<PluginInformation> pluginInformation, std::shared_ptr<PluginData> pluginData)
-        : metaInformation(std::move(metaInformation)),
-          pluginInformation(std::move(pluginInformation)),
-          pluginData(std::move(pluginData)) {
+        : mMetaInformation(std::move(metaInformation)),
+          mPluginInformation(std::move(pluginInformation)),
+          mPluginData(std::move(pluginData)) {
     }
 
-    [[nodiscard]] const std::unique_ptr<PluginMetaInformation> &getMetaInformation() const {
-        return this->metaInformation;
+    [[nodiscard]] const PluginMetaInformation &getMetaInformation() const {
+        return *this->mMetaInformation;
     }
 
-    [[nodiscard]] const std::unique_ptr<PluginInformation> &getPluginInformation() const {
-        return pluginInformation;
+    [[nodiscard]] const PluginInformation &getPluginInformation() const {
+        return *this->mPluginInformation;
     }
 
-    [[nodiscard]] const std::shared_ptr<PluginData> &getPluginData() const {
-        return pluginData;
+    [[nodiscard]] std::shared_ptr<PluginData> getPluginDataCopy() const {
+        return mPluginData;
     }
 
-    uint32_t getHandle() {
+    [[nodiscard]] uint32_t getHandle() const {
         return (uint32_t) this;
     }
 
-    const std::unique_ptr<PluginMetaInformation> metaInformation;
-    const std::unique_ptr<PluginInformation> pluginInformation;
-    const std::shared_ptr<PluginData> pluginData;
+    [[nodiscard]] const std::optional<PluginConfigData> &getConfigData() const {
+        return mPluginConfigData;
+    }
+
+    void setConfigData(const PluginConfigData &pluginConfigData) {
+        mPluginConfigData = pluginConfigData;
+    }
+
+    WUPSStorageError OpenStorage() {
+        if (getMetaInformation().getWUPSVersion() < WUPSVersion(0, 8, 0)) {
+            return WUPS_STORAGE_ERROR_SUCCESS;
+        }
+        auto &storageId = getMetaInformation().getStorageId();
+        if (storageId.empty()) {
+            return WUPS_STORAGE_ERROR_SUCCESS;
+        }
+        auto res = StorageUtils::API::Internal::OpenStorage(storageId, storageRootItem);
+        if (res != WUPS_STORAGE_ERROR_SUCCESS) {
+            storageRootItem = nullptr;
+        }
+        return res;
+    }
+
+    WUPSStorageError CloseStorage() {
+        if (getMetaInformation().getWUPSVersion() < WUPSVersion(0, 8, 0)) {
+            return WUPS_STORAGE_ERROR_SUCCESS;
+        }
+        if (storageRootItem == nullptr) {
+            return WUPS_STORAGE_ERROR_SUCCESS;
+        }
+        return StorageUtils::API::Internal::CloseStorage(storageRootItem);
+    }
+
+    [[nodiscard]] wups_storage_root_item getStorageRootItem() const {
+        return storageRootItem;
+    }
+
+private:
+    const std::unique_ptr<PluginMetaInformation> mMetaInformation;
+    const std::unique_ptr<PluginInformation> mPluginInformation;
+    const std::shared_ptr<PluginData> mPluginData;
+
+    std::optional<PluginConfigData> mPluginConfigData;
+    wups_storage_root_item storageRootItem = nullptr;
 };

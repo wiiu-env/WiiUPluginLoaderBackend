@@ -2,10 +2,6 @@
 
 #include <string>
 
-void StartNotificationThread();
+bool DisplayInfoNotificationMessage(std::string_view text, float duration);
 
-void StopNotificationThread();
-
-bool DisplayInfoNotificationMessage(std::string &text, float duration);
-
-bool DisplayErrorNotificationMessage(std::string &text, float duration);
+bool DisplayErrorNotificationMessage(std::string_view text, float duration);

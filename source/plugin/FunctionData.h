@@ -24,18 +24,23 @@
 class FunctionData {
 
 public:
-    FunctionData(void *paddress, void *vaddress, std::string name, function_replacement_library_type_t library, void *replaceAddr, void *replaceCall,
+    FunctionData(void *paddress, void *vaddress, std::string_view name, function_replacement_library_type_t library, void *replaceAddr, void *replaceCall,
                  FunctionPatcherTargetProcess targetProcess) {
         this->paddress      = paddress;
         this->vaddress      = vaddress;
-        this->name          = std::move(name);
+        this->name          = name;
         this->library       = library;
         this->targetProcess = targetProcess;
         this->replaceAddr   = replaceAddr;
         this->replaceCall   = replaceCall;
     }
 
-    ~FunctionData() = default;
+    ~FunctionData() {
+        if (handle != 0) {
+            DEBUG_FUNCTION_LINE_WARN("Destroying FunctionData while it was still patched. This should never happen.");
+            RemovePatch();
+        }
+    }
 
     [[nodiscard]] const std::string &getName() const {
         return this->name;
@@ -81,7 +86,7 @@ public:
                     }};
 
             if (FunctionPatcher_AddFunctionPatch(&functionData, &handle, nullptr) != FUNCTION_PATCHER_RESULT_SUCCESS) {
-                DEBUG_FUNCTION_LINE_ERR("Failed to add patch for function");
+                DEBUG_FUNCTION_LINE_ERR("Failed to add patch for function (\"%s\" PA:%08X VA:%08X)", this->name.c_str(), this->paddress, this->vaddress);
                 return false;
             }
         } else {

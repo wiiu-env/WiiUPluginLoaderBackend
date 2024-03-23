@@ -23,10 +23,9 @@
 #include <dirent.h>
 #include <forward_list>
 #include <memory>
-#include <sys/stat.h>
 
-std::forward_list<std::shared_ptr<PluginData>> PluginDataFactory::loadDir(const std::string &path) {
-    std::forward_list<std::shared_ptr<PluginData>> result;
+std::set<std::shared_ptr<PluginData>> PluginDataFactory::loadDir(std::string_view path) {
+    std::set<std::shared_ptr<PluginData>> result;
     struct dirent *dp;
     DIR *dfd;
 
@@ -35,8 +34,8 @@ std::forward_list<std::shared_ptr<PluginData>> PluginDataFactory::loadDir(const 
         return result;
     }
 
-    if ((dfd = opendir(path.c_str())) == nullptr) {
-        DEBUG_FUNCTION_LINE_ERR("Couldn't open dir %s", path.c_str());
+    if ((dfd = opendir(path.data())) == nullptr) {
+        DEBUG_FUNCTION_LINE_ERR("Couldn't open dir %s", path.data());
         return result;
     }
 
@@ -45,15 +44,15 @@ std::forward_list<std::shared_ptr<PluginData>> PluginDataFactory::loadDir(const 
             continue;
         }
         if (std::string_view(dp->d_name).starts_with('.') || std::string_view(dp->d_name).starts_with('_') || !std::string_view(dp->d_name).ends_with(".wps")) {
-            DEBUG_FUNCTION_LINE_WARN("Skip file %s/%s", path.c_str(), dp->d_name);
+            DEBUG_FUNCTION_LINE_WARN("Skip file %s/%s", path.data(), dp->d_name);
             continue;
         }
 
-        auto full_file_path = string_format("%s/%s", path.c_str(), dp->d_name);
+        auto full_file_path = string_format("%s/%s", path.data(), dp->d_name);
         DEBUG_FUNCTION_LINE("Loading plugin: %s", full_file_path.c_str());
         auto pluginData = load(full_file_path);
         if (pluginData) {
-            result.push_front(std::move(pluginData.value()));
+            result.insert(std::move(pluginData));
         } else {
             auto errMsg = string_format("Failed to load plugin: %s", full_file_path.c_str());
             DEBUG_FUNCTION_LINE_ERR("%s", errMsg.c_str());
@@ -66,33 +65,21 @@ std::forward_list<std::shared_ptr<PluginData>> PluginDataFactory::loadDir(const 
     return result;
 }
 
-std::optional<std::unique_ptr<PluginData>> PluginDataFactory::load(const std::string &filename) {
-    uint8_t *buffer = nullptr;
-    uint32_t fsize  = 0;
-    if (FSUtils::LoadFileToMem(filename.c_str(), &buffer, &fsize) < 0) {
-        DEBUG_FUNCTION_LINE_ERR("Failed to load %s into memory", filename.c_str());
-        return {};
+std::unique_ptr<PluginData> PluginDataFactory::load(std::string_view filename) {
+    std::vector<uint8_t> buffer;
+    if (FSUtils::LoadFileToMem(filename, buffer) < 0) {
+        DEBUG_FUNCTION_LINE_ERR("Failed to load %s into memory", filename.data());
+        return nullptr;
     }
-
-    std::vector<uint8_t> result;
-    result.resize(fsize);
-    memcpy(&result[0], buffer, fsize);
-    free(buffer);
 
     DEBUG_FUNCTION_LINE_VERBOSE("Loaded file!");
-
-    return load(result, filename);
+    return load(std::move(buffer), filename);
 }
 
-std::optional<std::unique_ptr<PluginData>> PluginDataFactory::load(const std::vector<uint8_t> &buffer, const std::string &source) {
+std::unique_ptr<PluginData> PluginDataFactory::load(std::vector<uint8_t> &&buffer, std::string_view source) {
     if (buffer.empty()) {
-        return {};
+        return nullptr;
     }
 
-    auto res = make_unique_nothrow<PluginData>(buffer, source);
-    if (!res) {
-        return {};
-    }
-
-    return res;
+    return make_unique_nothrow<PluginData>(std::move(buffer), source);
 }

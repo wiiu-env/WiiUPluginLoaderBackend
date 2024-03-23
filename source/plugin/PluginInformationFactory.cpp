@@ -18,6 +18,7 @@
 #include "PluginInformationFactory.h"
 #include "../utils/ElfUtils.h"
 #include "../utils/utils.h"
+#include "utils/HeapMemoryFixedSize.h"
 #include "utils/wiiu_zlib.hpp"
 #include <coreinit/cache.h>
 #include <map>
@@ -27,33 +28,34 @@
 
 using namespace ELFIO;
 
-std::optional<std::unique_ptr<PluginInformation>>
-PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, relocation_trampoline_entry_t *trampoline_data, uint32_t trampoline_data_length,
-                               uint8_t trampolineId) {
-    if (!pluginData->buffer) {
-        DEBUG_FUNCTION_LINE_ERR("Buffer was nullptr");
-        return {};
+std::unique_ptr<PluginInformation>
+PluginInformationFactory::load(const PluginData &pluginData, std::vector<relocation_trampoline_entry_t> &trampolineData, uint8_t trampolineId) {
+    auto buffer = pluginData.getBuffer();
+    if (buffer.empty()) {
+        DEBUG_FUNCTION_LINE_ERR("Buffer was empty");
+        return nullptr;
     }
     elfio reader(new wiiu_zlib);
 
-    if (!reader.load(reinterpret_cast<const char *>(pluginData->buffer.get()), pluginData->length)) {
+    if (!reader.load(reinterpret_cast<const char *>(buffer.data()), buffer.size())) {
         DEBUG_FUNCTION_LINE_ERR("Can't process PluginData in elfio");
-        return {};
+        return nullptr;
     }
 
     auto pluginInfo = make_unique_nothrow<PluginInformation>();
     if (!pluginInfo) {
         DEBUG_FUNCTION_LINE_ERR("Failed to allocate PluginInformation");
-        return {};
+        return nullptr;
     }
 
     uint32_t sec_num = reader.sections.size();
 
-    auto destinations = make_unique_nothrow<uint8_t *[]>(sec_num);
-    if (!destinations) {
+    auto destinationsData = make_unique_nothrow<uint8_t *[]>(sec_num);
+    if (!destinationsData) {
         DEBUG_FUNCTION_LINE_ERR("Failed alloc memory for destinations array");
-        return {};
+        return nullptr;
     }
+    std::span<uint8_t *> destinations(destinationsData.get(), sec_num);
 
     uint32_t totalSize = 0;
 
@@ -80,21 +82,17 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, re
         }
     }
 
-    auto text_data = make_unique_nothrow<uint8_t[]>(text_size);
+    HeapMemoryFixedSize text_data(text_size);
     if (!text_data) {
         DEBUG_FUNCTION_LINE_ERR("Failed to alloc memory for the .text section (%d bytes)", text_size);
-        return {};
+        return nullptr;
     }
 
-    DEBUG_FUNCTION_LINE_VERBOSE("Allocated %d kb", text_size / 1024);
-
-    auto data_data = make_unique_nothrow<uint8_t[]>(data_size);
+    HeapMemoryFixedSize data_data(data_size);
     if (!data_data) {
         DEBUG_FUNCTION_LINE_ERR("Failed to alloc memory for the .data section (%d bytes)", data_size);
-        return {};
+        return nullptr;
     }
-
-    DEBUG_FUNCTION_LINE_VERBOSE("Allocated %d kb", data_size / 1024);
 
     for (uint32_t i = 0; i < sec_num; ++i) {
         section *psec = reader.sections[i];
@@ -108,29 +106,29 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, re
 
             uint32_t destination = address;
             if ((address >= 0x02000000) && address < 0x10000000) {
-                destination += (uint32_t) text_data.get();
+                destination += (uint32_t) text_data.data();
                 destination -= 0x02000000;
-                destinations[psec->get_index()] = (uint8_t *) text_data.get();
+                destinations[psec->get_index()] = (uint8_t *) text_data.data();
 
-                if (destination + sectionSize > (uint32_t) text_data.get() + text_size) {
-                    DEBUG_FUNCTION_LINE_ERR("Tried to overflow .text buffer. %08X > %08X", destination + sectionSize, (uint32_t) text_data.get() + text_size);
+                if (destination + sectionSize > (uint32_t) text_data.data() + text_size) {
+                    DEBUG_FUNCTION_LINE_ERR("Tried to overflow .text buffer. %08X > %08X", destination + sectionSize, (uint32_t) text_data.data() + text_data.size());
                     OSFatal("WUPSLoader: Tried to overflow buffer");
                 }
             } else if ((address >= 0x10000000) && address < 0xC0000000) {
-                destination += (uint32_t) data_data.get();
+                destination += (uint32_t) data_data.data();
                 destination -= 0x10000000;
-                destinations[psec->get_index()] = (uint8_t *) data_data.get();
+                destinations[psec->get_index()] = (uint8_t *) data_data.data();
 
-                if (destination + sectionSize > (uint32_t) data_data.get() + data_size) {
-                    DEBUG_FUNCTION_LINE_ERR("Tried to overflow .data buffer. %08X > %08X", destination + sectionSize, (uint32_t) data_data.get() + data_size);
+                if (destination + sectionSize > (uint32_t) data_data.data() + data_data.size()) {
+                    DEBUG_FUNCTION_LINE_ERR("Tried to overflow .data buffer. %08X > %08X", destination + sectionSize, (uint32_t) text_data.data() + text_data.size());
                     OSFatal("WUPSLoader: Tried to overflow buffer");
                 }
             } else if (address >= 0xC0000000) {
                 DEBUG_FUNCTION_LINE_ERR("Loading section from 0xC0000000 is NOT supported");
-                return std::nullopt;
+                return nullptr;
             } else {
                 DEBUG_FUNCTION_LINE_ERR("Unhandled case");
-                return std::nullopt;
+                return nullptr;
             }
 
             const char *p = psec->get_data();
@@ -146,7 +144,7 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, re
             auto sectionInfo = make_unique_nothrow<SectionInfo>(psec->get_name(), destination, sectionSize);
             if (!sectionInfo) {
                 DEBUG_FUNCTION_LINE_ERR("Failed to allocat SectionInfo");
-                return {};
+                return nullptr;
             }
 
             pluginInfo->addSectionInfo(std::move(sectionInfo));
@@ -163,30 +161,30 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, re
         section *psec = reader.sections[i];
         if ((psec->get_type() == SHT_PROGBITS || psec->get_type() == SHT_NOBITS) && (psec->get_flags() & SHF_ALLOC)) {
             DEBUG_FUNCTION_LINE_VERBOSE("Linking (%d)... %s at %08X", i, psec->get_name().c_str(), destinations[psec->get_index()]);
-            if (!linkSection(reader, psec->get_index(), (uint32_t) destinations[psec->get_index()], (uint32_t) text_data.get(), (uint32_t) data_data.get(), trampoline_data, trampoline_data_length,
+            if (!linkSection(reader, psec->get_index(), (uint32_t) destinations[psec->get_index()], (uint32_t) text_data.data(), (uint32_t) data_data.data(), trampolineData,
                              trampolineId)) {
                 DEBUG_FUNCTION_LINE_ERR("linkSection failed");
-                return {};
+                return nullptr;
             }
         }
     }
 
-    if (!PluginInformationFactory::addImportRelocationData(pluginInfo, reader, destinations)) {
+    if (!PluginInformationFactory::addImportRelocationData(*pluginInfo, reader, destinations)) {
         DEBUG_FUNCTION_LINE_ERR("addImportRelocationData failed");
-        return {};
+        return nullptr;
     }
 
-    DCFlushRange((void *) text_data.get(), text_size);
-    ICInvalidateRange((void *) text_data.get(), text_size);
-    DCFlushRange((void *) data_data.get(), data_size);
-    ICInvalidateRange((void *) data_data.get(), data_size);
+    DCFlushRange((void *) text_data.data(), text_data.size());
+    ICInvalidateRange((void *) text_data.data(), text_data.size());
+    DCFlushRange((void *) data_data.data(), data_data.size());
+    ICInvalidateRange((void *) data_data.data(), data_data.size());
 
     pluginInfo->setTrampolineId(trampolineId);
 
     auto secInfo = pluginInfo->getSectionInfo(".wups.hooks");
-    if (secInfo && secInfo.value()->getSize() > 0) {
-        size_t entries_count = secInfo.value()->getSize() / sizeof(wups_loader_hook_t);
-        auto *entries        = (wups_loader_hook_t *) secInfo.value()->getAddress();
+    if (secInfo && secInfo->getSize() > 0) {
+        size_t entries_count = secInfo->getSize() / sizeof(wups_loader_hook_t);
+        auto *entries        = (wups_loader_hook_t *) secInfo->getAddress();
         if (entries != nullptr) {
             for (size_t j = 0; j < entries_count; j++) {
                 wups_loader_hook_t *hook = &entries[j];
@@ -194,7 +192,7 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, re
                 auto hookData = make_unique_nothrow<HookData>((void *) hook->target, hook->type);
                 if (!hookData) {
                     DEBUG_FUNCTION_LINE_ERR("Failed to allocate HookData");
-                    return {};
+                    return nullptr;
                 }
                 pluginInfo->addHookData(std::move(hookData));
             }
@@ -202,14 +200,14 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, re
     }
 
     secInfo = pluginInfo->getSectionInfo(".wups.load");
-    if (secInfo && secInfo.value()->getSize() > 0) {
-        size_t entries_count = secInfo.value()->getSize() / sizeof(wups_loader_entry_t);
-        auto *entries        = (wups_loader_entry_t *) secInfo.value()->getAddress();
+    if (secInfo && secInfo->getSize() > 0) {
+        size_t entries_count = secInfo->getSize() / sizeof(wups_loader_entry_t);
+        auto *entries        = (wups_loader_entry_t *) secInfo->getAddress();
         if (entries != nullptr) {
             for (size_t j = 0; j < entries_count; j++) {
                 wups_loader_entry_t *cur_function = &entries[j];
                 DEBUG_FUNCTION_LINE_VERBOSE("Saving function \"%s\" of plugin . PA:%08X VA:%08X Library: %08X, target: %08X, call_addr: %08X",
-                                            cur_function->_function.name /*,pluginData->getPluginInformation()->getName().c_str()*/,
+                                            cur_function->_function.name /*,mPluginData->getPluginInformation()->getName().c_str()*/,
                                             cur_function->_function.physical_address, cur_function->_function.virtual_address, cur_function->_function.library, cur_function->_function.target,
                                             (void *) cur_function->_function.call_addr);
 
@@ -222,7 +220,7 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, re
                                                                       (FunctionPatcherTargetProcess) cur_function->_function.targetProcess);
                 if (!functionData) {
                     DEBUG_FUNCTION_LINE_ERR("Failed to allocate FunctionData");
-                    return {};
+                    return nullptr;
                 }
                 pluginInfo->addFunctionData(std::move(functionData));
             }
@@ -248,18 +246,18 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, re
                     if (symbols.get_symbol(j, name, value, size, bind, type, section, other)) {
 
                         if (type == STT_FUNC) { // We only care about functions.
-                            auto sectionVal = reader.sections[section];
-                            auto offsetVal  = value - sectionVal->get_address();
-                            auto sectionOpt = pluginInfo->getSectionInfo(sectionVal->get_name());
-                            if (!sectionOpt.has_value()) {
+                            auto sectionVal  = reader.sections[section];
+                            auto offsetVal   = value - sectionVal->get_address();
+                            auto sectionInfo = pluginInfo->getSectionInfo(sectionVal->get_name());
+                            if (!sectionInfo) {
                                 continue;
                             }
 
-                            auto finalAddress       = offsetVal + sectionOpt.value()->getAddress();
+                            auto finalAddress       = offsetVal + sectionInfo->getAddress();
                             auto functionSymbolData = make_unique_nothrow<FunctionSymbolData>(name, (void *) finalAddress, (uint32_t) size);
                             if (!functionSymbolData) {
                                 DEBUG_FUNCTION_LINE_ERR("Failed to allocate FunctionSymbolData");
-                                return {};
+                                return nullptr;
                             }
                             pluginInfo->addFunctionSymbolData(std::move(functionSymbolData));
                         }
@@ -272,17 +270,18 @@ PluginInformationFactory::load(const std::shared_ptr<PluginData> &pluginData, re
 
     if (totalSize > text_size + data_size) {
         DEBUG_FUNCTION_LINE_ERR("We didn't allocate enough memory!!");
-        return std::nullopt;
+        return nullptr;
     }
 
+
     // Save the addresses for the allocated memory. This way we can free it again :)
-    pluginInfo->allocatedDataMemoryAddress = std::move(data_data);
-    pluginInfo->allocatedTextMemoryAddress = std::move(text_data);
+    pluginInfo->mAllocatedDataMemoryAddress = std::move(data_data);
+    pluginInfo->mAllocatedTextMemoryAddress = std::move(text_data);
 
     return pluginInfo;
 }
 
-bool PluginInformationFactory::addImportRelocationData(const std::unique_ptr<PluginInformation> &pluginInfo, const elfio &reader, const std::unique_ptr<uint8_t *[]> &destinations) {
+bool PluginInformationFactory::addImportRelocationData(PluginInformation &pluginInfo, const elfio &reader, std::span<uint8_t *> destinations) {
     std::map<uint32_t, std::shared_ptr<ImportRPLInformation>> infoMap;
 
     uint32_t sec_num = reader.sections.size();
@@ -352,16 +351,15 @@ bool PluginInformationFactory::addImportRelocationData(const std::unique_ptr<Plu
                     return false;
                 }
 
-                pluginInfo->addRelocationData(std::move(relocationData));
+                pluginInfo.addRelocationData(std::move(relocationData));
             }
         }
     }
     return true;
 }
 
-bool PluginInformationFactory::linkSection(const elfio &reader, uint32_t section_index, uint32_t destination, uint32_t base_text, uint32_t base_data, relocation_trampoline_entry_t *trampoline_data,
-                                           uint32_t trampoline_data_length,
-                                           uint8_t trampolineId) {
+bool PluginInformationFactory::linkSection(const elfio &reader, uint32_t section_index, uint32_t destination, uint32_t base_text, uint32_t base_data,
+                                           std::vector<relocation_trampoline_entry_t> &trampolineData, uint8_t trampolineId) {
     uint32_t sec_num = reader.sections.size();
 
     for (uint32_t i = 0; i < sec_num; ++i) {
@@ -431,7 +429,7 @@ bool PluginInformationFactory::linkSection(const elfio &reader, uint32_t section
                 }
                 // DEBUG_FUNCTION_LINE_VERBOSE("sym_value %08X adjusted_sym_value %08X offset %08X adjusted_offset %08X", (uint32_t) sym_value, adjusted_sym_value, (uint32_t) offset, adjusted_offset);
 
-                if (!ElfUtils::elfLinkOne(type, adjusted_offset, addend, destination, adjusted_sym_value, trampoline_data, trampoline_data_length, RELOC_TYPE_FIXED, trampolineId)) {
+                if (!ElfUtils::elfLinkOne(type, adjusted_offset, addend, destination, adjusted_sym_value, trampolineData, RELOC_TYPE_FIXED, trampolineId)) {
                     DEBUG_FUNCTION_LINE_ERR("Link failed");
                     return false;
                 }

@@ -1,11 +1,14 @@
 #pragma once
 
+#include <algorithm>
 #include <coreinit/dynload.h>
 #include <cstdint>
 #include <forward_list>
 #include <malloc.h>
 #include <memory>
 #include <mutex>
+#include <set>
+#include <vector>
 
 #ifdef __cplusplus
 extern "C" {
@@ -60,18 +63,71 @@ std::shared_ptr<T> make_shared_nothrow(Args &&...args) noexcept(noexcept(T(std::
     return std::shared_ptr<T>(new (std::nothrow) T(std::forward<Args>(args)...));
 }
 
-template<typename T, class Allocator, class Predicate>
-bool remove_locked_first_if(std::mutex &mutex, std::forward_list<T, Allocator> &list, Predicate pred) {
-    std::lock_guard<std::mutex> lock(mutex);
-    auto oit = list.before_begin(), it = std::next(oit);
-    while (it != list.end()) {
-        if (pred(*it)) {
-            list.erase_after(oit);
+template<typename Container, typename Predicate>
+typename std::enable_if<std::is_same<Container, std::forward_list<typename Container::value_type>>::value, bool>::type
+remove_first_if(Container &container, Predicate pred) {
+    auto it = container.before_begin();
+
+    for (auto prev = it, current = ++it; current != container.end(); ++prev, ++current) {
+        if (pred(*current)) {
+            container.erase_after(prev);
             return true;
         }
-        oit = it++;
+    }
+
+    return false;
+}
+
+template<typename Container, typename Predicate>
+typename std::enable_if<std::is_same<Container, std::set<typename Container::value_type>>::value, bool>::type
+remove_first_if(Container &container, Predicate pred) {
+    auto it = container.begin();
+    while (it != container.end()) {
+        if (pred(*it)) {
+            container.erase(it);
+            return true;
+        }
+        ++it;
     }
     return false;
+}
+
+template<typename Container, typename Predicate>
+typename std::enable_if<std::is_same<Container, std::vector<typename Container::value_type>>::value, bool>::type
+remove_first_if(Container &container, Predicate pred) {
+    auto it = container.begin();
+    while (it != container.end()) {
+        if (pred(*it)) {
+            container.erase(it);
+            return true;
+        }
+        ++it;
+    }
+
+    return false;
+}
+
+template<typename Container, typename Predicate>
+bool remove_locked_first_if(std::mutex &mutex, Container &container, Predicate pred) {
+    std::lock_guard<std::mutex> lock(mutex);
+    return remove_first_if(container, pred);
+}
+
+template<typename T, typename Predicate>
+T pop_locked_first_if(std::mutex &mutex, std::vector<T> &container, Predicate pred) {
+    std::lock_guard<std::mutex> lock(mutex);
+    T result;
+    auto it = container.begin();
+    while (it != container.end()) {
+        if (pred(*it)) {
+            result = std::move(*it);
+            container.erase(it);
+            return result;
+        }
+        ++it;
+    }
+
+    return result;
 }
 
 std::string getPluginPath();

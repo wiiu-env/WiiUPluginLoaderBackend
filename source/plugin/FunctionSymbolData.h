@@ -24,31 +24,31 @@ class FunctionSymbolData {
 public:
     FunctionSymbolData(const FunctionSymbolData &o2) = default;
 
-    FunctionSymbolData(std::string &name, void *address, uint32_t size) : name(name),
-                                                                          address(address),
-                                                                          size(size) {
+    FunctionSymbolData(std::string_view name, void *address, uint32_t size) : mName(name),
+                                                                              mAddress(address),
+                                                                              mSize(size) {
     }
 
     bool operator<(const FunctionSymbolData &rhs) const {
-        return (uint32_t) address < (uint32_t) rhs.address;
+        return (uint32_t) mAddress < (uint32_t) rhs.mAddress;
     }
 
     virtual ~FunctionSymbolData() = default;
 
     [[nodiscard]] const std::string &getName() const {
-        return name;
+        return mName;
     }
 
     [[nodiscard]] void *getAddress() const {
-        return address;
+        return mAddress;
     }
 
     [[nodiscard]] uint32_t getSize() const {
-        return size;
+        return mSize;
     }
 
 private:
-    std::string name;
-    void *address;
-    uint32_t size;
+    std::string mName;
+    void *mAddress;
+    uint32_t mSize;
 };

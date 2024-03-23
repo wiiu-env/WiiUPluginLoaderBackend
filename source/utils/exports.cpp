@@ -74,7 +74,10 @@ extern "C" PluginBackendApiErrorType WUPSLoadPluginAsData(WUPSBackendGetPluginIn
         return PLUGIN_BACKEND_API_ERROR_FAILED_ALLOC;
     } else {
         *out = pluginData->getHandle();
-        gLoadedData.insert(std::move(pluginData));
+        {
+            std::lock_guard lockLoadedData(gLoadedDataMutex);
+            gLoadedData.insert(std::move(pluginData));
+        }
     }
 
     return PLUGIN_BACKEND_API_ERROR_NONE;

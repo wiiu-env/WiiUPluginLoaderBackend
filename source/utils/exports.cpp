@@ -47,7 +47,7 @@ extern "C" PluginBackendApiErrorType WUPSLoadAndLinkByDataHandle(const wups_back
 extern "C" PluginBackendApiErrorType WUPSDeletePluginData(const wups_backend_plugin_data_handle *plugin_data_handle_list, uint32_t plugin_data_handle_list_size) {
     if (plugin_data_handle_list != nullptr && plugin_data_handle_list_size != 0) {
         for (auto &handle : std::span(plugin_data_handle_list, plugin_data_handle_list_size)) {
-            if (!remove_locked_first_if(gLoadedDataMutex, gLoadedData, [handle](auto &cur) { return cur->getHandle() == handle; })) {
+            if (!remove_locked_first_if(gLoadedDataMutex, gLoadedData, [&handle](auto &cur) { return cur->getHandle() == handle; })) {
                 DEBUG_FUNCTION_LINE_ERR("Failed to delete plugin data by handle %08X", handle);
             }
         }

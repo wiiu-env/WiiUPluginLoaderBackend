@@ -28,7 +28,7 @@ namespace WUPSConfigAPIBackend {
     namespace Intern {
         WUPSConfig *GetConfigByHandle(WUPSConfigHandle handle) {
             std::lock_guard lock(sConfigsMutex);
-            auto itr = std::find_if(sConfigs.begin(), sConfigs.end(), [handle](auto &cur) { return handle == cur.get(); });
+            auto itr = std::find_if(sConfigs.begin(), sConfigs.end(), [&handle](auto &cur) { return handle == cur.get(); });
             if (itr == sConfigs.end()) {
                 return nullptr;
             }
@@ -36,7 +36,7 @@ namespace WUPSConfigAPIBackend {
         }
 
         std::unique_ptr<WUPSConfig> PopConfigByHandle(WUPSConfigHandle handle) {
-            return pop_locked_first_if(sConfigsMutex, sConfigs, [handle](auto &cur) { return handle == cur.get(); });
+            return pop_locked_first_if(sConfigsMutex, sConfigs, [&handle](auto &cur) { return handle == cur.get(); });
         }
 
         static WUPSConfigCategory *GetCategoryByHandleRecursive(WUPSConfigCategory *category, WUPSConfigCategoryHandle handle) {
@@ -54,7 +54,7 @@ namespace WUPSConfigAPIBackend {
 
         WUPSConfigCategory *GetCategoryByHandle(WUPSConfigCategoryHandle handle, bool checkRecursive) {
             std::lock_guard lock(sConfigCategoryMutex);
-            auto itr = std::find_if(sConfigCategories.begin(), sConfigCategories.end(), [handle](auto &cur) { return handle == cur.get(); });
+            auto itr = std::find_if(sConfigCategories.begin(), sConfigCategories.end(), [&handle](auto &cur) { return handle == cur.get(); });
             if (itr == sConfigCategories.end()) {
                 if (checkRecursive) {
                     std::lock_guard config_lock(sConfigsMutex);
@@ -72,12 +72,12 @@ namespace WUPSConfigAPIBackend {
 
 
         std::unique_ptr<WUPSConfigCategory> PopCategoryByHandle(WUPSConfigCategoryHandle handle) {
-            return pop_locked_first_if(sConfigCategoryMutex, sConfigCategories, [handle](auto &cur) { return handle == cur.get(); });
+            return pop_locked_first_if(sConfigCategoryMutex, sConfigCategories, [&handle](auto &cur) { return handle == cur.get(); });
         }
 
         WUPSConfigItem *GetItemByHandle(WUPSConfigItemHandle handle) {
             std::lock_guard lock(sConfigItemsMutex);
-            auto itr = std::find_if(sConfigItems.begin(), sConfigItems.end(), [handle](auto &cur) { return handle == cur.get(); });
+            auto itr = std::find_if(sConfigItems.begin(), sConfigItems.end(), [&handle](auto &cur) { return handle == cur.get(); });
             if (itr == sConfigItems.end()) {
                 return nullptr;
             }
@@ -85,7 +85,7 @@ namespace WUPSConfigAPIBackend {
         }
 
         std::unique_ptr<WUPSConfigItem> PopItemByHandle(WUPSConfigItemHandle handle) {
-            return pop_locked_first_if(sConfigItemsMutex, sConfigItems, [handle](auto &cur) { return handle == cur.get(); });
+            return pop_locked_first_if(sConfigItemsMutex, sConfigItems, [&handle](auto &cur) { return handle == cur.get(); });
         }
 
         WUPSConfigAPIStatus CreateConfig(const char *name, WUPSConfigHandle *out) {
@@ -184,11 +184,11 @@ namespace WUPSConfigAPIBackend {
                 return WUPSCONFIG_API_RESULT_INVALID_ARGUMENT;
             }
 
-            if (!remove_locked_first_if(sConfigCategoryMutex, sConfigCategories, [handle](auto &cur) { return handle == cur.get(); })) {
+            if (!remove_locked_first_if(sConfigCategoryMutex, sConfigCategories, [&handle](auto &cur) { return handle == cur.get(); })) {
                 {
                     // Ignore any attempts to destroy to create root item.
                     std::lock_guard lock(sConfigsMutex);
-                    if (std::any_of(sConfigs.begin(), sConfigs.end(), [handle](auto &cur) { return handle == cur.get(); })) {
+                    if (std::any_of(sConfigs.begin(), sConfigs.end(), [&handle](auto &cur) { return handle == cur.get(); })) {
                         return WUPSCONFIG_API_RESULT_SUCCESS;
                     }
                 }
@@ -295,7 +295,7 @@ namespace WUPSConfigAPIBackend {
                 return WUPSCONFIG_API_RESULT_INVALID_ARGUMENT;
             }
 
-            if (!remove_locked_first_if(sConfigItemsMutex, sConfigItems, [handle](auto &cur) { return cur.get() == handle; })) {
+            if (!remove_locked_first_if(sConfigItemsMutex, sConfigItems, [&handle](auto &cur) { return cur.get() == handle; })) {
                 DEBUG_FUNCTION_LINE_WARN("Failed to destroy WUPSConfigItem (handle: \"%08X\")", handle);
                 return WUPSCONFIG_API_RESULT_NOT_FOUND;
             }

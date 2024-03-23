@@ -11,7 +11,7 @@
 #include <memory>
 #include <string>
 namespace StorageUtils {
-    std::forward_list<std::shared_ptr<StorageItemRoot>> gStorage;
+    std::forward_list<StorageItemRoot> gStorage;
     std::mutex gStorageMutex;
 
     namespace Helper {
@@ -152,9 +152,9 @@ namespace StorageUtils {
         }
 
         static StorageItemRoot *getRootItem(wups_storage_root_item root) {
-            for (const auto &cur : gStorage) {
-                if (cur->getHandle() == (uint32_t) root) {
-                    return cur.get();
+            for (auto &cur : gStorage) {
+                if (cur.getHandle() == (uint32_t) root) {
+                    return &cur;
                 }
             }
 
@@ -212,15 +212,15 @@ namespace StorageUtils {
                     storage = make_unique_nothrow<StorageItemRoot>(plugin_id);
                 }
             }
-            rootItem = *storage;
+            rootItem = std::move(*storage);
             return WUPS_STORAGE_ERROR_SUCCESS;
         }
 
         static WUPSStorageError WriteStorageToSD(wups_storage_root_item root, bool forceSave) {
-            std::shared_ptr<StorageItemRoot> rootItem;
+            const StorageItemRoot *rootItem = nullptr;
             for (const auto &cur : gStorage) {
-                if (cur->getHandle() == (uint32_t) root) {
-                    rootItem = cur;
+                if (cur.getHandle() == (uint32_t) root) {
+                    rootItem = &cur;
                     break;
                 }
             }
@@ -272,7 +272,7 @@ namespace StorageUtils {
         }
 
         static StorageItem *createOrGetItem(wups_storage_root_item root, wups_storage_item parent, const char *key, WUPSStorageError &error) {
-            const auto subItem = getSubItem(root, parent);
+            auto subItem = getSubItem(root, parent);
             if (!subItem) {
                 error = WUPS_STORAGE_ERROR_NOT_FOUND;
                 return {};
@@ -400,21 +400,18 @@ namespace StorageUtils {
     namespace API {
         namespace Internal {
             WUPSStorageError OpenStorage(std::string_view plugin_id, wups_storage_root_item &outItem) {
-                std::unique_ptr<StorageItemRoot> root = make_unique_nothrow<StorageItemRoot>(plugin_id);
-                if (!root) {
-                    return WUPS_STORAGE_ERROR_MALLOC_FAILED;
-                }
+                StorageItemRoot root(plugin_id);
 
-                WUPSStorageError err = Helper::LoadFromFile(plugin_id, *root);
+                WUPSStorageError err = Helper::LoadFromFile(plugin_id, root);
                 if (err == WUPS_STORAGE_ERROR_NOT_FOUND) {
                     // Create new clean StorageItemRoot if no existing storage was found
-                    root = make_unique_nothrow<StorageItemRoot>(plugin_id);
+                    root = StorageItemRoot(plugin_id);
                 } else if (err != WUPS_STORAGE_ERROR_SUCCESS) {
                     // Return on any other error
                     return err;
                 }
 
-                outItem = (wups_storage_root_item) root->getHandle();
+                outItem = (wups_storage_root_item) root.getHandle();
                 {
                     std::lock_guard lock(gStorageMutex);
                     gStorage.push_front(std::move(root));
@@ -429,7 +426,7 @@ namespace StorageUtils {
                 auto res = StorageUtils::Helper::WriteStorageToSD(root, false);
                 // TODO: handle write error?
 
-                if (!remove_locked_first_if(gStorageMutex, gStorage, [root](auto &cur) { return cur->getHandle() == (uint32_t) root; })) {
+                if (!remove_locked_first_if(gStorageMutex, gStorage, [root](auto &cur) { return cur.getHandle() == (uint32_t) root; })) {
                     DEBUG_FUNCTION_LINE_WARN("Failed to close storage: Not opened (\"%08X\")", root);
                     return WUPS_STORAGE_ERROR_NOT_FOUND;
                 }

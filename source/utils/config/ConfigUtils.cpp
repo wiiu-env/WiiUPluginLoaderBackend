@@ -134,7 +134,8 @@ void ConfigUtils::displayMenu() {
             WPAD_CHAN_2,
             WPAD_CHAN_3};
 
-    auto startTime = OSGetTime();
+    auto startTime      = OSGetTime();
+    bool skipFirstInput = true;
     while (true) {
         baseInput.reset();
         if (vpadInput.update(1280, 720)) {
@@ -145,6 +146,12 @@ void ConfigUtils::displayMenu() {
                 baseInput.combine(wpadInput);
             }
         }
+
+        if (skipFirstInput) {
+            skipFirstInput     = false;
+            baseInput.lastData = baseInput.data;
+        }
+
         baseInput.process();
 
         WUPSConfigSimplePadData simpleData;

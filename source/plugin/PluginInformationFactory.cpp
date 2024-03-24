@@ -17,7 +17,6 @@
 
 #include "PluginInformationFactory.h"
 #include "../utils/ElfUtils.h"
-#include "../utils/utils.h"
 #include "utils/HeapMemoryFixedSize.h"
 #include "utils/wiiu_zlib.hpp"
 #include <coreinit/cache.h>
@@ -28,32 +27,28 @@
 
 using namespace ELFIO;
 
-std::unique_ptr<PluginInformation>
+std::optional<PluginInformation>
 PluginInformationFactory::load(const PluginData &pluginData, std::vector<relocation_trampoline_entry_t> &trampolineData, uint8_t trampolineId) {
     auto buffer = pluginData.getBuffer();
     if (buffer.empty()) {
         DEBUG_FUNCTION_LINE_ERR("Buffer was empty");
-        return nullptr;
+        return std::nullopt;
     }
     elfio reader(new wiiu_zlib);
 
     if (!reader.load(reinterpret_cast<const char *>(buffer.data()), buffer.size())) {
         DEBUG_FUNCTION_LINE_ERR("Can't process PluginData in elfio");
-        return nullptr;
+        return std::nullopt;
     }
 
-    auto pluginInfo = make_unique_nothrow<PluginInformation>();
-    if (!pluginInfo) {
-        DEBUG_FUNCTION_LINE_ERR("Failed to allocate PluginInformation");
-        return nullptr;
-    }
+    PluginInformation pluginInfo;
 
     uint32_t sec_num = reader.sections.size();
 
     auto destinationsData = make_unique_nothrow<uint8_t *[]>(sec_num);
     if (!destinationsData) {
         DEBUG_FUNCTION_LINE_ERR("Failed alloc memory for destinations array");
-        return nullptr;
+        return std::nullopt;
     }
     std::span<uint8_t *> destinations(destinationsData.get(), sec_num);
 
@@ -85,13 +80,13 @@ PluginInformationFactory::load(const PluginData &pluginData, std::vector<relocat
     HeapMemoryFixedSize text_data(text_size);
     if (!text_data) {
         DEBUG_FUNCTION_LINE_ERR("Failed to alloc memory for the .text section (%d bytes)", text_size);
-        return nullptr;
+        return std::nullopt;
     }
 
     HeapMemoryFixedSize data_data(data_size);
     if (!data_data) {
         DEBUG_FUNCTION_LINE_ERR("Failed to alloc memory for the .data section (%d bytes)", data_size);
-        return nullptr;
+        return std::nullopt;
     }
 
     for (uint32_t i = 0; i < sec_num; ++i) {
@@ -125,10 +120,10 @@ PluginInformationFactory::load(const PluginData &pluginData, std::vector<relocat
                 }
             } else if (address >= 0xC0000000) {
                 DEBUG_FUNCTION_LINE_ERR("Loading section from 0xC0000000 is NOT supported");
-                return nullptr;
+                return std::nullopt;
             } else {
                 DEBUG_FUNCTION_LINE_ERR("Unhandled case");
-                return nullptr;
+                return std::nullopt;
             }
 
             const char *p = psec->get_data();
@@ -140,14 +135,7 @@ PluginInformationFactory::load(const PluginData &pluginData, std::vector<relocat
                 DEBUG_FUNCTION_LINE_VERBOSE("Copy section %s %08X -> %08X (%d bytes)", psec->get_name().c_str(), p, destination, sectionSize);
                 memcpy((void *) destination, p, sectionSize);
             }
-
-            auto sectionInfo = make_unique_nothrow<SectionInfo>(psec->get_name(), destination, sectionSize);
-            if (!sectionInfo) {
-                DEBUG_FUNCTION_LINE_ERR("Failed to allocat SectionInfo");
-                return nullptr;
-            }
-
-            pluginInfo->addSectionInfo(std::move(sectionInfo));
+            pluginInfo.addSectionInfo(SectionInfo(psec->get_name(), destination, sectionSize));
             DEBUG_FUNCTION_LINE_VERBOSE("Saved %s section info. Location: %08X size: %08X", psec->get_name().c_str(), destination, sectionSize);
 
             totalSize += sectionSize;
@@ -164,14 +152,14 @@ PluginInformationFactory::load(const PluginData &pluginData, std::vector<relocat
             if (!linkSection(reader, psec->get_index(), (uint32_t) destinations[psec->get_index()], (uint32_t) text_data.data(), (uint32_t) data_data.data(), trampolineData,
                              trampolineId)) {
                 DEBUG_FUNCTION_LINE_ERR("linkSection failed");
-                return nullptr;
+                return std::nullopt;
             }
         }
     }
 
-    if (!PluginInformationFactory::addImportRelocationData(*pluginInfo, reader, destinations)) {
+    if (!PluginInformationFactory::addImportRelocationData(pluginInfo, reader, destinations)) {
         DEBUG_FUNCTION_LINE_ERR("addImportRelocationData failed");
-        return nullptr;
+        return std::nullopt;
     }
 
     DCFlushRange((void *) text_data.data(), text_data.size());
@@ -179,9 +167,9 @@ PluginInformationFactory::load(const PluginData &pluginData, std::vector<relocat
     DCFlushRange((void *) data_data.data(), data_data.size());
     ICInvalidateRange((void *) data_data.data(), data_data.size());
 
-    pluginInfo->setTrampolineId(trampolineId);
+    pluginInfo.setTrampolineId(trampolineId);
 
-    auto secInfo = pluginInfo->getSectionInfo(".wups.hooks");
+    auto secInfo = pluginInfo.getSectionInfo(".wups.hooks");
     if (secInfo && secInfo->getSize() > 0) {
         size_t entries_count = secInfo->getSize() / sizeof(wups_loader_hook_t);
         auto *entries        = (wups_loader_hook_t *) secInfo->getAddress();
@@ -189,17 +177,12 @@ PluginInformationFactory::load(const PluginData &pluginData, std::vector<relocat
             for (size_t j = 0; j < entries_count; j++) {
                 wups_loader_hook_t *hook = &entries[j];
                 DEBUG_FUNCTION_LINE_VERBOSE("Saving hook of plugin Type: %08X, target: %08X", hook->type, (void *) hook->target);
-                auto hookData = make_unique_nothrow<HookData>((void *) hook->target, hook->type);
-                if (!hookData) {
-                    DEBUG_FUNCTION_LINE_ERR("Failed to allocate HookData");
-                    return nullptr;
-                }
-                pluginInfo->addHookData(std::move(hookData));
+                pluginInfo.addHookData(HookData((void *) hook->target, hook->type));
             }
         }
     }
 
-    secInfo = pluginInfo->getSectionInfo(".wups.load");
+    secInfo = pluginInfo.getSectionInfo(".wups.load");
     if (secInfo && secInfo->getSize() > 0) {
         size_t entries_count = secInfo->getSize() / sizeof(wups_loader_entry_t);
         auto *entries        = (wups_loader_entry_t *) secInfo->getAddress();
@@ -210,19 +193,13 @@ PluginInformationFactory::load(const PluginData &pluginData, std::vector<relocat
                                             cur_function->_function.name /*,mPluginData->getPluginInformation()->getName().c_str()*/,
                                             cur_function->_function.physical_address, cur_function->_function.virtual_address, cur_function->_function.library, cur_function->_function.target,
                                             (void *) cur_function->_function.call_addr);
-
-                auto functionData = make_unique_nothrow<FunctionData>((void *) cur_function->_function.physical_address,
-                                                                      (void *) cur_function->_function.virtual_address,
-                                                                      cur_function->_function.name,
-                                                                      (function_replacement_library_type_t) cur_function->_function.library,
-                                                                      (void *) cur_function->_function.target,
-                                                                      (void *) cur_function->_function.call_addr,
-                                                                      (FunctionPatcherTargetProcess) cur_function->_function.targetProcess);
-                if (!functionData) {
-                    DEBUG_FUNCTION_LINE_ERR("Failed to allocate FunctionData");
-                    return nullptr;
-                }
-                pluginInfo->addFunctionData(std::move(functionData));
+                pluginInfo.addFunctionData(FunctionData((void *) cur_function->_function.physical_address,
+                                                        (void *) cur_function->_function.virtual_address,
+                                                        cur_function->_function.name,
+                                                        (function_replacement_library_type_t) cur_function->_function.library,
+                                                        (void *) cur_function->_function.target,
+                                                        (void *) cur_function->_function.call_addr,
+                                                        (FunctionPatcherTargetProcess) cur_function->_function.targetProcess));
             }
         }
     }
@@ -248,18 +225,13 @@ PluginInformationFactory::load(const PluginData &pluginData, std::vector<relocat
                         if (type == STT_FUNC) { // We only care about functions.
                             auto sectionVal  = reader.sections[section];
                             auto offsetVal   = value - sectionVal->get_address();
-                            auto sectionInfo = pluginInfo->getSectionInfo(sectionVal->get_name());
+                            auto sectionInfo = pluginInfo.getSectionInfo(sectionVal->get_name());
                             if (!sectionInfo) {
                                 continue;
                             }
 
-                            auto finalAddress       = offsetVal + sectionInfo->getAddress();
-                            auto functionSymbolData = make_unique_nothrow<FunctionSymbolData>(name, (void *) finalAddress, (uint32_t) size);
-                            if (!functionSymbolData) {
-                                DEBUG_FUNCTION_LINE_ERR("Failed to allocate FunctionSymbolData");
-                                return nullptr;
-                            }
-                            pluginInfo->addFunctionSymbolData(std::move(functionSymbolData));
+                            auto finalAddress = offsetVal + sectionInfo->getAddress();
+                            pluginInfo.addFunctionSymbolData(FunctionSymbolData(name, (void *) finalAddress, (uint32_t) size));
                         }
                     }
                 }
@@ -270,13 +242,13 @@ PluginInformationFactory::load(const PluginData &pluginData, std::vector<relocat
 
     if (totalSize > text_size + data_size) {
         DEBUG_FUNCTION_LINE_ERR("We didn't allocate enough memory!!");
-        return nullptr;
+        return std::nullopt;
     }
 
 
     // Save the addresses for the allocated memory. This way we can free it again :)
-    pluginInfo->mAllocatedDataMemoryAddress = std::move(data_data);
-    pluginInfo->mAllocatedTextMemoryAddress = std::move(text_data);
+    pluginInfo.mAllocatedDataMemoryAddress = std::move(data_data);
+    pluginInfo.mAllocatedTextMemoryAddress = std::move(text_data);
 
     return pluginInfo;
 }
@@ -340,18 +312,12 @@ bool PluginInformationFactory::addImportRelocationData(PluginInformation &plugin
                     return false;
                 }
 
-                auto relocationData = make_unique_nothrow<RelocationData>(type,
-                                                                          offset - 0x02000000,
-                                                                          addend,
-                                                                          (void *) (destinations[section_index]),
-                                                                          sym_name,
-                                                                          infoMap[sym_section_index]);
-                if (!relocationData) {
-                    DEBUG_FUNCTION_LINE_ERR("Failed to allocate RelocationData");
-                    return false;
-                }
-
-                pluginInfo.addRelocationData(std::move(relocationData));
+                pluginInfo.addRelocationData(RelocationData(type,
+                                                            offset - 0x02000000,
+                                                            addend,
+                                                            (void *) (destinations[section_index]),
+                                                            sym_name,
+                                                            infoMap[sym_section_index]));
             }
         }
     }

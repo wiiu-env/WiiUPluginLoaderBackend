@@ -47,7 +47,7 @@ extern "C" PluginBackendApiErrorType WUPSLoadAndLinkByDataHandle(const wups_back
 extern "C" PluginBackendApiErrorType WUPSDeletePluginData(const wups_backend_plugin_data_handle *plugin_data_handle_list, uint32_t plugin_data_handle_list_size) {
     if (plugin_data_handle_list != nullptr && plugin_data_handle_list_size != 0) {
         for (auto &handle : std::span(plugin_data_handle_list, plugin_data_handle_list_size)) {
-            if (!remove_locked_first_if(gLoadedDataMutex, gLoadedData, [handle](auto &cur) { return cur->getHandle() == handle; })) {
+            if (!remove_locked_first_if(gLoadedDataMutex, gLoadedData, [&handle](auto &cur) { return cur->getHandle() == handle; })) {
                 DEBUG_FUNCTION_LINE_ERR("Failed to delete plugin data by handle %08X", handle);
             }
         }
@@ -74,7 +74,10 @@ extern "C" PluginBackendApiErrorType WUPSLoadPluginAsData(WUPSBackendGetPluginIn
         return PLUGIN_BACKEND_API_ERROR_FAILED_ALLOC;
     } else {
         *out = pluginData->getHandle();
-        gLoadedData.insert(std::move(pluginData));
+        {
+            std::lock_guard lockLoadedData(gLoadedDataMutex);
+            gLoadedData.insert(std::move(pluginData));
+        }
     }
 
     return PLUGIN_BACKEND_API_ERROR_NONE;
@@ -94,7 +97,7 @@ extern "C" PluginBackendApiErrorType WUPSGetPluginMetaInformation(WUPSBackendGet
         return PLUGIN_BACKEND_API_ERROR_INVALID_ARG;
     }
 
-    std::unique_ptr<PluginMetaInformation> pluginInfo;
+    std::optional<PluginMetaInformation> pluginInfo;
     PluginParseErrors error = PLUGIN_PARSE_ERROR_UNKNOWN;
     if (inputType == PLUGIN_INFORMATION_INPUT_TYPE_PATH && path != nullptr) {
         pluginInfo = PluginMetaInformationFactory::loadPlugin(path, error);
@@ -133,8 +136,8 @@ extern "C" PluginBackendApiErrorType WUPSGetPluginDataForContainerHandles(const 
         auto handle = plugin_container_handle_list[i];
         bool found  = false;
         for (const auto &curContainer : gLoadedPlugins) {
-            if (curContainer->getHandle() == handle) {
-                auto pluginData     = curContainer->getPluginDataCopy();
+            if (curContainer.getHandle() == handle) {
+                auto pluginData     = curContainer.getPluginDataCopy();
                 plugin_data_list[i] = (uint32_t) pluginData->getHandle();
                 gLoadedData.insert(std::move(pluginData));
                 found = true;
@@ -157,8 +160,8 @@ extern "C" PluginBackendApiErrorType WUPSGetMetaInformation(const wups_backend_p
             auto handle = plugin_container_handle_list[i];
             bool found  = false;
             for (const auto &curContainer : gLoadedPlugins) {
-                if (curContainer->getHandle() == handle) {
-                    const auto &metaInfo = curContainer->getMetaInformation();
+                if (curContainer.getHandle() == handle) {
+                    const auto &metaInfo = curContainer.getMetaInformation();
 
                     plugin_information_list[i].plugin_information_version = WUPS_BACKEND_PLUGIN_INFORMATION_VERSION;
                     strncpy(plugin_information_list[i].storageId, metaInfo.getStorageId().c_str(), sizeof(plugin_information_list[i].storageId) - 1);
@@ -193,7 +196,7 @@ extern "C" PluginBackendApiErrorType WUPSGetLoadedPlugins(wups_backend_plugin_co
     uint32_t counter            = 0;
     for (const auto &plugin : gLoadedPlugins) {
         if (counter < buffer_size) {
-            io_handles[counter] = plugin->getHandle();
+            io_handles[counter] = plugin.getHandle();
             counter++;
         } else {
             break;
@@ -242,9 +245,9 @@ extern "C" PluginBackendApiErrorType WUPSGetSectionInformationForPlugin(const wu
     if (handle != 0 && plugin_section_list != nullptr && buffer_size != 0) {
         bool found = false;
         for (const auto &curContainer : gLoadedPlugins) {
-            if (curContainer->getHandle() == handle) {
+            if (curContainer.getHandle() == handle) {
                 found                       = true;
-                const auto &sectionInfoList = curContainer->getPluginInformation().getSectionInfoList();
+                const auto &sectionInfoList = curContainer.getPluginInformation().getSectionInfoList();
 
                 uint32_t offset = 0;
                 for (auto const &[key, sectionInfo] : sectionInfoList) {
@@ -252,9 +255,9 @@ extern "C" PluginBackendApiErrorType WUPSGetSectionInformationForPlugin(const wu
                         break;
                     }
                     plugin_section_list[offset].plugin_section_info_version = WUPS_BACKEND_PLUGIN_SECTION_INFORMATION_VERSION;
-                    strncpy(plugin_section_list[offset].name, sectionInfo->getName().c_str(), sizeof(plugin_section_list[offset].name) - 1);
-                    plugin_section_list[offset].address = (void *) sectionInfo->getAddress();
-                    plugin_section_list[offset].size    = sectionInfo->getSize();
+                    strncpy(plugin_section_list[offset].name, sectionInfo.getName().c_str(), sizeof(plugin_section_list[offset].name) - 1);
+                    plugin_section_list[offset].address = (void *) sectionInfo.getAddress();
+                    plugin_section_list[offset].size    = sectionInfo.getSize();
                     offset++;
                 }
                 if (out_count != nullptr) {
@@ -286,9 +289,9 @@ extern "C" PluginBackendApiErrorType WUPSGetSectionMemoryAddresses(wups_backend_
         return PLUGIN_BACKEND_API_ERROR_INVALID_ARG;
     }
     for (const auto &curContainer : gLoadedPlugins) {
-        if (curContainer->getHandle() == handle) {
-            *textAddress = (void *) curContainer->getPluginInformation().getTextMemory().data();
-            *dataAddress = (void *) curContainer->getPluginInformation().getDataMemory().data();
+        if (curContainer.getHandle() == handle) {
+            *textAddress = (void *) curContainer.getPluginInformation().getTextMemory().data();
+            *dataAddress = (void *) curContainer.getPluginInformation().getDataMemory().data();
             return PLUGIN_BACKEND_API_ERROR_NONE;
         }
     }

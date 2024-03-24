@@ -34,99 +34,60 @@
 #include <vector>
 
 struct FunctionSymbolDataComparator {
-    bool operator()(const std::unique_ptr<FunctionSymbolData> &lhs,
-                    const std::unique_ptr<FunctionSymbolData> &rhs) const {
-        return *lhs < *rhs;
+    bool operator()(const FunctionSymbolData &lhs,
+                    const FunctionSymbolData &rhs) const {
+        return lhs < rhs;
     }
 };
 
 class PluginInformation {
 public:
-    void addHookData(std::unique_ptr<HookData> hook_data) {
-        mHookDataList.push_back(std::move(hook_data));
-    }
+    PluginInformation(const PluginInformation &) = delete;
 
-    [[nodiscard]] const std::vector<std::unique_ptr<HookData>> &getHookDataList() const {
-        return mHookDataList;
-    }
+    PluginInformation(PluginInformation &&src);
 
-    void addFunctionData(std::unique_ptr<FunctionData> function_data) {
-        mFunctionDataList.push_back(std::move(function_data));
-    }
+    PluginInformation &operator=(PluginInformation &&src);
 
-    [[nodiscard]] const std::vector<std::unique_ptr<FunctionData>> &getFunctionDataList() const {
-        return mFunctionDataList;
-    }
+    [[nodiscard]] const std::vector<HookData> &getHookDataList() const;
 
-    void addRelocationData(std::unique_ptr<RelocationData> relocation_data) {
-        mRelocationDataList.push_back(std::move(relocation_data));
-    }
+    [[nodiscard]] const std::vector<FunctionData> &getFunctionDataList() const;
 
-    [[nodiscard]] const std::vector<std::unique_ptr<RelocationData>> &getRelocationDataList() const {
-        return mRelocationDataList;
-    }
+    [[nodiscard]] std::vector<FunctionData> &getFunctionDataList();
 
-    void addFunctionSymbolData(std::unique_ptr<FunctionSymbolData> symbol_data) {
-        mSymbolDataList.insert(std::move(symbol_data));
-    }
+    [[nodiscard]] const std::vector<RelocationData> &getRelocationDataList() const;
 
-    void addSectionInfo(std::unique_ptr<SectionInfo> sectionInfo) {
-        mSectionInfoList[sectionInfo->getName()] = std::move(sectionInfo);
-    }
+    [[nodiscard]] const std::map<std::string, SectionInfo> &getSectionInfoList() const;
 
-    [[nodiscard]] const std::map<std::string, std::unique_ptr<SectionInfo>> &getSectionInfoList() const {
-        return mSectionInfoList;
-    }
+    [[nodiscard]] std::optional<SectionInfo> getSectionInfo(const std::string &sectionName) const;
 
-    [[nodiscard]] std::optional<SectionInfo> getSectionInfo(const std::string &sectionName) const {
-        if (getSectionInfoList().contains(sectionName)) {
-            return *mSectionInfoList.at(sectionName);
-        }
-        return std::nullopt;
-    }
+    [[nodiscard]] uint8_t getTrampolineId() const;
 
-    void setTrampolineId(uint8_t trampolineId) {
-        this->mTrampolineId = trampolineId;
-    }
+    [[nodiscard]] const FunctionSymbolData *getNearestFunctionSymbolData(uint32_t address) const;
 
-    [[nodiscard]] uint8_t getTrampolineId() const {
-        return mTrampolineId;
-    }
+    [[nodiscard]] const HeapMemoryFixedSize &getTextMemory() const;
 
-    [[nodiscard]] FunctionSymbolData *getNearestFunctionSymbolData(uint32_t address) const {
-        FunctionSymbolData *result = nullptr;
-
-        bool foundHit = false;
-        for (auto &cur : mSymbolDataList) {
-            if (foundHit && address < (uint32_t) cur->getAddress()) {
-                break;
-            }
-            if (address >= (uint32_t) cur->getAddress()) {
-                result   = cur.get();
-                foundHit = true;
-            }
-        }
-        if (!foundHit) {
-            return nullptr;
-        }
-
-        return result;
-    }
-
-    [[nodiscard]] const HeapMemoryFixedSize &getTextMemory() const {
-        return mAllocatedTextMemoryAddress;
-    }
-
-    [[nodiscard]] const HeapMemoryFixedSize &getDataMemory() const {
-        return mAllocatedDataMemoryAddress;
-    }
+    [[nodiscard]] const HeapMemoryFixedSize &getDataMemory() const;
 
 private:
-    std::vector<std::unique_ptr<HookData>> mHookDataList;
-    std::vector<std::unique_ptr<FunctionData>> mFunctionDataList;
-    std::vector<std::unique_ptr<RelocationData>> mRelocationDataList;
-    std::set<std::unique_ptr<FunctionSymbolData>, FunctionSymbolDataComparator> mSymbolDataList;
-    std::map<std::string, std::unique_ptr<SectionInfo>> mSectionInfoList;
+    PluginInformation() = default;
+
+    void addHookData(HookData hook_data);
+
+    void addFunctionData(FunctionData function_data);
+
+    void addRelocationData(RelocationData relocation_data);
+
+    void addFunctionSymbolData(const FunctionSymbolData &symbol_data);
+
+    void addSectionInfo(const SectionInfo &sectionInfo);
+
+    void setTrampolineId(uint8_t trampolineId);
+
+    std::vector<HookData> mHookDataList;
+    std::vector<FunctionData> mFunctionDataList;
+    std::vector<RelocationData> mRelocationDataList;
+    std::set<FunctionSymbolData, FunctionSymbolDataComparator> mSymbolDataList;
+    std::map<std::string, SectionInfo> mSectionInfoList;
 
     uint8_t mTrampolineId = 0;
 

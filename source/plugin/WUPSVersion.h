@@ -9,8 +9,6 @@ public:
                    (static_cast<uint64_t>(minor) << 16) |
                    static_cast<uint64_t>(revision)) {}
 
-    WUPSVersion(const WUPSVersion &other) = default;
-
     static std::optional<WUPSVersion> createFromString(const std::string &versionStr) {
         char *end;
         errno = 0; // Initialize errno before calling strtol

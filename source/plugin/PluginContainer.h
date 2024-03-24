@@ -28,69 +28,42 @@
 
 class PluginContainer {
 public:
-    PluginContainer(std::unique_ptr<PluginMetaInformation> metaInformation, std::unique_ptr<PluginInformation> pluginInformation, std::shared_ptr<PluginData> pluginData)
-        : mMetaInformation(std::move(metaInformation)),
-          mPluginInformation(std::move(pluginInformation)),
-          mPluginData(std::move(pluginData)) {
-    }
+    PluginContainer(PluginMetaInformation metaInformation, PluginInformation pluginInformation, std::shared_ptr<PluginData> pluginData);
 
-    [[nodiscard]] const PluginMetaInformation &getMetaInformation() const {
-        return *this->mMetaInformation;
-    }
 
-    [[nodiscard]] const PluginInformation &getPluginInformation() const {
-        return *this->mPluginInformation;
-    }
+    PluginContainer(const PluginContainer &) = delete;
 
-    [[nodiscard]] std::shared_ptr<PluginData> getPluginDataCopy() const {
-        return mPluginData;
-    }
 
-    [[nodiscard]] uint32_t getHandle() const {
-        return (uint32_t) this;
-    }
+    PluginContainer(PluginContainer &&src);
 
-    [[nodiscard]] const std::optional<PluginConfigData> &getConfigData() const {
-        return mPluginConfigData;
-    }
+    PluginContainer &operator=(PluginContainer &&src);
 
-    void setConfigData(const PluginConfigData &pluginConfigData) {
-        mPluginConfigData = pluginConfigData;
-    }
 
-    WUPSStorageError OpenStorage() {
-        if (getMetaInformation().getWUPSVersion() < WUPSVersion(0, 8, 0)) {
-            return WUPS_STORAGE_ERROR_SUCCESS;
-        }
-        auto &storageId = getMetaInformation().getStorageId();
-        if (storageId.empty()) {
-            return WUPS_STORAGE_ERROR_SUCCESS;
-        }
-        auto res = StorageUtils::API::Internal::OpenStorage(storageId, storageRootItem);
-        if (res != WUPS_STORAGE_ERROR_SUCCESS) {
-            storageRootItem = nullptr;
-        }
-        return res;
-    }
+    [[nodiscard]] const PluginMetaInformation &getMetaInformation() const;
 
-    WUPSStorageError CloseStorage() {
-        if (getMetaInformation().getWUPSVersion() < WUPSVersion(0, 8, 0)) {
-            return WUPS_STORAGE_ERROR_SUCCESS;
-        }
-        if (storageRootItem == nullptr) {
-            return WUPS_STORAGE_ERROR_SUCCESS;
-        }
-        return StorageUtils::API::Internal::CloseStorage(storageRootItem);
-    }
+    [[nodiscard]] const PluginInformation &getPluginInformation() const;
+    [[nodiscard]] PluginInformation &getPluginInformation();
+
+    [[nodiscard]] std::shared_ptr<PluginData> getPluginDataCopy() const;
+
+    [[nodiscard]] uint32_t getHandle() const;
+
+    [[nodiscard]] const std::optional<PluginConfigData> &getConfigData() const;
+
+    void setConfigData(const PluginConfigData &pluginConfigData);
+
+    WUPSStorageError OpenStorage();
+
+    WUPSStorageError CloseStorage();
 
     [[nodiscard]] wups_storage_root_item getStorageRootItem() const {
         return storageRootItem;
     }
 
 private:
-    const std::unique_ptr<PluginMetaInformation> mMetaInformation;
-    const std::unique_ptr<PluginInformation> mPluginInformation;
-    const std::shared_ptr<PluginData> mPluginData;
+    PluginMetaInformation mMetaInformation;
+    PluginInformation mPluginInformation;
+    std::shared_ptr<PluginData> mPluginData;
 
     std::optional<PluginConfigData> mPluginConfigData;
     wups_storage_root_item storageRootItem = nullptr;

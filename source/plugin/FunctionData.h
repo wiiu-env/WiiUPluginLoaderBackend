@@ -25,89 +25,27 @@ class FunctionData {
 
 public:
     FunctionData(void *paddress, void *vaddress, std::string_view name, function_replacement_library_type_t library, void *replaceAddr, void *replaceCall,
-                 FunctionPatcherTargetProcess targetProcess) {
-        this->paddress      = paddress;
-        this->vaddress      = vaddress;
-        this->name          = name;
-        this->library       = library;
-        this->targetProcess = targetProcess;
-        this->replaceAddr   = replaceAddr;
-        this->replaceCall   = replaceCall;
-    }
+                 FunctionPatcherTargetProcess targetProcess);
 
-    ~FunctionData() {
-        if (handle != 0) {
-            DEBUG_FUNCTION_LINE_WARN("Destroying FunctionData while it was still patched. This should never happen.");
-            RemovePatch();
-        }
-    }
+    ~FunctionData();
 
-    [[nodiscard]] const std::string &getName() const {
-        return this->name;
-    }
+    [[nodiscard]] const std::string &getName() const;
 
-    [[nodiscard]] function_replacement_library_type_t getLibrary() const {
-        return this->library;
-    }
+    [[maybe_unused]] [[nodiscard]] function_replacement_library_type_t getLibrary() const;
 
-    [[nodiscard]] const void *getPhysicalAddress() const {
-        return paddress;
-    }
+    [[maybe_unused]] [[nodiscard]] const void *getPhysicalAddress() const;
 
-    [[nodiscard]] const void *getVirtualAddress() const {
-        return vaddress;
-    }
+    [[maybe_unused]] [[nodiscard]] const void *getVirtualAddress() const;
 
-    [[nodiscard]] const void *getReplaceAddress() const {
-        return replaceAddr;
-    }
+    [[maybe_unused]] [[nodiscard]] const void *getReplaceAddress() const;
 
-    [[nodiscard]] const void *getReplaceCall() const {
-        return replaceCall;
-    }
+    [[maybe_unused]] [[nodiscard]] const void *getReplaceCall() const;
 
-    [[nodiscard]] FunctionPatcherTargetProcess getTargetProcess() const {
-        return targetProcess;
-    }
+    [[maybe_unused]] [[nodiscard]] FunctionPatcherTargetProcess getTargetProcess() const;
 
-    bool AddPatch() {
-        if (handle == 0) {
-            function_replacement_data_t functionData = {
-                    .version       = FUNCTION_REPLACEMENT_DATA_STRUCT_VERSION,
-                    .type          = FUNCTION_PATCHER_REPLACE_BY_LIB_OR_ADDRESS,
-                    .physicalAddr  = reinterpret_cast<uint32_t>(this->paddress),
-                    .virtualAddr   = reinterpret_cast<uint32_t>(this->vaddress),
-                    .replaceAddr   = reinterpret_cast<uint32_t>(this->replaceAddr),
-                    .replaceCall   = static_cast<uint32_t *>(this->replaceCall),
-                    .targetProcess = this->targetProcess,
-                    .ReplaceInRPL  = {
-                             .function_name = this->name.c_str(),
-                             .library       = this->library,
-                    }};
+    bool AddPatch();
 
-            if (FunctionPatcher_AddFunctionPatch(&functionData, &handle, nullptr) != FUNCTION_PATCHER_RESULT_SUCCESS) {
-                DEBUG_FUNCTION_LINE_ERR("Failed to add patch for function (\"%s\" PA:%08X VA:%08X)", this->name.c_str(), this->paddress, this->vaddress);
-                return false;
-            }
-        } else {
-            DEBUG_FUNCTION_LINE("Function patch has already been added.");
-        }
-        return true;
-    }
-
-    bool RemovePatch() {
-        if (handle != 0) {
-            if (FunctionPatcher_RemoveFunctionPatch(handle) != FUNCTION_PATCHER_RESULT_SUCCESS) {
-                DEBUG_FUNCTION_LINE_ERR("Failed to remove patch for function");
-                return false;
-            }
-            handle = 0;
-        } else {
-            DEBUG_FUNCTION_LINE_VERBOSE("Was not patched.");
-        }
-
-        return true;
-    }
+    bool RemovePatch();
 
 private:
     void *paddress = nullptr;

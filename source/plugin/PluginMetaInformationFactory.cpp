@@ -22,11 +22,11 @@
 #include "utils/wiiu_zlib.hpp"
 #include <memory>
 
-std::unique_ptr<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(const PluginData &pluginData, PluginParseErrors &error) {
+std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(const PluginData &pluginData, PluginParseErrors &error) {
     return loadPlugin(pluginData.getBuffer(), error);
 }
 
-std::unique_ptr<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(std::string_view filePath, PluginParseErrors &error) {
+std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(std::string_view filePath, PluginParseErrors &error) {
     std::vector<uint8_t> buffer;
     if (FSUtils::LoadFileToMem(filePath, buffer) < 0) {
         DEBUG_FUNCTION_LINE_ERR("Failed to load file to memory");
@@ -36,7 +36,7 @@ std::unique_ptr<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(
     return loadPlugin(buffer, error);
 }
 
-std::unique_ptr<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(std::span<const uint8_t> buffer, PluginParseErrors &error) {
+std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(std::span<const uint8_t> buffer, PluginParseErrors &error) {
     if (buffer.empty()) {
         error = PLUGIN_PARSE_ERROR_BUFFER_EMPTY;
         DEBUG_FUNCTION_LINE_ERR("Buffer is empty");
@@ -47,12 +47,12 @@ std::unique_ptr<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(
     if (!reader.load(reinterpret_cast<const char *>(buffer.data()), buffer.size())) {
         error = PLUGIN_PARSE_ERROR_ELFIO_PARSE_FAILED;
         DEBUG_FUNCTION_LINE_ERR("Can't find or process ELF file");
-        return nullptr;
+        return {};
     }
 
     size_t pluginSize = 0;
 
-    auto pluginInfo = std::unique_ptr<PluginMetaInformation>(new PluginMetaInformation);
+    PluginMetaInformation pluginInfo;
 
     uint32_t sec_num = reader.sections.size();
 
@@ -89,28 +89,28 @@ std::unique_ptr<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(
                     std::string value(curEntry + firstFound + 1);
 
                     if (key == "name") {
-                        pluginInfo->setName(value);
+                        pluginInfo.setName(value);
                     } else if (key == "author") {
-                        pluginInfo->setAuthor(value);
+                        pluginInfo.setAuthor(value);
                     } else if (key == "version") {
-                        pluginInfo->setVersion(value);
+                        pluginInfo.setVersion(value);
                     } else if (key == "license") {
-                        pluginInfo->setLicense(value);
+                        pluginInfo.setLicense(value);
                     } else if (key == "buildtimestamp") {
-                        pluginInfo->setBuildTimestamp(value);
+                        pluginInfo.setBuildTimestamp(value);
                     } else if (key == "description") {
-                        pluginInfo->setDescription(value);
+                        pluginInfo.setDescription(value);
                     } else if (key == "storage_id") {
-                        pluginInfo->setStorageId(value);
+                        pluginInfo.setStorageId(value);
                     } else if (key == "wups") {
                         if (value == "0.7.1") {
-                            pluginInfo->setWUPSVersion(0, 7, 1);
+                            pluginInfo.setWUPSVersion(0, 7, 1);
                         } else if (value == "0.8.0") {
-                            pluginInfo->setWUPSVersion(0, 8, 0);
+                            pluginInfo.setWUPSVersion(0, 8, 0);
                         } else {
                             error = PLUGIN_PARSE_ERROR_INCOMPATIBLE_VERSION;
                             DEBUG_FUNCTION_LINE_ERR("Warning: Ignoring plugin - Unsupported WUPS version: %s.", value.c_str());
-                            return nullptr;
+                            return {};
                         }
                     }
                 }
@@ -119,7 +119,7 @@ std::unique_ptr<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(
         }
     }
 
-    pluginInfo->setSize(pluginSize);
+    pluginInfo.setSize(pluginSize);
 
     error = PLUGIN_PARSE_ERROR_NONE;
 

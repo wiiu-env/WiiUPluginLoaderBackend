@@ -9,22 +9,22 @@
 
 class PluginManagement {
 public:
-    static std::vector<std::unique_ptr<PluginContainer>> loadPlugins(
+    static std::vector<PluginContainer> loadPlugins(
             const std::set<std::shared_ptr<PluginData>> &pluginDataList,
             std::vector<relocation_trampoline_entry_t> &trampolineData);
 
-    static void callInitHooks(const std::vector<std::unique_ptr<PluginContainer>> &plugins);
+    static void callInitHooks(const std::vector<PluginContainer> &plugins);
 
-    static bool doRelocations(const std::vector<std::unique_ptr<PluginContainer>> &plugins,
+    static bool doRelocations(const std::vector<PluginContainer> &plugins,
                               std::vector<relocation_trampoline_entry_t> &trampData,
                               std::map<std::string, OSDynLoad_Module> &usedRPls);
 
-    static bool doRelocation(const std::vector<std::unique_ptr<RelocationData>> &relocData,
+    static bool doRelocation(const std::vector<RelocationData> &relocData,
                              std::vector<relocation_trampoline_entry_t> &trampData,
                              uint32_t trampolineID,
                              std::map<std::string, OSDynLoad_Module> &usedRPls);
 
-    static bool DoFunctionPatches(const std::vector<std::unique_ptr<PluginContainer>> &plugins);
+    static bool DoFunctionPatches(std::vector<PluginContainer> &plugins);
 
-    static bool RestoreFunctionPatches(const std::vector<std::unique_ptr<PluginContainer>> &plugins);
+    static bool RestoreFunctionPatches(std::vector<PluginContainer> &plugins);
 };

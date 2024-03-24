@@ -72,16 +72,16 @@ void ConfigUtils::displayMenu() {
     renderBasicScreen("Loading configs...");
 
     std::vector<ConfigDisplayItem> configs;
-    for (auto &plugin : gLoadedPlugins) {
+    for (const auto &plugin : gLoadedPlugins) {
         GeneralConfigInformation info;
-        info.name    = plugin->getMetaInformation().getName();
-        info.author  = plugin->getMetaInformation().getAuthor();
-        info.version = plugin->getMetaInformation().getVersion();
+        info.name    = plugin.getMetaInformation().getName();
+        info.author  = plugin.getMetaInformation().getAuthor();
+        info.version = plugin.getMetaInformation().getVersion();
 
         std::unique_ptr<WUPSConfigAPIBackend::WUPSConfig> config;
-        auto configData = plugin->getConfigData();
+        const auto configData = plugin.getConfigData();
         if (configData) {
-            auto configHandleOpt = configData->createConfig();
+            const auto configHandleOpt = configData->createConfig();
             if (configHandleOpt) {
                 WUPSConfigAPIStatus callbackResult = configData->CallMenuOpenendCallback(configHandleOpt.value());
                 config                             = WUPSConfigAPIBackend::Intern::PopConfigByHandle(configHandleOpt.value());
@@ -97,13 +97,13 @@ void ConfigUtils::displayMenu() {
                 DEBUG_FUNCTION_LINE_ERR("Failed to create config for plugin: \"%s\"", info.name.c_str());
             }
         } else {
-            for (const auto &hook : plugin->getPluginInformation().getHookDataList()) {
-                if (hook->getType() == WUPS_LOADER_HOOK_GET_CONFIG_DEPRECATED) {
-                    if (hook->getFunctionPointer() == nullptr) {
+            for (const auto &hook : plugin.getPluginInformation().getHookDataList()) {
+                if (hook.getType() == WUPS_LOADER_HOOK_GET_CONFIG_DEPRECATED) {
+                    if (hook.getFunctionPointer() == nullptr) {
                         DEBUG_FUNCTION_LINE_ERR("Hook had invalid ptr");
                         break;
                     }
-                    auto cur_config_handle = ((void *(*) ())((uint32_t *) hook->getFunctionPointer()))();
+                    auto cur_config_handle = ((void *(*) ())((uint32_t *) hook.getFunctionPointer()))();
                     if (cur_config_handle == nullptr) {
                         DEBUG_FUNCTION_LINE_WARN("Hook returned empty handle");
                         break;
@@ -183,12 +183,14 @@ void ConfigUtils::displayMenu() {
         }
     }
 
-    for (auto &plugin : gLoadedPlugins) {
-        auto configData = plugin->getConfigData();
+    for (const auto &plugin : gLoadedPlugins) {
+        const auto configData = plugin.getConfigData();
         if (configData) {
-            configData->CallMenuClosedCallback();
+            if (configData->CallMenuClosedCallback() == WUPSCONFIG_API_RESULT_MISSING_CALLBACK) {
+                DEBUG_FUNCTION_LINE_WARN("CallMenuClosedCallback is missing for %s", plugin.getMetaInformation().getName().c_str());
+            }
         } else {
-            CallHook(*plugin, WUPS_LOADER_HOOK_CONFIG_CLOSED_DEPRECATED);
+            CallHook(plugin, WUPS_LOADER_HOOK_CONFIG_CLOSED_DEPRECATED);
         }
     }
 

@@ -67,7 +67,7 @@ WUMS_APPLICATION_ENDS() {
     deinitLogging();
 }
 
-void CheckCleanupCallbackUsage(const std::vector<std::unique_ptr<PluginContainer>> &plugins);
+void CheckCleanupCallbackUsage(const std::vector<PluginContainer> &plugins);
 
 WUMS_APPLICATION_STARTS() {
     uint32_t upid = OSGetUPID();
@@ -132,9 +132,9 @@ WUMS_APPLICATION_STARTS() {
         PluginManagement::RestoreFunctionPatches(gLoadedPlugins);
 
         for (auto &plugin : gLoadedPlugins) {
-            WUPSStorageError err = plugin->CloseStorage();
+            WUPSStorageError err = plugin.CloseStorage();
             if (err != WUPS_STORAGE_ERROR_SUCCESS) {
-                DEBUG_FUNCTION_LINE_ERR("Failed to close storage for plugin: %s", plugin->getMetaInformation().getName().c_str());
+                DEBUG_FUNCTION_LINE_ERR("Failed to close storage for plugin: %s", plugin.getMetaInformation().getName().c_str());
             }
         }
 
@@ -174,9 +174,9 @@ WUMS_APPLICATION_STARTS() {
 
         if (initNeeded) {
             for (auto &plugin : gLoadedPlugins) {
-                WUPSStorageError err = plugin->OpenStorage();
+                WUPSStorageError err = plugin.OpenStorage();
                 if (err != WUPS_STORAGE_ERROR_SUCCESS) {
-                    DEBUG_FUNCTION_LINE_ERR("Failed to open storage for plugin: %s. (%s)", plugin->getMetaInformation().getName().c_str(), WUPSStorageAPI_GetStatusStr(err));
+                    DEBUG_FUNCTION_LINE_ERR("Failed to open storage for plugin: %s. (%s)", plugin.getMetaInformation().getName().c_str(), WUPSStorageAPI_GetStatusStr(err));
                 }
             }
             PluginManagement::callInitHooks(gLoadedPlugins);
@@ -186,16 +186,16 @@ WUMS_APPLICATION_STARTS() {
     }
 }
 
-void CheckCleanupCallbackUsage(const std::vector<std::unique_ptr<PluginContainer>> &plugins) {
+void CheckCleanupCallbackUsage(const std::vector<PluginContainer> &plugins) {
     auto *curThread = OSGetCurrentThread();
     for (const auto &cur : plugins) {
-        auto textSection = cur->getPluginInformation().getSectionInfo(".text");
+        auto textSection = cur.getPluginInformation().getSectionInfo(".text");
         if (!textSection) {
             continue;
         }
         uint32_t startAddress = textSection->getAddress();
         uint32_t endAddress   = textSection->getAddress() + textSection->getSize();
-        auto *pluginName      = cur->getMetaInformation().getName().c_str();
+        auto *pluginName      = cur.getMetaInformation().getName().c_str();
         {
             __OSLockScheduler(curThread);
             int state   = OSDisableInterrupts();

@@ -140,7 +140,7 @@ namespace WUPSConfigAPIBackend {
             return WUPSCONFIG_API_RESULT_INVALID_ARGUMENT;
         }
         for (auto &cur : gLoadedPlugins) {
-            if (cur->getHandle() == pluginIdentifier) {
+            if (cur.getHandle() == pluginIdentifier) {
                 if (options.version != 1) {
                     return WUPSCONFIG_API_RESULT_UNSUPPORTED_VERSION;
                 }
@@ -149,7 +149,7 @@ namespace WUPSConfigAPIBackend {
                     DEBUG_FUNCTION_LINE_WARN("Failed to create config data for %08X", pluginIdentifier);
                     return WUPSCONFIG_API_RESULT_UNSUPPORTED_VERSION;
                 }
-                cur->setConfigData(configDat.value());
+                cur.setConfigData(configDat.value());
                 return WUPSCONFIG_API_RESULT_SUCCESS;
             }
         }

@@ -36,9 +36,9 @@ enum PluginParseErrors {
 
 class PluginMetaInformationFactory {
 public:
-    static std::unique_ptr<PluginMetaInformation> loadPlugin(const PluginData &pluginData, PluginParseErrors &error);
+    static std::optional<PluginMetaInformation> loadPlugin(const PluginData &pluginData, PluginParseErrors &error);
 
-    static std::unique_ptr<PluginMetaInformation> loadPlugin(std::string_view filePath, PluginParseErrors &error);
+    static std::optional<PluginMetaInformation> loadPlugin(std::string_view filePath, PluginParseErrors &error);
 
-    static std::unique_ptr<PluginMetaInformation> loadPlugin(std::span<const uint8_t> buffer, PluginParseErrors &error);
+    static std::optional<PluginMetaInformation> loadPlugin(std::span<const uint8_t> buffer, PluginParseErrors &error);
 };

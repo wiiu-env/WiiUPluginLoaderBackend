@@ -35,18 +35,18 @@ static const char **hook_names = (const char *[]){
         "WUPS_LOADER_HOOK_INIT_STORAGE",
         "WUPS_LOADER_HOOK_INIT_CONFIG"};
 
-void CallHook(const std::vector<std::unique_ptr<PluginContainer>> &plugins, wups_loader_hook_type_t hook_type) {
+void CallHook(const std::vector<PluginContainer> &plugins, wups_loader_hook_type_t hook_type) {
     DEBUG_FUNCTION_LINE_VERBOSE("Calling hook of type %s [%d]", hook_names[hook_type], hook_type);
     for (const auto &plugin : plugins) {
-        CallHook(*plugin, hook_type);
+        CallHook(plugin, hook_type);
     }
 }
 
 void CallHook(const PluginContainer &plugin, wups_loader_hook_type_t hook_type) {
     for (const auto &hook : plugin.getPluginInformation().getHookDataList()) {
-        if (hook->getType() == hook_type) {
-            DEBUG_FUNCTION_LINE_VERBOSE("Calling hook of type %s for plugin %s [%d]", hook_names[hook->getType()], plugin.getMetaInformation().getName().c_str(), hook_type);
-            void *func_ptr = hook->getFunctionPointer();
+        if (hook.getType() == hook_type) {
+            DEBUG_FUNCTION_LINE_VERBOSE("Calling hook of type %s for plugin %s [%d]", hook_names[hook.getType()], plugin.getMetaInformation().getName().c_str(), hook_type);
+            void *func_ptr = hook.getFunctionPointer();
             if (func_ptr != nullptr) {
                 switch (hook_type) {
                     case WUPS_LOADER_HOOK_INIT_WUT_MALLOC:

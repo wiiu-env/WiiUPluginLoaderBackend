@@ -33,17 +33,11 @@ public:
     explicit PluginData(std::span<uint8_t> buffer, std::string_view source) : mBuffer(buffer.begin(), buffer.end()), mSource(source) {
     }
 
-    [[nodiscard]] uint32_t getHandle() const {
-        return (uint32_t) this;
-    }
+    [[nodiscard]] uint32_t getHandle() const;
 
-    [[nodiscard]] std::span<uint8_t const> getBuffer() const {
-        return mBuffer;
-    }
+    [[nodiscard]] std::span<uint8_t const> getBuffer() const;
 
-    [[nodiscard]] const std::string &getSource() const {
-        return mSource;
-    }
+    [[nodiscard]] const std::string &getSource() const;
 
 private:
     std::vector<uint8_t> mBuffer;

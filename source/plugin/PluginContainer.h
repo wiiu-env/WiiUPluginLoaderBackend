@@ -28,91 +28,33 @@
 
 class PluginContainer {
 public:
-    PluginContainer(PluginMetaInformation metaInformation, PluginInformation pluginInformation, std::shared_ptr<PluginData> pluginData)
-        : mMetaInformation(std::move(metaInformation)),
-          mPluginInformation(std::move(pluginInformation)),
-          mPluginData(std::move(pluginData)) {
-    }
+    PluginContainer(PluginMetaInformation metaInformation, PluginInformation pluginInformation, std::shared_ptr<PluginData> pluginData);
 
 
     PluginContainer(const PluginContainer &) = delete;
 
 
-    PluginContainer(PluginContainer &&src) : mMetaInformation(std::move(src.mMetaInformation)),
-                                             mPluginInformation(std::move(src.mPluginInformation)),
-                                             mPluginData(std::move(src.mPluginData)),
-                                             mPluginConfigData(std::move(src.mPluginConfigData)),
-                                             storageRootItem(src.storageRootItem)
+    PluginContainer(PluginContainer &&src);
 
-    {
-        src.storageRootItem = {};
-    }
-
-    PluginContainer &operator=(PluginContainer &&src) {
-        if (this != &src) {
-            this->mMetaInformation   = src.mMetaInformation;
-            this->mPluginInformation = std::move(src.mPluginInformation);
-            this->mPluginData        = std::move(src.mPluginData);
-            this->mPluginConfigData  = std::move(src.mPluginConfigData);
-            this->storageRootItem    = src.storageRootItem;
-
-            storageRootItem = nullptr;
-        }
-        return *this;
-    }
+    PluginContainer &operator=(PluginContainer &&src);
 
 
-    [[nodiscard]] const PluginMetaInformation &getMetaInformation() const {
-        return this->mMetaInformation;
-    }
+    [[nodiscard]] const PluginMetaInformation &getMetaInformation() const;
 
-    [[nodiscard]] const PluginInformation &getPluginInformation() const {
-        return this->mPluginInformation;
-    }
-    [[nodiscard]]  PluginInformation &getPluginInformation()  {
-        return this->mPluginInformation;
-    }
+    [[nodiscard]] const PluginInformation &getPluginInformation() const;
+    [[nodiscard]] PluginInformation &getPluginInformation();
 
-    [[nodiscard]] std::shared_ptr<PluginData> getPluginDataCopy() const {
-        return mPluginData;
-    }
+    [[nodiscard]] std::shared_ptr<PluginData> getPluginDataCopy() const;
 
-    [[nodiscard]] uint32_t getHandle() const {
-        return (uint32_t) this;
-    }
+    [[nodiscard]] uint32_t getHandle() const;
 
-    [[nodiscard]] const std::optional<PluginConfigData> &getConfigData() const {
-        return mPluginConfigData;
-    }
+    [[nodiscard]] const std::optional<PluginConfigData> &getConfigData() const;
 
-    void setConfigData(const PluginConfigData &pluginConfigData) {
-        mPluginConfigData = pluginConfigData;
-    }
+    void setConfigData(const PluginConfigData &pluginConfigData);
 
-    WUPSStorageError OpenStorage() {
-        if (getMetaInformation().getWUPSVersion() < WUPSVersion(0, 8, 0)) {
-            return WUPS_STORAGE_ERROR_SUCCESS;
-        }
-        auto &storageId = getMetaInformation().getStorageId();
-        if (storageId.empty()) {
-            return WUPS_STORAGE_ERROR_SUCCESS;
-        }
-        auto res = StorageUtils::API::Internal::OpenStorage(storageId, storageRootItem);
-        if (res != WUPS_STORAGE_ERROR_SUCCESS) {
-            storageRootItem = nullptr;
-        }
-        return res;
-    }
+    WUPSStorageError OpenStorage();
 
-    WUPSStorageError CloseStorage() {
-        if (getMetaInformation().getWUPSVersion() < WUPSVersion(0, 8, 0)) {
-            return WUPS_STORAGE_ERROR_SUCCESS;
-        }
-        if (storageRootItem == nullptr) {
-            return WUPS_STORAGE_ERROR_SUCCESS;
-        }
-        return StorageUtils::API::Internal::CloseStorage(storageRootItem);
-    }
+    WUPSStorageError CloseStorage();
 
     [[nodiscard]] wups_storage_root_item getStorageRootItem() const {
         return storageRootItem;

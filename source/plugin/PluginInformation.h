@@ -44,35 +44,21 @@ class PluginInformation {
 public:
     PluginInformation(const PluginInformation &) = delete;
 
-
     PluginInformation(PluginInformation &&src);
 
     PluginInformation &operator=(PluginInformation &&src);
 
-
-    void addHookData(HookData hook_data);
-
     [[nodiscard]] const std::vector<HookData> &getHookDataList() const;
-
-    void addFunctionData(FunctionData function_data);
 
     [[nodiscard]] const std::vector<FunctionData> &getFunctionDataList() const;
 
     [[nodiscard]] std::vector<FunctionData> &getFunctionDataList();
 
-    void addRelocationData(RelocationData relocation_data);
-
     [[nodiscard]] const std::vector<RelocationData> &getRelocationDataList() const;
-
-    void addFunctionSymbolData(const FunctionSymbolData &symbol_data);
-
-    void addSectionInfo(const SectionInfo &sectionInfo);
 
     [[nodiscard]] const std::map<std::string, SectionInfo> &getSectionInfoList() const;
 
     [[nodiscard]] std::optional<SectionInfo> getSectionInfo(const std::string &sectionName) const;
-
-    void setTrampolineId(uint8_t trampolineId);
 
     [[nodiscard]] uint8_t getTrampolineId() const;
 
@@ -84,6 +70,19 @@ public:
 
 private:
     PluginInformation() = default;
+
+    void addHookData(HookData hook_data);
+
+    void addFunctionData(FunctionData function_data);
+
+    void addRelocationData(RelocationData relocation_data);
+
+    void addFunctionSymbolData(const FunctionSymbolData &symbol_data);
+
+    void addSectionInfo(const SectionInfo &sectionInfo);
+
+    void setTrampolineId(uint8_t trampolineId);
+
     std::vector<HookData> mHookDataList;
     std::vector<FunctionData> mFunctionDataList;
     std::vector<RelocationData> mRelocationDataList;

@@ -3,7 +3,7 @@
 StoredBuffer gStoredTVBuffer  = {};
 StoredBuffer gStoredDRCBuffer = {};
 
-std::vector<std::unique_ptr<PluginContainer>> gLoadedPlugins;
+std::vector<PluginContainer> gLoadedPlugins;
 std::vector<relocation_trampoline_entry_t> gTrampData;
 
 std::set<std::shared_ptr<PluginData>> gLoadedData;

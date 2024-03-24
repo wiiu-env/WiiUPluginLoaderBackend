@@ -29,7 +29,7 @@
 
 class PluginInformationFactory {
 public:
-    static std::unique_ptr<PluginInformation>
+    static std::optional<PluginInformation>
     load(const PluginData &pluginData, std::vector<relocation_trampoline_entry_t> &trampolineData, uint8_t trampolineId);
 
     static bool

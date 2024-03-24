@@ -14,7 +14,7 @@ public:
                                                                         mClosedCallback(closedCallback) {
     }
 
-    std::optional<WUPSConfigHandle> createConfig() {
+    [[nodiscard]] std::optional<WUPSConfigHandle> createConfig() const{
         WUPSConfigHandle handle;
         if (WUPSConfigAPIBackend::Intern::CreateConfig(mName.c_str(), &handle) == WUPSCONFIG_API_RESULT_SUCCESS) {
             return handle;
@@ -22,7 +22,7 @@ public:
         return std::nullopt;
     }
 
-    WUPSConfigAPIStatus CallMenuOpenendCallback(WUPSConfigHandle config) {
+    [[nodiscard]] WUPSConfigAPIStatus CallMenuOpenendCallback(WUPSConfigHandle config) const {
         if (mOpenedCallback == nullptr) {
             return WUPSCONFIG_API_RESULT_MISSING_CALLBACK;
         }
@@ -32,7 +32,7 @@ public:
         return WUPSCONFIG_API_RESULT_SUCCESS;
     }
 
-    WUPSConfigAPIStatus CallMenuClosedCallback() {
+    [[nodiscard]] WUPSConfigAPIStatus CallMenuClosedCallback() const {
         if (mClosedCallback == nullptr) {
             return WUPSCONFIG_API_RESULT_MISSING_CALLBACK;
         }

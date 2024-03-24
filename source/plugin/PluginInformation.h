@@ -45,122 +45,45 @@ public:
     PluginInformation(const PluginInformation &) = delete;
 
 
-    PluginInformation(PluginInformation &&src) : mHookDataList(std::move(src.mHookDataList)),
-                                                 mFunctionDataList(std::move(src.mFunctionDataList)),
-                                                 mRelocationDataList(std::move(src.mRelocationDataList)),
-                                                 mSymbolDataList(std::move(src.mSymbolDataList)),
-                                                 mSectionInfoList(std::move(src.mSectionInfoList)),
-                                                 mTrampolineId(src.mTrampolineId),
-                                                 mAllocatedTextMemoryAddress(std::move(src.mAllocatedTextMemoryAddress)),
-                                                 mAllocatedDataMemoryAddress(std::move(src.mAllocatedDataMemoryAddress))
+    PluginInformation(PluginInformation &&src);
 
-    {
-        src.mTrampolineId = {};
-    }
-
-    PluginInformation &operator=(PluginInformation &&src) {
-        if (this != &src) {
-            this->mHookDataList               = std::move(src.mHookDataList);
-            this->mFunctionDataList           = std::move(src.mFunctionDataList);
-            this->mRelocationDataList         = std::move(src.mRelocationDataList);
-            this->mSymbolDataList             = std::move(src.mSymbolDataList);
-            this->mSectionInfoList            = std::move(src.mSectionInfoList);
-            this->mTrampolineId               = src.mTrampolineId;
-            this->mAllocatedTextMemoryAddress = std::move(src.mAllocatedTextMemoryAddress);
-            this->mAllocatedDataMemoryAddress = std::move(src.mAllocatedDataMemoryAddress);
-            src.mTrampolineId                 = {};
-        }
-        return *this;
-    }
+    PluginInformation &operator=(PluginInformation &&src);
 
 
-    void addHookData(HookData hook_data) {
-        mHookDataList.push_back(hook_data);
-    }
+    void addHookData(HookData hook_data);
 
-    [[nodiscard]] const std::vector<HookData> &getHookDataList() const {
-        return mHookDataList;
-    }
+    [[nodiscard]] const std::vector<HookData> &getHookDataList() const;
 
-    void addFunctionData(FunctionData function_data) {
-        mFunctionDataList.push_back(std::move(function_data));
-    }
+    void addFunctionData(FunctionData function_data);
 
-    [[nodiscard]] const std::vector<FunctionData> &getFunctionDataList() const {
-        return mFunctionDataList;
-    }
+    [[nodiscard]] const std::vector<FunctionData> &getFunctionDataList() const;
 
-    [[nodiscard]] std::vector<FunctionData> &getFunctionDataList() {
-        return mFunctionDataList;
-    }
+    [[nodiscard]] std::vector<FunctionData> &getFunctionDataList();
 
-    void addRelocationData(RelocationData relocation_data) {
-        mRelocationDataList.push_back(std::move(relocation_data));
-    }
+    void addRelocationData(RelocationData relocation_data);
 
-    [[nodiscard]] const std::vector<RelocationData> &getRelocationDataList() const {
-        return mRelocationDataList;
-    }
+    [[nodiscard]] const std::vector<RelocationData> &getRelocationDataList() const;
 
-    void addFunctionSymbolData(const FunctionSymbolData &symbol_data) {
-        mSymbolDataList.insert(symbol_data);
-    }
+    void addFunctionSymbolData(const FunctionSymbolData &symbol_data);
 
-    void addSectionInfo(const SectionInfo &sectionInfo) {
-        mSectionInfoList.insert(std::pair(sectionInfo.getName(), sectionInfo));
-    }
+    void addSectionInfo(const SectionInfo &sectionInfo);
 
-    [[nodiscard]] const std::map<std::string, SectionInfo> &getSectionInfoList() const {
-        return mSectionInfoList;
-    }
+    [[nodiscard]] const std::map<std::string, SectionInfo> &getSectionInfoList() const;
 
-    [[nodiscard]] std::optional<SectionInfo> getSectionInfo(const std::string &sectionName) const {
-        if (getSectionInfoList().contains(sectionName)) {
-            return mSectionInfoList.at(sectionName);
-        }
-        return std::nullopt;
-    }
+    [[nodiscard]] std::optional<SectionInfo> getSectionInfo(const std::string &sectionName) const;
 
-    void setTrampolineId(uint8_t trampolineId) {
-        this->mTrampolineId = trampolineId;
-    }
+    void setTrampolineId(uint8_t trampolineId);
 
-    [[nodiscard]] uint8_t getTrampolineId() const {
-        return mTrampolineId;
-    }
+    [[nodiscard]] uint8_t getTrampolineId() const;
 
-    [[nodiscard]] const FunctionSymbolData *getNearestFunctionSymbolData(uint32_t address) const {
-        const FunctionSymbolData *result = nullptr;
+    [[nodiscard]] const FunctionSymbolData *getNearestFunctionSymbolData(uint32_t address) const;
 
-        bool foundHit = false;
-        for (auto &cur : mSymbolDataList) {
-            if (foundHit && address < (uint32_t) cur.getAddress()) {
-                break;
-            }
-            if (address >= (uint32_t) cur.getAddress()) {
-                result   = &cur;
-                foundHit = true;
-            }
-        }
-        if (!foundHit) {
-            return nullptr;
-        }
+    [[nodiscard]] const HeapMemoryFixedSize &getTextMemory() const;
 
-        return result;
-    }
-
-    [[nodiscard]] const HeapMemoryFixedSize &getTextMemory() const {
-        return mAllocatedTextMemoryAddress;
-    }
-
-    [[nodiscard]] const HeapMemoryFixedSize &getDataMemory() const {
-        return mAllocatedDataMemoryAddress;
-    }
+    [[nodiscard]] const HeapMemoryFixedSize &getDataMemory() const;
 
 private:
-    PluginInformation(){
-
-    }
+    PluginInformation() = default;
     std::vector<HookData> mHookDataList;
     std::vector<FunctionData> mFunctionDataList;
     std::vector<RelocationData> mRelocationDataList;

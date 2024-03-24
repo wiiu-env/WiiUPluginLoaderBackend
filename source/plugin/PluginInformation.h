@@ -34,53 +34,89 @@
 #include <vector>
 
 struct FunctionSymbolDataComparator {
-    bool operator()(const std::unique_ptr<FunctionSymbolData> &lhs,
-                    const std::unique_ptr<FunctionSymbolData> &rhs) const {
-        return *lhs < *rhs;
+    bool operator()(const FunctionSymbolData &lhs,
+                    const FunctionSymbolData &rhs) const {
+        return lhs < rhs;
     }
 };
 
 class PluginInformation {
 public:
-    void addHookData(std::unique_ptr<HookData> hook_data) {
-        mHookDataList.push_back(std::move(hook_data));
+    PluginInformation(const PluginInformation &) = delete;
+
+
+    PluginInformation(PluginInformation &&src) : mHookDataList(std::move(src.mHookDataList)),
+                                                 mFunctionDataList(std::move(src.mFunctionDataList)),
+                                                 mRelocationDataList(std::move(src.mRelocationDataList)),
+                                                 mSymbolDataList(std::move(src.mSymbolDataList)),
+                                                 mSectionInfoList(std::move(src.mSectionInfoList)),
+                                                 mTrampolineId(src.mTrampolineId),
+                                                 mAllocatedTextMemoryAddress(std::move(src.mAllocatedTextMemoryAddress)),
+                                                 mAllocatedDataMemoryAddress(std::move(src.mAllocatedDataMemoryAddress))
+
+    {
+        src.mTrampolineId = {};
     }
 
-    [[nodiscard]] const std::vector<std::unique_ptr<HookData>> &getHookDataList() const {
+    PluginInformation &operator=(PluginInformation &&src) {
+        if (this != &src) {
+            this->mHookDataList               = std::move(src.mHookDataList);
+            this->mFunctionDataList           = std::move(src.mFunctionDataList);
+            this->mRelocationDataList         = std::move(src.mRelocationDataList);
+            this->mSymbolDataList             = std::move(src.mSymbolDataList);
+            this->mSectionInfoList            = std::move(src.mSectionInfoList);
+            this->mTrampolineId               = src.mTrampolineId;
+            this->mAllocatedTextMemoryAddress = std::move(src.mAllocatedTextMemoryAddress);
+            this->mAllocatedDataMemoryAddress = std::move(src.mAllocatedDataMemoryAddress);
+            src.mTrampolineId                 = {};
+        }
+        return *this;
+    }
+
+
+    void addHookData(HookData hook_data) {
+        mHookDataList.push_back(hook_data);
+    }
+
+    [[nodiscard]] const std::vector<HookData> &getHookDataList() const {
         return mHookDataList;
     }
 
-    void addFunctionData(std::unique_ptr<FunctionData> function_data) {
+    void addFunctionData(FunctionData function_data) {
         mFunctionDataList.push_back(std::move(function_data));
     }
 
-    [[nodiscard]] const std::vector<std::unique_ptr<FunctionData>> &getFunctionDataList() const {
+    [[nodiscard]] const std::vector<FunctionData> &getFunctionDataList() const {
         return mFunctionDataList;
     }
 
-    void addRelocationData(std::unique_ptr<RelocationData> relocation_data) {
+    [[nodiscard]] std::vector<FunctionData> &getFunctionDataList() {
+        return mFunctionDataList;
+    }
+
+    void addRelocationData(RelocationData relocation_data) {
         mRelocationDataList.push_back(std::move(relocation_data));
     }
 
-    [[nodiscard]] const std::vector<std::unique_ptr<RelocationData>> &getRelocationDataList() const {
+    [[nodiscard]] const std::vector<RelocationData> &getRelocationDataList() const {
         return mRelocationDataList;
     }
 
-    void addFunctionSymbolData(std::unique_ptr<FunctionSymbolData> symbol_data) {
-        mSymbolDataList.insert(std::move(symbol_data));
+    void addFunctionSymbolData(const FunctionSymbolData &symbol_data) {
+        mSymbolDataList.insert(symbol_data);
     }
 
-    void addSectionInfo(std::unique_ptr<SectionInfo> sectionInfo) {
-        mSectionInfoList[sectionInfo->getName()] = std::move(sectionInfo);
+    void addSectionInfo(const SectionInfo &sectionInfo) {
+        mSectionInfoList.insert(std::pair(sectionInfo.getName(), sectionInfo));
     }
 
-    [[nodiscard]] const std::map<std::string, std::unique_ptr<SectionInfo>> &getSectionInfoList() const {
+    [[nodiscard]] const std::map<std::string, SectionInfo> &getSectionInfoList() const {
         return mSectionInfoList;
     }
 
     [[nodiscard]] std::optional<SectionInfo> getSectionInfo(const std::string &sectionName) const {
         if (getSectionInfoList().contains(sectionName)) {
-            return *mSectionInfoList.at(sectionName);
+            return mSectionInfoList.at(sectionName);
         }
         return std::nullopt;
     }
@@ -93,16 +129,16 @@ public:
         return mTrampolineId;
     }
 
-    [[nodiscard]] FunctionSymbolData *getNearestFunctionSymbolData(uint32_t address) const {
-        FunctionSymbolData *result = nullptr;
+    [[nodiscard]] const FunctionSymbolData *getNearestFunctionSymbolData(uint32_t address) const {
+        const FunctionSymbolData *result = nullptr;
 
         bool foundHit = false;
         for (auto &cur : mSymbolDataList) {
-            if (foundHit && address < (uint32_t) cur->getAddress()) {
+            if (foundHit && address < (uint32_t) cur.getAddress()) {
                 break;
             }
-            if (address >= (uint32_t) cur->getAddress()) {
-                result   = cur.get();
+            if (address >= (uint32_t) cur.getAddress()) {
+                result   = &cur;
                 foundHit = true;
             }
         }
@@ -122,11 +158,14 @@ public:
     }
 
 private:
-    std::vector<std::unique_ptr<HookData>> mHookDataList;
-    std::vector<std::unique_ptr<FunctionData>> mFunctionDataList;
-    std::vector<std::unique_ptr<RelocationData>> mRelocationDataList;
-    std::set<std::unique_ptr<FunctionSymbolData>, FunctionSymbolDataComparator> mSymbolDataList;
-    std::map<std::string, std::unique_ptr<SectionInfo>> mSectionInfoList;
+    PluginInformation(){
+
+    }
+    std::vector<HookData> mHookDataList;
+    std::vector<FunctionData> mFunctionDataList;
+    std::vector<RelocationData> mRelocationDataList;
+    std::set<FunctionSymbolData, FunctionSymbolDataComparator> mSymbolDataList;
+    std::map<std::string, SectionInfo> mSectionInfoList;
 
     uint8_t mTrampolineId = 0;
 

@@ -23,8 +23,6 @@
 
 class PluginMetaInformation {
 public:
-    PluginMetaInformation(const PluginMetaInformation &other);
-
     [[nodiscard]] const std::string &getName() const {
         return name;
     }

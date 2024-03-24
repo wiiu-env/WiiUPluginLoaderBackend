@@ -28,18 +28,49 @@
 
 class PluginContainer {
 public:
-    PluginContainer(std::unique_ptr<PluginMetaInformation> metaInformation, std::unique_ptr<PluginInformation> pluginInformation, std::shared_ptr<PluginData> pluginData)
+    PluginContainer(PluginMetaInformation metaInformation, PluginInformation pluginInformation, std::shared_ptr<PluginData> pluginData)
         : mMetaInformation(std::move(metaInformation)),
           mPluginInformation(std::move(pluginInformation)),
           mPluginData(std::move(pluginData)) {
     }
 
+
+    PluginContainer(const PluginContainer &) = delete;
+
+
+    PluginContainer(PluginContainer &&src) : mMetaInformation(std::move(src.mMetaInformation)),
+                                             mPluginInformation(std::move(src.mPluginInformation)),
+                                             mPluginData(std::move(src.mPluginData)),
+                                             mPluginConfigData(std::move(src.mPluginConfigData)),
+                                             storageRootItem(src.storageRootItem)
+
+    {
+        src.storageRootItem = {};
+    }
+
+    PluginContainer &operator=(PluginContainer &&src) {
+        if (this != &src) {
+            this->mMetaInformation   = src.mMetaInformation;
+            this->mPluginInformation = std::move(src.mPluginInformation);
+            this->mPluginData        = std::move(src.mPluginData);
+            this->mPluginConfigData  = std::move(src.mPluginConfigData);
+            this->storageRootItem    = src.storageRootItem;
+
+            storageRootItem = nullptr;
+        }
+        return *this;
+    }
+
+
     [[nodiscard]] const PluginMetaInformation &getMetaInformation() const {
-        return *this->mMetaInformation;
+        return this->mMetaInformation;
     }
 
     [[nodiscard]] const PluginInformation &getPluginInformation() const {
-        return *this->mPluginInformation;
+        return this->mPluginInformation;
+    }
+    [[nodiscard]]  PluginInformation &getPluginInformation()  {
+        return this->mPluginInformation;
     }
 
     [[nodiscard]] std::shared_ptr<PluginData> getPluginDataCopy() const {
@@ -88,9 +119,9 @@ public:
     }
 
 private:
-    const std::unique_ptr<PluginMetaInformation> mMetaInformation;
-    const std::unique_ptr<PluginInformation> mPluginInformation;
-    const std::shared_ptr<PluginData> mPluginData;
+    PluginMetaInformation mMetaInformation;
+    PluginInformation mPluginInformation;
+    std::shared_ptr<PluginData> mPluginData;
 
     std::optional<PluginConfigData> mPluginConfigData;
     wups_storage_root_item storageRootItem = nullptr;

@@ -17,7 +17,7 @@ extern StoredBuffer gStoredDRCBuffer;
 
 #define TRAMP_DATA_SIZE 1024
 extern std::vector<relocation_trampoline_entry_t> gTrampData;
-extern std::vector<std::unique_ptr<PluginContainer>> gLoadedPlugins;
+extern std::vector<PluginContainer> gLoadedPlugins;
 
 extern std::set<std::shared_ptr<PluginData>> gLoadedData;
 extern std::set<std::shared_ptr<PluginData>> gLoadOnNextLaunch;

@@ -24,7 +24,7 @@ PluginContainer &PluginContainer::operator=(PluginContainer &&src) {
         this->mPluginConfigData  = std::move(src.mPluginConfigData);
         this->storageRootItem    = src.storageRootItem;
 
-        storageRootItem = nullptr;
+        src.storageRootItem = nullptr;
     }
     return *this;
 }

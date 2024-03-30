@@ -425,7 +425,7 @@ namespace StorageUtils {
                 auto res = StorageUtils::Helper::WriteStorageToSD(root, false);
                 // TODO: handle write error?
 
-                if (!remove_locked_first_if(gStorageMutex, gStorage, [&root](auto &cur) { return cur.getHandle() == (uint32_t) root; })) {
+                if (!remove_first_if(gStorage, [&root](auto &cur) { return cur.getHandle() == (uint32_t) root; })) {
                     DEBUG_FUNCTION_LINE_WARN("Failed to close storage: Not opened (\"%08X\")", root);
                     return WUPS_STORAGE_ERROR_NOT_FOUND;
                 }

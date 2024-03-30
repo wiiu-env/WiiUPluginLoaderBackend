@@ -186,7 +186,7 @@ namespace WUPSConfigAPIBackend {
 
             if (!remove_locked_first_if(sConfigCategoryMutex, sConfigCategories, [&handle](auto &cur) { return handle == cur.get(); })) {
                 {
-                    // Ignore any attempts to destroy to create root item.
+                    // Ignore any attempts to destroy the root item.
                     std::lock_guard lock(sConfigsMutex);
                     if (std::any_of(sConfigs.begin(), sConfigs.end(), [&handle](auto &cur) { return handle == cur.get(); })) {
                         return WUPSCONFIG_API_RESULT_SUCCESS;

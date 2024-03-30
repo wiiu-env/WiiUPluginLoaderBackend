@@ -400,7 +400,9 @@ namespace StorageUtils {
     namespace API {
         namespace Internal {
             WUPSStorageError OpenStorage(std::string_view plugin_id, wups_storage_root_item &outItem) {
-                StorageItemRoot root(plugin_id);
+                std::lock_guard lock(gStorageMutex);
+                gStorage.emplace_front(plugin_id);
+                auto &root = gStorage.front();
 
                 WUPSStorageError err = Helper::LoadFromFile(plugin_id, root);
                 if (err == WUPS_STORAGE_ERROR_NOT_FOUND) {
@@ -408,14 +410,11 @@ namespace StorageUtils {
                     root = StorageItemRoot(plugin_id);
                 } else if (err != WUPS_STORAGE_ERROR_SUCCESS) {
                     // Return on any other error
+                    gStorage.pop_front();
                     return err;
                 }
 
                 outItem = (wups_storage_root_item) root.getHandle();
-                {
-                    std::lock_guard lock(gStorageMutex);
-                    gStorage.push_front(std::move(root));
-                }
 
                 return WUPS_STORAGE_ERROR_SUCCESS;
             }

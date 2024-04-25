@@ -24,7 +24,7 @@ In order to be able to compile this, you need to have devkitPPC installed
 pacman packages installed.
 
 ```
-(sudo) (dkp-)pacman -Syu --needed wiiu-dev
+(sudo) (dkp-)pacman -Syu --needed wiiu-dev wiiu-portlibs
 ```
 
 Make sure the following environment variables are set:

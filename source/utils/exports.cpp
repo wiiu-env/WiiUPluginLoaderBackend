@@ -92,7 +92,7 @@ extern "C" PluginBackendApiErrorType WUPSLoadPluginAsDataByBuffer(wups_backend_p
     return WUPSLoadPluginAsData(PLUGIN_INFORMATION_INPUT_TYPE_BUFFER, nullptr, buffer, size, output);
 }
 
-extern "C" PluginBackendApiErrorType WUPSGetPluginMetaInformation(WUPSBackendGetPluginInformationInputType inputType, const char *path, char *buffer, size_t size, wups_backend_plugin_information *output) {
+extern "C" PluginBackendApiErrorType WUPSGetPluginMetaInformationEx(WUPSBackendGetPluginInformationInputType inputType, const char *path, char *buffer, size_t size, wups_backend_plugin_information *output, PluginBackendPluginParseError *errOut) {
     if (output == nullptr) {
         DEBUG_FUNCTION_LINE_ERR("PLUGIN_BACKEND_API_ERROR_INVALID_ARG");
         return PLUGIN_BACKEND_API_ERROR_INVALID_ARG;
@@ -105,8 +105,29 @@ extern "C" PluginBackendApiErrorType WUPSGetPluginMetaInformation(WUPSBackendGet
     } else if (inputType == PLUGIN_INFORMATION_INPUT_TYPE_BUFFER && buffer != nullptr && size > 0) {
         pluginInfo = PluginMetaInformationFactory::loadPlugin(std::span<uint8_t const>((uint8_t *) buffer, size), error);
     } else {
+        if (errOut) {
+            *errOut = PLUGIN_BACKEND_PLUGIN_PARSE_ERROR_UNKNOWN;
+        }
+
         DEBUG_FUNCTION_LINE_ERR("PLUGIN_BACKEND_API_ERROR_INVALID_ARG");
         return PLUGIN_BACKEND_API_ERROR_INVALID_ARG;
+    }
+
+    if (errOut) {
+        switch (error) {
+            case PLUGIN_PARSE_ERROR_NONE:
+                *errOut = PLUGIN_BACKEND_PLUGIN_PARSE_ERROR_NONE;
+                break;
+            case PLUGIN_PARSE_ERROR_INCOMPATIBLE_VERSION:
+                *errOut = PLUGIN_BACKEND_PLUGIN_PARSE_ERROR_INCOMPATIBLE_VERSION;
+                break;
+            case PLUGIN_PARSE_ERROR_UNKNOWN:
+            case PLUGIN_PARSE_ERROR_BUFFER_EMPTY:
+            case PLUGIN_PARSE_ERROR_ELFIO_PARSE_FAILED:
+            case PLUGIN_PARSE_ERROR_IO_ERROR:
+                *errOut = PLUGIN_BACKEND_PLUGIN_PARSE_ERROR_UNKNOWN;
+                break;
+        }
     }
 
     if (!pluginInfo) {
@@ -118,12 +139,16 @@ extern "C" PluginBackendApiErrorType WUPSGetPluginMetaInformation(WUPSBackendGet
     return PLUGIN_BACKEND_API_ERROR_NONE;
 }
 
+extern "C" PluginBackendApiErrorType WUPSGetPluginMetaInformation(WUPSBackendGetPluginInformationInputType inputType, const char *path, char *buffer, size_t size, wups_backend_plugin_information *output) {
+    return WUPSGetPluginMetaInformationEx(inputType, path, buffer, size, output, nullptr);
+}
+
 extern "C" PluginBackendApiErrorType WUPSGetPluginMetaInformationByPath(wups_backend_plugin_information *output, const char *path) {
-    return WUPSGetPluginMetaInformation(PLUGIN_INFORMATION_INPUT_TYPE_PATH, path, nullptr, 0, output);
+    return WUPSGetPluginMetaInformationEx(PLUGIN_INFORMATION_INPUT_TYPE_PATH, path, nullptr, 0, output, nullptr);
 }
 
 extern "C" PluginBackendApiErrorType WUPSGetPluginMetaInformationByBuffer(wups_backend_plugin_information *output, char *buffer, size_t size) {
-    return WUPSGetPluginMetaInformation(PLUGIN_INFORMATION_INPUT_TYPE_BUFFER, nullptr, buffer, size, output);
+    return WUPSGetPluginMetaInformationEx(PLUGIN_INFORMATION_INPUT_TYPE_BUFFER, nullptr, buffer, size, output, nullptr);
 }
 
 extern "C" PluginBackendApiErrorType WUPSGetPluginDataForContainerHandles(const wups_backend_plugin_container_handle *plugin_container_handle_list, wups_backend_plugin_data_handle *plugin_data_list, uint32_t buffer_size) {
@@ -226,7 +251,7 @@ extern "C" PluginBackendApiErrorType WUPSGetAPIVersion(WUPSBackendAPIVersion *ou
     if (outVersion == nullptr) {
         return PLUGIN_BACKEND_API_ERROR_INVALID_ARG;
     }
-    *outVersion = 2;
+    *outVersion = 3;
     return PLUGIN_BACKEND_API_ERROR_NONE;
 }
 
@@ -304,3 +329,15 @@ WUMS_EXPORT_FUNCTION(WUPSGetNumberOfLoadedPlugins);
 WUMS_EXPORT_FUNCTION(WUPSGetSectionInformationForPlugin);
 WUMS_EXPORT_FUNCTION(WUPSWillReloadPluginsOnNextLaunch);
 WUMS_EXPORT_FUNCTION(WUPSGetSectionMemoryAddresses);
+
+// API 3.0
+extern "C" PluginBackendApiErrorType WUPSGetPluginMetaInformationByPathEx(wups_backend_plugin_information *output, const char *path, PluginBackendPluginParseError *err) {
+    return WUPSGetPluginMetaInformationEx(PLUGIN_INFORMATION_INPUT_TYPE_PATH, path, nullptr, 0, output, err);
+}
+
+extern "C" PluginBackendApiErrorType WUPSGetPluginMetaInformationByBufferEx(wups_backend_plugin_information *output, char *buffer, size_t size, PluginBackendPluginParseError *err) {
+    return WUPSGetPluginMetaInformationEx(PLUGIN_INFORMATION_INPUT_TYPE_BUFFER, nullptr, buffer, size, output, err);
+}
+
+WUMS_EXPORT_FUNCTION(WUPSGetPluginMetaInformationByPathEx);
+WUMS_EXPORT_FUNCTION(WUPSGetPluginMetaInformationByBufferEx);

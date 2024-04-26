@@ -24,7 +24,7 @@ PluginManagement::loadPlugins(const std::set<std::shared_ptr<PluginData>> &plugi
         if (metaInfo && error == PLUGIN_PARSE_ERROR_NONE) {
             auto info = PluginInformationFactory::load(*pluginData, trampolineData, trampolineID++);
             if (!info) {
-                auto errMsg = string_format("Failed to load plugin: %s", metaInfo->getName().c_str());
+                auto errMsg = string_format("Failed to load plugin: %s", pluginData->getSource().c_str());
                 DEBUG_FUNCTION_LINE_ERR("%s", errMsg.c_str());
                 DisplayErrorNotificationMessage(errMsg, 15.0f);
                 continue;

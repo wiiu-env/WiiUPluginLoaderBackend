@@ -56,6 +56,7 @@ std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(st
 
     uint32_t sec_num = reader.sections.size();
 
+    bool hasMetaSection = false;
     for (uint32_t i = 0; i < sec_num; ++i) {
         ELFIO::section *psec = reader.sections[i];
 
@@ -72,6 +73,7 @@ std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(st
 
         // Get meta information and check WUPS version:
         if (psec->get_name() == ".wups.meta") {
+            hasMetaSection          = true;
             const void *sectionData = psec->get_data();
             uint32_t sectionSize    = psec->get_size();
 
@@ -117,6 +119,11 @@ std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(st
                 curEntry += strlen(curEntry) + 1;
             }
         }
+    }
+    if (!hasMetaSection) {
+        DEBUG_FUNCTION_LINE_ERR("File has no \".wups.meta\" section");
+        error = PLUGIN_PARSE_ERROR_NO_PLUGIN;
+        return {};
     }
 
     pluginInfo.setSize(pluginSize);

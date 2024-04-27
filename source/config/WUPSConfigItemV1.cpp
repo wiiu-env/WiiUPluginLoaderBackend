@@ -81,6 +81,7 @@ namespace WUPSConfigAPIBackend {
     void WUPSConfigItemV1::onCloseCallback() {
         if (this->mCallbacks.callCallback == nullptr) {
             DEBUG_FUNCTION_LINE_VERBOSE("callCallback callback not implemented. [%s]", mDisplayName.c_str());
+            return;
         }
         if (mDefaultValue != getCurrentValueDisplay()) {
             this->mCallbacks.callCallback(mContext);

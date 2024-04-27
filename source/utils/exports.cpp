@@ -125,6 +125,7 @@ extern "C" PluginBackendApiErrorType WUPSGetPluginMetaInformationEx(WUPSBackendG
             case PLUGIN_PARSE_ERROR_BUFFER_EMPTY:
             case PLUGIN_PARSE_ERROR_ELFIO_PARSE_FAILED:
             case PLUGIN_PARSE_ERROR_IO_ERROR:
+            case PLUGIN_PARSE_ERROR_NO_PLUGIN:
                 *errOut = PLUGIN_BACKEND_PLUGIN_PARSE_ERROR_UNKNOWN;
                 break;
         }

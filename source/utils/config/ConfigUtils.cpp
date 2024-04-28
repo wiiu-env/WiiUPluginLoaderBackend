@@ -214,6 +214,7 @@ void ConfigUtils::openConfigMenu() {
 
     bool skipScreen0Free = false;
     bool skipScreen1Free = false;
+    bool doShutdownKPAD  = false;
 
     if (!screenbuffer0 || !screenbuffer1) {
         if (screenbuffer0 == nullptr) {
@@ -259,7 +260,18 @@ void ConfigUtils::openConfigMenu() {
     // disable the home button menu to prevent opening it when exiting
     OSEnableHomeButtonMenu(false);
 
+    KPADStatus status;
+    KPADError err;
+    if (KPADReadEx(WPAD_CHAN_0, &status, 0, &err) == 0 && err == KPAD_ERROR_UNINITIALIZED) {
+        doShutdownKPAD = true;
+        KPADInit();
+    }
+
     displayMenu();
+
+    if (doShutdownKPAD) {
+        KPADShutdown();
+    }
 
     OSEnableHomeButtonMenu(wasHomeButtonMenuEnabled);
 

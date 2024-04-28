@@ -3,6 +3,8 @@
 class CombinedInput : public Input {
 public:
     void combine(const Input &b) {
+        data.buttons_d |= b.data.buttons_d;
+        data.buttons_r |= b.data.buttons_r;
         data.buttons_h |= b.data.buttons_h;
         if (!data.touched) {
             data.touched = b.data.touched;
@@ -13,12 +15,6 @@ public:
             data.x            = b.data.x;
             data.y            = b.data.y;
         }
-    }
-
-    void process() {
-        data.buttons_d |= (data.buttons_h & (~lastData.buttons_h));
-        data.buttons_r |= (lastData.buttons_h & (~data.buttons_h));
-        lastData.buttons_h = data.buttons_h;
     }
 
     void reset() {

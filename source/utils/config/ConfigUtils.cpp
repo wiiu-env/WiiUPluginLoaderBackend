@@ -152,8 +152,6 @@ void ConfigUtils::displayMenu() {
             baseInput.lastData = baseInput.data;
         }
 
-        baseInput.process();
-
         WUPSConfigSimplePadData simpleData;
         simpleData.buttons_d    = convertInputs(baseInput.data.buttons_d);
         simpleData.buttons_r    = convertInputs(baseInput.data.buttons_r);

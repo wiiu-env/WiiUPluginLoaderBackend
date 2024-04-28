@@ -305,18 +305,18 @@ void DrawUtils::print(uint32_t x, uint32_t y, const wchar_t *string, bool alignR
             textureWidth  = (mtx.minWidth + 3) & ~3;
             textureHeight = mtx.minHeight;
 
-            SFT_Image img = {
-                    .pixels = nullptr,
-                    .width  = textureWidth,
-                    .height = textureHeight,
-            };
-
             if (textureWidth == 0) {
                 textureWidth = 4;
             }
             if (textureHeight == 0) {
                 textureHeight = 4;
             }
+
+            SFT_Image img = {
+                    .pixels = nullptr,
+                    .width  = textureWidth,
+                    .height = textureHeight,
+            };
 
             auto buffer = make_unique_nothrow<uint8_t[]>((uint32_t) (img.width * img.height));
             if (!buffer) {

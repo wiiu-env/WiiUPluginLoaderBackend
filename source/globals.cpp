@@ -13,3 +13,5 @@ std::map<std::string, OSDynLoad_Module> gUsedRPLs;
 std::vector<void *> gAllocatedAddresses;
 
 bool gNotificationModuleLoaded = false;
+
+OSThread *gOnlyAcceptFromThread = nullptr;

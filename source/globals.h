@@ -26,3 +26,5 @@ extern std::map<std::string, OSDynLoad_Module> gUsedRPLs;
 extern std::vector<void *> gAllocatedAddresses;
 
 extern bool gNotificationModuleLoaded;
+
+extern OSThread *gOnlyAcceptFromThread;

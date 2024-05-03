@@ -136,6 +136,8 @@ void ConfigUtils::displayMenu() {
 
     auto startTime      = OSGetTime();
     bool skipFirstInput = true;
+
+    gOnlyAcceptFromThread = OSGetCurrentThread();
     while (true) {
         baseInput.reset();
         if (vpadInput.update(1280, 720)) {
@@ -184,6 +186,7 @@ void ConfigUtils::displayMenu() {
             OSSleepTicks(OSMicrosecondsToTicks(16000 - diffTime));
         }
     }
+    gOnlyAcceptFromThread = nullptr;
 
     for (const auto &plugin : gLoadedPlugins) {
         const auto configData = plugin.getConfigData();

@@ -68,6 +68,8 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
     if (mConfigs.empty()) {
         return SUB_STATE_ERROR;
     }
+    auto prevSelectedItem = mCursorPos;
+
     auto totalElementSize = mConfigs.size();
     if (input.data.buttons_d & Input::eButtons::BUTTON_DOWN) {
         mCursorPos++;
@@ -101,8 +103,30 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
     } else if (mCursorPos >= mRenderOffset + MAX_BUTTONS_ON_SCREEN - 1) {
         mRenderOffset = mCursorPos - MAX_BUTTONS_ON_SCREEN + 1;
     }
+
+    if (prevSelectedItem != mCursorPos) {
+        mNeedRedraw = true;
+    }
+
     return SUB_STATE_RUNNING;
 }
+
+bool ConfigRenderer::NeedsRedraw() const {
+    if (mNeedRedraw) {
+        return true;
+    } else if (mState == STATE_SUB && mCategoryRenderer) {
+        return mCategoryRenderer->NeedsRedraw();
+    }
+    return false;
+}
+
+void ConfigRenderer::ResetNeedsRedraw() {
+    mNeedRedraw = false;
+    if (mState == STATE_SUB && mCategoryRenderer) {
+        mCategoryRenderer->ResetNeedsRedraw();
+    }
+}
+
 
 void ConfigRenderer::Render() const {
     switch (mState) {
@@ -128,7 +152,8 @@ ConfigSubState ConfigRenderer::Update(Input &input, const WUPSConfigSimplePadDat
             if (mCategoryRenderer) {
                 auto subResult = mCategoryRenderer->Update(input, simpleInputData, complexInputData);
                 if (subResult != SUB_STATE_RUNNING) {
-                    mState = STATE_MAIN;
+                    mNeedRedraw = true;
+                    mState      = STATE_MAIN;
                     return SUB_STATE_RUNNING;
                 }
                 return SUB_STATE_RUNNING;

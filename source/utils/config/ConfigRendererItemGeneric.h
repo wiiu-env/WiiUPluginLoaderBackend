@@ -20,6 +20,12 @@ public:
 
     virtual void Draw(uint32_t yOffset, bool isHighlighted) const = 0;
 
+    virtual void Update(bool) = 0;
+
+    [[nodiscard]] virtual bool NeedsRedraw() const = 0;
+
+    virtual void ResetNeedsRedraw() = 0;
+
     virtual void SetIsSelected(bool) {
     }
 

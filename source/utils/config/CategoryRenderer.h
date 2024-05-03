@@ -19,6 +19,10 @@ public:
 
     void Render() const;
 
+    [[nodiscard]] bool NeedsRedraw() const;
+
+    void ResetNeedsRedraw();
+
 private:
     ConfigSubState UpdateStateMain(Input &input, const WUPSConfigSimplePadData &simpleInputData, const WUPSConfigComplexPadData &complexInputData);
 
@@ -43,4 +47,5 @@ private:
     bool mIsItemMovementAllowed                                           = true;
     bool mFirstFrame                                                      = true;
     bool mIsRoot                                                          = false;
+    bool mNeedsRedraw                                                     = true;
 };

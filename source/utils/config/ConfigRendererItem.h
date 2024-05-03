@@ -12,11 +12,28 @@ public:
         assert(mItem);
         drawGenericBoxAndText(yOffset, mItem->getDisplayName(), isHighlighted);
         DrawUtils::setFontSize(24);
-        if (isHighlighted) {
-            DrawUtils::print(SCREEN_WIDTH - 16 * 2, yOffset + 8 + 24, mItem->getCurrentValueSelectedDisplay().c_str(), true);
-        } else {
-            DrawUtils::print(SCREEN_WIDTH - 16 * 2, yOffset + 8 + 24, mItem->getCurrentValueDisplay().c_str(), true);
+        DrawUtils::print(SCREEN_WIDTH - 16 * 2, yOffset + 8 + 24, mCurItemText.c_str(), true);
+    }
+
+    std::string GetValueToPrint(bool isHighlighted) {
+        return isHighlighted ? mItem->getCurrentValueSelectedDisplay() : mItem->getCurrentValueDisplay();
+    }
+
+    void Update(bool isHighlighted) override {
+        const auto newText = GetValueToPrint(isHighlighted);
+
+        if (mCurItemText != newText) {
+            mNeedsDraw = true;
         }
+        mCurItemText = newText;
+    }
+
+    void ResetNeedsRedraw() override {
+        mNeedsDraw = false;
+    }
+
+    [[nodiscard]] bool NeedsRedraw() const override {
+        return mNeedsDraw;
     }
 
     void SetIsSelected(bool isSelected) override {
@@ -40,4 +57,6 @@ public:
 
 private:
     const WUPSConfigAPIBackend::WUPSConfigItem *mItem;
+    std::string mCurItemText;
+    bool mNeedsDraw = true;
 };

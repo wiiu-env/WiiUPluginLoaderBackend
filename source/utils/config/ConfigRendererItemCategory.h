@@ -12,6 +12,16 @@ public:
         drawGenericBoxAndText(yOffset, mCategory->getName(), isHighlighted);
     }
 
+    void Update(bool) override {
+    }
+
+    [[nodiscard]] bool NeedsRedraw() const override {
+        return false;
+    }
+
+    void ResetNeedsRedraw() override {
+    }
+
 private:
     const WUPSConfigAPIBackend::WUPSConfigCategory *mCategory;
 };

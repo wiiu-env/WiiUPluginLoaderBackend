@@ -174,7 +174,11 @@ void ConfigUtils::displayMenu() {
         if (subState != SUB_STATE_RUNNING) {
             break;
         }
-        renderer.Render();
+        if (renderer.NeedsRedraw()) {
+            renderer.Render();
+        }
+        renderer.ResetNeedsRedraw();
+
         auto diffTime = OSTicksToMicroseconds(OSGetTime() - startTime);
         if (diffTime < 16000) {
             OSSleepTicks(OSMicrosecondsToTicks(16000 - diffTime));

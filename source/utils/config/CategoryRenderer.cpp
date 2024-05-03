@@ -54,8 +54,9 @@ ConfigSubState CategoryRenderer::Update(Input &input, const WUPSConfigSimplePadD
             if (mSubCategoryRenderer) {
                 auto subResult = mSubCategoryRenderer->Update(input, simpleInputData, complexInputData);
                 if (subResult != SUB_STATE_RUNNING) {
-                    mState      = STATE_MAIN;
-                    mFirstFrame = true;
+                    mNeedsRedraw = true;
+                    mState       = STATE_MAIN;
+                    mFirstFrame  = true;
                     return SUB_STATE_RUNNING;
                 }
                 return SUB_STATE_RUNNING;
@@ -93,6 +94,7 @@ ConfigSubState CategoryRenderer::UpdateStateMain(Input &input, const WUPSConfigS
                 }
                 mCurrentOpen = mCursorPos;
                 mState       = STATE_SUB;
+                mNeedsRedraw = true;
             }
         }
     }
@@ -115,6 +117,7 @@ ConfigSubState CategoryRenderer::UpdateStateMain(Input &input, const WUPSConfigS
         mItemRenderer[prevSelectedItem]->SetIsSelected(false);
         mItemRenderer[mCursorPos]->SetIsSelected(true);
         posJustChanged = true;
+        mNeedsRedraw   = true;
     }
 
     if (!posJustChanged && !mFirstFrame) {
@@ -135,7 +138,41 @@ ConfigSubState CategoryRenderer::UpdateStateMain(Input &input, const WUPSConfigS
 
     mIsItemMovementAllowed = mItemRenderer[mCursorPos]->IsMovementAllowed();
 
+    for (uint32_t i = 0; i < mItemRenderer.size(); i++) {
+        bool isHighlighted = ((int) i == mCursorPos);
+        mItemRenderer[i]->Update(isHighlighted);
+    }
+
     return SUB_STATE_RUNNING;
+}
+
+
+void CategoryRenderer::ResetNeedsRedraw() {
+    mNeedsRedraw = false;
+    if (mState == STATE_SUB && mSubCategoryRenderer) {
+        mSubCategoryRenderer->ResetNeedsRedraw();
+    }
+    for (auto &item : mItemRenderer) {
+        item->ResetNeedsRedraw();
+    }
+}
+
+
+bool CategoryRenderer::NeedsRedraw() const {
+    if (mNeedsRedraw) {
+        return true;
+    }
+    if (mState == STATE_SUB && mSubCategoryRenderer) {
+        if (mSubCategoryRenderer->NeedsRedraw()) {
+            return true;
+        }
+    }
+    for (const auto &item : mItemRenderer) {
+        if (item->NeedsRedraw()) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void CategoryRenderer::Render() const {

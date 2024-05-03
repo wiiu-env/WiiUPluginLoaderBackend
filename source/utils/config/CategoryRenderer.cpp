@@ -95,6 +95,7 @@ ConfigSubState CategoryRenderer::UpdateStateMain(Input &input, const WUPSConfigS
                 mCurrentOpen = mCursorPos;
                 mState       = STATE_SUB;
                 mNeedsRedraw = true;
+                return SUB_STATE_RUNNING;
             }
         }
     }
@@ -149,7 +150,7 @@ ConfigSubState CategoryRenderer::UpdateStateMain(Input &input, const WUPSConfigS
 
 void CategoryRenderer::ResetNeedsRedraw() {
     mNeedsRedraw = false;
-    if (mState == STATE_SUB && mSubCategoryRenderer) {
+    if (mSubCategoryRenderer) {
         mSubCategoryRenderer->ResetNeedsRedraw();
     }
     for (auto &item : mItemRenderer) {
@@ -162,7 +163,7 @@ bool CategoryRenderer::NeedsRedraw() const {
     if (mNeedsRedraw) {
         return true;
     }
-    if (mState == STATE_SUB && mSubCategoryRenderer) {
+    if (mSubCategoryRenderer) {
         if (mSubCategoryRenderer->NeedsRedraw()) {
             return true;
         }

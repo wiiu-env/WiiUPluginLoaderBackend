@@ -7,18 +7,18 @@
 #include "../globals.h"
 #include "../hooks.h"
 
-uint8_t vpadPressCooldown  = 0xFF;
-bool configMenuOpened      = false;
-bool wantsToOpenConfigMenu = false;
+static uint8_t sVpadPressCooldown  = 0xFF;
+static bool sConfigMenuOpened      = false;
+static bool sWantsToOpenConfigMenu = false;
 
 DECL_FUNCTION(void, GX2SwapScanBuffers, void) {
     real_GX2SwapScanBuffers();
 
-    if (wantsToOpenConfigMenu && !configMenuOpened) {
-        configMenuOpened = true;
+    if (sWantsToOpenConfigMenu && !sConfigMenuOpened) {
+        sConfigMenuOpened = true;
         ConfigUtils::openConfigMenu();
-        configMenuOpened      = false;
-        wantsToOpenConfigMenu = false;
+        sConfigMenuOpened      = false;
+        sWantsToOpenConfigMenu = false;
     }
 }
 
@@ -69,7 +69,7 @@ DECL_FUNCTION(void, OSReleaseForeground) {
 }
 
 DECL_FUNCTION(int32_t, VPADRead, int32_t chan, VPADStatus *buffer, uint32_t buffer_size, int32_t *error) {
-    if (configMenuOpened) {
+    if (sConfigMenuOpened) {
         // Ignore reading vpad input only from other threads if the config menu is opened
         if (OSGetCurrentThread() != gOnlyAcceptFromThread) {
             return 0;
@@ -77,14 +77,14 @@ DECL_FUNCTION(int32_t, VPADRead, int32_t chan, VPADStatus *buffer, uint32_t buff
     }
     int32_t result = real_VPADRead(chan, buffer, buffer_size, error);
 
-    if (result > 0 && ((buffer[0].hold & 0xFFFFF) == (VPAD_BUTTON_L | VPAD_BUTTON_DOWN | VPAD_BUTTON_MINUS)) && vpadPressCooldown == 0 && !configMenuOpened) {
-        wantsToOpenConfigMenu = true;
-        vpadPressCooldown     = 0x3C;
+    if (result > 0 && ((buffer[0].hold & 0xFFFFF) == (VPAD_BUTTON_L | VPAD_BUTTON_DOWN | VPAD_BUTTON_MINUS)) && sVpadPressCooldown == 0 && !sConfigMenuOpened) {
+        sWantsToOpenConfigMenu = true;
+        sVpadPressCooldown     = 0x3C;
         return 0;
     }
 
-    if (vpadPressCooldown > 0) {
-        vpadPressCooldown--;
+    if (sVpadPressCooldown > 0) {
+        sVpadPressCooldown--;
     }
     return result;
 }
@@ -92,21 +92,22 @@ DECL_FUNCTION(int32_t, VPADRead, int32_t chan, VPADStatus *buffer, uint32_t buff
 DECL_FUNCTION(void, WPADRead, WPADChan chan, WPADStatusProController *data) {
     real_WPADRead(chan, data);
 
-    if (!configMenuOpened && data[0].err == 0) {
+
+    if (!sConfigMenuOpened && data[0].err == 0) {
         if (data[0].extensionType != 0xFF) {
             if (data[0].extensionType == WPAD_EXT_CORE || data[0].extensionType == WPAD_EXT_NUNCHUK) {
                 // button data is in the first 2 bytes for wiimotes
                 if (((uint16_t *) data)[0] == (WPAD_BUTTON_B | WPAD_BUTTON_DOWN | WPAD_BUTTON_MINUS)) {
-                    wantsToOpenConfigMenu = true;
+                    sWantsToOpenConfigMenu = true;
                 }
             } else if (data[0].extensionType == WPAD_EXT_CLASSIC) {
                 // TODO: figure out the real struct..
                 if ((((uint32_t *) data)[10] & 0xFFFF) == (WPAD_CLASSIC_BUTTON_L | WPAD_CLASSIC_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_MINUS)) {
-                    wantsToOpenConfigMenu = true;
+                    sWantsToOpenConfigMenu = true;
                 }
             } else if (data[0].extensionType == WPAD_EXT_PRO_CONTROLLER) {
                 if (data[0].buttons == (WPAD_PRO_TRIGGER_L | WPAD_PRO_BUTTON_DOWN | WPAD_PRO_BUTTON_MINUS)) {
-                    wantsToOpenConfigMenu = true;
+                    sWantsToOpenConfigMenu = true;
                 }
             }
         }

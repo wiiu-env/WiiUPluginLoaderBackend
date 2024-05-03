@@ -28,3 +28,5 @@ extern std::vector<void *> gAllocatedAddresses;
 extern bool gNotificationModuleLoaded;
 
 extern OSThread *gOnlyAcceptFromThread;
+
+extern bool gConfigMenuShouldClose;

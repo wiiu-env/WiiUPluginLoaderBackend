@@ -15,3 +15,5 @@ std::vector<void *> gAllocatedAddresses;
 bool gNotificationModuleLoaded = false;
 
 OSThread *gOnlyAcceptFromThread = nullptr;
+
+bool gConfigMenuShouldClose = false;

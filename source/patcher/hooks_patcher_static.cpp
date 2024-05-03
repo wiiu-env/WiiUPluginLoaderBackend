@@ -44,6 +44,18 @@ DECL_FUNCTION(void, GX2SetDRCBuffer, void *buffer, uint32_t buffer_size, uint32_
 
 static uint32_t lastData0 = 0;
 
+
+DECL_FUNCTION(BOOL, OSSendMessage, OSMessageQueue *queue, OSMessage *message, OSMessageFlags flags) {
+    if (sConfigMenuOpened && queue == OSGetSystemMessageQueue()) {
+        if (message != nullptr) {
+            if (message->args[0] == 0xfacebacc) { // Release foreground
+                gConfigMenuShouldClose = true;
+            }
+        }
+    }
+    return real_OSSendMessage(queue, message, flags);
+}
+
 DECL_FUNCTION(uint32_t, OSReceiveMessage, OSMessageQueue *queue, OSMessage *message, uint32_t flags) {
     uint32_t res = real_OSReceiveMessage(queue, message, flags);
     if (queue == OSGetSystemMessageQueue()) {
@@ -197,6 +209,7 @@ function_replacement_data_t method_hooks_static[] __attribute__((section(".data"
         REPLACE_FUNCTION(GX2SwapScanBuffers, LIBRARY_GX2, GX2SwapScanBuffers),
         REPLACE_FUNCTION(GX2SetTVBuffer, LIBRARY_GX2, GX2SetTVBuffer),
         REPLACE_FUNCTION(GX2SetDRCBuffer, LIBRARY_GX2, GX2SetDRCBuffer),
+        REPLACE_FUNCTION(OSSendMessage, LIBRARY_COREINIT, OSSendMessage),
         REPLACE_FUNCTION(OSReceiveMessage, LIBRARY_COREINIT, OSReceiveMessage),
         REPLACE_FUNCTION(OSReleaseForeground, LIBRARY_COREINIT, OSReleaseForeground),
         REPLACE_FUNCTION(VPADRead, LIBRARY_VPAD, VPADRead),

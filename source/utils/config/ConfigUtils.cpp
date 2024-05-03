@@ -139,6 +139,10 @@ void ConfigUtils::displayMenu() {
 
     gOnlyAcceptFromThread = OSGetCurrentThread();
     while (true) {
+        if (gConfigMenuShouldClose) {
+            gConfigMenuShouldClose = false;
+            break;
+        }
         baseInput.reset();
         if (vpadInput.update(1280, 720)) {
             baseInput.combine(vpadInput);
@@ -186,7 +190,6 @@ void ConfigUtils::displayMenu() {
             OSSleepTicks(OSMicrosecondsToTicks(16000 - diffTime));
         }
     }
-    gOnlyAcceptFromThread = nullptr;
 
     for (const auto &plugin : gLoadedPlugins) {
         const auto configData = plugin.getConfigData();
@@ -205,6 +208,7 @@ void ConfigUtils::displayMenu() {
 #define __SetDCPitchReg ((void (*)(uint32_t, uint32_t))(0x101C400 + 0x1e714))
 
 void ConfigUtils::openConfigMenu() {
+    gOnlyAcceptFromThread         = OSGetCurrentThread();
     bool wasHomeButtonMenuEnabled = OSIsHomeButtonMenuEnabled();
 
     OSScreenInit();
@@ -302,6 +306,7 @@ error_exit:
     if (!skipScreen1Free && screenbuffer1) {
         MEMFreeToMappedMemory(screenbuffer1);
     }
+    gOnlyAcceptFromThread = nullptr;
 }
 
 void ConfigUtils::renderBasicScreen(std::string_view text) {

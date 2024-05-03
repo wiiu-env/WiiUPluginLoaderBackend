@@ -66,6 +66,7 @@ void ConfigRenderer::drawConfigEntry(uint32_t yOffset, const GeneralConfigInform
 
 ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
     if (mConfigs.empty()) {
+        mNeedRedraw = true;
         return SUB_STATE_ERROR;
     }
     auto prevSelectedItem = mCursorPos;
@@ -80,10 +81,12 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
             mCategoryRenderer.reset();
             mCategoryRenderer = make_unique_nothrow<CategoryRenderer>(&(mConfigs[mCursorPos].getConfigInformation()), &(mConfigs[mCursorPos].getConfig()), true);
         }
+        mNeedRedraw  = true;
         mCurrentOpen = mCursorPos;
         mState       = STATE_SUB;
         return SUB_STATE_RUNNING;
     } else if (input.data.buttons_d & (Input::eButtons::BUTTON_B | Input::eButtons::BUTTON_HOME)) {
+        mNeedRedraw = true;
         mCategoryRenderer.reset();
         for (const auto &element : mConfigs) {
             CallOnCloseCallback(element.getConfigInformation(), element.getConfig());
@@ -114,7 +117,7 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
 bool ConfigRenderer::NeedsRedraw() const {
     if (mNeedRedraw) {
         return true;
-    } else if (mState == STATE_SUB && mCategoryRenderer) {
+    } else if (mCategoryRenderer) {
         return mCategoryRenderer->NeedsRedraw();
     }
     return false;
@@ -122,11 +125,10 @@ bool ConfigRenderer::NeedsRedraw() const {
 
 void ConfigRenderer::ResetNeedsRedraw() {
     mNeedRedraw = false;
-    if (mState == STATE_SUB && mCategoryRenderer) {
+    if (mCategoryRenderer) {
         mCategoryRenderer->ResetNeedsRedraw();
     }
 }
-
 
 void ConfigRenderer::Render() const {
     switch (mState) {

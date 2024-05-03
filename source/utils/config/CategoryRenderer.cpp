@@ -35,6 +35,12 @@ CategoryRenderer::CategoryRenderer(const GeneralConfigInformation *info, const W
     if (!mItemRenderer.empty()) {
         mItemRenderer[mCursorPos]->SetIsSelected(true);
     }
+
+    // Make sure to call Update to get the current text of an item.
+    for (uint32_t i = 0; i < mItemRenderer.size(); i++) {
+        bool isHighlighted = ((int) i == mCursorPos);
+        mItemRenderer[i]->Update(isHighlighted);
+    }
 }
 
 CategoryRenderer::~CategoryRenderer() {

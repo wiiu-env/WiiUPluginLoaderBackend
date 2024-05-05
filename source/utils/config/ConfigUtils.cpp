@@ -128,11 +128,15 @@ void ConfigUtils::displayMenu() {
 
     CombinedInput baseInput;
     VPadInput vpadInput;
-    WPADInput wpadInputs[4] = {
+    WPADInput wpadInputs[7] = {
             WPAD_CHAN_0,
             WPAD_CHAN_1,
             WPAD_CHAN_2,
-            WPAD_CHAN_3};
+            WPAD_CHAN_3,
+            WPAD_CHAN_4,
+            WPAD_CHAN_5,
+            WPAD_CHAN_6,
+    };
 
     auto startTime      = OSGetTime();
     bool skipFirstInput = true;
@@ -171,7 +175,7 @@ void ConfigUtils::displayMenu() {
         complexData.vpad.data      = vpadInput.vpad;
         complexData.vpad.tpCalib   = vpadInput.tpCalib;
         complexData.vpad.vpadError = vpadInput.vpadError;
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 7; i++) {
             complexData.kpad.kpadError[i] = wpadInputs[i].kpadError;
             complexData.kpad.data[i]      = wpadInputs[i].kpad;
         }

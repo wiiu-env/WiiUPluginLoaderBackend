@@ -12,6 +12,7 @@
 #include <coreinit/screen.h>
 #include <gx2/display.h>
 #include <memory/mappedmemory.h>
+#include <ranges>
 #include <string>
 #include <vector>
 
@@ -122,6 +123,21 @@ void ConfigUtils::displayMenu() {
 
         configs.emplace_back(info, std::move(config));
     }
+
+    // Sort Configs by name
+    std::sort(
+            configs.begin(),
+            configs.end(),
+            [](const ConfigDisplayItem &lhs, const ConfigDisplayItem &rhs) {
+                auto &str1 = lhs.getConfigInformation().name;
+                auto &str2 = rhs.getConfigInformation().name;
+                return lexicographical_compare(
+                        begin(str1), end(str1),
+                        begin(str2), end(str2),
+                        [](const char &char1, const char &char2) {
+                            return tolower(char1) < tolower(char2);
+                        });
+            });
 
     ConfigRenderer renderer(std::move(configs));
     configs.clear();

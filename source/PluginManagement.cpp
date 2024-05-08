@@ -42,7 +42,7 @@ PluginManagement::loadPlugins(const std::set<std::shared_ptr<PluginData>> &plugi
 
     if (!PluginManagement::DoFunctionPatches(plugins)) {
         DEBUG_FUNCTION_LINE_ERR("Failed to patch functions");
-        OSFatal("Failed to patch functions");
+        OSFatal("WiiUPluginLoaderBackend: Failed to patch functions");
     }
 
     return plugins;

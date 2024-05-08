@@ -67,12 +67,12 @@ PluginInformationFactory::load(const PluginData &pluginData, std::vector<relocat
             uint32_t sectionSize = psec->get_size();
             auto address         = (uint32_t) psec->get_address();
             if ((address >= 0x02000000) && address < 0x10000000) {
-                text_size += sectionSize;
+                text_size += sectionSize + psec->get_addr_align();
             } else if ((address >= 0x10000000) && address < 0xC0000000) {
-                data_size += sectionSize;
+                data_size += sectionSize + psec->get_addr_align();
             }
             if (psec->get_name().starts_with(".wups.")) {
-                data_size += sectionSize;
+                data_size += sectionSize + psec->get_addr_align();
             }
         }
     }
@@ -107,7 +107,10 @@ PluginInformationFactory::load(const PluginData &pluginData, std::vector<relocat
 
                 if (destination + sectionSize > (uint32_t) text_data.data() + text_size) {
                     DEBUG_FUNCTION_LINE_ERR("Tried to overflow .text buffer. %08X > %08X", destination + sectionSize, (uint32_t) text_data.data() + text_data.size());
-                    OSFatal("WUPSLoader: Tried to overflow buffer");
+                    return std::nullopt;
+                } else if (destination < (uint32_t) text_data.data()) {
+                    DEBUG_FUNCTION_LINE_ERR("Tried to underflow .text buffer. %08X < %08X", destination, (uint32_t) text_data.data());
+                    return std::nullopt;
                 }
             } else if ((address >= 0x10000000) && address < 0xC0000000) {
                 destination += (uint32_t) data_data.data();
@@ -115,8 +118,11 @@ PluginInformationFactory::load(const PluginData &pluginData, std::vector<relocat
                 destinations[psec->get_index()] = (uint8_t *) data_data.data();
 
                 if (destination + sectionSize > (uint32_t) data_data.data() + data_data.size()) {
-                    DEBUG_FUNCTION_LINE_ERR("Tried to overflow .data buffer. %08X > %08X", destination + sectionSize, (uint32_t) text_data.data() + text_data.size());
-                    OSFatal("WUPSLoader: Tried to overflow buffer");
+                    DEBUG_FUNCTION_LINE_ERR("Tried to overflow .data buffer. %08X > %08X", destination + sectionSize, (uint32_t) data_data.data() + data_data.size());
+                    return std::nullopt;
+                } else if (destination < (uint32_t) data_data.data()) {
+                    DEBUG_FUNCTION_LINE_ERR("Tried to underflow .data buffer. %08X < %08X", destination, (uint32_t) text_data.data());
+                    return std::nullopt;
                 }
             } else if (address >= 0xC0000000) {
                 DEBUG_FUNCTION_LINE_ERR("Loading section from 0xC0000000 is NOT supported");
@@ -127,6 +133,12 @@ PluginInformationFactory::load(const PluginData &pluginData, std::vector<relocat
             }
 
             const char *p = psec->get_data();
+
+            uint32_t address_align = psec->get_addr_align();
+            if ((destination & (address_align - 1)) != 0) {
+                DEBUG_FUNCTION_LINE_WARN("Address not aligned: %08X %08X", destination, address_align);
+                return std::nullopt;
+            }
 
             if (psec->get_type() == SHT_NOBITS) {
                 DEBUG_FUNCTION_LINE_VERBOSE("memset section %s %08X to 0 (%d bytes)", psec->get_name().c_str(), destination, sectionSize);

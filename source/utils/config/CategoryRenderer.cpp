@@ -11,22 +11,15 @@ CategoryRenderer::CategoryRenderer(const GeneralConfigInformation *info, const W
     for (uint32_t i = 0; i < cat->getCategories().size() + cat->getItems().size(); i++) {
         if (i < cat->getCategories().size()) {
             auto item = make_unique_nothrow<ConfigRendererItemCategory>(cat->getCategories()[i].get());
-            if (!item) {
-                DEBUG_FUNCTION_LINE_ERR("Failed to alloc ConfigRendererItemCategory");
-                OSFatal("WiiUPluginBackend::CategoryRenderer::CategoryRenderer() Failed to alloc ConfigRendererItemCategory");
-            }
+            assert(item);
             mItemRenderer.push_back(std::move(item));
         } else {
             auto itemIndex = (int32_t) (i - cat->getCategories().size());
             if (itemIndex < 0 || itemIndex >= (int32_t) cat->getItems().size()) {
-                DEBUG_FUNCTION_LINE_ERR("unexpected index");
-                OSFatal("WiiUPluginBackend::CategoryRenderer::CategoryRenderer() unexpected index");
+                assert(false);
             }
             auto item = make_unique_nothrow<ConfigRendererItem>(cat->getItems()[itemIndex].get());
-            if (!item) {
-                DEBUG_FUNCTION_LINE_ERR("Failed to alloc ConfigRendererItemCategory");
-                OSFatal("WiiUPluginBackend::CategoryRenderer::CategoryRenderer() Failed to alloc ConfigRendererItem");
-            }
+            assert(item);
             mItemRenderer.push_back(std::move(item));
         }
     }

@@ -9,6 +9,7 @@
 #include "utils/input/VPADInput.h"
 #include "utils/input/WPADInput.h"
 
+#include <avm/tv.h>
 #include <coreinit/screen.h>
 #include <gx2/display.h>
 #include <memory/mappedmemory.h>
@@ -225,11 +226,41 @@ void ConfigUtils::displayMenu() {
     WUPSConfigAPIBackend::Intern::CleanAllHandles();
 }
 
-#define __SetDCPitchReg ((void (*)(uint32_t, uint32_t))(0x101C400 + 0x1e714))
+extern "C" uint32_t __OSPhysicalToEffectiveUncached(uint32_t);
+
+static uint32_t __ReadReg32(uint32_t index) {
+    if (OSIsECOMode()) {
+        return 0;
+    }
+    auto regs = (uint32_t *) __OSPhysicalToEffectiveUncached(0xc200000);
+    return regs[index];
+}
+
+static void __WriteReg32(uint32_t index, uint32_t val) {
+    if (OSIsECOMode()) {
+        return;
+    }
+    auto regs   = (uint32_t *) __OSPhysicalToEffectiveUncached(0xc200000);
+    regs[index] = val;
+}
+
+
+extern "C" void (*real_GX2SetTVBuffer)(void *buffer, uint32_t buffer_size, int32_t tv_render_mode, GX2SurfaceFormat format, GX2BufferingMode buffering_mode);
+extern "C" void (*real_GX2SetDRCBuffer)(void *buffer, uint32_t buffer_size, uint32_t drc_mode, GX2SurfaceFormat surface_format, GX2BufferingMode buffering_mode);
 
 void ConfigUtils::openConfigMenu() {
     gOnlyAcceptFromThread         = OSGetCurrentThread();
     bool wasHomeButtonMenuEnabled = OSIsHomeButtonMenuEnabled();
+
+    // Save copy of DC reg values
+    auto tvRender1  = __ReadReg32(0x1841 + SCREEN_TV * 0x200);
+    auto tvRender2  = __ReadReg32(0x1840 + SCREEN_TV * 0x200);
+    auto tvPitch1   = __ReadReg32(0x1848 + SCREEN_TV * 0x200);
+    auto tvPitch2   = __ReadReg32(0x1866 + SCREEN_TV * 0x200);
+    auto drcRender1 = __ReadReg32(0x1841 + SCREEN_DRC * 0x200);
+    auto drcRender2 = __ReadReg32(0x1840 + SCREEN_DRC * 0x200);
+    auto drcPitch1  = __ReadReg32(0x1848 + SCREEN_DRC * 0x200);
+    auto drcPitch2  = __ReadReg32(0x1866 + SCREEN_DRC * 0x200);
 
     OSScreenInit();
 
@@ -237,11 +268,6 @@ void ConfigUtils::openConfigMenu() {
     uint32_t screen_buf1_size = OSScreenGetBufferSizeEx(SCREEN_DRC);
     void *screenbuffer0       = MEMAllocFromMappedMemoryForGX2Ex(screen_buf0_size, 0x100);
     void *screenbuffer1       = MEMAllocFromMappedMemoryForGX2Ex(screen_buf1_size, 0x100);
-
-    // Fix the TV buffer pitch if a 1080p buffer is used.
-    if (screen_buf0_size == 0x00FD2000) {
-        __SetDCPitchReg(SCREEN_TV, 1920);
-    }
 
     bool skipScreen0Free = false;
     bool skipScreen1Free = false;
@@ -271,8 +297,13 @@ void ConfigUtils::openConfigMenu() {
     OSScreenSetBufferEx(SCREEN_TV, screenbuffer0);
     OSScreenSetBufferEx(SCREEN_DRC, screenbuffer1);
 
-    OSScreenEnableEx(SCREEN_TV, 1);
-    OSScreenEnableEx(SCREEN_DRC, 1);
+    // Clear screens
+    OSScreenClearBufferEx(SCREEN_TV, 0);
+    OSScreenClearBufferEx(SCREEN_DRC, 0);
+
+    // Flip buffers
+    OSScreenFlipBuffersEx(SCREEN_TV);
+    OSScreenFlipBuffersEx(SCREEN_DRC);
 
     // Clear screens
     OSScreenClearBufferEx(SCREEN_TV, 0);
@@ -281,6 +312,9 @@ void ConfigUtils::openConfigMenu() {
     // Flip buffers
     OSScreenFlipBuffersEx(SCREEN_TV);
     OSScreenFlipBuffersEx(SCREEN_DRC);
+
+    OSScreenEnableEx(SCREEN_TV, 1);
+    OSScreenEnableEx(SCREEN_DRC, 1);
 
     DrawUtils::initBuffers(screenbuffer0, screen_buf0_size, screenbuffer1, screen_buf1_size);
     if (!DrawUtils::initFont()) {
@@ -309,16 +343,17 @@ void ConfigUtils::openConfigMenu() {
     DrawUtils::deinitFont();
 
 error_exit:
+    // Restore DC reg values
+    __WriteReg32(0x1841 + SCREEN_TV * 0x200, tvRender1);
+    __WriteReg32(0x1840 + SCREEN_TV * 0x200, tvRender2);
+    __WriteReg32(0x1848 + SCREEN_TV * 0x200, tvPitch1);
+    __WriteReg32(0x1866 + SCREEN_TV * 0x200, tvPitch2);
 
-    if (gStoredTVBuffer.buffer != nullptr) {
-        GX2SetTVBuffer(gStoredTVBuffer.buffer, gStoredTVBuffer.buffer_size, static_cast<GX2TVRenderMode>(gStoredTVBuffer.mode),
-                       gStoredTVBuffer.surface_format, gStoredTVBuffer.buffering_mode);
-    }
+    __WriteReg32(0x1841 + SCREEN_DRC * 0x200, drcRender1);
+    __WriteReg32(0x1840 + SCREEN_DRC * 0x200, drcRender2);
+    __WriteReg32(0x1848 + SCREEN_DRC * 0x200, drcPitch1);
+    __WriteReg32(0x1866 + SCREEN_DRC * 0x200, drcPitch2);
 
-    if (gStoredDRCBuffer.buffer != nullptr) {
-        GX2SetDRCBuffer(gStoredDRCBuffer.buffer, gStoredDRCBuffer.buffer_size, static_cast<GX2DrcRenderMode>(gStoredDRCBuffer.mode),
-                        gStoredDRCBuffer.surface_format, gStoredDRCBuffer.buffering_mode);
-    }
     if (!skipScreen0Free && screenbuffer0) {
         MEMFreeToMappedMemory(screenbuffer0);
     }

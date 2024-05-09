@@ -73,4 +73,6 @@ private:
     static uint32_t tvSize;
     static uint8_t *drcBuffer;
     static uint32_t drcSize;
+    static uint32_t usedTVWidth;
+    static float usedTVScale;
 };

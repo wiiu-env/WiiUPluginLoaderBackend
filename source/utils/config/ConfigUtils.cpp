@@ -1,6 +1,7 @@
 #include "ConfigUtils.h"
 #include "../../globals.h"
 #include "../DrawUtils.h"
+#include "../dc.h"
 #include "../logger.h"
 #include "ConfigRenderer.h"
 #include "config/WUPSConfigAPI.h"
@@ -236,41 +237,20 @@ void ConfigUtils::displayMenu() {
     }
 }
 
-extern "C" uint32_t __OSPhysicalToEffectiveUncached(uint32_t);
-
-static uint32_t __ReadReg32(uint32_t index) {
-    if (OSIsECOMode()) {
-        return 0;
-    }
-    auto regs = (uint32_t *) __OSPhysicalToEffectiveUncached(0xc200000);
-    return regs[index];
-}
-
-static void __WriteReg32(uint32_t index, uint32_t val) {
-    if (OSIsECOMode()) {
-        return;
-    }
-    auto regs   = (uint32_t *) __OSPhysicalToEffectiveUncached(0xc200000);
-    regs[index] = val;
-}
-
-
-extern "C" void (*real_GX2SetTVBuffer)(void *buffer, uint32_t buffer_size, int32_t tv_render_mode, GX2SurfaceFormat format, GX2BufferingMode buffering_mode);
-extern "C" void (*real_GX2SetDRCBuffer)(void *buffer, uint32_t buffer_size, uint32_t drc_mode, GX2SurfaceFormat surface_format, GX2BufferingMode buffering_mode);
-
 void ConfigUtils::openConfigMenu() {
     gOnlyAcceptFromThread         = OSGetCurrentThread();
     bool wasHomeButtonMenuEnabled = OSIsHomeButtonMenuEnabled();
 
     // Save copy of DC reg values
-    auto tvRender1  = __ReadReg32(0x1841 + SCREEN_TV * 0x200);
-    auto tvRender2  = __ReadReg32(0x1840 + SCREEN_TV * 0x200);
-    auto tvPitch1   = __ReadReg32(0x1848 + SCREEN_TV * 0x200);
-    auto tvPitch2   = __ReadReg32(0x1866 + SCREEN_TV * 0x200);
-    auto drcRender1 = __ReadReg32(0x1841 + SCREEN_DRC * 0x200);
-    auto drcRender2 = __ReadReg32(0x1840 + SCREEN_DRC * 0x200);
-    auto drcPitch1  = __ReadReg32(0x1848 + SCREEN_DRC * 0x200);
-    auto drcPitch2  = __ReadReg32(0x1866 + SCREEN_DRC * 0x200);
+    auto tvRender1 = DCReadReg32(SCREEN_TV, D1GRPH_CONTROL_REG);
+    auto tvRender2 = DCReadReg32(SCREEN_TV, D1GRPH_ENABLE_REG);
+    auto tvPitch1  = DCReadReg32(SCREEN_TV, D1GRPH_PITCH_REG);
+    auto tvPitch2  = DCReadReg32(SCREEN_TV, D1OVL_PITCH_REG);
+
+    auto drcRender1 = DCReadReg32(SCREEN_DRC, D1GRPH_CONTROL_REG);
+    auto drcRender2 = DCReadReg32(SCREEN_DRC, D1GRPH_ENABLE_REG);
+    auto drcPitch1  = DCReadReg32(SCREEN_DRC, D1GRPH_PITCH_REG);
+    auto drcPitch2  = DCReadReg32(SCREEN_DRC, D1OVL_PITCH_REG);
 
     OSScreenInit();
 
@@ -354,15 +334,15 @@ void ConfigUtils::openConfigMenu() {
 
 error_exit:
     // Restore DC reg values
-    __WriteReg32(0x1841 + SCREEN_TV * 0x200, tvRender1);
-    __WriteReg32(0x1840 + SCREEN_TV * 0x200, tvRender2);
-    __WriteReg32(0x1848 + SCREEN_TV * 0x200, tvPitch1);
-    __WriteReg32(0x1866 + SCREEN_TV * 0x200, tvPitch2);
+    DCWriteReg32(SCREEN_TV, D1GRPH_CONTROL_REG, tvRender1);
+    DCWriteReg32(SCREEN_TV, D1GRPH_ENABLE_REG, tvRender2);
+    DCWriteReg32(SCREEN_TV, D1GRPH_PITCH_REG, tvPitch1);
+    DCWriteReg32(SCREEN_TV, D1OVL_PITCH_REG, tvPitch2);
 
-    __WriteReg32(0x1841 + SCREEN_DRC * 0x200, drcRender1);
-    __WriteReg32(0x1840 + SCREEN_DRC * 0x200, drcRender2);
-    __WriteReg32(0x1848 + SCREEN_DRC * 0x200, drcPitch1);
-    __WriteReg32(0x1866 + SCREEN_DRC * 0x200, drcPitch2);
+    DCWriteReg32(SCREEN_DRC, D1GRPH_CONTROL_REG, drcRender1);
+    DCWriteReg32(SCREEN_DRC, D1GRPH_ENABLE_REG, drcRender2);
+    DCWriteReg32(SCREEN_DRC, D1GRPH_PITCH_REG, drcPitch1);
+    DCWriteReg32(SCREEN_DRC, D1OVL_PITCH_REG, drcPitch2);
 
     if (!skipScreen0Free && screenbuffer0) {
         MEMFreeToMappedMemory(screenbuffer0);

@@ -160,6 +160,7 @@ void ConfigUtils::displayMenu() {
 
     gOnlyAcceptFromThread = OSGetCurrentThread();
     while (true) {
+        startTime = OSGetTime();
         if (gConfigMenuShouldClose) {
             gConfigMenuShouldClose = false;
             break;
@@ -212,6 +213,9 @@ void ConfigUtils::displayMenu() {
         }
     }
 
+    startTime = OSGetTime();
+    renderBasicScreen("Saving configs...");
+
     for (const auto &plugin : gLoadedPlugins) {
         const auto configData = plugin.getConfigData();
         if (configData) {
@@ -224,6 +228,12 @@ void ConfigUtils::displayMenu() {
     }
 
     WUPSConfigAPIBackend::Intern::CleanAllHandles();
+
+    // we want wait at least 300ms to avoid leaking inputs from the config menu to the application
+    auto diffTime = OSTicksToMilliseconds(OSGetTime() - startTime);
+    if (diffTime < 300) {
+        OSSleepTicks(OSMillisecondsToTicks(300 - diffTime));
+    }
 }
 
 extern "C" uint32_t __OSPhysicalToEffectiveUncached(uint32_t);

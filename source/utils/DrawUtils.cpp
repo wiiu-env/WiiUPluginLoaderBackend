@@ -1,5 +1,6 @@
 #include "DrawUtils.h"
 
+#include "dc.h"
 #include "logger.h"
 #include "utils.h"
 #include <avm/tv.h>
@@ -23,18 +24,6 @@ float DrawUtils::usedTVScale    = 1.5f;
 static SFT pFont                = {};
 
 static Color font_col(0xFFFFFFFF);
-
-#define __SetDCPitchReg ((void (*)(uint32_t, uint32_t))(0x101C400 + 0x1e714))
-
-extern "C" uint32_t __OSPhysicalToEffectiveUncached(uint32_t);
-
-static uint32_t __ReadReg32(uint32_t index) {
-    if (OSIsECOMode()) {
-        return 0;
-    }
-    auto regs = (uint32_t *) __OSPhysicalToEffectiveUncached(0xc200000);
-    return regs[index];
-}
 
 void DrawUtils::initBuffers(void *tvBuffer_, uint32_t tvSize_, void *drcBuffer_, uint32_t drcSize_) {
     DrawUtils::tvBuffer  = (uint8_t *) tvBuffer_;
@@ -75,19 +64,19 @@ void DrawUtils::initBuffers(void *tvBuffer_, uint32_t tvSize_, void *drcBuffer_,
         }
     }
 
-    auto tvScanBufferWidth = __ReadReg32(0x184d + SCREEN_TV * 0x200);
+    auto tvScanBufferWidth = DCReadReg32(SCREEN_TV, D1GRPH_X_END_REG);
 
     if (tvScanBufferWidth == 640) { // 480i/480p/576i 4:3
         DrawUtils::usedTVWidth = 640;
-        __SetDCPitchReg(SCREEN_TV, 640);
+        SetDCPitchReg(SCREEN_TV, 640);
         DrawUtils::usedTVScale = bigScale ? 0.75 : 0.75f;
     } else if (tvScanBufferWidth == 854) { // 480i/480p/576i 16:9
         DrawUtils::usedTVWidth = 896;
-        __SetDCPitchReg(SCREEN_TV, 896);
+        SetDCPitchReg(SCREEN_TV, 896);
         DrawUtils::usedTVScale = bigScale ? 1.0 : 1.0f;
     } else if (tvScanBufferWidth == 1280) { // 720p 16:9
         DrawUtils::usedTVWidth = 1280;
-        __SetDCPitchReg(SCREEN_TV, 1280);
+        SetDCPitchReg(SCREEN_TV, 1280);
         if (bigScale) {
             DrawUtils::usedTVScale = 1.5;
         } else {
@@ -102,11 +91,11 @@ void DrawUtils::initBuffers(void *tvBuffer_, uint32_t tvSize_, void *drcBuffer_,
         }
     } else if (tvScanBufferWidth == 1920) { // 1080i/1080p 16:9
         DrawUtils::usedTVWidth = 1920;
-        __SetDCPitchReg(SCREEN_TV, 1920);
+        SetDCPitchReg(SCREEN_TV, 1920);
         DrawUtils::usedTVScale = bigScale ? 2.25 : 1.125f;
     } else {
         DrawUtils::usedTVWidth = tvScanBufferWidth;
-        __SetDCPitchReg(SCREEN_TV, tvScanBufferWidth);
+        SetDCPitchReg(SCREEN_TV, tvScanBufferWidth);
         DrawUtils::usedTVScale = 1.0f;
         DEBUG_FUNCTION_LINE_WARN("Unknown tv width detected, config menu might not show properly");
     }

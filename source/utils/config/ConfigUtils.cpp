@@ -202,7 +202,7 @@ void ConfigUtils::displayMenu() {
         if (subState != SUB_STATE_RUNNING) {
             break;
         }
-        if (renderer.NeedsRedraw()) {
+        if (renderer.NeedsRedraw() || baseInput.data.buttons_d || baseInput.data.buttons_r) {
             renderer.Render();
         }
         renderer.ResetNeedsRedraw();

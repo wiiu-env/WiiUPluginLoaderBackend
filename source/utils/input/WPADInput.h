@@ -144,7 +144,8 @@ public:
             return false;
         }
 
-        if (kpad.extensionType == WPAD_EXT_CORE || kpad.extensionType == WPAD_EXT_NUNCHUK) {
+        if (kpad.extensionType == WPAD_EXT_CORE || kpad.extensionType == WPAD_EXT_NUNCHUK ||
+            kpad.extensionType == WPAD_EXT_MPLUS || kpad.extensionType == WPAD_EXT_MPLUS_NUNCHUK) {
             data.buttons_r = remapWiiMoteButtons(kpad.release);
             data.buttons_h = remapWiiMoteButtons(kpad.hold);
             data.buttons_d = remapWiiMoteButtons(kpad.trigger);

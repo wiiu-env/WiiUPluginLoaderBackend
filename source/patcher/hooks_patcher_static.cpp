@@ -111,12 +111,13 @@ DECL_FUNCTION(void, WPADRead, WPADChan chan, WPADStatusProController *data) {
 
     if (!sConfigMenuOpened && data && data[0].err == 0) {
         if (data[0].extensionType != 0xFF) {
-            if (data[0].extensionType == WPAD_EXT_CORE || data[0].extensionType == WPAD_EXT_NUNCHUK) {
+            if (data[0].extensionType == WPAD_EXT_CORE || data[0].extensionType == WPAD_EXT_NUNCHUK ||
+                data[0].extensionType == WPAD_EXT_MPLUS || data[0].extensionType == WPAD_EXT_MPLUS_NUNCHUK) {
                 // button data is in the first 2 bytes for wiimotes
                 if (((uint16_t *) data)[0] == (WPAD_BUTTON_B | WPAD_BUTTON_DOWN | WPAD_BUTTON_MINUS)) {
                     sWantsToOpenConfigMenu = true;
                 }
-            } else if (data[0].extensionType == WPAD_EXT_CLASSIC) {
+            } else if (data[0].extensionType == WPAD_EXT_CLASSIC || data[0].extensionType == WPAD_EXT_MPLUS_CLASSIC) {
                 // TODO: figure out the real struct..
                 if ((((uint32_t *) data)[10] & 0xFFFF) == (WPAD_CLASSIC_BUTTON_L | WPAD_CLASSIC_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_MINUS)) {
                     sWantsToOpenConfigMenu = true;

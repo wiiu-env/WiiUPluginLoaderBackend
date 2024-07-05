@@ -80,19 +80,24 @@ DECL_FUNCTION(void, OSReleaseForeground) {
     real_OSReleaseForeground();
 }
 
-DECL_FUNCTION(int32_t, VPADRead, int32_t chan, VPADStatus *buffer, uint32_t buffer_size, int32_t *error) {
+DECL_FUNCTION(int32_t, VPADRead, int32_t chan, VPADStatus *buffer, uint32_t buffer_size, VPADReadError *error) {
     if (sConfigMenuOpened) {
         // Ignore reading vpad input only from other threads if the config menu is opened
         if (OSGetCurrentThread() != gOnlyAcceptFromThread) {
             return 0;
         }
     }
-    int32_t result = real_VPADRead(chan, buffer, buffer_size, error);
+    VPADReadError real_error = VPAD_READ_SUCCESS;
+    int32_t result           = real_VPADRead(chan, buffer, buffer_size, &real_error);
 
-    if (result > 0 && ((buffer[0].hold & 0xFFFFF) == (VPAD_BUTTON_L | VPAD_BUTTON_DOWN | VPAD_BUTTON_MINUS)) && sVpadPressCooldown == 0 && !sConfigMenuOpened) {
+    if (result > 0 && real_error == VPAD_READ_SUCCESS && buffer && ((buffer[0].hold & 0xFFFFF) == (VPAD_BUTTON_L | VPAD_BUTTON_DOWN | VPAD_BUTTON_MINUS)) && sVpadPressCooldown == 0 && !sConfigMenuOpened) {
+
         sWantsToOpenConfigMenu = true;
         sVpadPressCooldown     = 0x3C;
         return 0;
+    }
+    if (error) {
+        *error = real_error;
     }
 
     if (sVpadPressCooldown > 0) {
@@ -104,8 +109,7 @@ DECL_FUNCTION(int32_t, VPADRead, int32_t chan, VPADStatus *buffer, uint32_t buff
 DECL_FUNCTION(void, WPADRead, WPADChan chan, WPADStatusProController *data) {
     real_WPADRead(chan, data);
 
-
-    if (!sConfigMenuOpened && data[0].err == 0) {
+    if (!sConfigMenuOpened && data && data[0].err == 0) {
         if (data[0].extensionType != 0xFF) {
             if (data[0].extensionType == WPAD_EXT_CORE || data[0].extensionType == WPAD_EXT_NUNCHUK) {
                 // button data is in the first 2 bytes for wiimotes

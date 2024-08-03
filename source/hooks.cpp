@@ -44,6 +44,9 @@ void CallHook(const std::vector<PluginContainer> &plugins, const wups_loader_hoo
 void CallHook(const std::vector<PluginContainer> &plugins, const wups_loader_hook_type_t hook_type, const std::function<bool(const PluginContainer &)> &pred) {
     DEBUG_FUNCTION_LINE_VERBOSE("Calling hook of type %s [%d]", hook_names[hook_type], hook_type);
     for (const auto &plugin : plugins) {
+        if (!plugin.isPluginLinkedAndLoaded()) {
+            return;
+        }
         if (pred(plugin)) {
             CallHook(plugin, hook_type);
         }
@@ -51,7 +54,10 @@ void CallHook(const std::vector<PluginContainer> &plugins, const wups_loader_hoo
 }
 
 void CallHook(const PluginContainer &plugin, wups_loader_hook_type_t hook_type) {
-    for (const auto &hook : plugin.getPluginInformation().getHookDataList()) {
+    if (!plugin.isPluginLinkedAndLoaded()) {
+        return;
+    }
+    for (const auto &hook : plugin.getPluginLinkInformation()->getHookDataList()) {
         if (hook.getType() == hook_type) {
             DEBUG_FUNCTION_LINE_VERBOSE("Calling hook of type %s for plugin %s [%d]", hook_names[hook.getType()], plugin.getMetaInformation().getName().c_str(), hook_type);
             void *func_ptr = hook.getFunctionPointer();

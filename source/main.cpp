@@ -217,7 +217,7 @@ void CleanupPlugins(std::vector<PluginContainer> &&pluginsToDeinit) {
 
     for (const auto &pluginContainer : pluginsToDeinit) {
         for (auto &cur : gTrampData) {
-            if (cur.id != pluginContainer.getPluginInformation().getTrampolineId()) {
+            if (!pluginContainer.isPluginLinkedAndLoaded() || cur.id != pluginContainer.getPluginLinkInformation()->getTrampolineId()) {
                 continue;
             }
             cur.status = RELOC_TRAMP_FREE;
@@ -227,7 +227,10 @@ void CleanupPlugins(std::vector<PluginContainer> &&pluginsToDeinit) {
 void CheckCleanupCallbackUsage(const std::vector<PluginContainer> &plugins) {
     auto *curThread = OSGetCurrentThread();
     for (const auto &cur : plugins) {
-        const auto textSection = cur.getPluginInformation().getSectionInfo(".text");
+        if (!cur.isPluginLinkedAndLoaded()) {
+            continue;
+        }
+        const auto textSection = cur.getPluginLinkInformation()->getSectionInfo(".text");
         if (!textSection) {
             continue;
         }

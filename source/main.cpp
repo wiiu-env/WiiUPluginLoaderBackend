@@ -5,6 +5,7 @@
 #include "hooks.h"
 #include "patcher/hooks_patcher_static.h"
 #include "plugin/PluginDataFactory.h"
+#include "plugin/PluginMetaInformationFactory.h"
 #include "utils/utils.h"
 #include <coreinit/debug.h>
 #include <notifications/notifications.h>
@@ -190,7 +191,10 @@ WUMS_APPLICATION_STARTS() {
 void CheckCleanupCallbackUsage(const std::vector<PluginContainer> &plugins) {
     auto *curThread = OSGetCurrentThread();
     for (const auto &cur : plugins) {
-        auto textSection = cur.getPluginInformation().getSectionInfo(".text");
+        if (!cur.isPluginLinkedAndLoaded()) {
+            continue;
+        }
+        auto textSection = cur.getPluginLinkInformation()->getSectionInfo(".text");
         if (!textSection) {
             continue;
         }

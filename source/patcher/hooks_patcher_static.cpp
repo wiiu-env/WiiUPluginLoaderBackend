@@ -146,7 +146,10 @@ DECL_FUNCTION(uint32_t, SC17_FindClosestSymbol,
               char *moduleNameBuffer,
               uint32_t moduleNameBufferLength) {
     for (const auto &plugin : gLoadedPlugins) {
-        const auto sectionInfo = plugin.getPluginInformation().getSectionInfo(".text");
+        if (!plugin.isPluginLinkedAndLoaded()) {
+            continue;
+        }
+        const auto sectionInfo = plugin.getPluginLinkInformation()->getSectionInfo(".text");
         if (!sectionInfo) {
             continue;
         }
@@ -156,7 +159,7 @@ DECL_FUNCTION(uint32_t, SC17_FindClosestSymbol,
         }
 
         strncpy(moduleNameBuffer, plugin.getMetaInformation().getName().c_str(), moduleNameBufferLength - 1);
-        auto functionSymbolData = plugin.getPluginInformation().getNearestFunctionSymbolData(addr);
+        auto functionSymbolData = plugin.getPluginLinkInformation()->getNearestFunctionSymbolData(addr);
         if (functionSymbolData) {
             strncpy(symbolNameBuffer, functionSymbolData->getName().c_str(), moduleNameBufferLength - 1);
             if (outDistance) {
@@ -179,7 +182,10 @@ DECL_FUNCTION(uint32_t, SC17_FindClosestSymbol,
 
 DECL_FUNCTION(uint32_t, KiGetAppSymbolName, uint32_t addr, char *buffer, int32_t bufSize) {
     for (const auto &plugin : gLoadedPlugins) {
-        const auto sectionInfo = plugin.getPluginInformation().getSectionInfo(".text");
+        if (!plugin.isPluginLinkedAndLoaded()) {
+            continue;
+        }
+        const auto sectionInfo = plugin.getPluginLinkInformation()->getSectionInfo(".text");
         if (!sectionInfo) {
             continue;
         }
@@ -195,7 +201,7 @@ DECL_FUNCTION(uint32_t, KiGetAppSymbolName, uint32_t addr, char *buffer, int32_t
         }
         strncpy(buffer, plugin.getMetaInformation().getName().c_str(), bufSize - 1);
 
-        const auto functionSymbolData = plugin.getPluginInformation().getNearestFunctionSymbolData(addr);
+        const auto functionSymbolData = plugin.getPluginLinkInformation()->getNearestFunctionSymbolData(addr);
         if (functionSymbolData) {
             buffer[pluginNameLen]     = '|';
             buffer[pluginNameLen + 1] = '\0';

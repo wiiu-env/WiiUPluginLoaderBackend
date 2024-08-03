@@ -272,9 +272,9 @@ extern "C" PluginBackendApiErrorType WUPSGetSectionInformationForPlugin(const wu
     if (handle != 0 && plugin_section_list != nullptr && buffer_size != 0) {
         bool found = false;
         for (const auto &curContainer : gLoadedPlugins) {
-            if (curContainer.getHandle() == handle) {
+            if (curContainer.isPluginLinkedAndLoaded() && curContainer.getHandle() == handle) {
                 found                       = true;
-                const auto &sectionInfoList = curContainer.getPluginInformation().getSectionInfoList();
+                const auto &sectionInfoList = curContainer.getPluginLinkInformation()->getSectionInfoList();
 
                 uint32_t offset = 0;
                 for (auto const &[key, sectionInfo] : sectionInfoList) {
@@ -316,9 +316,9 @@ extern "C" PluginBackendApiErrorType WUPSGetSectionMemoryAddresses(wups_backend_
         return PLUGIN_BACKEND_API_ERROR_INVALID_ARG;
     }
     for (const auto &curContainer : gLoadedPlugins) {
-        if (curContainer.getHandle() == handle) {
-            *textAddress = (void *) curContainer.getPluginInformation().getTextMemory().data();
-            *dataAddress = (void *) curContainer.getPluginInformation().getDataMemory().data();
+        if (curContainer.isPluginLinkedAndLoaded() && curContainer.getHandle() == handle) {
+            *textAddress = (void *) curContainer.getPluginLinkInformation()->getTextMemory().data();
+            *dataAddress = (void *) curContainer.getPluginLinkInformation()->getDataMemory().data();
             return PLUGIN_BACKEND_API_ERROR_NONE;
         }
     }

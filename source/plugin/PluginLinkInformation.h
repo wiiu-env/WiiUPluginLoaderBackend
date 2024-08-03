@@ -40,13 +40,13 @@ struct FunctionSymbolDataComparator {
     }
 };
 
-class PluginInformation {
+class PluginLinkInformation {
 public:
-    PluginInformation(const PluginInformation &) = delete;
+    PluginLinkInformation(const PluginLinkInformation &) = delete;
 
-    PluginInformation(PluginInformation &&src);
+    PluginLinkInformation(PluginLinkInformation &&src);
 
-    PluginInformation &operator=(PluginInformation &&src);
+    PluginLinkInformation &operator=(PluginLinkInformation &&src);
 
     [[nodiscard]] const std::vector<HookData> &getHookDataList() const;
 
@@ -69,7 +69,7 @@ public:
     [[nodiscard]] const HeapMemoryFixedSize &getDataMemory() const;
 
 private:
-    PluginInformation() = default;
+    PluginLinkInformation() = default;
 
     void addHookData(HookData hook_data);
 
@@ -94,5 +94,5 @@ private:
     HeapMemoryFixedSize mAllocatedTextMemoryAddress;
     HeapMemoryFixedSize mAllocatedDataMemoryAddress;
 
-    friend class PluginInformationFactory;
+    friend class PluginLinkInformationFactory;
 };

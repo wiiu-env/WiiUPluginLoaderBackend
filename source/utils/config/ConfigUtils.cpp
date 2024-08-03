@@ -76,6 +76,9 @@ void ConfigUtils::displayMenu() {
 
     std::vector<ConfigDisplayItem> configs;
     for (const auto &plugin : gLoadedPlugins) {
+        if (!plugin.isPluginLinkedAndLoaded()) {
+            continue;
+        }
         GeneralConfigInformation info;
         info.name    = plugin.getMetaInformation().getName();
         info.author  = plugin.getMetaInformation().getAuthor();
@@ -100,7 +103,7 @@ void ConfigUtils::displayMenu() {
                 DEBUG_FUNCTION_LINE_ERR("Failed to create config for plugin: \"%s\"", info.name.c_str());
             }
         } else {
-            for (const auto &hook : plugin.getPluginInformation().getHookDataList()) {
+            for (const auto &hook : plugin.getPluginLinkInformation()->getHookDataList()) {
                 if (hook.getType() == WUPS_LOADER_HOOK_GET_CONFIG_DEPRECATED) {
                     if (hook.getFunctionPointer() == nullptr) {
                         DEBUG_FUNCTION_LINE_ERR("Hook had invalid ptr");

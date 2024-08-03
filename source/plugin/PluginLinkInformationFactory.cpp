@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
 
-#include "PluginInformationFactory.h"
+#include "PluginLinkInformationFactory.h"
 #include "../utils/ElfUtils.h"
 #include "utils/HeapMemoryFixedSize.h"
 #include "utils/wiiu_zlib.hpp"
@@ -27,8 +27,8 @@
 
 using namespace ELFIO;
 
-std::optional<PluginInformation>
-PluginInformationFactory::load(const PluginData &pluginData, std::vector<relocation_trampoline_entry_t> &trampolineData, uint8_t trampolineId) {
+std::optional<PluginLinkInformation>
+PluginLinkInformationFactory::load(const PluginData &pluginData, std::vector<relocation_trampoline_entry_t> &trampolineData, uint8_t trampolineId) {
     auto buffer = pluginData.getBuffer();
     if (buffer.empty()) {
         DEBUG_FUNCTION_LINE_ERR("Buffer was empty");
@@ -41,7 +41,7 @@ PluginInformationFactory::load(const PluginData &pluginData, std::vector<relocat
         return std::nullopt;
     }
 
-    PluginInformation pluginInfo;
+    PluginLinkInformation pluginInfo;
 
     uint32_t sec_num = reader.sections.size();
 
@@ -169,7 +169,7 @@ PluginInformationFactory::load(const PluginData &pluginData, std::vector<relocat
         }
     }
 
-    if (!PluginInformationFactory::addImportRelocationData(pluginInfo, reader, destinations)) {
+    if (!PluginLinkInformationFactory::addImportRelocationData(pluginInfo, reader, destinations)) {
         DEBUG_FUNCTION_LINE_ERR("addImportRelocationData failed");
         return std::nullopt;
     }
@@ -265,7 +265,7 @@ PluginInformationFactory::load(const PluginData &pluginData, std::vector<relocat
     return pluginInfo;
 }
 
-bool PluginInformationFactory::addImportRelocationData(PluginInformation &pluginInfo, const elfio &reader, std::span<uint8_t *> destinations) {
+bool PluginLinkInformationFactory::addImportRelocationData(PluginLinkInformation &pluginInfo, const elfio &reader, std::span<uint8_t *> destinations) {
     std::map<uint32_t, std::shared_ptr<ImportRPLInformation>> infoMap;
 
     uint32_t sec_num = reader.sections.size();
@@ -336,7 +336,7 @@ bool PluginInformationFactory::addImportRelocationData(PluginInformation &plugin
     return true;
 }
 
-bool PluginInformationFactory::linkSection(const elfio &reader, uint32_t section_index, uint32_t destination, uint32_t base_text, uint32_t base_data,
+bool PluginLinkInformationFactory::linkSection(const elfio &reader, uint32_t section_index, uint32_t destination, uint32_t base_text, uint32_t base_data,
                                            std::vector<relocation_trampoline_entry_t> &trampolineData, uint8_t trampolineId) {
     uint32_t sec_num = reader.sections.size();
 

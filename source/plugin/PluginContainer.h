@@ -19,7 +19,7 @@
 
 #include "PluginConfigData.h"
 #include "PluginData.h"
-#include "PluginInformation.h"
+#include "PluginLinkInformation.h"
 #include "PluginMetaInformation.h"
 
 #include <memory>
@@ -28,20 +28,23 @@
 
 class PluginContainer {
 public:
-    PluginContainer(PluginMetaInformation metaInformation, PluginInformation pluginInformation, std::shared_ptr<PluginData> pluginData);
+    PluginContainer(PluginMetaInformation metaInformation, std::optional<PluginLinkInformation> pluginLinkInformation, std::shared_ptr<PluginData> pluginData);
 
     PluginContainer(const PluginContainer &) = delete;
 
-    PluginContainer(PluginContainer &&src) noexcept;
+    PluginContainer(PluginContainer &&src);
 
-    PluginContainer &operator=(PluginContainer &&src) noexcept;
+    PluginContainer &operator=(PluginContainer &&src);
 
     [[nodiscard]] const PluginMetaInformation &getMetaInformation() const;
 
-    [[nodiscard]] const PluginInformation &getPluginInformation() const;
-    [[nodiscard]] PluginInformation &getPluginInformation();
+    [[nodiscard]] const PluginLinkInformation *getPluginLinkInformation() const;
+
+    [[nodiscard]] PluginLinkInformation *getPluginLinkInformation();
 
     [[nodiscard]] std::shared_ptr<PluginData> getPluginDataCopy() const;
+
+    [[nodiscard]] bool isPluginLinkedAndLoaded() const;
 
     [[nodiscard]] uint32_t getHandle() const;
 
@@ -61,10 +64,10 @@ public:
 
 private:
     PluginMetaInformation mMetaInformation;
-    PluginInformation mPluginInformation;
+    std::optional<PluginLinkInformation> mPluginLinkInformation;
     std::shared_ptr<PluginData> mPluginData;
 
-    std::optional<PluginConfigData> mPluginConfigData;
-    wups_storage_root_item mStorageRootItem = nullptr;
-    bool mInitDone                          = false;
+    std::optional<PluginConfigData> mPluginConfigData = std::nullopt;
+    wups_storage_root_item mStorageRootItem           = nullptr;
+    bool mInitDone                                    = false;
 };

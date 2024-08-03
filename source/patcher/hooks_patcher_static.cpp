@@ -147,7 +147,10 @@ DECL_FUNCTION(uint32_t, SC17_FindClosestSymbol,
               char *moduleNameBuffer,
               uint32_t moduleNameBufferLength) {
     for (const auto &plugin : gLoadedPlugins) {
-        const auto sectionInfo = plugin.getPluginInformation().getSectionInfo(".text");
+        if (!plugin.isPluginLinkedAndLoaded()) {
+            continue;
+        }
+        const auto sectionInfo = plugin.getPluginLinkInformation()->getSectionInfo(".text");
         if (!sectionInfo) {
             continue;
         }
@@ -157,7 +160,7 @@ DECL_FUNCTION(uint32_t, SC17_FindClosestSymbol,
         }
 
         strncpy(moduleNameBuffer, plugin.getMetaInformation().getName().c_str(), moduleNameBufferLength - 1);
-        if (const auto functionSymbolData = plugin.getPluginInformation().getNearestFunctionSymbolData(addr)) {
+        if (const auto functionSymbolData = plugin.getPluginLinkInformation()->getNearestFunctionSymbolData(addr)) {
             strncpy(symbolNameBuffer, functionSymbolData->getName().c_str(), moduleNameBufferLength - 1);
             if (outDistance) {
                 *outDistance = addr - reinterpret_cast<uint32_t>(functionSymbolData->getAddress());
@@ -179,7 +182,10 @@ DECL_FUNCTION(uint32_t, SC17_FindClosestSymbol,
 
 DECL_FUNCTION(uint32_t, KiGetAppSymbolName, uint32_t addr, char *buffer, int32_t bufSize) {
     for (const auto &plugin : gLoadedPlugins) {
-        const auto sectionInfo = plugin.getPluginInformation().getSectionInfo(".text");
+        if (!plugin.isPluginLinkedAndLoaded()) {
+            continue;
+        }
+        const auto sectionInfo = plugin.getPluginLinkInformation()->getSectionInfo(".text");
         if (!sectionInfo) {
             continue;
         }
@@ -195,7 +201,7 @@ DECL_FUNCTION(uint32_t, KiGetAppSymbolName, uint32_t addr, char *buffer, int32_t
         }
         strncpy(buffer, plugin.getMetaInformation().getName().c_str(), bufSize - 1);
 
-        if (const auto functionSymbolData = plugin.getPluginInformation().getNearestFunctionSymbolData(addr)) {
+        if (const auto functionSymbolData = plugin.getPluginLinkInformation()->getNearestFunctionSymbolData(addr)) {
             buffer[pluginNameLen]     = '|';
             buffer[pluginNameLen + 1] = '\0';
             strncpy(buffer + pluginNameLen + 1, functionSymbolData->getName().c_str(), spaceLeftInBuffer - 1);

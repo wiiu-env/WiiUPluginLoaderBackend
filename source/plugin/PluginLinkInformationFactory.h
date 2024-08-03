@@ -17,21 +17,22 @@
 
 #pragma once
 #include "PluginData.h"
-#include "PluginInformation.h"
+#include "PluginLinkInformation.h"
 
 #include <elfio/elfio.hpp>
 #include <optional>
 #include <wums/defines/relocation_defines.h>
 
-class PluginInformationFactory {
+class PluginLinkInformationFactory {
 public:
-    static std::optional<PluginInformation>
+    static std::optional<PluginLinkInformation>
     load(const PluginData &pluginData, std::vector<relocation_trampoline_entry_t> &trampolineData, uint8_t trampolineId);
 
+private:
     static bool
     linkSection(const ELFIO::elfio &reader, uint32_t section_index, uint32_t destination, uint32_t base_text, uint32_t base_data,
                 std::vector<relocation_trampoline_entry_t> &trampolineData, uint8_t trampolineId);
 
     static bool
-    addImportRelocationData(PluginInformation &pluginInfo, const ELFIO::elfio &reader, std::span<uint8_t *> destinations);
+    addImportRelocationData(PluginLinkInformation &pluginInfo, const ELFIO::elfio &reader, std::span<uint8_t *> destinations);
 };

@@ -276,9 +276,9 @@ extern "C" PluginBackendApiErrorType WUPSGetSectionInformationForPlugin(const wu
     if (handle != 0 && plugin_section_list != nullptr && buffer_size != 0) {
         bool found = false;
         for (const auto &curContainer : gLoadedPlugins) {
-            if (curContainer.getHandle() == handle) {
+            if (curContainer.isPluginLinkedAndLoaded() && curContainer.getHandle() == handle) {
                 found                       = true;
-                const auto &sectionInfoList = curContainer.getPluginInformation().getSectionInfoList();
+                const auto &sectionInfoList = curContainer.getPluginLinkInformation()->getSectionInfoList();
 
                 uint32_t offset = 0;
                 for (auto const &sectionInfo : sectionInfoList | std::views::values) {
@@ -320,9 +320,9 @@ extern "C" PluginBackendApiErrorType WUPSGetSectionMemoryAddresses(const wups_ba
         return PLUGIN_BACKEND_API_ERROR_INVALID_ARG;
     }
     for (const auto &curContainer : gLoadedPlugins) {
-        if (curContainer.getHandle() == handle) {
-            *textAddress = const_cast<void *>(curContainer.getPluginInformation().getTextMemory().data());
-            *dataAddress = const_cast<void *>(curContainer.getPluginInformation().getDataMemory().data());
+        if (curContainer.isPluginLinkedAndLoaded() && curContainer.getHandle() == handle) {
+            *textAddress = const_cast<void *>(curContainer.getPluginLinkInformation()->getTextMemory().data());
+            *dataAddress = const_cast<void *>(curContainer.getPluginLinkInformation()->getDataMemory().data());
             return PLUGIN_BACKEND_API_ERROR_NONE;
         }
     }

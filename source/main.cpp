@@ -81,7 +81,8 @@ WUMS_APPLICATION_STARTS() {
     }
 
     OSReport("Running WiiUPluginLoaderBackend " MODULE_VERSION_FULL "\n");
-    gStoredTVBuffer = {};
+    gStoredTVBuffer        = {};
+    gConfigMenuShouldClose = false;
 
     gUsedRPLs.clear();
 
@@ -117,21 +118,21 @@ WUMS_APPLICATION_STARTS() {
 
     if (!gLoadOnNextLaunch.empty()) {
         std::vector<PluginContainer> pluginsToKeep;
-        std::set<std::shared_ptr<PluginData>, PluginDataSharedPtrComparator> toBeLoaded;
+        std::vector<PluginLoadWrapper> toBeLoaded;
 
         // Check which plugins are already loaded and which needs to be
-        for (const auto &pluginData : gLoadOnNextLaunch) {
+        for (const auto &pluginLoadWrapper : gLoadOnNextLaunch) {
             // Check if the plugin data is already loaded
             if (auto it = std::ranges::find_if(gLoadedPlugins,
-                                               [&pluginData](const PluginContainer &container) {
-                                                   return container.getPluginDataCopy()->getHandle() == pluginData->getHandle();
+                                               [&pluginLoadWrapper](const PluginContainer &container) {
+                                                   return container.getPluginDataCopy()->getHandle() == pluginLoadWrapper.getPluginData()->getHandle();
                                                });
                 it != gLoadedPlugins.end()) {
                 pluginsToKeep.push_back(std::move(*it));
                 gLoadedPlugins.erase(it);
             } else {
                 // Load it if it's not already loaded
-                toBeLoaded.insert(pluginData);
+                toBeLoaded.push_back(pluginLoadWrapper);
             }
         }
 

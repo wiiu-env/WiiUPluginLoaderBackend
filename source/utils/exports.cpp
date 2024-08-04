@@ -35,7 +35,7 @@ extern "C" PluginBackendApiErrorType WUPSLoadAndLinkByDataHandle(const wups_back
 
         for (const auto &pluginData : gLoadedData) {
             if (pluginData->getHandle() == handle) {
-                gLoadOnNextLaunch.push_back(pluginData);
+                gLoadOnNextLaunch.emplace_back(pluginData, true);
                 found = true;
                 break;
             }

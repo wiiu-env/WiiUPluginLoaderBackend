@@ -22,6 +22,8 @@ public:
 
     [[nodiscard]] bool isActivePlugin() const;
 
+    void toggleIsActivePlugin();
+
 private:
     std::unique_ptr<WUPSConfigAPIBackend::WUPSConfig> mConfig;
     GeneralConfigInformation mInfo;

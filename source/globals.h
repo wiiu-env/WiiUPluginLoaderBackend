@@ -16,6 +16,7 @@
 class PluginDataSharedPtrComparator;
 class PluginData;
 class PluginContainer;
+class PluginLoadWrapper;
 
 extern StoredBuffer gStoredTVBuffer;
 extern StoredBuffer gStoredDRCBuffer;
@@ -25,7 +26,7 @@ extern std::vector<relocation_trampoline_entry_t> gTrampData;
 extern std::vector<PluginContainer> gLoadedPlugins;
 
 extern std::set<std::shared_ptr<PluginData>, PluginDataSharedPtrComparator> gLoadedData;
-extern std::vector<std::shared_ptr<PluginData>> gLoadOnNextLaunch;
+extern std::vector<PluginLoadWrapper> gLoadOnNextLaunch;
 extern std::mutex gLoadedDataMutex;
 extern std::map<std::string, OSDynLoad_Module> gUsedRPLs;
 extern std::vector<void *> gAllocatedAddresses;

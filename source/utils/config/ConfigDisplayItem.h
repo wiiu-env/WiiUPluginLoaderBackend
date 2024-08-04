@@ -12,7 +12,7 @@ struct GeneralConfigInformation {
 
 class ConfigDisplayItem {
 public:
-    ConfigDisplayItem(GeneralConfigInformation &info, std::unique_ptr<WUPSConfigAPIBackend::WUPSConfig> config, bool isActive) : mConfig(std::move(config)), mInfo(std::move(info)), mIsActivePlugin(isActive) {
+    ConfigDisplayItem(GeneralConfigInformation &info, std::unique_ptr<WUPSConfigAPIBackend::WUPSConfig> config, bool isActive) : mConfig(std::move(config)), mInfo(std::move(info)), mIsActivePlugin(isActive), mInitialIsActivePlugin(isActive) {
         assert(mConfig);
     }
     [[nodiscard]] const GeneralConfigInformation &getConfigInformation() const {
@@ -30,8 +30,13 @@ public:
         mIsActivePlugin = !mIsActivePlugin;
     }
 
+    void resetIsActivePlugin() {
+        mIsActivePlugin = mInitialIsActivePlugin;
+    }
+
 private:
     std::unique_ptr<WUPSConfigAPIBackend::WUPSConfig> mConfig;
     GeneralConfigInformation mInfo;
     bool mIsActivePlugin;
+    bool mInitialIsActivePlugin;
 };

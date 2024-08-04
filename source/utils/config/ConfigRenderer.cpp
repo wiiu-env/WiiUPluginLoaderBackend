@@ -119,12 +119,18 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
             return SUB_STATE_RUNNING;
         }
     } else if (input.data.buttons_d & (Input::eButtons::BUTTON_B | Input::eButtons::BUTTON_HOME)) {
-        mNeedRedraw = true;
-        mCategoryRenderer.reset();
-        for (const auto &element : configs) {
-            CallOnCloseCallback(element.get().getConfigInformation(), element.get().getConfig());
+        if (mSetActivePluginsMode) {
+            mNeedRedraw = true;
+            mSetActivePluginsMode = false;
+            return SUB_STATE_RUNNING;
+        } else {
+            mNeedRedraw = true;
+            mCategoryRenderer.reset();
+            for (const auto &element : configs) {
+                CallOnCloseCallback(element.get().getConfigInformation(), element.get().getConfig());
+            }
+            return SUB_STATE_RETURN;
         }
-        return SUB_STATE_RETURN;
     }
 
     if (mCursorPos < 0) {

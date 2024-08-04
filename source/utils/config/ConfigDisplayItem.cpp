@@ -5,7 +5,8 @@ ConfigDisplayItem::ConfigDisplayItem(GeneralConfigInformation &info,
                                      std::unique_ptr<WUPSConfigAPIBackend::WUPSConfig> config,
                                      const bool isActive) : mConfig(std::move(config)),
                                                             mInfo(std::move(info)),
-                                                            mIsActivePlugin(isActive) {
+                                                            mIsActivePlugin(isActive),
+                                                            mInitialIsActivePlugin(isActive) {
     assert(mConfig);
 }
 
@@ -23,4 +24,8 @@ bool ConfigDisplayItem::isActivePlugin() const {
 
 void ConfigDisplayItem::toggleIsActivePlugin() {
     mIsActivePlugin = !mIsActivePlugin;
+}
+
+void ConfigDisplayItem::resetIsActivePlugin() {
+    mIsActivePlugin = mInitialIsActivePlugin;
 }

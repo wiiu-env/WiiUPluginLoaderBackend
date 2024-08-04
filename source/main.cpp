@@ -6,6 +6,7 @@
 #include "patcher/hooks_patcher_static.h"
 #include "plugin/PluginDataFactory.h"
 #include "plugin/PluginMetaInformationFactory.h"
+#include "utils/WUPSBackendSettings.h"
 #include "utils/utils.h"
 #include <coreinit/debug.h>
 #include <notifications/notifications.h>
@@ -107,7 +108,10 @@ WUMS_APPLICATION_STARTS() {
 
         DEBUG_FUNCTION_LINE("Load plugins from %s", pluginPath.c_str());
 
-        auto pluginData = PluginDataFactory::loadDir(pluginPath);
+        WUPSBackendSettings::LoadSettings();
+        auto &inactiveList = WUPSBackendSettings::GetInactivePluginFilenames();
+
+        auto pluginData = PluginDataFactory::loadDir(pluginPath, inactiveList);
         gLoadedPlugins  = PluginManagement::loadPlugins(pluginData, gTrampData);
 
         initNeeded = true;

@@ -1,14 +1,19 @@
 #include "utils.h"
+#include "fs/CFile.hpp"
 #include "globals.h"
+#include "json.hpp"
 #include "logger.h"
 #include <algorithm>
 #include <coreinit/ios.h>
 #include <string>
 
 static std::string sPluginPath;
-std::string getPluginPath() {
-    if (!sPluginPath.empty()) {
-        return sPluginPath;
+static std::string sModulePath;
+static std::string sEnvironmentPath;
+
+std::string getEnvironmentPath() {
+    if (!sEnvironmentPath.empty()) {
+        return sEnvironmentPath;
     }
     char environmentPath[0x100];
     memset(environmentPath, 0, sizeof(environmentPath));
@@ -17,13 +22,30 @@ std::string getPluginPath() {
     if (handle >= 0) {
         int in = 0xF9; // IPC_CUSTOM_COPY_ENVIRONMENT_PATH
         if (IOS_Ioctl(handle, 100, &in, sizeof(in), environmentPath, sizeof(environmentPath)) != IOS_ERROR_OK) {
-            return "fs:/vol/external01/wiiu/plugins";
+            return "fs:/vol/external01/wiiu/environments/aroma";
         }
 
         IOS_Close(handle);
     }
-    sPluginPath = std::string(environmentPath).append("/plugins");
+    sEnvironmentPath = environmentPath;
+    return sEnvironmentPath;
+}
+std::string getPluginPath() {
+    if (!sPluginPath.empty()) {
+        return sPluginPath;
+    }
+
+    sPluginPath = getEnvironmentPath().append("/plugins");
     return sPluginPath;
+}
+
+std::string getModulePath() {
+    if (!sModulePath.empty()) {
+        return sModulePath;
+    }
+
+    sModulePath = getEnvironmentPath().append("/modules");
+    return sModulePath;
 }
 
 // https://gist.github.com/ccbrown/9722406
@@ -88,4 +110,26 @@ void CustomDynLoadFree(void *addr) {
     if (it != gAllocatedAddresses.end()) {
         gAllocatedAddresses.erase(it);
     }
+}
+
+bool ParseJsonFromFile(const std::string &filePath, nlohmann::json &outJson) {
+    CFile file(filePath, CFile::ReadOnly);
+    if (!file.isOpen() || file.size() == 0) {
+        return WUPS_STORAGE_ERROR_NOT_FOUND;
+    }
+    auto *json_data = (uint8_t *) memalign(0x40, ROUNDUP(file.size() + 1, 0x40));
+    if (!json_data) {
+        return WUPS_STORAGE_ERROR_MALLOC_FAILED;
+    }
+    bool result      = true;
+    uint64_t readRes = file.read(json_data, file.size());
+    if (readRes == file.size()) {
+        json_data[file.size()] = '\0';
+        outJson                = nlohmann::json::parse(json_data, nullptr, false);
+    } else {
+        result = false;
+    }
+    file.close();
+    free(json_data);
+    return result;
 }

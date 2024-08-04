@@ -30,6 +30,8 @@ public:
 
     void ResetNeedsRedraw();
 
+    bool GetActivePluginsIfChanged(std::vector<PluginLoadWrapper> &result);
+
 private:
     ConfigSubState UpdateStateMain(const Input &input);
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "json.hpp"
 #include <algorithm>
 #include <coreinit/dynload.h>
 #include <cstdint>
@@ -132,6 +133,10 @@ T pop_locked_first_if(std::mutex &mutex, std::vector<T> &container, Predicate pr
 
 std::string getPluginPath();
 
+std::string getModulePath();
+
 OSDynLoad_Error CustomDynLoadAlloc(int32_t size, int32_t align, void **outAddr);
 
 void CustomDynLoadFree(void *addr);
+
+bool ParseJsonFromFile(const std::string &filePath, nlohmann::json &outJson);

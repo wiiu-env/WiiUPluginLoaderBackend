@@ -6,9 +6,12 @@
 #include "ConfigRenderer.h"
 #include "config/WUPSConfigAPI.h"
 #include "hooks.h"
+#include "utils/WUPSBackendSettings.h"
 #include "utils/input/CombinedInput.h"
 #include "utils/input/VPADInput.h"
 #include "utils/input/WPADInput.h"
+#include <coreinit/title.h>
+#include <sysapp/title.h>
 
 #include <avm/tv.h>
 #include <coreinit/screen.h>
@@ -16,6 +19,7 @@
 #include <memory/mappedmemory.h>
 #include <ranges>
 #include <string>
+#include <sysapp/launch.h>
 #include <vector>
 
 WUPS_CONFIG_SIMPLE_INPUT ConfigUtils::convertInputs(uint32_t buttons) {
@@ -218,16 +222,51 @@ void ConfigUtils::displayMenu() {
     }
 
     startTime = OSGetTime();
-    renderBasicScreen("Saving configs...");
 
-    for (const auto &plugin : gLoadedPlugins) {
-        const auto configData = plugin.getConfigData();
-        if (configData) {
-            if (configData->CallMenuClosedCallback() == WUPSCONFIG_API_RESULT_MISSING_CALLBACK) {
-                DEBUG_FUNCTION_LINE_WARN("CallMenuClosedCallback is missing for %s", plugin.getMetaInformation().getName().c_str());
+    DEBUG_FUNCTION_LINE_INFO(".");
+    std::vector<PluginLoadWrapper> newActivePluginsList;
+
+    if (renderer.GetActivePluginsIfChanged(newActivePluginsList)) {
+        startTime = OSGetTime();
+        renderBasicScreen("Applying changes, app will now restart...");
+
+        // Get list of inactive plugins to save them in the config
+        // Note: this does only consider plugin loaded from the sd card.
+        std::vector<std::string> newInactivePluginsList;
+        for (const auto &cur : newActivePluginsList) {
+            if (!cur.isLoadAndLink()) {
+                auto &source = cur.getPluginData()->getSource();
+                // TODO: Make sure to only use plugins from the actual plugin directory?
+                // atm nothing (to my knowledge) is using the WUPS API to load any plugin from a path though
+                if (source.ends_with(".wps")) {
+                    std::size_t found    = source.find_last_of("/\\");
+                    std::string filename = source.substr(found + 1);
+                    newInactivePluginsList.push_back(filename);
+                }
             }
-        } else {
-            CallHook(plugin, WUPS_LOADER_HOOK_CONFIG_CLOSED_DEPRECATED);
+        }
+        gLoadOnNextLaunch = newActivePluginsList;
+        WUPSBackendSettings::SetInactivePluginFilenames(newInactivePluginsList);
+        WUPSBackendSettings::SaveSettings();
+
+        _SYSLaunchTitleWithStdArgsInNoSplash(OSGetTitleID(), nullptr);
+        // Make sure to wait at least 2 seconds so user can read the screen and
+        // are aware the app will restart now.
+        auto diffTime = OSTicksToMilliseconds(OSGetTime() - startTime);
+        if (diffTime < 2000) {
+            OSSleepTicks(OSTicksToMilliseconds(2000 - diffTime));
+        }
+    } else {
+        renderBasicScreen("Saving configs...");
+        for (const auto &plugin : gLoadedPlugins) {
+            const auto configData = plugin.getConfigData();
+            if (configData) {
+                if (configData->CallMenuClosedCallback() == WUPSCONFIG_API_RESULT_MISSING_CALLBACK) {
+                    DEBUG_FUNCTION_LINE_WARN("CallMenuClosedCallback is missing for %s", plugin.getMetaInformation().getName().c_str());
+                }
+            } else {
+                CallHook(plugin, WUPS_LOADER_HOOK_CONFIG_CLOSED_DEPRECATED);
+            }
         }
     }
 

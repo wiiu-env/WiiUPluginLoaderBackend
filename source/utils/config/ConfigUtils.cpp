@@ -77,13 +77,11 @@ void ConfigUtils::displayMenu() {
 
     std::vector<ConfigDisplayItem> configs;
     for (const auto &plugin : gLoadedPlugins) {
-        if (!plugin.isLinkedAndLoaded()) {
-            continue;
-        }
         GeneralConfigInformation info;
-        info.name    = plugin.getMetaInformation().getName();
-        info.author  = plugin.getMetaInformation().getAuthor();
-        info.version = plugin.getMetaInformation().getVersion();
+        info.name       = plugin.getMetaInformation().getName();
+        info.author     = plugin.getMetaInformation().getAuthor();
+        info.version    = plugin.getMetaInformation().getVersion();
+        info.pluginData = plugin.getPluginDataCopy();
 
         std::unique_ptr<WUPSConfigAPIBackend::WUPSConfig> config;
         if (const auto configData = plugin.getConfigData()) {
@@ -124,8 +122,7 @@ void ConfigUtils::displayMenu() {
         if (!config) {
             config = make_unique_nothrow<WUPSConfigAPIBackend::WUPSConfig>(info.name);
         }
-
-        configs.emplace_back(info, std::move(config));
+        configs.emplace_back(info, std::move(config), plugin.isLinkedAndLoaded());
     }
 
     // Sort Configs by name

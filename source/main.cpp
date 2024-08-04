@@ -217,7 +217,7 @@ void CleanupPlugins(std::vector<PluginContainer> &&pluginsToDeinit) {
 
     for (const auto &pluginContainer : pluginsToDeinit) {
         for (auto &cur : gTrampData) {
-            if (!pluginContainer.isPluginLinkedAndLoaded() || cur.id != pluginContainer.getPluginLinkInformation()->getTrampolineId()) {
+            if (!pluginContainer.isLinkedAndLoaded() || cur.id != pluginContainer.getPluginLinkInformation().getTrampolineId()) {
                 continue;
             }
             cur.status = RELOC_TRAMP_FREE;

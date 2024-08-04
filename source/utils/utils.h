@@ -1,5 +1,6 @@
 #pragma once
 
+#include "json.hpp"
 #include <algorithm>
 #include <coreinit/dynload.h>
 #include <cstdint>
@@ -137,6 +138,10 @@ void append_move_all_values(Container &dest, Container &src) {
 
 std::string getPluginPath();
 
+std::string getModulePath();
+
 OSDynLoad_Error CustomDynLoadAlloc(int32_t size, int32_t align, void **outAddr);
 
 void CustomDynLoadFree(void *addr);
+
+bool ParseJsonFromFile(const std::string &filePath, nlohmann::json &outJson);

@@ -5,6 +5,7 @@
 #include "hooks.h"
 #include "patcher/hooks_patcher_static.h"
 #include "plugin/PluginDataFactory.h"
+#include "utils/WUPSBackendSettings.h"
 #include "utils/logger.h"
 #include "utils/utils.h"
 #include "version.h"
@@ -112,7 +113,9 @@ WUMS_APPLICATION_STARTS() {
 
         DEBUG_FUNCTION_LINE("Load plugins from %s", pluginPath.c_str());
 
-        const auto pluginData = PluginDataFactory::loadDir(pluginPath);
+        WUPSBackendSettings::LoadSettings();
+        auto &inactiveList    = WUPSBackendSettings::GetInactivePluginFilenames();
+        const auto pluginData = PluginDataFactory::loadDir(pluginPath, inactiveList);
         newLoadedPlugins      = PluginManagement::loadPlugins(pluginData, gTrampData);
     }
 

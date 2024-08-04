@@ -174,24 +174,10 @@ namespace StorageUtils {
 
         WUPSStorageError LoadFromFile(std::string_view plugin_id, nlohmann::json &outJson) {
             const std::string filePath = getPluginPath() + "/config/" + plugin_id.data() + ".json";
-            CFile file(filePath, CFile::ReadOnly);
-            if (!file.isOpen() || file.size() == 0) {
-                return WUPS_STORAGE_ERROR_NOT_FOUND;
+            if (ParseJsonFromFile(filePath, outJson)) {
+                return WUPS_STORAGE_ERROR_SUCCESS;
             }
-            auto *json_data = static_cast<uint8_t *>(memalign(0x40, ROUNDUP(file.size() + 1, 0x40)));
-            if (!json_data) {
-                return WUPS_STORAGE_ERROR_MALLOC_FAILED;
-            }
-            WUPSStorageError result = WUPS_STORAGE_ERROR_SUCCESS;
-            if (const uint64_t readRes = file.read(json_data, file.size()); readRes == file.size()) {
-                json_data[file.size()] = '\0';
-                outJson                = nlohmann::json::parse(json_data, nullptr, false);
-            } else {
-                result = WUPS_STORAGE_ERROR_IO_ERROR;
-            }
-            file.close();
-            free(json_data);
-            return result;
+            return WUPS_STORAGE_ERROR_IO_ERROR;
         }
 
         WUPSStorageError LoadFromFile(std::string_view plugin_id, StorageItemRoot &rootItem) {

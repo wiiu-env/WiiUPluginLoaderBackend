@@ -1,18 +1,17 @@
 #pragma once
 
 #include "plugin/PluginContainer.h"
-
+#include "plugin/PluginLoadWrapper.h"
 #include <coreinit/dynload.h>
 #include <functional>
 #include <map>
-#include <memory>
 #include <set>
 #include <wums/defines/relocation_defines.h>
 
 class PluginManagement {
 public:
     static std::vector<PluginContainer> loadPlugins(
-            const std::set<std::shared_ptr<PluginData>, PluginDataSharedPtrComparator> &pluginDataList,
+            const std::vector<PluginLoadWrapper> &pluginDataList,
             std::vector<relocation_trampoline_entry_t> &trampolineData);
 
     static void callInitHooks(const std::vector<PluginContainer> &plugins, const std::function<bool(const PluginContainer &)> &pred);

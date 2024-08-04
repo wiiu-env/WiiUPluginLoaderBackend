@@ -125,6 +125,7 @@ void ConfigUtils::displayMenu() {
         if (!config) {
             config = make_unique_nothrow<WUPSConfigAPIBackend::WUPSConfig>(info.name);
         }
+
         configs.emplace_back(info, std::move(config), plugin.isLinkedAndLoaded());
     }
 

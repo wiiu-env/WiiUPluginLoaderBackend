@@ -23,7 +23,8 @@ struct StoredBuffer {
 };
 
 enum ConfigSubState {
-    SUB_STATE_RUNNING = 0,
-    SUB_STATE_RETURN  = 1,
-    SUB_STATE_ERROR   = 2,
+    SUB_STATE_RUNNING                   = 0,
+    SUB_STATE_RETURN                    = 1,
+    SUB_STATE_RETURN_WITH_PLUGIN_RELOAD = 1,
+    SUB_STATE_ERROR                     = 2,
 };

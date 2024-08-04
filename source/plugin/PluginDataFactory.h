@@ -25,7 +25,7 @@
 
 class PluginDataFactory {
 public:
-    static std::vector<PluginLoadWrapper> loadDir(std::string_view path);
+    static std::vector<PluginLoadWrapper> loadDir(std::string_view path, const std::vector<std::string> &inactivePluginsFilenames);
 
     static std::unique_ptr<PluginData> load(std::string_view path);
 

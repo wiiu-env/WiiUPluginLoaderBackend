@@ -157,7 +157,7 @@ bool PluginManagement::doRelocations(const std::vector<PluginContainer> &plugins
     OSDynLoad_SetAllocator(CustomDynLoadAlloc, CustomDynLoadFree);
 
     for (const auto &pluginContainer : plugins) {
-        if (pluginContainer.isLinkedAndLoaded()) {
+        if (!pluginContainer.isLinkedAndLoaded()) {
             continue;
         }
         DEBUG_FUNCTION_LINE_VERBOSE("Doing relocations for plugin: %s", pluginContainer.getMetaInformation().getName().c_str());

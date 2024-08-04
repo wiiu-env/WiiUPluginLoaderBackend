@@ -1,7 +1,7 @@
 #include "ConfigRenderer.h"
 
 void ConfigRenderer::RenderStateMain() const {
-    auto totalElementSize = (int32_t) mConfigs.size();
+    auto totalElementSize = (int32_t) mActiveConfigs.size();
     // Calculate the range of items to display
     int start = std::max(0, mRenderOffset);
     int end   = std::min(start + MAX_BUTTONS_ON_SCREEN, totalElementSize);
@@ -11,7 +11,7 @@ void ConfigRenderer::RenderStateMain() const {
 
     uint32_t yOffset = 8 + 24 + 8 + 4;
     for (int32_t i = start; i < end; i++) {
-        drawConfigEntry(yOffset, mConfigs[i].getConfigInformation(), i == mCursorPos);
+        drawConfigEntry(yOffset, mActiveConfigs[i].get().getConfigInformation(), i == mCursorPos);
         yOffset += 42 + 8;
     }
 
@@ -65,21 +65,23 @@ void ConfigRenderer::drawConfigEntry(uint32_t yOffset, const GeneralConfigInform
 }
 
 ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
-    if (mConfigs.empty()) {
+    if (mActiveConfigs.empty()) {
         mNeedRedraw = true;
         return SUB_STATE_ERROR;
     }
     auto prevSelectedItem = mCursorPos;
 
-    auto totalElementSize = mConfigs.size();
+    auto totalElementSize = mActiveConfigs.size();
     if (input.data.buttons_d & Input::eButtons::BUTTON_DOWN) {
         mCursorPos++;
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_UP) {
         mCursorPos--;
+    } else if (input.data.buttons_d & Input::eButtons::BUTTON_X) {
+        mSetActivePluginsMode = !mSetActivePluginsMode;
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_A) {
         if (mCursorPos != mCurrentOpen) {
             mCategoryRenderer.reset();
-            mCategoryRenderer = make_unique_nothrow<CategoryRenderer>(&(mConfigs[mCursorPos].getConfigInformation()), &(mConfigs[mCursorPos].getConfig()), true);
+            mCategoryRenderer = make_unique_nothrow<CategoryRenderer>(&(mActiveConfigs[mCursorPos].get().getConfigInformation()), &(mActiveConfigs[mCursorPos].get().getConfig()), true);
         }
         mNeedRedraw  = true;
         mCurrentOpen = mCursorPos;
@@ -88,8 +90,8 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
     } else if (input.data.buttons_d & (Input::eButtons::BUTTON_B | Input::eButtons::BUTTON_HOME)) {
         mNeedRedraw = true;
         mCategoryRenderer.reset();
-        for (const auto &element : mConfigs) {
-            CallOnCloseCallback(element.getConfigInformation(), element.getConfig());
+        for (const auto &element : mActiveConfigs) {
+            CallOnCloseCallback(element.get().getConfigInformation(), element.get().getConfig());
         }
         return SUB_STATE_RETURN;
     }

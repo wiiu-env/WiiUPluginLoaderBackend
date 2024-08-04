@@ -11,7 +11,13 @@ class ConfigRenderer {
 
 public:
     explicit ConfigRenderer(std::vector<ConfigDisplayItem> &&vec) : mConfigs(std::move(vec)) {
+        std::copy_if(mConfigs.begin(), mConfigs.end(),
+                     std::back_inserter(mActiveConfigs),
+                     [&](const auto & value) {
+                         return value.isActivePlugin();
+                     });
     }
+
     ~ConfigRenderer() = default;
 
     ConfigSubState Update(Input &input, const WUPSConfigSimplePadData &simpleInputData, const WUPSConfigComplexPadData &complexInputData);
@@ -35,6 +41,7 @@ private:
     };
 
     std::vector<ConfigDisplayItem> mConfigs;
+    std::vector<std::reference_wrapper<ConfigDisplayItem>> mActiveConfigs;
     std::unique_ptr<CategoryRenderer> mCategoryRenderer = {};
 
     State mState = STATE_MAIN;

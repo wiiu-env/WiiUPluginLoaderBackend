@@ -42,6 +42,8 @@ struct FunctionSymbolDataComparator {
 
 class PluginLinkInformation {
 public:
+    static PluginLinkInformation CreateStub();
+
     PluginLinkInformation(const PluginLinkInformation &) = delete;
 
     PluginLinkInformation(PluginLinkInformation &&src);
@@ -67,6 +69,8 @@ public:
     [[nodiscard]] const HeapMemoryFixedSize &getTextMemory() const;
 
     [[nodiscard]] const HeapMemoryFixedSize &getDataMemory() const;
+
+    [[nodiscard]] bool hasValidData() const;
 
 private:
     PluginLinkInformation() = default;

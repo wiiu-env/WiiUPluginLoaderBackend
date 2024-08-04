@@ -110,3 +110,11 @@ const HeapMemoryFixedSize &PluginLinkInformation::getTextMemory() const {
 const HeapMemoryFixedSize &PluginLinkInformation::getDataMemory() const {
     return mAllocatedDataMemoryAddress;
 }
+
+PluginLinkInformation PluginLinkInformation::CreateStub() {
+    return {};
+}
+
+bool PluginLinkInformation::hasValidData() const {
+    return mAllocatedDataMemoryAddress.size() > 0 && mAllocatedTextMemoryAddress.size() > 0;
+}

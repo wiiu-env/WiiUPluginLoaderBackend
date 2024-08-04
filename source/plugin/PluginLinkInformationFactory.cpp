@@ -337,7 +337,7 @@ bool PluginLinkInformationFactory::addImportRelocationData(PluginLinkInformation
 }
 
 bool PluginLinkInformationFactory::linkSection(const elfio &reader, uint32_t section_index, uint32_t destination, uint32_t base_text, uint32_t base_data,
-                                           std::vector<relocation_trampoline_entry_t> &trampolineData, uint8_t trampolineId) {
+                                               std::vector<relocation_trampoline_entry_t> &trampolineData, uint8_t trampolineId) {
     uint32_t sec_num = reader.sections.size();
 
     for (uint32_t i = 0; i < sec_num; ++i) {

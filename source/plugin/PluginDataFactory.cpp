@@ -17,6 +17,7 @@
 
 #include "PluginDataFactory.h"
 #include "NotificationsUtils.h"
+#include "PluginLoadWrapper.h"
 #include "fs/FSUtils.h"
 #include "utils/StringTools.h"
 #include "utils/logger.h"
@@ -25,8 +26,8 @@
 #include <set>
 #include <sys/dirent.h>
 
-std::set<std::shared_ptr<PluginData>, PluginDataSharedPtrComparator> PluginDataFactory::loadDir(const std::string_view path) {
-    std::set<std::shared_ptr<PluginData>, PluginDataSharedPtrComparator> result;
+std::vector<PluginLoadWrapper> PluginDataFactory::loadDir(std::string_view path) {
+    std::vector<PluginLoadWrapper> result;
     dirent *dp;
     DIR *dfd;
 
@@ -51,8 +52,18 @@ std::set<std::shared_ptr<PluginData>, PluginDataSharedPtrComparator> PluginDataF
 
         auto full_file_path = string_format("%s/%s", path.data(), dp->d_name);
         DEBUG_FUNCTION_LINE("Loading plugin: %s", full_file_path.c_str());
+
         if (auto pluginData = load(full_file_path)) {
-            result.insert(std::move(pluginData));
+            // TODO: This is only for testing. Remove me!c
+            bool shouldBeLoadedAndLinked = false;
+            if (full_file_path.ends_with("AromaBasePlugin.wps") ||
+                full_file_path.ends_with("drc_region_free.wps") ||
+                full_file_path.ends_with("regionfree.wps") ||
+                full_file_path.ends_with("ftpiiu.wps") ||
+                full_file_path.ends_with("wiiload.wps")) {
+                shouldBeLoadedAndLinked = true;
+            }
+            result.emplace_back(std::move(pluginData), shouldBeLoadedAndLinked);
         } else {
             auto errMsg = string_format("Failed to load plugin: %s", full_file_path.c_str());
             DEBUG_FUNCTION_LINE_ERR("%s", errMsg.c_str());

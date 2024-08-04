@@ -20,3 +20,7 @@ const WUPSConfigAPIBackend::WUPSConfig &ConfigDisplayItem::getConfig() const {
 bool ConfigDisplayItem::isActivePlugin() const {
     return mIsActivePlugin;
 }
+
+void ConfigDisplayItem::toggleIsActivePlugin() {
+    mIsActivePlugin = !mIsActivePlugin;
+}

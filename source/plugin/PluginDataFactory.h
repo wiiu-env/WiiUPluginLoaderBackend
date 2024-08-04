@@ -17,6 +17,7 @@
 
 #pragma once
 #include "PluginData.h"
+#include "PluginLoadWrapper.h"
 
 #include <memory>
 #include <set>
@@ -24,7 +25,7 @@
 
 class PluginDataFactory {
 public:
-    static std::set<std::shared_ptr<PluginData>, PluginDataSharedPtrComparator> loadDir(std::string_view path);
+    static std::vector<PluginLoadWrapper> loadDir(std::string_view path);
 
     static std::unique_ptr<PluginData> load(std::string_view path);
 

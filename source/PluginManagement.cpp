@@ -3,6 +3,7 @@
 #include "hooks.h"
 #include "plugin/PluginContainer.h"
 #include "plugin/PluginLinkInformationFactory.h"
+#include "plugin/PluginLoadWrapper.h"
 #include "plugin/PluginMetaInformationFactory.h"
 #include "utils/ElfUtils.h"
 #include "utils/StringTools.h"
@@ -10,49 +11,35 @@
 #include <coreinit/cache.h>
 #include <coreinit/dynload.h>
 #include <memory.h>
-#include <memory>
 #include <ranges>
 
 static uint32_t sTrampolineID = 0;
 
-bool CheckIfAllowed(const PluginMetaInformation &metaInfo) {
-    std::vector<std::pair<std::string, std::string>> allowList = {
-            {"Maschell", "Aroma Base Plugin"},
-            {"Maschell", "DRC Region Free Plugin"},
-            {"Maschell", "Homebrew on Wii U menu"},
-            {"Maschell", "Region Free Plugin"},
-            {"Maschell", "Wiiload"},
-            {"mtheall, Maschell", "ftpiiu"},
-    };
-    return std::any_of(allowList.begin(), allowList.end(), [&metaInfo](const auto &cur) {
-        return metaInfo.getAuthor() == cur.first && metaInfo.getName() == cur.second;
-    });
-}
-
 std::vector<PluginContainer>
-PluginManagement::loadPlugins(const std::set<std::shared_ptr<PluginData>, PluginDataSharedPtrComparator> &pluginDataList, std::vector<relocation_trampoline_entry_t> &trampolineData) {
+PluginManagement::loadPlugins(const std::vector<PluginLoadWrapper> &pluginDataList, std::vector<relocation_trampoline_entry_t> &trampolineData) {
     std::vector<PluginContainer> plugins;
 
-    for (const auto &pluginData : pluginDataList) {
+    for (const auto &pluginDataWrapper : pluginDataList) {
         PluginParseErrors error = PLUGIN_PARSE_ERROR_UNKNOWN;
-        auto metaInfo           = PluginMetaInformationFactory::loadPlugin(*pluginData, error);
+        auto metaInfo           = PluginMetaInformationFactory::loadPlugin(*pluginDataWrapper.getPluginData(), error);
         if (metaInfo && error == PLUGIN_PARSE_ERROR_NONE) {
-            if (!pluginData->getSource().ends_with(".wps") || CheckIfAllowed(*metaInfo)) {
+            if (pluginDataWrapper.isLoadAndLink()) {
                 DEBUG_FUNCTION_LINE_INFO("We want to link %s by %s", metaInfo->getName().c_str(), metaInfo->getAuthor().c_str());
-                auto linkInfo = PluginLinkInformationFactory::load(*pluginData, trampolineData, sTrampolineID++);
+
+                auto linkInfo = PluginLinkInformationFactory::load(*pluginDataWrapper.getPluginData(), trampolineData, sTrampolineID++);
                 if (!linkInfo) {
-                    auto errMsg = string_format("Failed to load plugin: %s", pluginData->getSource().c_str());
+                    auto errMsg = string_format("Failed to load plugin: %s", pluginDataWrapper.getPluginData()->getSource().c_str());
                     DEBUG_FUNCTION_LINE_ERR("%s", errMsg.c_str());
                     DisplayErrorNotificationMessage(errMsg, 15.0f);
                     continue;
                 }
-                plugins.emplace_back(std::move(*metaInfo), std::move(*linkInfo), pluginData);
+                plugins.emplace_back(std::move(*metaInfo), std::move(*linkInfo), pluginDataWrapper.getPluginData());
             } else {
                 DEBUG_FUNCTION_LINE_INFO("We want to skip %s by %s", metaInfo->getName().c_str(), metaInfo->getAuthor().c_str());
-                plugins.emplace_back(std::move(*metaInfo), PluginLinkInformation::CreateStub(), pluginData);
+                plugins.emplace_back(std::move(*metaInfo), PluginLinkInformation::CreateStub(), pluginDataWrapper.getPluginData());
             }
         } else {
-            auto errMsg = string_format("Failed to load plugin: %s", pluginData->getSource().c_str());
+            auto errMsg = string_format("Failed to load plugin: %s", *pluginDataWrapper.getPluginData()->getSource().c_str());
             if (error == PLUGIN_PARSE_ERROR_INCOMPATIBLE_VERSION) {
                 errMsg += ". Incompatible version.";
             }

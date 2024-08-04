@@ -226,6 +226,9 @@ extern "C" PluginBackendApiErrorType WUPSGetLoadedPlugins(wups_backend_plugin_co
     *plugin_information_version = WUPS_BACKEND_PLUGIN_INFORMATION_VERSION;
     uint32_t counter            = 0;
     for (const auto &plugin : gLoadedPlugins) {
+        if (!plugin.isLinkedAndLoaded()) {
+            continue;
+        }
         if (counter < buffer_size) {
             io_handles[counter] = plugin.getHandle();
             counter++;

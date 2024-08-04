@@ -46,10 +46,10 @@ PluginManagement::loadPlugins(const std::set<std::shared_ptr<PluginData>, Plugin
                     DisplayErrorNotificationMessage(errMsg, 15.0f);
                     continue;
                 }
-                plugins.emplace_back(std::move(*metaInfo), std::move(linkInfo), pluginData);
+                plugins.emplace_back(std::move(*metaInfo), std::move(*linkInfo), pluginData);
             } else {
                 DEBUG_FUNCTION_LINE_INFO("We want to skip %s by %s", metaInfo->getName().c_str(), metaInfo->getAuthor().c_str());
-                plugins.emplace_back(std::move(*metaInfo), std::nullopt, pluginData);
+                plugins.emplace_back(std::move(*metaInfo), PluginLinkInformation::CreateStub(), pluginData);
             }
         } else {
             auto errMsg = string_format("Failed to load plugin: %s", pluginData->getSource().c_str());
@@ -157,13 +157,13 @@ bool PluginManagement::doRelocations(const std::vector<PluginContainer> &plugins
     OSDynLoad_SetAllocator(CustomDynLoadAlloc, CustomDynLoadFree);
 
     for (const auto &pluginContainer : plugins) {
-        if (!pluginContainer.isPluginLinkedAndLoaded()) {
+        if (pluginContainer.isLinkedAndLoaded()) {
             continue;
         }
         DEBUG_FUNCTION_LINE_VERBOSE("Doing relocations for plugin: %s", pluginContainer.getMetaInformation().getName().c_str());
-        if (!PluginManagement::doRelocation(pluginContainer.getPluginLinkInformation()->getRelocationDataList(),
+        if (!PluginManagement::doRelocation(pluginContainer.getPluginLinkInformation().getRelocationDataList(),
                                             trampData,
-                                            pluginContainer.getPluginLinkInformation()->getTrampolineId(),
+                                            pluginContainer.getPluginLinkInformation().getTrampolineId(),
                                             usedRPls)) {
             return false;
         }
@@ -176,10 +176,7 @@ bool PluginManagement::doRelocations(const std::vector<PluginContainer> &plugins
 
 bool PluginManagement::RestoreFunctionPatches(std::vector<PluginContainer> &plugins) {
     for (auto &cur : std::ranges::reverse_view(plugins)) {
-        if (!cur.isPluginLinkedAndLoaded()) {
-            continue;
-        }
-        for (auto &curFunction : std::ranges::reverse_view(cur.getPluginLinkInformation()->getFunctionDataList())) {
+        for (auto &curFunction : std::ranges::reverse_view(cur.getPluginLinkInformation().getFunctionDataList())) {
             if (!curFunction.RemovePatch()) {
                 DEBUG_FUNCTION_LINE_ERR("Failed to remove function patch for: plugin %s", cur.getMetaInformation().getName().c_str());
                 return false;
@@ -191,10 +188,7 @@ bool PluginManagement::RestoreFunctionPatches(std::vector<PluginContainer> &plug
 
 bool PluginManagement::DoFunctionPatches(std::vector<PluginContainer> &plugins) {
     for (auto &cur : plugins) {
-        if (!cur.isPluginLinkedAndLoaded()) {
-            continue;
-        }
-        for (auto &curFunction : cur.getPluginLinkInformation()->getFunctionDataList()) {
+        for (auto &curFunction : cur.getPluginLinkInformation().getFunctionDataList()) {
             if (!curFunction.AddPatch()) {
                 DEBUG_FUNCTION_LINE_ERR("Failed to add function patch for: plugin %s", cur.getMetaInformation().getName().c_str());
                 return false;

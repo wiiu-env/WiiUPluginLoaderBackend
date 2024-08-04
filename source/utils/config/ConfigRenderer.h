@@ -3,12 +3,13 @@
 #include "CategoryRenderer.h"
 #include "ConfigDefines.h"
 #include "ConfigDisplayItem.h"
+#include "plugin/PluginLoadWrapper.h"
 #include "utils/input/Input.h"
 
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <vector>
-#include <functional>
 #include <wups/config.h>
 
 class ConfigRenderer {
@@ -25,6 +26,8 @@ public:
     [[nodiscard]] bool NeedsRedraw() const;
 
     void ResetNeedsRedraw();
+
+    bool GetActivePluginsIfChanged(std::vector<PluginLoadWrapper> &result);
 
 private:
     ConfigSubState UpdateStateMain(const Input &input);

@@ -90,18 +90,16 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
         mCursorPos--;
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_PLUS) {
         if (mSetActivePluginsMode) {
-            if (mActivePluginsDirty) {
-                for (const auto &cur : mConfigs) {
-                    gLoadOnNextLaunch.emplace_back(cur.getConfigInformation().pluginData, cur.isActivePlugin());
-                }
-                _SYSLaunchTitleWithStdArgsInNoSplash(OSGetTitleID(), nullptr);
-            }
             mNeedRedraw = true;
             mCategoryRenderer.reset();
-            return SUB_STATE_RETURN;
+            return SUB_STATE_RETURN_WITH_PLUGIN_RELOAD;
         }
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_X) {
-        mSetActivePluginsMode = !mSetActivePluginsMode;
+        if (!mSetActivePluginsMode) {
+            mSetActivePluginsMode = true;
+            mNeedRedraw           = true;
+            return SUB_STATE_RUNNING;
+        }
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_A) {
         if (mSetActivePluginsMode) {
             mActivePluginsDirty = true;
@@ -123,7 +121,7 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
             for (auto &cur : mConfigs) {
                 cur.resetIsActivePlugin();
             }
-            mNeedRedraw = true;
+            mNeedRedraw           = true;
             mSetActivePluginsMode = false;
             return SUB_STATE_RUNNING;
         } else {
@@ -250,6 +248,18 @@ void ConfigRenderer::CallOnCloseCallback(const GeneralConfigInformation &info, c
             item->onCloseCallback();
         }
     }
+}
+
+bool ConfigRenderer::GetActivePluginsIfChanged(std::vector<PluginLoadWrapper> &result) {
+    if (mActivePluginsDirty) {
+        std::vector<std::string> inactive_plugins;
+        result.clear();
+        for (const auto &cur : mConfigs) {
+            result.emplace_back(cur.getConfigInformation().pluginData, cur.isActivePlugin());
+        }
+        return true;
+    }
+    return false;
 }
 
 void ConfigRenderer::CallOnCloseCallback(const GeneralConfigInformation &info, const WUPSConfigAPIBackend::WUPSConfig &config) {

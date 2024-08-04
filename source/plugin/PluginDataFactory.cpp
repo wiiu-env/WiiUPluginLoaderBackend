@@ -26,7 +26,8 @@
 #include <set>
 #include <sys/dirent.h>
 
-std::vector<PluginLoadWrapper> PluginDataFactory::loadDir(std::string_view path) {
+
+std::vector<PluginLoadWrapper> PluginDataFactory::loadDir(std::string_view path, const std::vector<std::string> &inactivePluginsFilenames) {
     std::vector<PluginLoadWrapper> result;
     dirent *dp;
     DIR *dfd;
@@ -54,15 +55,9 @@ std::vector<PluginLoadWrapper> PluginDataFactory::loadDir(std::string_view path)
         DEBUG_FUNCTION_LINE("Loading plugin: %s", full_file_path.c_str());
 
         if (auto pluginData = load(full_file_path)) {
-            // TODO: This is only for testing. Remove me!c
-            bool shouldBeLoadedAndLinked = false;
-            if (full_file_path.ends_with("AromaBasePlugin.wps") ||
-                full_file_path.ends_with("drc_region_free.wps") ||
-                full_file_path.ends_with("regionfree.wps") ||
-                full_file_path.ends_with("ftpiiu.wps") ||
-                full_file_path.ends_with("wiiload.wps") ||
-                full_file_path.ends_with("homebrew_on_menu.wps")) {
-                shouldBeLoadedAndLinked = true;
+            bool shouldBeLoadedAndLinked = true;
+            if (std::ranges::find(inactivePluginsFilenames, dp->d_name) != inactivePluginsFilenames.end()) {
+                shouldBeLoadedAndLinked = false;
             }
             result.emplace_back(std::move(pluginData), shouldBeLoadedAndLinked);
         } else {

@@ -60,7 +60,8 @@ std::vector<PluginLoadWrapper> PluginDataFactory::loadDir(std::string_view path)
                 full_file_path.ends_with("drc_region_free.wps") ||
                 full_file_path.ends_with("regionfree.wps") ||
                 full_file_path.ends_with("ftpiiu.wps") ||
-                full_file_path.ends_with("wiiload.wps")) {
+                full_file_path.ends_with("wiiload.wps") ||
+                full_file_path.ends_with("homebrew_on_menu.wps")) {
                 shouldBeLoadedAndLinked = true;
             }
             result.emplace_back(std::move(pluginData), shouldBeLoadedAndLinked);

@@ -46,6 +46,14 @@ extern "C" PluginBackendApiErrorType WUPSLoadAndLinkByDataHandle(const wups_back
         }
     }
 
+    // TODO: What happens when we wiiload a new version of an inactive plugin? Do we consider that a problem?
+    // add all loaded plugins that are not active as inactive
+    for (const auto &plugin : gLoadedPlugins) {
+        if (!plugin.isLinkedAndLoaded()) {
+            gLoadOnNextLaunch.emplace_back(plugin.getPluginDataCopy(), false);
+        }
+    }
+
     return PLUGIN_BACKEND_API_ERROR_NONE;
 }
 

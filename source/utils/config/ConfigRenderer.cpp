@@ -71,7 +71,9 @@ void ConfigRenderer::drawConfigEntry(uint32_t yOffset, const GeneralConfigInform
     if (mSetActivePluginsMode) {
         DrawUtils::setFontSize(24);
         if (isActive) {
-            DrawUtils::print(textXOffset, yOffset + 8 + 24, "x");
+            DrawUtils::print(textXOffset, yOffset + 8 + 24, "\u25C9");
+        } else {
+            DrawUtils::print(textXOffset, yOffset + 8 + 24, "\u25CE");
         }
         textXOffset += 32;
     }

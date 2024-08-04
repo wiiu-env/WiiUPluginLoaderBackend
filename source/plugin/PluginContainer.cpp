@@ -1,7 +1,7 @@
 #include "PluginContainer.h"
 #include "utils/storage/StorageUtils.h"
 
-PluginContainer::PluginContainer(PluginMetaInformation metaInformation, std::optional<PluginLinkInformation> pluginLinkInformation, std::shared_ptr<PluginData> pluginData)
+PluginContainer::PluginContainer(PluginMetaInformation metaInformation, PluginLinkInformation pluginLinkInformation, std::shared_ptr<PluginData> pluginData)
     : mMetaInformation(std::move(metaInformation)),
       mPluginLinkInformation(std::move(pluginLinkInformation)),
       mPluginData(std::move(pluginData)) {
@@ -39,22 +39,13 @@ const PluginMetaInformation &PluginContainer::getMetaInformation() const {
     return this->mMetaInformation;
 }
 
-bool PluginContainer::isPluginLinkedAndLoaded() const {
-    return this->mPluginLinkInformation.has_value();
+
+const PluginLinkInformation &PluginContainer::getPluginLinkInformation() const {
+    return this->mPluginLinkInformation;
 }
 
-const PluginLinkInformation *PluginContainer::getPluginLinkInformation() const {
-    if (this->mPluginLinkInformation.has_value()) {
-        return this->mPluginLinkInformation.operator->();
-    }
-    return nullptr;
-}
-
-PluginLinkInformation *PluginContainer::getPluginLinkInformation() {
-    if (this->mPluginLinkInformation.has_value()) {
-        return this->mPluginLinkInformation.operator->();
-    }
-    return nullptr;
+PluginLinkInformation &PluginContainer::getPluginLinkInformation() {
+    return this->mPluginLinkInformation;
 }
 
 std::shared_ptr<PluginData> PluginContainer::getPluginDataCopy() const {
@@ -71,6 +62,10 @@ const std::optional<PluginConfigData> &PluginContainer::getConfigData() const {
 
 void PluginContainer::setConfigData(const PluginConfigData &pluginConfigData) {
     mPluginConfigData = pluginConfigData;
+}
+
+bool PluginContainer::isLinkedAndLoaded() const {
+    return mPluginLinkInformation.hasValidData();
 }
 
 WUPSStorageError PluginContainer::OpenStorage() {

@@ -227,10 +227,11 @@ void CleanupPlugins(std::vector<PluginContainer> &&pluginsToDeinit) {
 void CheckCleanupCallbackUsage(const std::vector<PluginContainer> &plugins) {
     auto *curThread = OSGetCurrentThread();
     for (const auto &cur : plugins) {
-        if (!cur.isPluginLinkedAndLoaded()) {
+        if (!cur.isLinkedAndLoaded()) {
             continue;
         }
-        const auto textSection = cur.getPluginLinkInformation()->getSectionInfo(".text");
+
+        const auto textSection = cur.getPluginLinkInformation().getSectionInfo(".text");
         if (!textSection) {
             continue;
         }

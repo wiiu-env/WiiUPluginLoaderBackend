@@ -264,7 +264,7 @@ extern "C" PluginBackendApiErrorType WUPSGetNumberOfLoadedPlugins(uint32_t *outC
     if (outCount == nullptr) {
         return PLUGIN_BACKEND_API_ERROR_INVALID_ARG;
     }
-    *outCount = gLoadedPlugins.size();
+    *outCount = std::count_if(gLoadedPlugins.begin(), gLoadedPlugins.end(), [](const auto &cur) { return cur.isLinkedAndLoaded(); });
     return PLUGIN_BACKEND_API_ERROR_NONE;
 }
 
@@ -276,9 +276,12 @@ extern "C" PluginBackendApiErrorType WUPSGetSectionInformationForPlugin(const wu
     if (handle != 0 && plugin_section_list != nullptr && buffer_size != 0) {
         bool found = false;
         for (const auto &curContainer : gLoadedPlugins) {
-            if (curContainer.isPluginLinkedAndLoaded() && curContainer.getHandle() == handle) {
+            if (!curContainer.isLinkedAndLoaded()) {
+                continue;
+            }
+            if (curContainer.getHandle() == handle) {
                 found                       = true;
-                const auto &sectionInfoList = curContainer.getPluginLinkInformation()->getSectionInfoList();
+                const auto &sectionInfoList = curContainer.getPluginLinkInformation().getSectionInfoList();
 
                 uint32_t offset = 0;
                 for (auto const &sectionInfo : sectionInfoList | std::views::values) {
@@ -320,9 +323,12 @@ extern "C" PluginBackendApiErrorType WUPSGetSectionMemoryAddresses(const wups_ba
         return PLUGIN_BACKEND_API_ERROR_INVALID_ARG;
     }
     for (const auto &curContainer : gLoadedPlugins) {
-        if (curContainer.isPluginLinkedAndLoaded() && curContainer.getHandle() == handle) {
-            *textAddress = const_cast<void *>(curContainer.getPluginLinkInformation()->getTextMemory().data());
-            *dataAddress = const_cast<void *>(curContainer.getPluginLinkInformation()->getDataMemory().data());
+        if (!curContainer.isLinkedAndLoaded()) {
+            continue;
+        }
+        if (curContainer.getHandle() == handle) {
+            *textAddress = static_cast<void *>(curContainer.getPluginLinkInformation().getTextMemory().data());
+            *dataAddress = static_cast<void *>(curContainer.getPluginLinkInformation().getDataMemory().data());
             return PLUGIN_BACKEND_API_ERROR_NONE;
         }
     }

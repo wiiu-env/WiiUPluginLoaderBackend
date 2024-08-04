@@ -28,7 +28,7 @@
 
 class PluginContainer {
 public:
-    PluginContainer(PluginMetaInformation metaInformation, std::optional<PluginLinkInformation> pluginLinkInformation, std::shared_ptr<PluginData> pluginData);
+    PluginContainer(PluginMetaInformation metaInformation, PluginLinkInformation pluginLinkInformation, std::shared_ptr<PluginData> pluginData);
 
     PluginContainer(const PluginContainer &) = delete;
 
@@ -38,17 +38,17 @@ public:
 
     [[nodiscard]] const PluginMetaInformation &getMetaInformation() const;
 
-    [[nodiscard]] const PluginLinkInformation *getPluginLinkInformation() const;
+    [[nodiscard]] const PluginLinkInformation &getPluginLinkInformation() const;
 
-    [[nodiscard]] PluginLinkInformation *getPluginLinkInformation();
+    [[nodiscard]] PluginLinkInformation &getPluginLinkInformation();
 
     [[nodiscard]] std::shared_ptr<PluginData> getPluginDataCopy() const;
-
-    [[nodiscard]] bool isPluginLinkedAndLoaded() const;
 
     [[nodiscard]] uint32_t getHandle() const;
 
     [[nodiscard]] const std::optional<PluginConfigData> &getConfigData() const;
+
+    [[nodiscard]] bool isLinkedAndLoaded() const;
 
     void setConfigData(const PluginConfigData &pluginConfigData);
 
@@ -64,7 +64,7 @@ public:
 
 private:
     PluginMetaInformation mMetaInformation;
-    std::optional<PluginLinkInformation> mPluginLinkInformation;
+    PluginLinkInformation mPluginLinkInformation;
     std::shared_ptr<PluginData> mPluginData;
 
     std::optional<PluginConfigData> mPluginConfigData = std::nullopt;

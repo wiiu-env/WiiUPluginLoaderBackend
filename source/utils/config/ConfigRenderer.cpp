@@ -5,6 +5,11 @@
 #include "utils/utils.h"
 
 ConfigRenderer::ConfigRenderer(std::vector<ConfigDisplayItem> &&vec) : mConfigs(std::move(vec)) {
+    std::copy_if(mConfigs.begin(), mConfigs.end(),
+                 std::back_inserter(mActiveConfigs),
+                 [&](const auto &value) {
+                     return value.isActivePlugin();
+                 });
 }
 
 ConfigRenderer::~ConfigRenderer() = default;
@@ -65,13 +70,13 @@ void ConfigRenderer::ResetNeedsRedraw() {
 }
 
 ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
-    if (mConfigs.empty()) {
+    if (mActiveConfigs.empty()) {
         mNeedRedraw = true;
         return SUB_STATE_ERROR;
     }
     const auto prevSelectedItem = mCursorPos;
 
-    const auto totalElementSize = static_cast<int32_t>(mConfigs.size());
+    const auto totalElementSize = mActiveConfigs.size();
     if (input.data.buttons_d & Input::eButtons::BUTTON_DOWN) {
         mCursorPos++;
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_LEFT) {
@@ -88,10 +93,12 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
             mCursorPos = totalElementSize - 1;
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_UP) {
         mCursorPos--;
+    } else if (input.data.buttons_d & Input::eButtons::BUTTON_X) {
+        mSetActivePluginsMode = !mSetActivePluginsMode;
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_A) {
         if (mCursorPos != mCurrentOpen) {
             mCategoryRenderer.reset();
-            mCategoryRenderer = make_unique_nothrow<CategoryRenderer>(&(mConfigs[mCursorPos].getConfigInformation()), &(mConfigs[mCursorPos].getConfig()), true);
+            mCategoryRenderer = make_unique_nothrow<CategoryRenderer>(&(mActiveConfigs[mCursorPos].get().getConfigInformation()), &(mActiveConfigs[mCursorPos].get().getConfig()), true);
         }
         mNeedRedraw  = true;
         mCurrentOpen = mCursorPos;
@@ -100,8 +107,8 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
     } else if (input.data.buttons_d & (Input::eButtons::BUTTON_B | Input::eButtons::BUTTON_HOME)) {
         mNeedRedraw = true;
         mCategoryRenderer.reset();
-        for (const auto &element : mConfigs) {
-            CallOnCloseCallback(element.getConfigInformation(), element.getConfig());
+        for (const auto &element : mActiveConfigs) {
+            CallOnCloseCallback(element.get().getConfigInformation(), element.get().getConfig());
         }
         return SUB_STATE_RETURN;
     }
@@ -126,18 +133,19 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
     return SUB_STATE_RUNNING;
 }
 
+
 void ConfigRenderer::RenderStateMain() const {
-    const auto totalElementSize = static_cast<int32_t>(mConfigs.size());
+    auto totalElementSize = (int32_t) mActiveConfigs.size();
     // Calculate the range of items to display
-    const int start = std::max(0, mRenderOffset);
-    const int end   = std::min(start + MAX_BUTTONS_ON_SCREEN, totalElementSize);
+    int start = std::max(0, mRenderOffset);
+    int end   = std::min(start + MAX_BUTTONS_ON_SCREEN, totalElementSize);
 
     DrawUtils::beginDraw();
     DrawUtils::clear(COLOR_BACKGROUND);
 
     uint32_t yOffset = 8 + 24 + 8 + 4;
     for (int32_t i = start; i < end; i++) {
-        DrawConfigEntry(yOffset, mConfigs[i].getConfigInformation(), i == mCursorPos);
+        DrawConfigEntry(yOffset, mActiveConfigs[i].get().getConfigInformation(), i == mCursorPos);
         yOffset += 42 + 8;
     }
 
@@ -153,7 +161,7 @@ void ConfigRenderer::RenderStateMain() const {
     // draw bottom bar
     DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
     DrawUtils::setFontSize(18);
-    DrawUtils::print(16, SCREEN_HEIGHT - 10, "\ue07d/\ue07e Navigate ");
+    DrawUtils::print(16, SCREEN_HEIGHT - 10, "\ue07d Navigate ");
     DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Select", true);
 
     // draw scroll indicator
@@ -167,7 +175,7 @@ void ConfigRenderer::RenderStateMain() const {
 
     // draw home button
     DrawUtils::setFontSize(18);
-    const auto exitHint = "\ue044 Exit";
+    const char *exitHint = "\ue044 Exit";
     DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHint) / 2, SCREEN_HEIGHT - 10, exitHint, true);
 
     DrawUtils::endDraw();

@@ -120,6 +120,9 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
         }
     } else if (input.data.buttons_d & (Input::eButtons::BUTTON_B | Input::eButtons::BUTTON_HOME)) {
         if (mSetActivePluginsMode) {
+            for (auto &cur : mConfigs) {
+                cur.resetIsActivePlugin();
+            }
             mNeedRedraw = true;
             mSetActivePluginsMode = false;
             return SUB_STATE_RUNNING;

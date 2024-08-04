@@ -24,8 +24,11 @@ public:
 
     void toggleIsActivePlugin();
 
+    void resetIsActivePlugin();
+
 private:
     std::unique_ptr<WUPSConfigAPIBackend::WUPSConfig> mConfig;
     GeneralConfigInformation mInfo;
     bool mIsActivePlugin;
+    bool mInitialIsActivePlugin;
 };

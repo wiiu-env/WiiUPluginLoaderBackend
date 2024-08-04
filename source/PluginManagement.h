@@ -1,6 +1,7 @@
 #pragma once
 
 #include "plugin/PluginContainer.h"
+#include "plugin/PluginLoadWrapper.h"
 #include <coreinit/dynload.h>
 #include <map>
 #include <memory>
@@ -10,7 +11,7 @@
 class PluginManagement {
 public:
     static std::vector<PluginContainer> loadPlugins(
-            const std::set<std::shared_ptr<PluginData>> &pluginDataList,
+            const std::vector<PluginLoadWrapper> &pluginDataList,
             std::vector<relocation_trampoline_entry_t> &trampolineData);
 
     static void callInitHooks(const std::vector<PluginContainer> &plugins);

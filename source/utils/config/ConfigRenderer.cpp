@@ -1,7 +1,10 @@
 #include "ConfigRenderer.h"
+#include <coreinit/title.h>
+#include <sysapp/launch.h>
 
 void ConfigRenderer::RenderStateMain() const {
-    auto totalElementSize = (int32_t) mActiveConfigs.size();
+    auto &configs         = GetConfigList();
+    auto totalElementSize = (int32_t) configs.size();
     // Calculate the range of items to display
     int start = std::max(0, mRenderOffset);
     int end   = std::min(start + MAX_BUTTONS_ON_SCREEN, totalElementSize);
@@ -11,7 +14,7 @@ void ConfigRenderer::RenderStateMain() const {
 
     uint32_t yOffset = 8 + 24 + 8 + 4;
     for (int32_t i = start; i < end; i++) {
-        drawConfigEntry(yOffset, mActiveConfigs[i].get().getConfigInformation(), i == mCursorPos);
+        drawConfigEntry(yOffset, configs[i].get().getConfigInformation(), i == mCursorPos, configs[i].get().isActivePlugin());
         yOffset += 42 + 8;
     }
 
@@ -19,7 +22,11 @@ void ConfigRenderer::RenderStateMain() const {
 
     // draw top bar
     DrawUtils::setFontSize(24);
-    DrawUtils::print(16, 6 + 24, "Wii U Plugin System Config Menu");
+    if (mSetActivePluginsMode) {
+        DrawUtils::print(16, 6 + 24, "Please select the plugin that should be active");
+    } else {
+        DrawUtils::print(16, 6 + 24, "Wii U Plugin System Config Menu");
+    }
     DrawUtils::setFontSize(18);
     DrawUtils::print(SCREEN_WIDTH - 16, 8 + 24, VERSION_FULL, true);
     DrawUtils::drawRectFilled(8, 8 + 24 + 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
@@ -28,7 +35,11 @@ void ConfigRenderer::RenderStateMain() const {
     DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
     DrawUtils::setFontSize(18);
     DrawUtils::print(16, SCREEN_HEIGHT - 10, "\ue07d Navigate ");
-    DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Select", true);
+    if (mSetActivePluginsMode) {
+        DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Select | \uE045 Apply", true);
+    } else {
+        DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Activate", true);
+    }
 
     // draw scroll indicator
     DrawUtils::setFontSize(24);
@@ -47,7 +58,7 @@ void ConfigRenderer::RenderStateMain() const {
     DrawUtils::endDraw();
 }
 
-void ConfigRenderer::drawConfigEntry(uint32_t yOffset, const GeneralConfigInformation &configInformation, bool isHighlighted) const {
+void ConfigRenderer::drawConfigEntry(uint32_t yOffset, const GeneralConfigInformation &configInformation, bool isHighlighted, bool isActive) const {
     DrawUtils::setFontColor(COLOR_TEXT);
 
     if (isHighlighted) {
@@ -56,41 +67,70 @@ void ConfigRenderer::drawConfigEntry(uint32_t yOffset, const GeneralConfigInform
         DrawUtils::drawRect(16, yOffset, SCREEN_WIDTH - 16 * 2, 44, 2, COLOR_BORDER);
     }
 
+    int textXOffset = 16 * 2;
+    if (mSetActivePluginsMode) {
+        DrawUtils::setFontSize(24);
+        if (isActive) {
+            DrawUtils::print(textXOffset, yOffset + 8 + 24, "x");
+        }
+        textXOffset += 32;
+    }
+
     DrawUtils::setFontSize(24);
-    DrawUtils::print(16 * 2, yOffset + 8 + 24, configInformation.name.c_str());
+    DrawUtils::print(textXOffset, yOffset + 8 + 24, configInformation.name.c_str());
     uint32_t sz = DrawUtils::getTextWidth(configInformation.name.c_str());
     DrawUtils::setFontSize(12);
-    DrawUtils::print(16 * 2 + sz + 4, yOffset + 8 + 24, configInformation.author.c_str());
+    DrawUtils::print(textXOffset + sz + 4, yOffset + 8 + 24, configInformation.author.c_str());
     DrawUtils::print(SCREEN_WIDTH - 16 * 2, yOffset + 8 + 24, configInformation.version.c_str(), true);
 }
 
 ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
-    if (mActiveConfigs.empty()) {
+    auto &configs = GetConfigList();
+    if (configs.empty()) {
         mNeedRedraw = true;
         return SUB_STATE_ERROR;
     }
     auto prevSelectedItem = mCursorPos;
 
-    auto totalElementSize = mActiveConfigs.size();
+    auto totalElementSize = configs.size();
     if (input.data.buttons_d & Input::eButtons::BUTTON_DOWN) {
         mCursorPos++;
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_UP) {
         mCursorPos--;
+    } else if (input.data.buttons_d & Input::eButtons::BUTTON_PLUS) {
+        if (mSetActivePluginsMode) {
+            if (mActivePluginsDirty) {
+                for (const auto &cur : mConfigs) {
+                    gLoadOnNextLaunch.emplace_back(cur.getConfigInformation().pluginData, cur.isActivePlugin());
+                }
+                _SYSLaunchTitleWithStdArgsInNoSplash(OSGetTitleID(), nullptr);
+            }
+            mNeedRedraw = true;
+            mCategoryRenderer.reset();
+            return SUB_STATE_RETURN;
+        }
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_X) {
         mSetActivePluginsMode = !mSetActivePluginsMode;
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_A) {
-        if (mCursorPos != mCurrentOpen) {
-            mCategoryRenderer.reset();
-            mCategoryRenderer = make_unique_nothrow<CategoryRenderer>(&(mActiveConfigs[mCursorPos].get().getConfigInformation()), &(mActiveConfigs[mCursorPos].get().getConfig()), true);
+        if (mSetActivePluginsMode) {
+            mActivePluginsDirty = true;
+            mNeedRedraw         = true;
+            configs[mCursorPos].get().toggleIsActivePlugin();
+            return SUB_STATE_RUNNING;
+        } else {
+            if (mCursorPos != mCurrentOpen) {
+                mCategoryRenderer.reset();
+                mCategoryRenderer = make_unique_nothrow<CategoryRenderer>(&(configs[mCursorPos].get().getConfigInformation()), &(configs[mCursorPos].get().getConfig()), true);
+            }
+            mNeedRedraw  = true;
+            mCurrentOpen = mCursorPos;
+            mState       = STATE_SUB;
+            return SUB_STATE_RUNNING;
         }
-        mNeedRedraw  = true;
-        mCurrentOpen = mCursorPos;
-        mState       = STATE_SUB;
-        return SUB_STATE_RUNNING;
     } else if (input.data.buttons_d & (Input::eButtons::BUTTON_B | Input::eButtons::BUTTON_HOME)) {
         mNeedRedraw = true;
         mCategoryRenderer.reset();
-        for (const auto &element : mActiveConfigs) {
+        for (const auto &element : configs) {
             CallOnCloseCallback(element.get().getConfigInformation(), element.get().getConfig());
         }
         return SUB_STATE_RETURN;

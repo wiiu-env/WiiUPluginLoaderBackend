@@ -18,6 +18,7 @@
 #pragma once
 
 #include "PluginData.h"
+#include "PluginLoadWrapper.h"
 #include <coreinit/memexpheap.h>
 #include <forward_list>
 #include <memory>
@@ -28,7 +29,7 @@
 
 class PluginDataFactory {
 public:
-    static std::set<std::shared_ptr<PluginData>> loadDir(std::string_view path);
+    static std::vector<PluginLoadWrapper> loadDir(std::string_view path);
 
     static std::unique_ptr<PluginData> load(std::string_view path);
 

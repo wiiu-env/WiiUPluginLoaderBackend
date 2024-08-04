@@ -77,7 +77,8 @@ WUMS_APPLICATION_STARTS() {
     }
 
     OSReport("Running WiiUPluginLoaderBackend " VERSION_FULL "\n");
-    gStoredTVBuffer = {};
+    gStoredTVBuffer        = {};
+    gConfigMenuShouldClose = false;
 
     gUsedRPLs.clear();
 

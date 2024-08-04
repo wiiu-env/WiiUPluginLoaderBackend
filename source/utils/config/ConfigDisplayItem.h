@@ -22,10 +22,14 @@ public:
         return *mConfig;
     }
 
-    [[nodiscard]] bool isActivePlugin () const {
+    [[nodiscard]] bool isActivePlugin() const {
         return mIsActivePlugin;
-
     }
+
+    void toggleIsActivePlugin() {
+        mIsActivePlugin = !mIsActivePlugin;
+    }
+
 private:
     std::unique_ptr<WUPSConfigAPIBackend::WUPSConfig> mConfig;
     GeneralConfigInformation mInfo;

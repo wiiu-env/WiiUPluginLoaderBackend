@@ -1,5 +1,6 @@
 #pragma once
 #include "plugin/PluginContainer.h"
+#include "plugin/PluginLoadWrapper.h"
 #include "utils/config/ConfigUtils.h"
 #include "version.h"
 #include <coreinit/dynload.h>
@@ -20,7 +21,7 @@ extern std::vector<relocation_trampoline_entry_t> gTrampData;
 extern std::vector<PluginContainer> gLoadedPlugins;
 
 extern std::set<std::shared_ptr<PluginData>> gLoadedData;
-extern std::set<std::shared_ptr<PluginData>> gLoadOnNextLaunch;
+extern std::vector<PluginLoadWrapper> gLoadOnNextLaunch;
 extern std::mutex gLoadedDataMutex;
 extern std::map<std::string, OSDynLoad_Module> gUsedRPLs;
 extern std::vector<void *> gAllocatedAddresses;

@@ -48,7 +48,7 @@ static uint32_t lastData0 = 0;
 DECL_FUNCTION(BOOL, OSSendMessage, OSMessageQueue *queue, OSMessage *message, OSMessageFlags flags) {
     if (sConfigMenuOpened && queue == OSGetSystemMessageQueue()) {
         if (message != nullptr) {
-            if (message->args[0] == 0xfacebacc) { // Release foreground
+            if (message->args[0] == 0xfacebacc && sConfigMenuOpened) { // Release foreground
                 gConfigMenuShouldClose = true;
             }
         }

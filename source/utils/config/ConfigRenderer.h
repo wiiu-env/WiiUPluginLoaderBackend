@@ -11,9 +11,11 @@ class ConfigRenderer {
 
 public:
     explicit ConfigRenderer(std::vector<ConfigDisplayItem> &&vec) : mConfigs(std::move(vec)) {
+        std::copy(mConfigs.begin(), mConfigs.end(),
+                  std::back_inserter(mAllConfigs));
         std::copy_if(mConfigs.begin(), mConfigs.end(),
                      std::back_inserter(mActiveConfigs),
-                     [&](const auto & value) {
+                     [&](const auto &value) {
                          return value.isActivePlugin();
                      });
     }
@@ -33,7 +35,14 @@ private:
 
     void RenderStateMain() const;
 
-    void drawConfigEntry(uint32_t yOffset, const GeneralConfigInformation &configInformation, bool isHighlighted) const;
+    [[nodiscard]] const std::vector<std::reference_wrapper<ConfigDisplayItem>> &GetConfigList() const {
+        if (mSetActivePluginsMode) {
+            return mAllConfigs;
+        }
+        return mActiveConfigs;
+    }
+
+    void drawConfigEntry(uint32_t yOffset, const GeneralConfigInformation &configInformation, bool isHighlighted, bool isActive) const;
 
     enum State {
         STATE_MAIN = 0,
@@ -41,6 +50,7 @@ private:
     };
 
     std::vector<ConfigDisplayItem> mConfigs;
+    std::vector<std::reference_wrapper<ConfigDisplayItem>> mAllConfigs;
     std::vector<std::reference_wrapper<ConfigDisplayItem>> mActiveConfigs;
     std::unique_ptr<CategoryRenderer> mCategoryRenderer = {};
 
@@ -52,5 +62,7 @@ private:
     void CallOnCloseCallback(const GeneralConfigInformation &info, const std::vector<std::unique_ptr<WUPSConfigAPIBackend::WUPSConfigCategory>> &categories);
     void CallOnCloseCallback(const GeneralConfigInformation &info, const WUPSConfigAPIBackend::WUPSConfig &config);
 
-    bool mNeedRedraw = true;
+    bool mNeedRedraw           = true;
+    bool mSetActivePluginsMode = false;
+    bool mActivePluginsDirty   = false;
 };

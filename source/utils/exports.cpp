@@ -327,8 +327,8 @@ extern "C" PluginBackendApiErrorType WUPSGetSectionMemoryAddresses(const wups_ba
             continue;
         }
         if (curContainer.getHandle() == handle) {
-            *textAddress = static_cast<void *>(curContainer.getPluginLinkInformation().getTextMemory().data());
-            *dataAddress = static_cast<void *>(curContainer.getPluginLinkInformation().getDataMemory().data());
+            *textAddress = (void *) curContainer.getPluginLinkInformation().getTextMemory().data();
+            *dataAddress = (void *) curContainer.getPluginLinkInformation().getDataMemory().data();
             return PLUGIN_BACKEND_API_ERROR_NONE;
         }
     }

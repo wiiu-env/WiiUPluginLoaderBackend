@@ -41,6 +41,7 @@ private:
     };
 
     std::vector<ConfigDisplayItem> mConfigs;
+    std::vector<std::reference_wrapper<ConfigDisplayItem>> mActiveConfigs;
     std::unique_ptr<CategoryRenderer> mCategoryRenderer = {};
 
     State mState = STATE_MAIN;
@@ -49,5 +50,6 @@ private:
     int32_t mRenderOffset = 0;
     int32_t mCurrentOpen  = -1;
 
-    bool mNeedRedraw = true;
+    bool mSetActivePluginsMode = false;
+    bool mNeedRedraw           = true;
 };

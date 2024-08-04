@@ -83,40 +83,42 @@ void ConfigUtils::displayMenu() {
         info.pluginData = plugin.getPluginDataCopy();
 
         std::unique_ptr<WUPSConfigAPIBackend::WUPSConfig> config;
-        const auto configData = plugin.getConfigData();
-        if (configData) {
-            const auto configHandleOpt = configData->createConfig();
-            if (configHandleOpt) {
-                WUPSConfigAPIStatus callbackResult = configData->CallMenuOpenendCallback(configHandleOpt.value());
-                config                             = WUPSConfigAPIBackend::Intern::PopConfigByHandle(configHandleOpt.value());
-                if (!config) {
-                    DEBUG_FUNCTION_LINE_ERR("Failed to get config for handle: %08X", configHandleOpt.value().handle);
-                } else if (callbackResult != WUPSCONFIG_API_RESULT_SUCCESS) {
-                    DEBUG_FUNCTION_LINE_ERR("Callback failed for %s: %s", info.name.c_str(), WUPSConfigAPI_GetStatusStr(callbackResult));
-                    config.reset();
+        if (plugin.isLinkedAndLoaded()) {
+            const auto configData = plugin.getConfigData();
+            if (configData) {
+                const auto configHandleOpt = configData->createConfig();
+                if (configHandleOpt) {
+                    WUPSConfigAPIStatus callbackResult = configData->CallMenuOpenendCallback(configHandleOpt.value());
+                    config                             = WUPSConfigAPIBackend::Intern::PopConfigByHandle(configHandleOpt.value());
+                    if (!config) {
+                        DEBUG_FUNCTION_LINE_ERR("Failed to get config for handle: %08X", configHandleOpt.value().handle);
+                    } else if (callbackResult != WUPSCONFIG_API_RESULT_SUCCESS) {
+                        DEBUG_FUNCTION_LINE_ERR("Callback failed for %s: %s", info.name.c_str(), WUPSConfigAPI_GetStatusStr(callbackResult));
+                        config.reset();
+                    } else {
+                        info.name = config->getName();
+                    }
                 } else {
-                    info.name = config->getName();
+                    DEBUG_FUNCTION_LINE_ERR("Failed to create config for plugin: \"%s\"", info.name.c_str());
                 }
             } else {
-                DEBUG_FUNCTION_LINE_ERR("Failed to create config for plugin: \"%s\"", info.name.c_str());
-            }
-        } else {
-            for (const auto &hook : plugin.getPluginLinkInformation().getHookDataList()) {
-                if (hook.getType() == WUPS_LOADER_HOOK_GET_CONFIG_DEPRECATED) {
-                    if (hook.getFunctionPointer() == nullptr) {
-                        DEBUG_FUNCTION_LINE_ERR("Hook had invalid ptr");
+                for (const auto &hook : plugin.getPluginLinkInformation().getHookDataList()) {
+                    if (hook.getType() == WUPS_LOADER_HOOK_GET_CONFIG_DEPRECATED) {
+                        if (hook.getFunctionPointer() == nullptr) {
+                            DEBUG_FUNCTION_LINE_ERR("Hook had invalid ptr");
+                            break;
+                        }
+                        auto cur_config_handle = ((void *(*) ())((uint32_t *) hook.getFunctionPointer()))();
+                        if (cur_config_handle == nullptr) {
+                            DEBUG_FUNCTION_LINE_WARN("Hook returned empty handle");
+                            break;
+                        }
+                        config = WUPSConfigAPIBackend::Intern::PopConfigByHandle(WUPSConfigHandle(cur_config_handle));
+                        if (!config) {
+                            DEBUG_FUNCTION_LINE_ERR("Failed to find config for handle: %08X", cur_config_handle);
+                        }
                         break;
                     }
-                    auto cur_config_handle = ((void *(*) ())((uint32_t *) hook.getFunctionPointer()))();
-                    if (cur_config_handle == nullptr) {
-                        DEBUG_FUNCTION_LINE_WARN("Hook returned empty handle");
-                        break;
-                    }
-                    config = WUPSConfigAPIBackend::Intern::PopConfigByHandle(WUPSConfigHandle(cur_config_handle));
-                    if (!config) {
-                        DEBUG_FUNCTION_LINE_ERR("Failed to find config for handle: %08X", cur_config_handle);
-                    }
-                    break;
                 }
             }
         }

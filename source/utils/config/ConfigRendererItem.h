@@ -10,8 +10,10 @@ public:
 
     void Draw(uint32_t yOffset, bool isHighlighted) const override {
         assert(mItem);
-        drawGenericBoxAndText(yOffset, mItem->getDisplayName(), isHighlighted);
+
+        drawGenericBoxAndText(yOffset, ConfigRenderItemFont::GetOffsettedText(mItem->getDisplayName(), mTextOffset), isHighlighted);
         DrawUtils::setFontSize(24);
+
         DrawUtils::print(SCREEN_WIDTH - 16 * 2, yOffset + 8 + 24, mCurItemText.c_str(), true);
     }
 
@@ -40,6 +42,24 @@ public:
         mItem->onSelected(isSelected);
     }
 
+    void ResetTextOffset() override {
+        mTextOffset = 0;
+    }
+
+    uint32_t GetTextOffset() const override {
+        return mTextOffset;
+    }
+
+    void IncrementTextOffset() override {
+        if (!mItem) return;
+        ConfigRenderItemFont::IncrementOffset(mItem->getDisplayName(), mTextOffset);
+    }
+
+    void DecrementTextOffset() override {
+        if (!mItem) return;
+        if (mTextOffset > 0) mTextOffset--;
+    }
+
     void OnButtonPressed(WUPSConfigButtons buttons) override {
         mItem->onButtonPressed(buttons);
     }
@@ -58,5 +78,6 @@ public:
 private:
     const WUPSConfigAPIBackend::WUPSConfigItem *mItem;
     std::string mCurItemText;
-    bool mNeedsDraw = true;
+    bool mNeedsDraw      = true;
+    uint32_t mTextOffset = 0;
 };

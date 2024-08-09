@@ -2,10 +2,22 @@
 
 #include "schrift.h"
 #include <cstdint>
+#include <functional>
 
 // visible screen sizes
 #define SCREEN_WIDTH  854
 #define SCREEN_HEIGHT 480
+
+#define COLOR_BACKGROUND         Color(238, 238, 238, 255)
+#define COLOR_BACKGROUND_WARN    Color(255, 251, 4, 255)
+#define COLOR_TEXT               Color(51, 51, 51, 255)
+#define COLOR_TEXT2              Color(72, 72, 72, 255)
+#define COLOR_DISABLED           Color(255, 0, 0, 255)
+#define COLOR_BORDER             Color(204, 204, 204, 255)
+#define COLOR_BORDER_HIGHLIGHTED Color(0x3478e4FF)
+#define COLOR_WHITE              Color(0xFFFFFFFF)
+#define COLOR_BLACK              Color(0, 0, 0, 255)
+#define COLOR_WARNING            COLOR_BLACK
 
 union Color {
     explicit Color(const uint32_t color) {
@@ -65,6 +77,8 @@ public:
     static uint32_t getTextWidth(const char *string);
 
     static uint32_t getTextWidth(const wchar_t *string);
+
+    static void RenderScreen(const std::function<void()>& callback);
 
 private:
     static bool mIsBackBuffer;

@@ -82,10 +82,13 @@ ConfigSubState CategoryRenderer::UpdateStateMain(Input &input, const WUPSConfigS
 
     if (mIsItemMovementAllowed) {
         if (input.data.buttons_d & Input::eButtons::BUTTON_DOWN) {
+            mItemRenderer[mCursorPos]->ResetTextOffset();
             mCursorPos++;
         } else if (input.data.buttons_d & Input::eButtons::BUTTON_UP) {
+            mItemRenderer[mCursorPos]->ResetTextOffset();
             mCursorPos--;
         } else if (input.data.buttons_d & Input::eButtons::BUTTON_A) {
+            mItemRenderer[mCursorPos]->ResetTextOffset();
             if (mCursorPos < (int32_t) mCat->getCategories().size()) {
                 if (mCurrentOpen != mCursorPos) {
                     mSubCategoryRenderer.reset();
@@ -96,6 +99,12 @@ ConfigSubState CategoryRenderer::UpdateStateMain(Input &input, const WUPSConfigS
                 mNeedsRedraw = true;
                 return SUB_STATE_RUNNING;
             }
+        } else if ((input.data.buttons_h & Input::eButtons::STICK_L_RIGHT) || (input.data.buttons_h & Input::eButtons::STICK_R_RIGHT)) {
+            mItemRenderer[mCursorPos]->IncrementTextOffset();
+            mNeedsRedraw = true;
+        } else if ((input.data.buttons_h & Input::eButtons::STICK_L_LEFT) || (input.data.buttons_h & Input::eButtons::STICK_R_LEFT)) {
+            mItemRenderer[mCursorPos]->DecrementTextOffset();
+            mNeedsRedraw = true;
         }
     }
 
@@ -216,8 +225,10 @@ void CategoryRenderer::RenderStateMain() const {
     RenderMainLayout();
 
     uint32_t yOffset = 8 + 24 + 8 + 4;
+
     for (int32_t i = start; i < end; i++) {
         bool isHighlighted = (i == mCursorPos);
+
         mItemRenderer[i]->Draw(yOffset, isHighlighted);
         yOffset += 42 + 8;
     }

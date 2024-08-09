@@ -47,13 +47,14 @@ WUMS_INITIALIZE() {
     vpadInput.update(1280, 720);
     auto buttomComboSafeMode = Input::eButtons::BUTTON_L | Input::eButtons::BUTTON_UP | Input::eButtons::BUTTON_MINUS;
     if ((vpadInput.data.buttons_h & (buttomComboSafeMode)) == buttomComboSafeMode) {
+        DEBUG_FUNCTION_LINE_INFO("Safe Mode activated!");
         auto tobeIgnoredFilePath = getNonBaseAromaPluginFilenames(getPluginPath());
         WUPSBackendSettings::LoadSettings();
         std::set<std::string> inactivePlugins = WUPSBackendSettings::GetInactivePluginFilenames();
 
         inactivePlugins.insert(tobeIgnoredFilePath.begin(), tobeIgnoredFilePath.end());
         for (const auto &d : inactivePlugins) {
-            DEBUG_FUNCTION_LINE_INFO("%s should be ignores", d.c_str());
+            DEBUG_FUNCTION_LINE_INFO("safemode: %s should be ignored", d.c_str());
         }
         WUPSBackendSettings::SetInactivePluginFilenames(inactivePlugins);
         WUPSBackendSettings::SaveSettings();

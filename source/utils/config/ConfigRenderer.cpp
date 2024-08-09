@@ -27,7 +27,7 @@ void ConfigRenderer::RenderStateMain() const {
     // draw bottom bar
     DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
     DrawUtils::setFontSize(18);
-    DrawUtils::print(16, SCREEN_HEIGHT - 10, "\ue07d Navigate ");
+    DrawUtils::print(16, SCREEN_HEIGHT - 10, "\ue07d/\ue07e Navigate ");
     DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Select", true);
 
     // draw scroll indicator
@@ -71,9 +71,21 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
     }
     auto prevSelectedItem = mCursorPos;
 
-    auto totalElementSize = mConfigs.size();
+    auto totalElementSize = (int32_t) mConfigs.size();
     if (input.data.buttons_d & Input::eButtons::BUTTON_DOWN) {
         mCursorPos++;
+    } else if (input.data.buttons_d & Input::eButtons::BUTTON_LEFT) {
+        // Paging up
+        mCursorPos -= MAX_BUTTONS_ON_SCREEN - 1;
+        // Don't jump past the top
+        if (mCursorPos < 0)
+            mCursorPos = 0;
+    } else if (input.data.buttons_d & Input::eButtons::BUTTON_RIGHT) {
+        // Paging down
+        mCursorPos += MAX_BUTTONS_ON_SCREEN - 1;
+        // Don't jump past the bottom
+        if (mCursorPos >= totalElementSize)
+            mCursorPos = totalElementSize - 1;
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_UP) {
         mCursorPos--;
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_A) {
@@ -95,8 +107,8 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
     }
 
     if (mCursorPos < 0) {
-        mCursorPos = (int32_t) totalElementSize - 1;
-    } else if (mCursorPos > (int32_t) (totalElementSize - 1)) {
+        mCursorPos = totalElementSize - 1;
+    } else if (mCursorPos > totalElementSize - 1) {
         mCursorPos = 0;
     }
 

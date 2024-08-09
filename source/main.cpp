@@ -6,6 +6,7 @@
 #include "patcher/hooks_patcher_static.h"
 #include "plugin/PluginDataFactory.h"
 #include "utils/WUPSBackendSettings.h"
+#include "utils/input/VPADInput.h"
 #include "utils/logger.h"
 #include "utils/utils.h"
 #include "version.h"
@@ -40,6 +41,22 @@ WUMS_INITIALIZE() {
         if (FunctionPatcher_AddFunctionPatch(&method_hooks_static[i], nullptr, nullptr) != FUNCTION_PATCHER_RESULT_SUCCESS) {
             OSFatal("homebrew_wupsbackend: Failed to AddPatch function");
         }
+    }
+
+    VPadInput vpadInput;
+    vpadInput.update(1280, 720);
+    auto buttomComboSafeMode = Input::eButtons::BUTTON_L | Input::eButtons::BUTTON_UP | Input::eButtons::BUTTON_MINUS;
+    if ((vpadInput.data.buttons_h & (buttomComboSafeMode)) == buttomComboSafeMode) {
+        auto tobeIgnoredFilePath = getNonBaseAromaPluginFilenames(getPluginPath());
+        WUPSBackendSettings::LoadSettings();
+        std::set<std::string> inactivePlugins = WUPSBackendSettings::GetInactivePluginFilenames();
+
+        inactivePlugins.insert(tobeIgnoredFilePath.begin(), tobeIgnoredFilePath.end());
+        for (const auto &d : inactivePlugins) {
+            DEBUG_FUNCTION_LINE_INFO("%s should be ignores", d.c_str());
+        }
+        WUPSBackendSettings::SetInactivePluginFilenames(inactivePlugins);
+        WUPSBackendSettings::SaveSettings();
     }
 
     deinitLogging();

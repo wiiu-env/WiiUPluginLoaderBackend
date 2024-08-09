@@ -145,3 +145,7 @@ OSDynLoad_Error CustomDynLoadAlloc(int32_t size, int32_t align, void **outAddr);
 void CustomDynLoadFree(void *addr);
 
 bool ParseJsonFromFile(const std::string &filePath, nlohmann::json &outJson);
+
+std::vector<std::string> getPluginFilePaths(std::string_view basePath);
+
+std::vector<std::string> getNonBaseAromaPluginFilenames(std::string_view basePath);

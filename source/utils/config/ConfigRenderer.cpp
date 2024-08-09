@@ -6,8 +6,6 @@
 #include "utils/logger.h"
 #include "utils/utils.h"
 
-#include <coreinit/title.h>
-
 ConfigRenderer::ConfigRenderer(std::vector<ConfigDisplayItem> &&vec) : mConfigs(std::move(vec)) {
     std::copy(mConfigs.begin(), mConfigs.end(),
               std::back_inserter(mAllConfigs));
@@ -153,7 +151,6 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
 
     return SUB_STATE_RUNNING;
 }
-
 void ConfigRenderer::RenderStateMain() const {
     auto &configs = GetConfigList();
 
@@ -193,7 +190,7 @@ void ConfigRenderer::RenderStateMain() const {
     // draw top bar
     DrawUtils::setFontSize(24);
     if (mSetActivePluginsMode) {
-        DrawUtils::print(16, 6 + 24, "Please select the plugin that should be active");
+        DrawUtils::print(16, 6 + 24, "Please select the plugins that should be active");
     } else {
         DrawUtils::print(16, 6 + 24, "Wii U Plugin System Config Menu");
 

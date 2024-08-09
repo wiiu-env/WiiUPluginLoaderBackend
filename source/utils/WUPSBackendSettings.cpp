@@ -9,7 +9,7 @@
 
 namespace WUPSBackendSettings {
     namespace {
-        std::vector<std::string> sInactivePlugins;
+        std::set<std::string> sInactivePlugins;
     }
 
 #define INACTIVE_PLUGINS_KEY "inactive_plugins"
@@ -20,14 +20,14 @@ namespace WUPSBackendSettings {
         std::string filePath   = folderPath + "wupsbackend.json";
 
         if (!ParseJsonFromFile(filePath, j)) {
-            sInactivePlugins.clear();
             return false;
         }
 
+        sInactivePlugins.clear();
         if (j.contains(INACTIVE_PLUGINS_KEY) && j[INACTIVE_PLUGINS_KEY].is_array()) {
             for (auto &cur : j[INACTIVE_PLUGINS_KEY]) {
                 if (cur.is_string()) {
-                    sInactivePlugins.push_back(cur);
+                    sInactivePlugins.insert(cur);
                 }
             }
         }
@@ -63,14 +63,15 @@ namespace WUPSBackendSettings {
         return true;
     }
 
-    void SetInactivePluginFilenames(std::span<std::string> filenames) {
+    void ClearInactivePluginFilenames() {
         sInactivePlugins.clear();
-        for (const auto &filename : filenames) {
-            sInactivePlugins.emplace_back(filename);
-        }
     }
 
-    const std::vector<std::string> &GetInactivePluginFilenames() {
+    void AddInactivePluginFilename(const std::string &filename) {
+        sInactivePlugins.insert(filename);
+    }
+
+    const std::set<std::string> &GetInactivePluginFilenames() {
         return sInactivePlugins;
     }
 

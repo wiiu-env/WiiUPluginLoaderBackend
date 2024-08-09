@@ -1,4 +1,6 @@
 #include "utils.h"
+
+#include "StringTools.h"
 #include "fs/CFile.hpp"
 #include "globals.h"
 #include "json.hpp"
@@ -8,6 +10,7 @@
 #include <coreinit/ios.h>
 #include <malloc.h>
 #include <string>
+#include <sys/dirent.h>
 #include <wups/storage.h>
 
 static std::string sPluginPath;
@@ -131,5 +134,64 @@ bool ParseJsonFromFile(const std::string &filePath, nlohmann::json &outJson) {
     }
     file.close();
     free(json_data);
+    return result;
+}
+
+std::vector<std::string> getPluginFilePaths(std::string_view basePath) {
+    std::vector<std::string> result;
+    struct dirent *dp;
+    DIR *dfd;
+
+    if (basePath.empty()) {
+        DEBUG_FUNCTION_LINE_ERR("Failed to scan plugin dir: Path was empty");
+        return result;
+    }
+
+    if ((dfd = opendir(basePath.data())) == nullptr) {
+        DEBUG_FUNCTION_LINE_ERR("Couldn't open dir %s", basePath.data());
+        return result;
+    }
+
+    while ((dp = readdir(dfd)) != nullptr) {
+        if (dp->d_type == DT_DIR) {
+            continue;
+        }
+
+        if (std::string_view(dp->d_name).starts_with('.') || std::string_view(dp->d_name).starts_with('_') || !std::string_view(dp->d_name).ends_with(".wps")) {
+            DEBUG_FUNCTION_LINE_WARN("Skip file %s/%s", basePath.data(), dp->d_name);
+            continue;
+        }
+
+        auto full_file_path = string_format("%s/%s", basePath.data(), dp->d_name);
+        result.push_back(full_file_path);
+    }
+    closedir(dfd);
+    return result;
+}
+
+std::vector<std::string> getNonBaseAromaPluginFilenames(std::string_view basePath) {
+    std::vector<std::string> result;
+
+    for (const auto &filePath : getPluginFilePaths(basePath)) {
+        std::string fileName = StringTools::FullpathToFilename(filePath.c_str());
+
+        const char *baseAromaFileNames[] = {
+                "AromaBasePlugin.wps",
+                "drc_region_free.wps",
+                "homebrew_on_menu.wps",
+                "regionfree.wps",
+        };
+
+        bool found = false;
+        for (const auto &cur : baseAromaFileNames) {
+            if (fileName == cur) {
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            result.push_back(fileName);
+        }
+    }
     return result;
 }

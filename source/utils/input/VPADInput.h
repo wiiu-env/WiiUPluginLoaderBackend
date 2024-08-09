@@ -17,6 +17,8 @@
  ****************************************************************************/
 
 #include "Input.h"
+
+#include <coreinit/thread.h>
 #include <vpad/input.h>
 
 class VPadInput final : public Input {
@@ -31,23 +33,28 @@ public:
         lastData = data;
 
         data      = {};
-        vpadError = VPAD_READ_NO_SAMPLES;
+        vpadError = VPAD_READ_UNINITIALIZED;
 
-        if (VPADRead(VPAD_CHAN_0, &vpad, 1, &vpadError) > 0 && vpadError == VPAD_READ_SUCCESS) {
-            data.buttons_r    = vpad.release;
-            data.buttons_h    = vpad.hold;
-            data.buttons_d    = vpad.trigger;
-            data.validPointer = !vpad.tpNormal.validity;
-            data.touched      = vpad.tpNormal.touched;
+        int maxAttempts = 100;
+        do {
+            if (VPADRead(VPAD_CHAN_0, &vpad, 1, &vpadError) > 0 && vpadError == VPAD_READ_SUCCESS) {
+                data.buttons_r    = vpad.release;
+                data.buttons_h    = vpad.hold;
+                data.buttons_d    = vpad.trigger;
+                data.validPointer = !vpad.tpNormal.validity;
+                data.touched      = vpad.tpNormal.touched;
 
-            VPADGetTPCalibratedPoint(VPAD_CHAN_0, &tpCalib, &vpad.tpFiltered1);
+                VPADGetTPCalibratedPoint(VPAD_CHAN_0, &tpCalib, &vpad.tpFiltered1);
 
-            //! calculate the screen offsets
-            data.x = -(width >> 1) + (int32_t) (((float) tpCalib.x / 1280.0f) * (float) width);
-            data.y = -(height >> 1) + (int32_t) (float) height - (((float) tpCalib.y / 720.0f) * (float) height);
+                //! calculate the screen offsets
+                data.x = -(width >> 1) + (int32_t) (((float) tpCalib.x / 1280.0f) * (float) width);
+                data.y = -(height >> 1) + (int32_t) (float) height - (((float) tpCalib.y / 720.0f) * (float) height);
 
-            return true;
-        }
+                return true;
+            } else {
+                OSSleepTicks(OSMillisecondsToTicks(1));
+            }
+        } while (--maxAttempts > 0 && vpadError == VPAD_READ_NO_SAMPLES);
         return false;
     }
 

@@ -1,15 +1,25 @@
 #pragma once
 
+#include <set>
 #include <span>
 #include <string>
-#include <vector>
 
 namespace WUPSBackendSettings {
     bool LoadSettings();
 
     bool SaveSettings();
 
-    void SetInactivePluginFilenames(std::span<std::string> filenames);
+    void ClearInactivePluginFilenames();
 
-    const std::vector<std::string> &GetInactivePluginFilenames();
+    void AddInactivePluginFilename(const std::string &filename);
+
+    template<typename Iterable>
+    void SetInactivePluginFilenames(const Iterable &filenames) {
+        ClearInactivePluginFilenames();
+        for (const auto &cur : filenames) {
+            AddInactivePluginFilename(cur);
+        }
+    }
+
+    const std::set<std::string> &GetInactivePluginFilenames();
 }; // namespace WUPSBackendSettings

@@ -26,37 +26,18 @@
 #include <set>
 #include <sys/dirent.h>
 
-
-std::vector<PluginLoadWrapper> PluginDataFactory::loadDir(std::string_view path, const std::vector<std::string> &inactivePluginsFilenames) {
+std::vector<PluginLoadWrapper> PluginDataFactory::loadDir(const std::string_view path, const std::set<std::string> &inactivePluginsFilenames) {
     std::vector<PluginLoadWrapper> result;
-    dirent *dp;
-    DIR *dfd;
 
-    if (path.empty()) {
-        DEBUG_FUNCTION_LINE_ERR("Failed to load Plugins from dir: Path was empty");
-        return result;
-    }
+    for (const auto &full_file_path : getPluginFilePaths(path)) {
+        std::string fileName = StringTools::FullpathToFilename(full_file_path.c_str());
 
-    if ((dfd = opendir(path.data())) == nullptr) {
-        DEBUG_FUNCTION_LINE_ERR("Couldn't open dir %s", path.data());
-        return result;
-    }
-
-    while ((dp = readdir(dfd)) != nullptr) {
-        if (dp->d_type == DT_DIR) {
-            continue;
-        }
-        if (std::string_view(dp->d_name).starts_with('.') || std::string_view(dp->d_name).starts_with('_') || !std::string_view(dp->d_name).ends_with(".wps")) {
-            DEBUG_FUNCTION_LINE_WARN("Skip file %s/%s", path.data(), dp->d_name);
-            continue;
-        }
-
-        auto full_file_path = string_format("%s/%s", path.data(), dp->d_name);
         DEBUG_FUNCTION_LINE("Loading plugin: %s", full_file_path.c_str());
 
         if (auto pluginData = load(full_file_path)) {
             bool shouldBeLoadedAndLinked = true;
-            if (std::ranges::find(inactivePluginsFilenames, dp->d_name) != inactivePluginsFilenames.end()) {
+
+            if (inactivePluginsFilenames.contains(fileName)) {
                 shouldBeLoadedAndLinked = false;
             }
             result.emplace_back(std::move(pluginData), shouldBeLoadedAndLinked);
@@ -66,8 +47,6 @@ std::vector<PluginLoadWrapper> PluginDataFactory::loadDir(std::string_view path,
             DisplayErrorNotificationMessage(errMsg, 15.0f);
         }
     }
-
-    closedir(dfd);
 
     return result;
 }

@@ -17,7 +17,6 @@
 #include <algorithm>
 #include <coreinit/title.h>
 #include <globals.h>
-#include <memory/mappedmemory.h>
 #include <memory>
 #include <sysapp/launch.h>
 #include <vector>
@@ -275,120 +274,7 @@ void ConfigUtils::displayMenu() {
 }
 
 void ConfigUtils::openConfigMenu() {
-    gOnlyAcceptFromThread               = OSGetCurrentThread();
-    const bool wasHomeButtonMenuEnabled = OSIsHomeButtonMenuEnabled();
-
-    // Save copy of DC reg values
-    const auto tvRender1 = DCReadReg32(SCREEN_TV, D1GRPH_CONTROL_REG);
-    const auto tvRender2 = DCReadReg32(SCREEN_TV, D1GRPH_ENABLE_REG);
-    const auto tvPitch1  = DCReadReg32(SCREEN_TV, D1GRPH_PITCH_REG);
-    const auto tvPitch2  = DCReadReg32(SCREEN_TV, D1OVL_PITCH_REG);
-
-    const auto drcRender1 = DCReadReg32(SCREEN_DRC, D1GRPH_CONTROL_REG);
-    const auto drcRender2 = DCReadReg32(SCREEN_DRC, D1GRPH_ENABLE_REG);
-    const auto drcPitch1  = DCReadReg32(SCREEN_DRC, D1GRPH_PITCH_REG);
-    const auto drcPitch2  = DCReadReg32(SCREEN_DRC, D1OVL_PITCH_REG);
-
-    OSScreenInit();
-
-    const uint32_t screen_buf0_size = OSScreenGetBufferSizeEx(SCREEN_TV);
-    const uint32_t screen_buf1_size = OSScreenGetBufferSizeEx(SCREEN_DRC);
-    void *screenbuffer0             = MEMAllocFromMappedMemoryForGX2Ex(screen_buf0_size, 0x100);
-    void *screenbuffer1             = MEMAllocFromMappedMemoryForGX2Ex(screen_buf1_size, 0x100);
-
-    bool skipScreen0Free = false;
-    bool skipScreen1Free = false;
-    bool doShutdownKPAD  = false;
-
-    if (!screenbuffer0 || !screenbuffer1) {
-        if (screenbuffer0 == nullptr) {
-            if (gStoredTVBuffer.buffer_size >= screen_buf0_size) {
-                screenbuffer0   = gStoredTVBuffer.buffer;
-                skipScreen0Free = true;
-                DEBUG_FUNCTION_LINE_VERBOSE("Use storedTVBuffer");
-            }
-        }
-        if (screenbuffer1 == nullptr) {
-            if (gStoredDRCBuffer.buffer_size >= screen_buf1_size) {
-                screenbuffer1   = gStoredDRCBuffer.buffer;
-                skipScreen1Free = true;
-                DEBUG_FUNCTION_LINE_VERBOSE("Use storedDRCBuffer");
-            }
-        }
-        if (!screenbuffer0 || !screenbuffer1) {
-            DEBUG_FUNCTION_LINE_ERR("Failed to alloc buffers");
-            goto error_exit;
-        }
-    }
-
-    OSScreenSetBufferEx(SCREEN_TV, screenbuffer0);
-    OSScreenSetBufferEx(SCREEN_DRC, screenbuffer1);
-
-    // Clear screens
-    OSScreenClearBufferEx(SCREEN_TV, 0);
-    OSScreenClearBufferEx(SCREEN_DRC, 0);
-
-    // Flip buffers
-    OSScreenFlipBuffersEx(SCREEN_TV);
-    OSScreenFlipBuffersEx(SCREEN_DRC);
-
-    // Clear screens
-    OSScreenClearBufferEx(SCREEN_TV, 0);
-    OSScreenClearBufferEx(SCREEN_DRC, 0);
-
-    // Flip buffers
-    OSScreenFlipBuffersEx(SCREEN_TV);
-    OSScreenFlipBuffersEx(SCREEN_DRC);
-
-    OSScreenEnableEx(SCREEN_TV, 1);
-    OSScreenEnableEx(SCREEN_DRC, 1);
-
-    DrawUtils::initBuffers(screenbuffer0, screen_buf0_size, screenbuffer1, screen_buf1_size);
-    if (!DrawUtils::initFont()) {
-        DEBUG_FUNCTION_LINE_ERR("Failed to init Font");
-        goto error_exit;
-    }
-
-    // disable the home button menu to prevent opening it when exiting
-    OSEnableHomeButtonMenu(false);
-
-    KPADStatus status;
-    KPADError err;
-    if (KPADReadEx(WPAD_CHAN_0, &status, 0, &err) == 0 && err == KPAD_ERROR_UNINITIALIZED) {
-        doShutdownKPAD = true;
-        KPADInit();
-    }
-
-    displayMenu();
-
-    if (doShutdownKPAD) {
-        KPADShutdown();
-    }
-
-    OSEnableHomeButtonMenu(wasHomeButtonMenuEnabled);
-
-    DrawUtils::deinitFont();
-
-error_exit:
-    // Restore DC reg values
-    DCWriteReg32(SCREEN_TV, D1GRPH_CONTROL_REG, tvRender1);
-    DCWriteReg32(SCREEN_TV, D1GRPH_ENABLE_REG, tvRender2);
-    DCWriteReg32(SCREEN_TV, D1GRPH_PITCH_REG, tvPitch1);
-    DCWriteReg32(SCREEN_TV, D1OVL_PITCH_REG, tvPitch2);
-
-    DCWriteReg32(SCREEN_DRC, D1GRPH_CONTROL_REG, drcRender1);
-    DCWriteReg32(SCREEN_DRC, D1GRPH_ENABLE_REG, drcRender2);
-    DCWriteReg32(SCREEN_DRC, D1GRPH_PITCH_REG, drcPitch1);
-    DCWriteReg32(SCREEN_DRC, D1OVL_PITCH_REG, drcPitch2);
-
-    if (!skipScreen0Free && screenbuffer0) {
-        MEMFreeToMappedMemory(screenbuffer0);
-    }
-
-    if (!skipScreen1Free && screenbuffer1) {
-        MEMFreeToMappedMemory(screenbuffer1);
-    }
-    gOnlyAcceptFromThread = nullptr;
+    DrawUtils::RenderScreen(&displayMenu);
 }
 
 void ConfigUtils::renderBasicScreen(std::string_view text) {

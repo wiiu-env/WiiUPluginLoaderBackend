@@ -151,6 +151,7 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
 
     return SUB_STATE_RUNNING;
 }
+
 void ConfigRenderer::RenderStateMain() const {
     auto &configs = GetConfigList();
 
@@ -212,7 +213,7 @@ void ConfigRenderer::RenderStateMain() const {
     if (mSetActivePluginsMode) {
         DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Activate  | \uE045 Apply", true);
     } else if (totalElementSize > 0) {
-        DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Select", true);
+        DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Select | \uE002 Manage plugins", true);
     }
 
     // draw scroll indicator

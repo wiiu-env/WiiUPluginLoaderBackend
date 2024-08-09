@@ -115,11 +115,11 @@ void CustomDynLoadFree(void *addr) {
 bool ParseJsonFromFile(const std::string &filePath, nlohmann::json &outJson) {
     CFile file(filePath, CFile::ReadOnly);
     if (!file.isOpen() || file.size() == 0) {
-        return WUPS_STORAGE_ERROR_NOT_FOUND;
+        return false;
     }
     auto *json_data = (uint8_t *) memalign(0x40, ROUNDUP(file.size() + 1, 0x40));
     if (!json_data) {
-        return WUPS_STORAGE_ERROR_MALLOC_FAILED;
+        return false;
     }
     bool result      = true;
     uint64_t readRes = file.read(json_data, file.size());

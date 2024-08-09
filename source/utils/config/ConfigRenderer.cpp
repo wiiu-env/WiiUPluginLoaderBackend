@@ -2,11 +2,11 @@
 #include "globals.h"
 #include "plugin/PluginLoadWrapper.h"
 #include "utils/DrawUtils.h"
+#include "utils/StringTools.h"
 #include "utils/logger.h"
 #include "utils/utils.h"
 
 #include <coreinit/title.h>
-#include <sysapp/launch.h>
 
 ConfigRenderer::ConfigRenderer(std::vector<ConfigDisplayItem> &&vec) : mConfigs(std::move(vec)) {
     std::copy(mConfigs.begin(), mConfigs.end(),
@@ -77,13 +77,9 @@ void ConfigRenderer::ResetNeedsRedraw() {
 
 ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
     auto &configs = GetConfigList();
-    if (configs.empty()) {
-        mNeedRedraw = true;
-        return SUB_STATE_ERROR;
-    }
+
     auto prevSelectedItem = mCursorPos;
 
-    auto totalElementSize = configs.size();
     if (input.data.buttons_d & Input::eButtons::BUTTON_DOWN) {
         mCursorPos++;
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_UP) {
@@ -95,7 +91,7 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
             return SUB_STATE_RETURN_WITH_PLUGIN_RELOAD;
         }
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_X) {
-        if (!mSetActivePluginsMode) {
+        if (!mSetActivePluginsMode && !mAllConfigs.empty()) {
             mSetActivePluginsMode = true;
             mNeedRedraw           = true;
             return SUB_STATE_RUNNING;
@@ -106,7 +102,7 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
             mNeedRedraw         = true;
             configs[mCursorPos].get().toggleIsActivePlugin();
             return SUB_STATE_RUNNING;
-        } else {
+        } else if (!configs.empty()) {
             if (mCursorPos != mCurrentOpen) {
                 mCategoryRenderer.reset();
                 mCategoryRenderer = make_unique_nothrow<CategoryRenderer>(&(configs[mCursorPos].get().getConfigInformation()), &(configs[mCursorPos].get().getConfig()), true);
@@ -134,9 +130,13 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
         }
     }
 
+    auto totalElementSize = (int32_t) configs.size();
     if (mCursorPos < 0) {
-        mCursorPos = (int32_t) totalElementSize - 1;
-    } else if (mCursorPos > (int32_t) (totalElementSize - 1)) {
+        mCursorPos = totalElementSize - 1;
+    } else if (mCursorPos > (totalElementSize - 1)) {
+        mCursorPos = 0;
+    }
+    if (mCursorPos < 0) {
         mCursorPos = 0;
     }
 
@@ -155,19 +155,37 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
 }
 
 void ConfigRenderer::RenderStateMain() const {
-    auto &configs         = GetConfigList();
-    auto totalElementSize = (int32_t) configs.size();
-    // Calculate the range of items to display
-    int start = std::max(0, mRenderOffset);
-    int end   = std::min(start + MAX_BUTTONS_ON_SCREEN, totalElementSize);
+    auto &configs = GetConfigList();
 
     DrawUtils::beginDraw();
     DrawUtils::clear(COLOR_BACKGROUND);
 
-    uint32_t yOffset = 8 + 24 + 8 + 4;
-    for (int32_t i = start; i < end; i++) {
-        DrawConfigEntry(yOffset, configs[i].get().getConfigInformation(), i == mCursorPos, configs[i].get().isActivePlugin());
-        yOffset += 42 + 8;
+    auto totalElementSize = (int32_t) configs.size();
+
+    // Calculate the range of items to display
+    int start = std::max(0, mRenderOffset);
+    int end   = std::min(start + MAX_BUTTONS_ON_SCREEN, totalElementSize);
+
+    if (mActiveConfigs.empty() && !mSetActivePluginsMode) {
+        DrawUtils::setFontSize(24);
+        std::string noConfigText = "No active plugins";
+        uint32_t szNoConfig      = DrawUtils::getTextWidth(noConfigText.data());
+
+        if (!mAllConfigs.empty()) {
+            std::string activateHint = "Press \ue002 to activate inactive plugins";
+            auto szHint              = DrawUtils::getTextWidth(activateHint.c_str());
+
+            DrawUtils::print((SCREEN_WIDTH / 2) - (szNoConfig / 2), (SCREEN_HEIGHT / 2) - 16, noConfigText.data());
+            DrawUtils::print((SCREEN_WIDTH / 2) - (szHint / 2), (SCREEN_HEIGHT / 2) + 16, activateHint.data());
+        } else {
+            DrawUtils::print((SCREEN_WIDTH / 2) - (szNoConfig / 2), (SCREEN_HEIGHT / 2), noConfigText.data());
+        }
+    } else {
+        uint32_t yOffset = 8 + 24 + 8 + 4;
+        for (int32_t i = start; i < end; i++) {
+            DrawConfigEntry(yOffset, configs[i].get().getConfigInformation(), i == mCursorPos, configs[i].get().isActivePlugin());
+            yOffset += 42 + 8;
+        }
     }
 
     DrawUtils::setFontColor(COLOR_TEXT);
@@ -178,6 +196,13 @@ void ConfigRenderer::RenderStateMain() const {
         DrawUtils::print(16, 6 + 24, "Please select the plugin that should be active");
     } else {
         DrawUtils::print(16, 6 + 24, "Wii U Plugin System Config Menu");
+
+        auto countInactivePlugins = mAllConfigs.size() - mActiveConfigs.size();
+        if (countInactivePlugins > 0) {
+            DrawUtils::setFontSize(14);
+            std::string plugin_unloaded = string_format("Found %d inactive plugins", countInactivePlugins);
+            DrawUtils::print(SCREEN_WIDTH - 16 - DrawUtils::getTextWidth(MODULE_VERSION_FULL) - 32, 8 + 24, plugin_unloaded.c_str(), true);
+        }
     }
     DrawUtils::setFontSize(18);
     DrawUtils::print(SCREEN_WIDTH - 16, 8 + 24, MODULE_VERSION_FULL, true);
@@ -188,9 +213,9 @@ void ConfigRenderer::RenderStateMain() const {
     DrawUtils::setFontSize(18);
     DrawUtils::print(16, SCREEN_HEIGHT - 10, "\ue07d Navigate ");
     if (mSetActivePluginsMode) {
-        DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Select | \uE045 Apply", true);
-    } else {
-        DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Activate", true);
+        DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Activate  | \uE045 Apply", true);
+    } else if (totalElementSize > 0) {
+        DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Select", true);
     }
 
     // draw scroll indicator
@@ -205,6 +230,9 @@ void ConfigRenderer::RenderStateMain() const {
     // draw home button
     DrawUtils::setFontSize(18);
     const char *exitHint = "\ue044 Exit";
+    if (mSetActivePluginsMode) {
+        exitHint = "\ue001 Abort";
+    }
     DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHint) / 2, SCREEN_HEIGHT - 10, exitHint, true);
 
     DrawUtils::endDraw();

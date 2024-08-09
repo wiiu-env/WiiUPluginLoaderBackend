@@ -219,7 +219,6 @@ void ConfigUtils::displayMenu() {
 
     startTime = OSGetTime();
 
-    DEBUG_FUNCTION_LINE_INFO(".");
     std::vector<PluginLoadWrapper> newActivePluginsList;
 
     if (renderer.GetActivePluginsIfChanged(newActivePluginsList)) {

@@ -71,31 +71,21 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
     }
     auto prevSelectedItem = mCursorPos;
 
-    int32_t totalElementSize = mConfigs.size();
+    auto totalElementSize = (int32_t) mConfigs.size();
     if (input.data.buttons_d & Input::eButtons::BUTTON_DOWN) {
         mCursorPos++;
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_LEFT) {
         // Paging up
-        if (mCursorPos == 0) {
-            // cursor at top pos, behaves as if pressed up
-            mCursorPos--;
-        } else {
-            mCursorPos -= MAX_BUTTONS_ON_SCREEN;
-            // otherwise, don't jump past the top
-            if (mCursorPos < 0)
-                mCursorPos = 0;
-        }
+        mCursorPos -= MAX_BUTTONS_ON_SCREEN - 1;
+        // Don't jump past the top
+        if (mCursorPos < 0)
+            mCursorPos = 0;
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_RIGHT) {
         // Paging down
-        if (mCursorPos == totalElementSize - 1) {
-            // cursor at bottom pos, behaves as if pressed down
-            mCursorPos++;
-        } else {
-            mCursorPos += MAX_BUTTONS_ON_SCREEN;
-            // otherwise, don't jump past the bottom
-            if (mCursorPos >= totalElementSize)
-                mCursorPos = totalElementSize - 1;
-        }
+        mCursorPos += MAX_BUTTONS_ON_SCREEN - 1;
+        // Don't jump past the bottom
+        if (mCursorPos >= totalElementSize)
+            mCursorPos = totalElementSize - 1;
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_UP) {
         mCursorPos--;
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_A) {

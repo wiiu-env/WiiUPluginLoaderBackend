@@ -5,6 +5,7 @@
 #include "hooks.h"
 #include "patcher/hooks_patcher_static.h"
 #include "plugin/PluginDataFactory.h"
+#include "utils/DrawUtils.h"
 #include "utils/WUPSBackendSettings.h"
 #include "utils/input/VPADInput.h"
 #include "utils/logger.h"
@@ -21,6 +22,8 @@ WUMS_USE_WUT_DEVOPTAB();
 WUMS_DEPENDS_ON(homebrew_functionpatcher);
 WUMS_DEPENDS_ON(homebrew_memorymapping);
 WUMS_DEPENDS_ON(homebrew_notifications);
+
+using namespace std::chrono_literals;
 
 WUMS_INITIALIZE() {
     initLogging();
@@ -47,6 +50,38 @@ WUMS_INITIALIZE() {
     vpadInput.update(1280, 720);
     auto buttomComboSafeMode = Input::eButtons::BUTTON_L | Input::eButtons::BUTTON_UP | Input::eButtons::BUTTON_MINUS;
     if ((vpadInput.data.buttons_h & (buttomComboSafeMode)) == buttomComboSafeMode) {
+        DrawUtils::RenderScreen([] {
+            DrawUtils::beginDraw();
+            DrawUtils::clear(COLOR_BACKGROUND_WARN);
+            DrawUtils::setFontColor(COLOR_WARNING);
+
+            // draw top bar
+            DrawUtils::setFontSize(48);
+            const char *title = "! Plugin System Safe Mode triggered !";
+            DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(title) / 2, 48 + 8, title, true);
+            DrawUtils::drawRectFilled(8, 48 + 8 + 16, SCREEN_WIDTH - 8 * 2, 3, COLOR_WHITE);
+
+            DrawUtils::setFontSize(24);
+            const char *message = "The Safe Mode of the Plugin System has been triggered.";
+            DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(message) / 2, SCREEN_HEIGHT / 2 - 48, message, true);
+            message = "Any plugins 3rd party plugins have been disabled!";
+            DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(message) / 2, SCREEN_HEIGHT / 2 - 24, message, true);
+
+            message = "To enable them again, open the plugin config menu (\ue004 + \ue07a + \ue046).";
+            DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(message) / 2, SCREEN_HEIGHT / 2 + 24, message, true);
+            message = "Press then \ue002 to manage active plugins";
+            DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(message) / 2, SCREEN_HEIGHT / 2 + 48, message, true);
+
+            // draw bottom bar
+            DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_WHITE);
+            DrawUtils::setFontSize(18);
+            const char *exitHints = "The console will continue to boot in 10 seconds.";
+            DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHints) / 2, SCREEN_HEIGHT - 8, exitHints, true);
+
+            DrawUtils::endDraw();
+
+            std::this_thread::sleep_for(10s);
+        });
         DEBUG_FUNCTION_LINE_INFO("Safe Mode activated!");
         auto tobeIgnoredFilePath = getNonBaseAromaPluginFilenames(getPluginPath());
         WUPSBackendSettings::LoadSettings();

@@ -34,6 +34,7 @@ std::string getEnvironmentPath() {
     sEnvironmentPath = environmentPath;
     return sEnvironmentPath;
 }
+
 std::string getPluginPath() {
     if (!sPluginPath.empty()) {
         return sPluginPath;

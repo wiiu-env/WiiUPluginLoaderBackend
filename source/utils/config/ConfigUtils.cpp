@@ -161,7 +161,8 @@ void ConfigUtils::displayMenu() {
     OSTime startTime;
     bool skipFirstInput = true;
 
-    gOnlyAcceptFromThread = OSGetCurrentThread();
+    gOnlyAcceptFromThread              = OSGetCurrentThread();
+    ConfigSubState subStateReturnValue = SUB_STATE_ERROR;
     while (true) {
         startTime = OSGetTime();
         if (gConfigMenuShouldClose) {
@@ -201,8 +202,8 @@ void ConfigUtils::displayMenu() {
             complexData.kpad.data[i]      = wpadInputs[i].kpad;
         }
 
-        auto subState = renderer.Update(baseInput, simpleData, complexData);
-        if (subState != SUB_STATE_RUNNING) {
+        subStateReturnValue = renderer.Update(baseInput, simpleData, complexData);
+        if (subStateReturnValue != SUB_STATE_RUNNING) {
             break;
         }
         if (renderer.NeedsRedraw() || baseInput.data.buttons_d || baseInput.data.buttons_r) {
@@ -220,7 +221,7 @@ void ConfigUtils::displayMenu() {
 
     std::vector<PluginLoadWrapper> newActivePluginsList;
 
-    if (renderer.GetActivePluginsIfChanged(newActivePluginsList)) {
+    if (subStateReturnValue == SUB_STATE_RETURN_WITH_PLUGIN_RELOAD && renderer.GetActivePluginsIfChanged(newActivePluginsList)) {
         startTime = OSGetTime();
         renderBasicScreen("Applying changes, app will now restart...");
 
@@ -230,9 +231,7 @@ void ConfigUtils::displayMenu() {
         for (const auto &cur : newActivePluginsList) {
             if (!cur.isLoadAndLink()) {
                 auto &source = cur.getPluginData()->getSource();
-                // TODO: Make sure to only use plugins from the actual plugin directory?
-                // atm nothing (to my knowledge) is using the WUPS API to load any plugin from a path though
-                if (source.ends_with(".wps")) {
+                if (source.starts_with(getPluginPath()) && source.ends_with(".wps")) {
                     std::size_t found    = source.find_last_of("/\\");
                     std::string filename = source.substr(found + 1);
                     newInactivePluginsList.push_back(filename);
@@ -241,7 +240,9 @@ void ConfigUtils::displayMenu() {
         }
         gLoadOnNextLaunch = newActivePluginsList;
         WUPSBackendSettings::SetInactivePluginFilenames(newInactivePluginsList);
-        WUPSBackendSettings::SaveSettings();
+        if (!WUPSBackendSettings::SaveSettings()) {
+            DEBUG_FUNCTION_LINE_WARN("Failed to save WUPSBackendSettings");
+        }
 
         _SYSLaunchTitleWithStdArgsInNoSplash(OSGetTitleID(), nullptr);
         // Make sure to wait at least 2 seconds so user can read the screen and
@@ -252,17 +253,18 @@ void ConfigUtils::displayMenu() {
         }
     } else {
         renderBasicScreen("Saving configs...");
-        for (const auto &plugin : gLoadedPlugins) {
-            const auto configData = plugin.getConfigData();
-            if (configData) {
-                if (configData->CallMenuClosedCallback() == WUPSCONFIG_API_RESULT_MISSING_CALLBACK) {
-                    DEBUG_FUNCTION_LINE_WARN("CallMenuClosedCallback is missing for %s", plugin.getMetaInformation().getName().c_str());
-                }
-            } else {
-                CallHook(plugin, WUPS_LOADER_HOOK_CONFIG_CLOSED_DEPRECATED);
+    }
+    for (const auto &plugin : gLoadedPlugins) {
+        const auto configData = plugin.getConfigData();
+        if (configData) {
+            if (configData->CallMenuClosedCallback() == WUPSCONFIG_API_RESULT_MISSING_CALLBACK) {
+                DEBUG_FUNCTION_LINE_WARN("CallMenuClosedCallback is missing for %s", plugin.getMetaInformation().getName().c_str());
             }
+        } else {
+            CallHook(plugin, WUPS_LOADER_HOOK_CONFIG_CLOSED_DEPRECATED);
         }
     }
+
 
     WUPSConfigAPIBackend::Intern::CleanAllHandles();
 

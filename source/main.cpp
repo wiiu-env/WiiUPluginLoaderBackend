@@ -50,7 +50,7 @@ WUMS_INITIALIZE() {
     vpadInput.update(1280, 720);
     auto buttomComboSafeMode = Input::eButtons::BUTTON_L | Input::eButtons::BUTTON_UP | Input::eButtons::BUTTON_MINUS;
     if ((vpadInput.data.buttons_h & (buttomComboSafeMode)) == buttomComboSafeMode) {
-        DrawUtils::RenderScreen([] {
+        DrawUtils::RenderScreen([&vpadInput] {
             DrawUtils::beginDraw();
             DrawUtils::clear(COLOR_BACKGROUND_WARN);
             DrawUtils::setFontColor(COLOR_WARNING);
@@ -69,18 +69,24 @@ WUMS_INITIALIZE() {
 
             message = "To enable them again, open the plugin config menu (\ue004 + \ue07a + \ue046).";
             DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(message) / 2, SCREEN_HEIGHT / 2 + 24, message, true);
-            message = "Press then \ue002 to manage active plugins";
+            message = "Then press \ue002 to manage active plugins";
             DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(message) / 2, SCREEN_HEIGHT / 2 + 48, message, true);
 
             // draw bottom bar
             DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_WHITE);
             DrawUtils::setFontSize(18);
-            const char *exitHints = "The console will continue to boot in 10 seconds.";
+            const char *exitHints = "Continuing in 10 seconds.";
             DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHints) / 2, SCREEN_HEIGHT - 8, exitHints, true);
 
             DrawUtils::endDraw();
 
-            std::this_thread::sleep_for(10s);
+            for (int i = 0; i < 10000 / 16; i++) {
+                vpadInput.update(1280, 720);
+                if ((vpadInput.data.buttons_d & (ANY_BUTTON_MASK))) {
+                    break;
+                }
+                std::this_thread::sleep_for(16ms);
+            }
         });
         DEBUG_FUNCTION_LINE_INFO("Safe Mode activated!");
         auto tobeIgnoredFilePath = getNonBaseAromaPluginFilenames(getPluginPath());

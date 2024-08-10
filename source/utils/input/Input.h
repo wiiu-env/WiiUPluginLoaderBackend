@@ -45,6 +45,19 @@ public:
         STICK_L_DOWN   = 0x08000000
     };
 
+#define ANY_BUTTON_MASK (Input::eButtons::BUTTON_L |     \
+                         Input::eButtons::BUTTON_R |     \
+                         Input::eButtons::BUTTON_PLUS |  \
+                         Input::eButtons::BUTTON_MINUS | \
+                         Input::eButtons::BUTTON_A |     \
+                         Input::eButtons::BUTTON_B |     \
+                         Input::eButtons::BUTTON_X |     \
+                         Input::eButtons::BUTTON_Y |     \
+                         Input::eButtons::BUTTON_DOWN |  \
+                         Input::eButtons::BUTTON_LEFT |  \
+                         Input::eButtons::BUTTON_RIGHT | \
+                         Input::eButtons::BUTTON_UP)
+
     typedef struct {
         uint32_t buttons_h;
         uint32_t buttons_d;

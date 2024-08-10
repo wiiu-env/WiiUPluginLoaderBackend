@@ -211,7 +211,7 @@ void ConfigRenderer::RenderStateMain() const {
     DrawUtils::setFontSize(18);
     DrawUtils::print(16, SCREEN_HEIGHT - 10, "\ue07d Navigate ");
     if (mSetActivePluginsMode) {
-        DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Activate  | \uE045 Apply", true);
+        DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Activate | \uE045 Apply", true);
     } else if (totalElementSize > 0) {
         DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Select | \uE002 Manage plugins", true);
     }

@@ -311,12 +311,16 @@ namespace WUPSConfigAPIBackend {
         return WUPSCONFIG_API_RESULT_SUCCESS;
     }
 
-    BOOL WUPSConfigAPI_IsMenuOpen(void) {
-        return gConfigMenuOpened;
+    WUPSConfigAPIStatus WUPSConfigAPI_GetMenuOpen(BOOL *out) {
+        if (out == nullptr) {
+            return WUPSCONFIG_API_RESULT_INVALID_ARGUMENT;
+        }
+        *out = gConfigMenuOpened;
+        return WUPSCONFIG_API_RESULT_SUCCESS;
     }
 
     WUMS_EXPORT_FUNCTION(WUPSConfigAPI_GetVersion);
-    WUMS_EXPORT_FUNCTION(WUPSConfigAPI_IsMenuOpen);
+    WUMS_EXPORT_FUNCTION(WUPSConfigAPI_GetMenuOpen);
 
     WUMS_EXPORT_FUNCTION_EX(WUPSConfigAPIBackend::InitEx, WUPSConfigAPI_InitEx);
     WUMS_EXPORT_FUNCTION_EX(WUPSConfigAPIBackend::Category::Create, WUPSConfigAPI_Category_CreateEx);

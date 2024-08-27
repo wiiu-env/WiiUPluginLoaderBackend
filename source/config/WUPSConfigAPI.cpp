@@ -311,7 +311,12 @@ namespace WUPSConfigAPIBackend {
         return WUPSCONFIG_API_RESULT_SUCCESS;
     }
 
+    BOOL WUPSConfigAPI_IsMenuOpen(void) {
+        return gConfigMenuOpened;
+    }
+
     WUMS_EXPORT_FUNCTION(WUPSConfigAPI_GetVersion);
+    WUMS_EXPORT_FUNCTION(WUPSConfigAPI_IsMenuOpen);
 
     WUMS_EXPORT_FUNCTION_EX(WUPSConfigAPIBackend::InitEx, WUPSConfigAPI_InitEx);
     WUMS_EXPORT_FUNCTION_EX(WUPSConfigAPIBackend::Category::Create, WUPSConfigAPI_Category_CreateEx);

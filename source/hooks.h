@@ -1,8 +1,12 @@
 #pragma once
 
 #include "plugin/PluginContainer.h"
+
+#include <functional>
 #include <vector>
 #include <wups/hooks.h>
+
+void CallHook(const std::vector<PluginContainer> &plugins, wups_loader_hook_type_t hook_type, const std::function<bool(const PluginContainer &)> &pred);
 
 void CallHook(const std::vector<PluginContainer> &plugins, wups_loader_hook_type_t hook_type);
 

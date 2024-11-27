@@ -24,7 +24,7 @@
 
 class PluginDataFactory {
 public:
-    static std::set<std::shared_ptr<PluginData>> loadDir(std::string_view path);
+    static std::set<std::shared_ptr<PluginData>, PluginDataSharedPtrComparator> loadDir(std::string_view path);
 
     static std::unique_ptr<PluginData> load(std::string_view path);
 

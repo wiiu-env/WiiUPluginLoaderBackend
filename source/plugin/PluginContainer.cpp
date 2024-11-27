@@ -1,6 +1,5 @@
 #include "PluginContainer.h"
-
-#include <utils/storage/StorageUtils.h>
+#include "utils/storage/StorageUtils.h"
 
 PluginContainer::PluginContainer(PluginMetaInformation metaInformation, PluginInformation pluginInformation, std::shared_ptr<PluginData> pluginData)
     : mMetaInformation(std::move(metaInformation)),
@@ -12,21 +11,25 @@ PluginContainer::PluginContainer(PluginContainer &&src) noexcept : mMetaInformat
                                                                    mPluginInformation(std::move(src.mPluginInformation)),
                                                                    mPluginData(std::move(src.mPluginData)),
                                                                    mPluginConfigData(std::move(src.mPluginConfigData)),
-                                                                   storageRootItem(src.storageRootItem)
+                                                                   mStorageRootItem(src.mStorageRootItem),
+                                                                   mInitDone(src.mInitDone)
 
 {
-    src.storageRootItem = {};
+    src.mStorageRootItem = {};
+    src.mInitDone        = {};
 }
 
 PluginContainer &PluginContainer::operator=(PluginContainer &&src) noexcept {
     if (this != &src) {
-        this->mMetaInformation   = src.mMetaInformation;
+        this->mMetaInformation   = std::move(src.mMetaInformation);
         this->mPluginInformation = std::move(src.mPluginInformation);
         this->mPluginData        = std::move(src.mPluginData);
         this->mPluginConfigData  = std::move(src.mPluginConfigData);
-        this->storageRootItem    = src.storageRootItem;
+        this->mStorageRootItem   = src.mStorageRootItem;
+        this->mInitDone          = src.mInitDone;
 
-        src.storageRootItem = nullptr;
+        src.mStorageRootItem = nullptr;
+        src.mInitDone        = false;
     }
     return *this;
 }
@@ -48,7 +51,7 @@ std::shared_ptr<PluginData> PluginContainer::getPluginDataCopy() const {
 }
 
 uint32_t PluginContainer::getHandle() const {
-    return (uint32_t) this;
+    return reinterpret_cast<uint32_t>(this);
 }
 
 const std::optional<PluginConfigData> &PluginContainer::getConfigData() const {
@@ -67,9 +70,9 @@ WUPSStorageError PluginContainer::OpenStorage() {
     if (storageId.empty()) {
         return WUPS_STORAGE_ERROR_SUCCESS;
     }
-    auto res = StorageUtils::API::Internal::OpenStorage(storageId, storageRootItem);
+    auto res = StorageUtils::API::Internal::OpenStorage(storageId, mStorageRootItem);
     if (res != WUPS_STORAGE_ERROR_SUCCESS) {
-        storageRootItem = nullptr;
+        mStorageRootItem = nullptr;
     }
     return res;
 }
@@ -78,8 +81,20 @@ WUPSStorageError PluginContainer::CloseStorage() {
     if (getMetaInformation().getWUPSVersion() < WUPSVersion(0, 8, 0)) {
         return WUPS_STORAGE_ERROR_SUCCESS;
     }
-    if (storageRootItem == nullptr) {
+    if (mStorageRootItem == nullptr) {
         return WUPS_STORAGE_ERROR_SUCCESS;
     }
-    return StorageUtils::API::Internal::CloseStorage(storageRootItem);
+    return StorageUtils::API::Internal::CloseStorage(mStorageRootItem);
+}
+
+wups_storage_root_item PluginContainer::getStorageRootItem() const {
+    return mStorageRootItem;
+}
+
+void PluginContainer::setInitDone(const bool val) {
+    mInitDone = val;
+}
+
+bool PluginContainer::isInitDone() const {
+    return mInitDone;
 }

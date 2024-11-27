@@ -13,17 +13,18 @@
 #include <memory>
 #include <ranges>
 
+static uint32_t sTrampolineID = 0;
+
 std::vector<PluginContainer>
-PluginManagement::loadPlugins(const std::set<std::shared_ptr<PluginData>> &pluginDataList, std::vector<relocation_trampoline_entry_t> &trampolineData) {
+PluginManagement::loadPlugins(const std::set<std::shared_ptr<PluginData>, PluginDataSharedPtrComparator> &pluginDataList, std::vector<relocation_trampoline_entry_t> &trampolineData) {
     std::vector<PluginContainer> plugins;
 
-    uint32_t trampolineID = 0;
     for (const auto &pluginData : pluginDataList) {
         PluginParseErrors error = PLUGIN_PARSE_ERROR_UNKNOWN;
 
         auto metaInfo = PluginMetaInformationFactory::loadPlugin(*pluginData, error);
         if (metaInfo && error == PLUGIN_PARSE_ERROR_NONE) {
-            auto info = PluginInformationFactory::load(*pluginData, trampolineData, trampolineID++);
+            auto info = PluginInformationFactory::load(*pluginData, trampolineData, sTrampolineID++);
             if (!info) {
                 auto errMsg = string_format("Failed to load plugin: %s", pluginData->getSource().c_str());
                 DEBUG_FUNCTION_LINE_ERR("%s", errMsg.c_str());
@@ -79,8 +80,7 @@ bool PluginManagement::doRelocation(const std::vector<RelocationData> &relocData
             if (!usedRPls.contains(rplName)) {
                 DEBUG_FUNCTION_LINE_VERBOSE("Acquire %s", rplName.c_str());
                 // Always acquire to increase refcount and make sure it won't get unloaded while we're using it.
-                OSDynLoad_Error err = OSDynLoad_Acquire(rplName.c_str(), &rplHandle);
-                if (err != OS_DYNLOAD_OK) {
+                if (const OSDynLoad_Error err = OSDynLoad_Acquire(rplName.c_str(), &rplHandle); err != OS_DYNLOAD_OK) {
                     DEBUG_FUNCTION_LINE_ERR("Failed to acquire %s", rplName.c_str());
                     return false;
                 }
@@ -91,7 +91,7 @@ bool PluginManagement::doRelocation(const std::vector<RelocationData> &relocData
                 rplHandle = usedRPls[rplName];
             }
 
-            OSDynLoad_FindExport(rplHandle, (OSDynLoad_ExportType) isData, functionName.c_str(), (void **) &functionAddress);
+            OSDynLoad_FindExport(rplHandle, static_cast<OSDynLoad_ExportType>(isData), functionName.c_str(), reinterpret_cast<void **>(&functionAddress));
         }
 
         if (functionAddress == 0) {
@@ -101,7 +101,7 @@ bool PluginManagement::doRelocation(const std::vector<RelocationData> &relocData
             //DEBUG_FUNCTION_LINE("Found export for %s %s", rplName.c_str(), functionName.c_str());
         }
 
-        if (!ElfUtils::elfLinkOne(cur.getType(), cur.getOffset(), cur.getAddend(), (uint32_t) cur.getDestination(), functionAddress, trampData, RELOC_TYPE_IMPORT, trampolineID)) {
+        if (!ElfUtils::elfLinkOne(cur.getType(), cur.getOffset(), cur.getAddend(), reinterpret_cast<uint32_t>(cur.getDestination()), functionAddress, trampData, RELOC_TYPE_IMPORT, trampolineID)) {
             DEBUG_FUNCTION_LINE_ERR("elfLinkOne failed");
             return false;
         }
@@ -156,6 +156,7 @@ bool PluginManagement::RestoreFunctionPatches(std::vector<PluginContainer> &plug
     for (auto &cur : std::ranges::reverse_view(plugins)) {
         for (auto &curFunction : std::ranges::reverse_view(cur.getPluginInformation().getFunctionDataList())) {
             if (!curFunction.RemovePatch()) {
+                DEBUG_FUNCTION_LINE_ERR("Failed to remove function patch for: plugin %s", cur.getMetaInformation().getName().c_str());
                 return false;
             }
         }
@@ -175,10 +176,10 @@ bool PluginManagement::DoFunctionPatches(std::vector<PluginContainer> &plugins) 
     return true;
 }
 
-void PluginManagement::callInitHooks(const std::vector<PluginContainer> &plugins) {
-    CallHook(plugins, WUPS_LOADER_HOOK_INIT_CONFIG);
-    CallHook(plugins, WUPS_LOADER_HOOK_INIT_STORAGE_DEPRECATED);
-    CallHook(plugins, WUPS_LOADER_HOOK_INIT_STORAGE);
-    CallHook(plugins, WUPS_LOADER_HOOK_INIT_PLUGIN);
+void PluginManagement::callInitHooks(const std::vector<PluginContainer> &plugins, const std::function<bool(const PluginContainer &)> &pred) {
+    CallHook(plugins, WUPS_LOADER_HOOK_INIT_CONFIG, pred);
+    CallHook(plugins, WUPS_LOADER_HOOK_INIT_STORAGE_DEPRECATED, pred);
+    CallHook(plugins, WUPS_LOADER_HOOK_INIT_STORAGE, pred);
+    CallHook(plugins, WUPS_LOADER_HOOK_INIT_PLUGIN, pred);
     DEBUG_FUNCTION_LINE_VERBOSE("Done calling init hooks");
 }

@@ -30,14 +30,11 @@ class PluginContainer {
 public:
     PluginContainer(PluginMetaInformation metaInformation, PluginInformation pluginInformation, std::shared_ptr<PluginData> pluginData);
 
-
     PluginContainer(const PluginContainer &) = delete;
-
 
     PluginContainer(PluginContainer &&src) noexcept;
 
     PluginContainer &operator=(PluginContainer &&src) noexcept;
-
 
     [[nodiscard]] const PluginMetaInformation &getMetaInformation() const;
 
@@ -56,9 +53,11 @@ public:
 
     WUPSStorageError CloseStorage();
 
-    [[nodiscard]] wups_storage_root_item getStorageRootItem() const {
-        return storageRootItem;
-    }
+    [[nodiscard]] wups_storage_root_item getStorageRootItem() const;
+
+    void setInitDone(bool val);
+
+    [[nodiscard]] bool isInitDone() const;
 
 private:
     PluginMetaInformation mMetaInformation;
@@ -66,5 +65,6 @@ private:
     std::shared_ptr<PluginData> mPluginData;
 
     std::optional<PluginConfigData> mPluginConfigData;
-    wups_storage_root_item storageRootItem = nullptr;
+    wups_storage_root_item mStorageRootItem = nullptr;
+    bool mInitDone                          = false;
 };

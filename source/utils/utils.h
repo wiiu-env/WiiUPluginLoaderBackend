@@ -63,7 +63,7 @@ std::shared_ptr<T> make_shared_nothrow(Args &&...args) noexcept(noexcept(T(std::
 }
 
 template<typename Container, typename Predicate>
-typename std::enable_if<std::is_same<Container, std::forward_list<typename Container::value_type>>::value, bool>::type
+std::enable_if_t<std::is_same_v<Container, std::forward_list<typename Container::value_type>>, bool>
 remove_first_if(Container &container, Predicate pred) {
     auto it = container.before_begin();
 
@@ -78,7 +78,7 @@ remove_first_if(Container &container, Predicate pred) {
 }
 
 template<typename Container, typename Predicate>
-typename std::enable_if<std::is_same<Container, std::set<typename Container::value_type>>::value, bool>::type
+std::enable_if_t<std::is_same_v<Container, std::set<typename Container::value_type, typename Container::key_compare>>, bool>
 remove_first_if(Container &container, Predicate pred) {
     auto it = container.begin();
     while (it != container.end()) {
@@ -92,7 +92,7 @@ remove_first_if(Container &container, Predicate pred) {
 }
 
 template<typename Container, typename Predicate>
-typename std::enable_if<std::is_same<Container, std::vector<typename Container::value_type>>::value, bool>::type
+std::enable_if_t<std::is_same_v<Container, std::vector<typename Container::value_type>>, bool>
 remove_first_if(Container &container, Predicate pred) {
     auto it = container.begin();
     while (it != container.end()) {
@@ -127,6 +127,12 @@ T pop_locked_first_if(std::mutex &mutex, std::vector<T> &container, Predicate pr
     }
 
     return result;
+}
+
+template<typename Container>
+void append_move_all_values(Container &dest, Container &src) {
+    dest.insert(dest.end(), std::make_move_iterator(src.begin()), std::make_move_iterator(src.end()));
+    src.clear();
 }
 
 std::string getPluginPath();

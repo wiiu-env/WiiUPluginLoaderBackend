@@ -18,6 +18,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <span>
 #include <string>
 #include <vector>
@@ -43,4 +44,10 @@ public:
 private:
     std::vector<uint8_t> mBuffer;
     std::string mSource;
+};
+
+struct PluginDataSharedPtrComparator {
+    bool operator()(const std::shared_ptr<PluginData> &lhs, const std::shared_ptr<PluginData> &rhs) const {
+        return lhs->getHandle() < rhs->getHandle();
+    }
 };

@@ -25,8 +25,8 @@
 #include <set>
 #include <sys/dirent.h>
 
-std::set<std::shared_ptr<PluginData>> PluginDataFactory::loadDir(const std::string_view path) {
-    std::set<std::shared_ptr<PluginData>> result;
+std::set<std::shared_ptr<PluginData>, PluginDataSharedPtrComparator> PluginDataFactory::loadDir(const std::string_view path) {
+    std::set<std::shared_ptr<PluginData>, PluginDataSharedPtrComparator> result;
     dirent *dp;
     DIR *dfd;
 

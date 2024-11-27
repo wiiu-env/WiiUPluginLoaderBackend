@@ -1,13 +1,8 @@
 #pragma once
 
-#include "ConfigDefines.h"
-#include "ConfigDisplayItem.h"
-#include "config/WUPSConfig.h"
-
-#include "utils/input/Input.h"
-#include <gx2/enum.h>
-#include <memory>
-#include <string>
+#include <cstdint>
+#include <string_view>
+#include <wups/config.h>
 
 #define MOVE_ITEM_INPUT_MASK (WUPS_CONFIG_BUTTON_B | WUPS_CONFIG_BUTTON_DOWN | WUPS_CONFIG_BUTTON_UP)
 

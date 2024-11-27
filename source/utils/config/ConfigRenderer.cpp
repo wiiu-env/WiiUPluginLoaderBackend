@@ -1,67 +1,67 @@
 #include "ConfigRenderer.h"
+#include "globals.h"
+#include "utils/DrawUtils.h"
+#include "utils/logger.h"
+#include "utils/utils.h"
 
-void ConfigRenderer::RenderStateMain() const {
-    auto totalElementSize = (int32_t) mConfigs.size();
-    // Calculate the range of items to display
-    int start = std::max(0, mRenderOffset);
-    int end   = std::min(start + MAX_BUTTONS_ON_SCREEN, totalElementSize);
-
-    DrawUtils::beginDraw();
-    DrawUtils::clear(COLOR_BACKGROUND);
-
-    uint32_t yOffset = 8 + 24 + 8 + 4;
-    for (int32_t i = start; i < end; i++) {
-        drawConfigEntry(yOffset, mConfigs[i].getConfigInformation(), i == mCursorPos);
-        yOffset += 42 + 8;
-    }
-
-    DrawUtils::setFontColor(COLOR_TEXT);
-
-    // draw top bar
-    DrawUtils::setFontSize(24);
-    DrawUtils::print(16, 6 + 24, "Wii U Plugin System Config Menu");
-    DrawUtils::setFontSize(18);
-    DrawUtils::print(SCREEN_WIDTH - 16, 8 + 24, VERSION_FULL, true);
-    DrawUtils::drawRectFilled(8, 8 + 24 + 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
-
-    // draw bottom bar
-    DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
-    DrawUtils::setFontSize(18);
-    DrawUtils::print(16, SCREEN_HEIGHT - 10, "\ue07d/\ue07e Navigate ");
-    DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Select", true);
-
-    // draw scroll indicator
-    DrawUtils::setFontSize(24);
-    if (end < totalElementSize) {
-        DrawUtils::print(SCREEN_WIDTH / 2 + 12, SCREEN_HEIGHT - 32, "\ufe3e", true);
-    }
-    if (start > 0) {
-        DrawUtils::print(SCREEN_WIDTH / 2 + 12, 32 + 20, "\ufe3d", true);
-    }
-
-    // draw home button
-    DrawUtils::setFontSize(18);
-    const char *exitHint = "\ue044 Exit";
-    DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHint) / 2, SCREEN_HEIGHT - 10, exitHint, true);
-
-    DrawUtils::endDraw();
+ConfigRenderer::ConfigRenderer(std::vector<ConfigDisplayItem> &&vec) : mConfigs(std::move(vec)) {
 }
 
-void ConfigRenderer::drawConfigEntry(uint32_t yOffset, const GeneralConfigInformation &configInformation, bool isHighlighted) const {
-    DrawUtils::setFontColor(COLOR_TEXT);
+ConfigRenderer::~ConfigRenderer() = default;
 
-    if (isHighlighted) {
-        DrawUtils::drawRect(16, yOffset, SCREEN_WIDTH - 16 * 2, 44, 4, COLOR_BORDER_HIGHLIGHTED);
-    } else {
-        DrawUtils::drawRect(16, yOffset, SCREEN_WIDTH - 16 * 2, 44, 2, COLOR_BORDER);
+ConfigSubState ConfigRenderer::Update(Input &input, const WUPSConfigSimplePadData &simpleInputData, const WUPSConfigComplexPadData &complexInputData) {
+    switch (mState) {
+        case STATE_MAIN:
+            return UpdateStateMain(input);
+        case STATE_SUB: {
+            if (mCategoryRenderer) {
+                if (const auto subResult = mCategoryRenderer->Update(input, simpleInputData, complexInputData); subResult != SUB_STATE_RUNNING) {
+                    mNeedRedraw = true;
+                    mState      = STATE_MAIN;
+                    return SUB_STATE_RUNNING;
+                }
+                return SUB_STATE_RUNNING;
+            } else {
+                DEBUG_FUNCTION_LINE_WARN("State is RENDERER_STATE_CAT but mCategoryRenderer is null. Resetting state.");
+                mState     = STATE_MAIN;
+                mCursorPos = 0;
+            }
+        }
     }
+    return SUB_STATE_ERROR;
+}
 
-    DrawUtils::setFontSize(24);
-    DrawUtils::print(16 * 2, yOffset + 8 + 24, configInformation.name.c_str());
-    uint32_t sz = DrawUtils::getTextWidth(configInformation.name.c_str());
-    DrawUtils::setFontSize(12);
-    DrawUtils::print(16 * 2 + sz + 4, yOffset + 8 + 24, configInformation.author.c_str());
-    DrawUtils::print(SCREEN_WIDTH - 16 * 2, yOffset + 8 + 24, configInformation.version.c_str(), true);
+void ConfigRenderer::Render() const {
+    switch (mState) {
+        case STATE_MAIN:
+            RenderStateMain();
+            break;
+        case STATE_SUB: {
+            if (mCategoryRenderer) {
+                mCategoryRenderer->Render();
+            } else {
+                DEBUG_FUNCTION_LINE_WARN("render failed: state was RENDERER_STATE_CAT but mCategoryRenderer is NULL");
+            }
+            break;
+        }
+    }
+}
+
+bool ConfigRenderer::NeedsRedraw() const {
+    if (mNeedRedraw) {
+        return true;
+    }
+    if (mCategoryRenderer) {
+        return mCategoryRenderer->NeedsRedraw();
+    }
+    return false;
+}
+
+void ConfigRenderer::ResetNeedsRedraw() {
+    mNeedRedraw = false;
+    if (mCategoryRenderer) {
+        mCategoryRenderer->ResetNeedsRedraw();
+    }
 }
 
 ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
@@ -69,9 +69,9 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
         mNeedRedraw = true;
         return SUB_STATE_ERROR;
     }
-    auto prevSelectedItem = mCursorPos;
+    const auto prevSelectedItem = mCursorPos;
 
-    auto totalElementSize = (int32_t) mConfigs.size();
+    const auto totalElementSize = static_cast<int32_t>(mConfigs.size());
     if (input.data.buttons_d & Input::eButtons::BUTTON_DOWN) {
         mCursorPos++;
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_LEFT) {
@@ -126,59 +126,68 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
     return SUB_STATE_RUNNING;
 }
 
-bool ConfigRenderer::NeedsRedraw() const {
-    if (mNeedRedraw) {
-        return true;
-    } else if (mCategoryRenderer) {
-        return mCategoryRenderer->NeedsRedraw();
+void ConfigRenderer::RenderStateMain() const {
+    const auto totalElementSize = static_cast<int32_t>(mConfigs.size());
+    // Calculate the range of items to display
+    const int start = std::max(0, mRenderOffset);
+    const int end   = std::min(start + MAX_BUTTONS_ON_SCREEN, totalElementSize);
+
+    DrawUtils::beginDraw();
+    DrawUtils::clear(COLOR_BACKGROUND);
+
+    uint32_t yOffset = 8 + 24 + 8 + 4;
+    for (int32_t i = start; i < end; i++) {
+        DrawConfigEntry(yOffset, mConfigs[i].getConfigInformation(), i == mCursorPos);
+        yOffset += 42 + 8;
     }
-    return false;
+
+    DrawUtils::setFontColor(COLOR_TEXT);
+
+    // draw top bar
+    DrawUtils::setFontSize(24);
+    DrawUtils::print(16, 6 + 24, "Wii U Plugin System Config Menu");
+    DrawUtils::setFontSize(18);
+    DrawUtils::print(SCREEN_WIDTH - 16, 8 + 24, MODULE_VERSION_FULL, true);
+    DrawUtils::drawRectFilled(8, 8 + 24 + 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
+
+    // draw bottom bar
+    DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
+    DrawUtils::setFontSize(18);
+    DrawUtils::print(16, SCREEN_HEIGHT - 10, "\ue07d/\ue07e Navigate ");
+    DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Select", true);
+
+    // draw scroll indicator
+    DrawUtils::setFontSize(24);
+    if (end < totalElementSize) {
+        DrawUtils::print(SCREEN_WIDTH / 2 + 12, SCREEN_HEIGHT - 32, "\ufe3e", true);
+    }
+    if (start > 0) {
+        DrawUtils::print(SCREEN_WIDTH / 2 + 12, 32 + 20, "\ufe3d", true);
+    }
+
+    // draw home button
+    DrawUtils::setFontSize(18);
+    const auto exitHint = "\ue044 Exit";
+    DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHint) / 2, SCREEN_HEIGHT - 10, exitHint, true);
+
+    DrawUtils::endDraw();
 }
 
-void ConfigRenderer::ResetNeedsRedraw() {
-    mNeedRedraw = false;
-    if (mCategoryRenderer) {
-        mCategoryRenderer->ResetNeedsRedraw();
-    }
-}
+void ConfigRenderer::DrawConfigEntry(const uint32_t yOffset, const GeneralConfigInformation &configInformation, const bool isHighlighted) const {
+    DrawUtils::setFontColor(COLOR_TEXT);
 
-void ConfigRenderer::Render() const {
-    switch (mState) {
-        case STATE_MAIN:
-            RenderStateMain();
-            break;
-        case STATE_SUB: {
-            if (mCategoryRenderer) {
-                mCategoryRenderer->Render();
-            } else {
-                DEBUG_FUNCTION_LINE_WARN("render failed: state was RENDERER_STATE_CAT but mCategoryRenderer is NULL");
-            }
-            break;
-        }
+    if (isHighlighted) {
+        DrawUtils::drawRect(16, yOffset, SCREEN_WIDTH - 16 * 2, 44, 4, COLOR_BORDER_HIGHLIGHTED);
+    } else {
+        DrawUtils::drawRect(16, yOffset, SCREEN_WIDTH - 16 * 2, 44, 2, COLOR_BORDER);
     }
-}
 
-ConfigSubState ConfigRenderer::Update(Input &input, const WUPSConfigSimplePadData &simpleInputData, const WUPSConfigComplexPadData &complexInputData) {
-    switch (mState) {
-        case STATE_MAIN:
-            return UpdateStateMain(input);
-        case STATE_SUB: {
-            if (mCategoryRenderer) {
-                auto subResult = mCategoryRenderer->Update(input, simpleInputData, complexInputData);
-                if (subResult != SUB_STATE_RUNNING) {
-                    mNeedRedraw = true;
-                    mState      = STATE_MAIN;
-                    return SUB_STATE_RUNNING;
-                }
-                return SUB_STATE_RUNNING;
-            } else {
-                DEBUG_FUNCTION_LINE_WARN("State is RENDERER_STATE_CAT but mCategoryRenderer is null. Resetting state.");
-                mState     = STATE_MAIN;
-                mCursorPos = 0;
-            }
-        }
-    }
-    return SUB_STATE_ERROR;
+    DrawUtils::setFontSize(24);
+    DrawUtils::print(16 * 2, yOffset + 8 + 24, configInformation.name.c_str());
+    const uint32_t sz = DrawUtils::getTextWidth(configInformation.name.c_str());
+    DrawUtils::setFontSize(12);
+    DrawUtils::print(16 * 2 + sz + 4, yOffset + 8 + 24, configInformation.author.c_str());
+    DrawUtils::print(SCREEN_WIDTH - 16 * 2, yOffset + 8 + 24, configInformation.version.c_str(), true);
 }
 
 void ConfigRenderer::CallOnCloseCallback(const GeneralConfigInformation &info, const std::vector<std::unique_ptr<WUPSConfigAPIBackend::WUPSConfigCategory>> &categories) {

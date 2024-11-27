@@ -1,5 +1,15 @@
 #include "StorageItem.h"
 
+#include "utils/base64.h"
+#include "utils/logger.h"
+
+StorageItem::StorageItem(const std::string_view key) : mKey(key) {
+}
+
+uint32_t StorageItem::getHandle() const {
+    return reinterpret_cast<uint32_t>(this);
+}
+
 void StorageItem::setValue(const std::string &value) {
     mData                 = value;
     mType                 = StorageItemType::String;
@@ -12,8 +22,8 @@ void StorageItem::setValue(bool value) {
     mBinaryConversionDone = true;
 }
 
-void StorageItem::setValue(int32_t value) {
-    mData                 = (int64_t) value;
+void StorageItem::setValue(const int32_t value) {
+    mData                 = static_cast<int64_t>(value);
     mType                 = StorageItemType::S64;
     mBinaryConversionDone = true;
 }
@@ -30,14 +40,14 @@ void StorageItem::setValue(uint64_t value) {
     mBinaryConversionDone = true;
 }
 
-void StorageItem::setValue(uint32_t value) {
-    mData                 = (uint64_t) value;
+void StorageItem::setValue(const uint32_t value) {
+    mData                 = static_cast<uint64_t>(value);
     mType                 = StorageItemType::U64;
     mBinaryConversionDone = true;
 }
 
-void StorageItem::setValue(float value) {
-    mData                 = (double) value;
+void StorageItem::setValue(const float value) {
+    mData                 = static_cast<double>(value);
     mType                 = StorageItemType::Double;
     mBinaryConversionDone = true;
 }
@@ -54,8 +64,8 @@ void StorageItem::setValue(const std::vector<uint8_t> &data) {
     mBinaryConversionDone = true;
 }
 
-void StorageItem::setValue(const uint8_t *data, size_t size) {
-    setValue(std::vector<uint8_t>(data, data + size));
+void StorageItem::setValue(const uint8_t *data, const size_t size) {
+    setValue(std::vector(data, data + size));
 }
 
 bool StorageItem::getValue(bool &result) const {
@@ -74,10 +84,10 @@ bool StorageItem::getValue(bool &result) const {
 
 bool StorageItem::getValue(int32_t &result) const {
     if (mType == StorageItemType::S64) {
-        result = (int32_t) std::get<int64_t>(mData);
+        result = static_cast<int32_t>(std::get<int64_t>(mData));
         return true;
     } else if (mType == StorageItemType::U64) {
-        result = (int32_t) std::get<uint64_t>(mData);
+        result = static_cast<int32_t>(std::get<uint64_t>(mData));
         return true;
     }
     return false;
@@ -109,7 +119,7 @@ bool StorageItem::getValue(double &result) const {
 
 bool StorageItem::getValue(float &result) const {
     if (mType == StorageItemType::Double) {
-        result = (float) std::get<double>(mData);
+        result = static_cast<float>(std::get<double>(mData));
         return true;
     }
     return false;
@@ -120,7 +130,7 @@ bool StorageItem::getValue(uint64_t &result) const {
         result = std::get<uint64_t>(mData);
         return true;
     } else if (mType == StorageItemType::S64) {
-        result = (uint64_t) std::get<int64_t>(mData);
+        result = static_cast<uint64_t>(std::get<int64_t>(mData));
         return true;
     }
     return false;
@@ -128,10 +138,10 @@ bool StorageItem::getValue(uint64_t &result) const {
 
 bool StorageItem::getValue(uint32_t &result) const {
     if (mType == StorageItemType::U64) {
-        result = (uint32_t) std::get<uint64_t>(mData);
+        result = static_cast<uint32_t>(std::get<uint64_t>(mData));
         return true;
     } else if (mType == StorageItemType::S64) {
-        result = (uint32_t) std::get<int64_t>(mData);
+        result = static_cast<uint32_t>(std::get<int64_t>(mData));
         return true;
     }
     return false;
@@ -142,7 +152,7 @@ bool StorageItem::getValue(int64_t &result) const {
         result = std::get<int64_t>(mData);
         return true;
     } else if (mType == StorageItemType::U64) {
-        result = (int64_t) std::get<uint64_t>(mData);
+        result = static_cast<int64_t>(std::get<uint64_t>(mData));
         return true;
     }
     return false;
@@ -169,11 +179,9 @@ bool StorageItem::attemptBinaryConversion() {
         return true;
     }
     if (mType == StorageItemType::String) {
-        auto &tmp     = std::get<std::string>(mData);
-        auto dec_size = b64_decoded_size(tmp.c_str());
-        if (dec_size > 0) {
-            auto *dec = (uint8_t *) malloc(dec_size);
-            if (dec) {
+        const auto &tmp = std::get<std::string>(mData);
+        if (const auto dec_size = b64_decoded_size(tmp.c_str()); dec_size > 0) {
+            if (auto *dec = static_cast<uint8_t *>(malloc(dec_size))) {
                 if (b64_decode(tmp.c_str(), dec, dec_size)) {
                     setValue(dec, dec_size);
                 }

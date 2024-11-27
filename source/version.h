@@ -1,2 +1,2 @@
 #pragma once
-#define VERSION_EXTRA ""
+#define MODULE_VERSION_EXTRA ""

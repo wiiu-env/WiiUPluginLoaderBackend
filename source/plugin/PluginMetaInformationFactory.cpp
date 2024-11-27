@@ -16,11 +16,15 @@
  ****************************************************************************/
 
 #include "PluginMetaInformationFactory.h"
-#include "elfio/elfio.hpp"
+
+#include "PluginData.h"
+#include "PluginMetaInformation.h"
 #include "fs/FSUtils.h"
 #include "utils/logger.h"
 #include "utils/wiiu_zlib.hpp"
-#include <memory>
+
+#include <elfio/elfio.hpp>
+#include <optional>
 
 std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(const PluginData &pluginData, PluginParseErrors &error) {
     return loadPlugin(pluginData.getBuffer(), error);

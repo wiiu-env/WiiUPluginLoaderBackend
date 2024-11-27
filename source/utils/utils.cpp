@@ -3,6 +3,7 @@
 #include "logger.h"
 #include <algorithm>
 #include <coreinit/ios.h>
+#include <malloc.h>
 #include <string>
 
 static std::string sPluginPath;
@@ -10,11 +11,9 @@ std::string getPluginPath() {
     if (!sPluginPath.empty()) {
         return sPluginPath;
     }
-    char environmentPath[0x100];
-    memset(environmentPath, 0, sizeof(environmentPath));
+    char environmentPath[0x100] = {};
 
-    auto handle = IOS_Open("/dev/mcp", IOS_OPEN_READ);
-    if (handle >= 0) {
+    if (const auto handle = IOS_Open("/dev/mcp", IOS_OPEN_READ); handle >= 0) {
         int in = 0xF9; // IPC_CUSTOM_COPY_ENVIRONMENT_PATH
         if (IOS_Ioctl(handle, 100, &in, sizeof(in), environmentPath, sizeof(environmentPath)) != IOS_ERROR_OK) {
             return "fs:/vol/external01/wiiu/plugins";
@@ -27,7 +26,7 @@ std::string getPluginPath() {
 }
 
 // https://gist.github.com/ccbrown/9722406
-void dumpHex(const void *data, size_t size) {
+void dumpHex(const void *data, const size_t size) {
     char ascii[17];
     size_t i, j;
     ascii[16] = '\0';
@@ -71,7 +70,7 @@ OSDynLoad_Error CustomDynLoadAlloc(int32_t size, int32_t align, void **outAddr) 
         align = -4;
     }
 
-    if (!(*outAddr = memalign(align, size))) {
+    if (*outAddr = memalign(align, size); !*outAddr) {
         return OS_DYNLOAD_OUT_OF_MEMORY;
     }
     // keep track of allocated memory to clean it up if RPLs won't get unloaded properly
@@ -84,8 +83,7 @@ void CustomDynLoadFree(void *addr) {
     free(addr);
 
     // Remove from list
-    auto it = std::find(gAllocatedAddresses.begin(), gAllocatedAddresses.end(), addr);
-    if (it != gAllocatedAddresses.end()) {
+    if (const auto it = std::ranges::find(gAllocatedAddresses, addr); it != gAllocatedAddresses.end()) {
         gAllocatedAddresses.erase(it);
     }
 }

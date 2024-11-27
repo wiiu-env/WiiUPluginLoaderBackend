@@ -19,7 +19,7 @@
 #include "Input.h"
 #include <vpad/input.h>
 
-class VPadInput : public Input {
+class VPadInput final : public Input {
 public:
     //!Constructor
     VPadInput() = default;
@@ -27,7 +27,7 @@ public:
     //!Destructor
     ~VPadInput() override = default;
 
-    bool update(int32_t width, int32_t height) {
+    bool update(const int32_t width, const int32_t height) {
         lastData = data;
 
         data      = {};

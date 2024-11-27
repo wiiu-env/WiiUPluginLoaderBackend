@@ -17,30 +17,20 @@
 
 #pragma once
 
-#include "../utils/logger.h"
 #include <string>
-#include <utility>
 
 class ImportRPLInformation {
 
 public:
-    explicit ImportRPLInformation(std::string_view name) {
-        this->mName = name;
-    }
+    explicit ImportRPLInformation(std::string_view name);
 
-    ~ImportRPLInformation() = default;
+    ~ImportRPLInformation();
 
-    [[nodiscard]] const std::string &getName() const {
-        return mName;
-    }
+    [[nodiscard]] const std::string &getName() const;
 
-    [[nodiscard]] std::string getRPLName() const {
-        return mName.substr(strlen(".dimport_"));
-    }
+    [[nodiscard]] std::string getRPLName() const;
 
-    [[nodiscard]] bool isData() const {
-        return mName.starts_with(".dimport_");
-    }
+    [[nodiscard]] bool isData() const;
 
 private:
     std::string mName;

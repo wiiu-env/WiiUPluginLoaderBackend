@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cstdint>
-#include <cstring>
 
 class Input {
 public:
@@ -11,7 +10,7 @@ public:
     //!Destructor
     virtual ~Input() = default;
 
-    enum eButtons {
+    enum eButtons : uint32_t {
         BUTTON_NONE    = 0x0000,
         VPAD_TOUCH     = 0x80000000,
         BUTTON_STICK_L = 0x80000,

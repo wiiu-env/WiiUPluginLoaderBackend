@@ -17,34 +17,24 @@
 
 #pragma once
 
+#include <cstdint>
 #include <string>
 
 class SectionInfo {
 
 public:
-    SectionInfo(std::string name, uint32_t address, uint32_t sectionSize) : name(std::move(name)),
-                                                                            address(address),
-                                                                            sectionSize(sectionSize) {
-    }
+    SectionInfo(std::string name, uint32_t address, uint32_t sectionSize);
 
-    [[nodiscard]] const std::string &getName() const {
-        return name;
-    }
+    [[nodiscard]] const std::string &getName() const;
 
-    [[nodiscard]] uint32_t getAddress() const {
-        return address;
-    }
+    [[nodiscard]] uint32_t getAddress() const;
 
-    [[nodiscard]] uint32_t getSize() const {
-        return sectionSize;
-    }
+    [[nodiscard]] uint32_t getSize() const;
 
-    [[nodiscard]] uint32_t isInSection(uint32_t addr) const {
-        return addr >= address && addr < address + sectionSize;
-    }
+    [[nodiscard]] uint32_t isInSection(uint32_t addr) const;
 
 private:
-    std::string name;
-    uint32_t address{};
-    uint32_t sectionSize{};
+    std::string mName;
+    uint32_t mAddress     = {};
+    uint32_t mSectionSize = {};
 };

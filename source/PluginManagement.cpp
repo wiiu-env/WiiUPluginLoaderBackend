@@ -11,6 +11,7 @@
 #include <coreinit/dynload.h>
 #include <memory.h>
 #include <memory>
+#include <ranges>
 
 std::vector<PluginContainer>
 PluginManagement::loadPlugins(const std::set<std::shared_ptr<PluginData>> &pluginDataList, std::vector<relocation_trampoline_entry_t> &trampolineData) {
@@ -50,7 +51,7 @@ PluginManagement::loadPlugins(const std::set<std::shared_ptr<PluginData>> &plugi
 
 bool PluginManagement::doRelocation(const std::vector<RelocationData> &relocData,
                                     std::vector<relocation_trampoline_entry_t> &trampData,
-                                    uint32_t trampolineID,
+                                    const uint32_t trampolineID,
                                     std::map<std::string, OSDynLoad_Module> &usedRPls) {
     for (auto const &cur : relocData) {
         uint32_t functionAddress = 0;

@@ -20,15 +20,15 @@
 #include <padscore/kpad.h>
 #include <padscore/wpad.h>
 
-class WPADInput : public Input {
+class WPADInput final : public Input {
 public:
-    WPADInput(KPADChan channel) {
+    WPADInput(const KPADChan channel) {
         this->channel = channel;
     }
 
-    ~WPADInput() override {}
+    ~WPADInput() override = default;
 
-    uint32_t remapWiiMoteButtons(uint32_t buttons) {
+    uint32_t remapWiiMoteButtons(const uint32_t buttons) {
         uint32_t conv_buttons = 0;
 
         if (buttons & WPAD_BUTTON_LEFT)
@@ -73,7 +73,7 @@ public:
         return conv_buttons;
     }
 
-    uint32_t remapClassicButtons(uint32_t buttons) {
+    uint32_t remapClassicButtons(const uint32_t buttons) {
         uint32_t conv_buttons = 0;
 
         if (buttons & WPAD_CLASSIC_BUTTON_LEFT)
@@ -124,7 +124,7 @@ public:
         return conv_buttons;
     }
 
-    bool update(int32_t width, int32_t height) {
+    bool update(const int32_t width, const int32_t height) {
         lastData = data;
 
         kpadError = KPAD_ERROR_UNINITIALIZED;

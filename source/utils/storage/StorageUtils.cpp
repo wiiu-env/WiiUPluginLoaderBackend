@@ -1,15 +1,18 @@
-#include "StorageUtils.h"
-#include "NotificationsUtils.h"
+#include "StorageItem.h"
 #include "StorageItemRoot.h"
+#include "StorageSubItem.h"
 #include "fs/CFile.hpp"
 #include "fs/FSUtils.h"
-#include "utils/StringTools.h"
 #include "utils/base64.h"
 #include "utils/json.hpp"
 #include "utils/logger.h"
 #include "utils/utils.h"
-#include <memory>
-#include <string>
+
+#include <forward_list>
+#include <malloc.h>
+#include <mutex>
+#include <wups/storage.h>
+
 namespace StorageUtils {
     std::forward_list<StorageItemRoot> gStorage;
     std::mutex gStorageMutex;
@@ -76,8 +79,7 @@ namespace StorageUtils {
             if (json.empty() || !json.is_object()) {
                 return nullptr;
             }
-            auto root = make_unique_nothrow<StorageItemRoot>(key);
-            if (root) {
+            if (auto root = make_unique_nothrow<StorageItemRoot>(key)) {
                 if (deserializeFromJson(json, *root)) {
                     return root;
                 }
@@ -132,8 +134,7 @@ namespace StorageUtils {
                     case StorageItemType::Binary: {
                         std::vector<uint8_t> tmp;
                         if (value.getValue(tmp)) {
-                            auto *enc = b64_encode(tmp.data(), tmp.size());
-                            if (enc) {
+                            if (auto *enc = b64_encode(tmp.data(), tmp.size())) {
                                 json[key] = enc;
                                 free(enc);
                             } else {
@@ -153,7 +154,7 @@ namespace StorageUtils {
 
         static StorageItemRoot *getRootItem(wups_storage_root_item root) {
             for (auto &cur : gStorage) {
-                if (cur.getHandle() == (uint32_t) root) {
+                if (cur.getHandle() == reinterpret_cast<uint32_t>(root)) {
                     return &cur;
                 }
             }
@@ -162,8 +163,7 @@ namespace StorageUtils {
         }
 
         static StorageSubItem *getSubItem(wups_storage_root_item root, wups_storage_item parent) {
-            auto rootItem = getRootItem(root);
-            if (rootItem) {
+            if (auto rootItem = getRootItem(root)) {
                 if (parent == nullptr) {
                     return rootItem;
                 }
@@ -173,18 +173,17 @@ namespace StorageUtils {
         }
 
         WUPSStorageError LoadFromFile(std::string_view plugin_id, nlohmann::json &outJson) {
-            std::string filePath = getPluginPath() + "/config/" + plugin_id.data() + ".json";
+            const std::string filePath = getPluginPath() + "/config/" + plugin_id.data() + ".json";
             CFile file(filePath, CFile::ReadOnly);
             if (!file.isOpen() || file.size() == 0) {
                 return WUPS_STORAGE_ERROR_NOT_FOUND;
             }
-            auto *json_data = (uint8_t *) memalign(0x40, ROUNDUP(file.size() + 1, 0x40));
+            auto *json_data = static_cast<uint8_t *>(memalign(0x40, ROUNDUP(file.size() + 1, 0x40)));
             if (!json_data) {
                 return WUPS_STORAGE_ERROR_MALLOC_FAILED;
             }
             WUPSStorageError result = WUPS_STORAGE_ERROR_SUCCESS;
-            uint64_t readRes        = file.read(json_data, file.size());
-            if (readRes == file.size()) {
+            if (const uint64_t readRes = file.read(json_data, file.size()); readRes == file.size()) {
                 json_data[file.size()] = '\0';
                 outJson                = nlohmann::json::parse(json_data, nullptr, false);
             } else {
@@ -197,9 +196,8 @@ namespace StorageUtils {
 
         WUPSStorageError LoadFromFile(std::string_view plugin_id, StorageItemRoot &rootItem) {
             nlohmann::json j;
-            WUPSStorageError err;
 
-            if ((err = LoadFromFile(plugin_id, j)) != WUPS_STORAGE_ERROR_SUCCESS) {
+            if (WUPSStorageError err; (err = LoadFromFile(plugin_id, j)) != WUPS_STORAGE_ERROR_SUCCESS) {
                 return err;
             }
 
@@ -219,7 +217,7 @@ namespace StorageUtils {
         static WUPSStorageError WriteStorageToSD(wups_storage_root_item root, bool forceSave) {
             const StorageItemRoot *rootItem = nullptr;
             for (const auto &cur : gStorage) {
-                if (cur.getHandle() == (uint32_t) root) {
+                if (cur.getHandle() == reinterpret_cast<uint32_t>(root)) {
                     rootItem = &cur;
                     break;
                 }
@@ -228,8 +226,8 @@ namespace StorageUtils {
                 return WUPS_STORAGE_ERROR_INTERNAL_NOT_INITIALIZED;
             }
 
-            std::string folderPath = getPluginPath() + "/config/";
-            std::string filePath   = folderPath + rootItem->getPluginId() + ".json";
+            const std::string folderPath = getPluginPath() + "/config/";
+            const std::string filePath   = folderPath + rootItem->getPluginId() + ".json";
 
             nlohmann::json j;
             j["storageitems"] = serializeToJson(*rootItem);
@@ -260,19 +258,19 @@ namespace StorageUtils {
                 return WUPS_STORAGE_ERROR_IO_ERROR;
             }
 
-            std::string jsonString = j.dump(4, ' ', false, nlohmann::json::error_handler_t::ignore);
-            auto writeResult       = file.write((const uint8_t *) jsonString.c_str(), jsonString.size());
+            const std::string jsonString = j.dump(4, ' ', false, nlohmann::json::error_handler_t::ignore);
+            const auto writeResult       = file.write(reinterpret_cast<const uint8_t *>(jsonString.c_str()), jsonString.size());
 
             file.close();
 
-            if (writeResult != (int32_t) jsonString.size()) {
+            if (writeResult != static_cast<int32_t>(jsonString.size())) {
                 return WUPS_STORAGE_ERROR_IO_ERROR;
             }
             return WUPS_STORAGE_ERROR_SUCCESS;
         }
 
         static StorageItem *createOrGetItem(wups_storage_root_item root, wups_storage_item parent, const char *key, WUPSStorageError &error) {
-            auto subItem = getSubItem(root, parent);
+            const auto subItem = getSubItem(root, parent);
             if (!subItem) {
                 error = WUPS_STORAGE_ERROR_NOT_FOUND;
                 return {};
@@ -280,8 +278,9 @@ namespace StorageUtils {
             auto res                                         = subItem->getItem(key);
             StorageSubItem::StorageSubItemError subItemError = StorageSubItem::STORAGE_SUB_ITEM_ERROR_NONE;
             if (!res) {
-                if (!(res = subItem->createItem(key, subItemError))) {
-                    error = StorageUtils::Helper::ConvertToWUPSError(subItemError);
+                res = subItem->createItem(key, subItemError);
+                if (!res) {
+                    error = ConvertToWUPSError(subItemError);
                 }
             }
             if (res) {
@@ -291,10 +290,9 @@ namespace StorageUtils {
         }
 
         template<typename T>
-        WUPSStorageError StoreItemGeneric(wups_storage_root_item root, wups_storage_item parent, const char *key, T value) {
+        WUPSStorageError StoreItemGeneric(wups_storage_root_item root, wups_storage_item parent, const char *key, const T &value) {
             WUPSStorageError err;
-            auto item = createOrGetItem(root, parent, key, err);
-            if (item && err == WUPS_STORAGE_ERROR_SUCCESS) {
+            if (auto item = createOrGetItem(root, parent, key, err); item && err == WUPS_STORAGE_ERROR_SUCCESS) {
                 item->setValue(value);
                 return WUPS_STORAGE_ERROR_SUCCESS;
             }
@@ -303,12 +301,11 @@ namespace StorageUtils {
 
         template<typename T>
         WUPSStorageError GetItemEx(wups_storage_root_item root, wups_storage_item parent, const char *key, T &result) {
-            auto subItem = getSubItem(root, parent);
+            const auto subItem = getSubItem(root, parent);
             if (!subItem) {
                 return WUPS_STORAGE_ERROR_NOT_FOUND;
             }
-            auto item = subItem->getItem(key);
-            if (item) {
+            if (auto item = subItem->getItem(key)) {
                 if (item->getValue(result)) {
                     return WUPS_STORAGE_ERROR_SUCCESS;
                 }
@@ -338,13 +335,11 @@ namespace StorageUtils {
         * Binary items are serialized as base64 encoded string. The first time they are read they'll get converted into binary data.
         */
         WUPSStorageError GetAndFixBinaryItem(wups_storage_root_item root, wups_storage_item parent, const char *key, std::vector<uint8_t> &result) {
-            auto subItem = getSubItem(root, parent);
+            const auto subItem = getSubItem(root, parent);
             if (!subItem) {
                 return WUPS_STORAGE_ERROR_NOT_FOUND;
             }
-            WUPSStorageError err = WUPS_STORAGE_ERROR_UNEXPECTED_DATA_TYPE;
-            auto item            = subItem->getItem(key);
-            if (item) {
+            if (const auto item = subItem->getItem(key)) {
                 // Trigger potential string->binary conversion
                 if (!item->attemptBinaryConversion()) {
                     return WUPS_STORAGE_ERROR_MALLOC_FAILED;
@@ -352,22 +347,22 @@ namespace StorageUtils {
                 if (item->getValue(result)) {
                     return WUPS_STORAGE_ERROR_SUCCESS;
                 }
-                return err;
+                return WUPS_STORAGE_ERROR_UNEXPECTED_DATA_TYPE;
             }
             return WUPS_STORAGE_ERROR_NOT_FOUND;
         }
 
         static WUPSStorageError GetStringItem(wups_storage_root_item root, wups_storage_item parent, const char *key, void *data, uint32_t maxSize, uint32_t *outSize) {
             std::string tmp;
-            auto res = GetItemEx<std::string>(root, parent, key, tmp);
+            const auto res = GetItemEx<std::string>(root, parent, key, tmp);
             if (res == WUPS_STORAGE_ERROR_SUCCESS) {
                 if (maxSize <= tmp.size()) { // maxSize needs to be bigger because of the null-terminator
                     return WUPS_STORAGE_ERROR_BUFFER_TOO_SMALL;
                 }
-                strncpy((char *) data, tmp.c_str(), tmp.size());
-                ((char *) data)[maxSize - 1] = '\0';
+                strncpy(static_cast<char *>(data), tmp.c_str(), tmp.size());
+                static_cast<char *>(data)[maxSize - 1] = '\0';
                 if (outSize) {
-                    *outSize = strlen((char *) data) + 1;
+                    *outSize = strlen(static_cast<char *>(data)) + 1;
                 }
                 return WUPS_STORAGE_ERROR_SUCCESS;
             }
@@ -376,7 +371,7 @@ namespace StorageUtils {
 
         static WUPSStorageError GetBinaryItem(wups_storage_root_item root, wups_storage_item parent, const char *key, const void *data, uint32_t maxSize, uint32_t *outSize) {
             std::vector<uint8_t> tmp;
-            auto res = GetAndFixBinaryItem(root, parent, key, tmp);
+            const auto res = GetAndFixBinaryItem(root, parent, key, tmp);
             if (res == WUPS_STORAGE_ERROR_SUCCESS) {
                 if (tmp.empty()) { // we need this to support getting empty std::vector
                     return WUPS_STORAGE_ERROR_SUCCESS;
@@ -404,8 +399,7 @@ namespace StorageUtils {
                 gStorage.emplace_front(plugin_id);
                 auto &root = gStorage.front();
 
-                WUPSStorageError err = Helper::LoadFromFile(plugin_id, root);
-                if (err == WUPS_STORAGE_ERROR_NOT_FOUND) {
+                if (const WUPSStorageError err = Helper::LoadFromFile(plugin_id, root); err == WUPS_STORAGE_ERROR_NOT_FOUND) {
                     // Create new clean StorageItemRoot if no existing storage was found
                     root = StorageItemRoot(plugin_id);
                 } else if (err != WUPS_STORAGE_ERROR_SUCCESS) {
@@ -414,7 +408,7 @@ namespace StorageUtils {
                     return err;
                 }
 
-                outItem = (wups_storage_root_item) root.getHandle();
+                outItem = reinterpret_cast<wups_storage_root_item>(root.getHandle());
 
                 return WUPS_STORAGE_ERROR_SUCCESS;
             }
@@ -422,10 +416,10 @@ namespace StorageUtils {
             WUPSStorageError CloseStorage(wups_storage_root_item root) {
                 std::lock_guard lock(gStorageMutex);
 
-                auto res = StorageUtils::Helper::WriteStorageToSD(root, false);
+                const auto res = Helper::WriteStorageToSD(root, false);
                 // TODO: handle write error?
 
-                if (!remove_first_if(gStorage, [&root](auto &cur) { return cur.getHandle() == (uint32_t) root; })) {
+                if (!remove_first_if(gStorage, [&root](auto &cur) { return cur.getHandle() == reinterpret_cast<uint32_t>(root); })) {
                     DEBUG_FUNCTION_LINE_WARN("Failed to close storage: Not opened (\"%08X\")", root);
                     return WUPS_STORAGE_ERROR_NOT_FOUND;
                 }
@@ -433,7 +427,7 @@ namespace StorageUtils {
             }
         } // namespace Internal
 
-        WUPSStorageError SaveStorage(wups_storage_root_item root, bool force) {
+        WUPSStorageError SaveStorage(wups_storage_root_item root, const bool force) {
             std::lock_guard lock(gStorageMutex);
             return StorageUtils::Helper::WriteStorageToSD(root, force);
         }
@@ -441,7 +435,7 @@ namespace StorageUtils {
         WUPSStorageError ForceReloadStorage(wups_storage_root_item root) {
             std::lock_guard lock(gStorageMutex);
 
-            auto rootItem = Helper::getRootItem(root);
+            const auto rootItem = Helper::getRootItem(root);
             if (!rootItem) {
                 return WUPS_STORAGE_ERROR_INTERNAL_NOT_INITIALIZED;
             }
@@ -456,7 +450,7 @@ namespace StorageUtils {
         WUPSStorageError WipeStorage(wups_storage_root_item root) {
             std::lock_guard lock(gStorageMutex);
 
-            auto rootItem = Helper::getRootItem(root);
+            const auto rootItem = Helper::getRootItem(root);
             if (!rootItem) {
                 return WUPS_STORAGE_ERROR_NOT_FOUND;
             }
@@ -471,14 +465,13 @@ namespace StorageUtils {
                 return WUPS_STORAGE_ERROR_INVALID_ARGS;
             }
             std::lock_guard lock(gStorageMutex);
-            auto subItem = StorageUtils::Helper::getSubItem(root, parent);
-            if (subItem) {
+            if (const auto subItem = StorageUtils::Helper::getSubItem(root, parent)) {
                 StorageSubItem::StorageSubItemError error = StorageSubItem::STORAGE_SUB_ITEM_ERROR_NONE;
-                auto res                                  = subItem->createSubItem(key, error);
+                const auto res                            = subItem->createSubItem(key, error);
                 if (!res) {
                     return StorageUtils::Helper::ConvertToWUPSError(error);
                 }
-                *outItem = (wups_storage_item) res->getHandle();
+                *outItem = reinterpret_cast<wups_storage_item>(res->getHandle());
                 return WUPS_STORAGE_ERROR_SUCCESS;
             }
             return WUPS_STORAGE_ERROR_NOT_FOUND;
@@ -489,13 +482,12 @@ namespace StorageUtils {
                 return WUPS_STORAGE_ERROR_INVALID_ARGS;
             }
             std::lock_guard lock(gStorageMutex);
-            auto subItem = StorageUtils::Helper::getSubItem(root, parent);
-            if (subItem) {
-                auto res = subItem->getSubItem(key);
+            if (const auto subItem = StorageUtils::Helper::getSubItem(root, parent)) {
+                const auto res = subItem->getSubItem(key);
                 if (!res) {
                     return WUPS_STORAGE_ERROR_NOT_FOUND;
                 }
-                *outItem = (wups_storage_item) res->getHandle();
+                *outItem = reinterpret_cast<wups_storage_item>(res->getHandle());
                 return WUPS_STORAGE_ERROR_SUCCESS;
             }
             return WUPS_STORAGE_ERROR_NOT_FOUND;
@@ -503,10 +495,8 @@ namespace StorageUtils {
 
         WUPSStorageError DeleteItem(wups_storage_root_item root, wups_storage_item parent, const char *key) {
             std::lock_guard lock(gStorageMutex);
-            auto subItem = StorageUtils::Helper::getSubItem(root, parent);
-            if (subItem) {
-                auto res = subItem->deleteItem(key);
-                if (!res) {
+            if (const auto subItem = StorageUtils::Helper::getSubItem(root, parent)) {
+                if (const auto res = subItem->deleteItem(key); !res) {
                     return WUPS_STORAGE_ERROR_NOT_FOUND;
                 }
                 return WUPS_STORAGE_ERROR_SUCCESS;
@@ -514,7 +504,7 @@ namespace StorageUtils {
             return WUPS_STORAGE_ERROR_NOT_FOUND;
         }
 
-        WUPSStorageError GetItemSize(wups_storage_root_item root, wups_storage_item parent, const char *key, WUPSStorageItemType itemType, uint32_t *outSize) {
+        WUPSStorageError GetItemSize(wups_storage_root_item root, wups_storage_item parent, const char *key, const WUPSStorageItemType itemType, uint32_t *outSize) {
             if (!outSize) {
                 return WUPS_STORAGE_ERROR_INVALID_ARGS;
             }
@@ -522,12 +512,11 @@ namespace StorageUtils {
                 return WUPS_STORAGE_ERROR_UNEXPECTED_DATA_TYPE;
             }
             std::lock_guard lock(gStorageMutex);
-            auto subItem = StorageUtils::Helper::getSubItem(root, parent);
+            const auto subItem = StorageUtils::Helper::getSubItem(root, parent);
             if (!subItem) {
                 return WUPS_STORAGE_ERROR_NOT_FOUND;
             }
-            auto item = subItem->getItem(key);
-            if (item) {
+            if (const auto item = subItem->getItem(key)) {
                 if (itemType == WUPS_STORAGE_ITEM_BINARY) {
                     // Trigger potential string -> binary conversion.
                     if (!item->attemptBinaryConversion()) {
@@ -551,42 +540,42 @@ namespace StorageUtils {
             return WUPS_STORAGE_ERROR_NOT_FOUND;
         }
 
-        WUPSStorageError StoreItem(wups_storage_root_item root, wups_storage_item parent, const char *key, WUPSStorageItemType itemType, void *data, uint32_t length) {
+        WUPSStorageError StoreItem(wups_storage_root_item root, wups_storage_item parent, const char *key, WUPSStorageItemType itemType, void *data, const uint32_t length) {
             std::lock_guard lock(gStorageMutex);
-            switch ((WUPSStorageItemTypes) itemType) {
+            switch (static_cast<WUPSStorageItemTypes>(itemType)) {
                 case WUPS_STORAGE_ITEM_S32: {
                     if (data == nullptr || length != sizeof(int32_t)) {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
                     }
                     DEBUG_FUNCTION_LINE_VERBOSE("Store %s as S32: %d", key, *(int32_t *) data);
-                    return StorageUtils::Helper::StoreItemGeneric<int32_t>(root, parent, key, *(int32_t *) data);
+                    return StorageUtils::Helper::StoreItemGeneric<int32_t>(root, parent, key, *static_cast<int32_t *>(data));
                 }
                 case WUPS_STORAGE_ITEM_S64: {
                     if (data == nullptr || length != sizeof(int64_t)) {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
                     }
                     DEBUG_FUNCTION_LINE_VERBOSE("Store %s as S64: %lld", key, *(int64_t *) data);
-                    return StorageUtils::Helper::StoreItemGeneric<int64_t>(root, parent, key, *(int64_t *) data);
+                    return StorageUtils::Helper::StoreItemGeneric<int64_t>(root, parent, key, *static_cast<int64_t *>(data));
                 }
                 case WUPS_STORAGE_ITEM_U32: {
                     if (data == nullptr || length != sizeof(uint32_t)) {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
                     }
                     DEBUG_FUNCTION_LINE_VERBOSE("Store %s as u32: %u", key, *(uint32_t *) data);
-                    return StorageUtils::Helper::StoreItemGeneric<uint32_t>(root, parent, key, *(uint32_t *) data);
+                    return StorageUtils::Helper::StoreItemGeneric<uint32_t>(root, parent, key, *static_cast<uint32_t *>(data));
                 }
                 case WUPS_STORAGE_ITEM_U64: {
                     if (data == nullptr || length != sizeof(uint64_t)) {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
                     }
                     DEBUG_FUNCTION_LINE_VERBOSE("Store %s as u64: %llu", key, *(uint64_t *) data);
-                    return StorageUtils::Helper::StoreItemGeneric<uint64_t>(root, parent, key, *(uint64_t *) data);
+                    return StorageUtils::Helper::StoreItemGeneric<uint64_t>(root, parent, key, *static_cast<uint64_t *>(data));
                 }
                 case WUPS_STORAGE_ITEM_STRING: {
                     if (data == nullptr) {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
                     }
-                    std::string tmp = length > 0 ? std::string((const char *) data, length) : std::string();
+                    const std::string tmp = length > 0 ? std::string(static_cast<const char *>(data), length) : std::string();
 
                     DEBUG_FUNCTION_LINE_VERBOSE("Store %s as string: %s", key, tmp.c_str());
                     return StorageUtils::Helper::StoreItemGeneric<std::string>(root, parent, key, tmp);
@@ -595,7 +584,7 @@ namespace StorageUtils {
                     if (data == nullptr && length > 0) {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
                     }
-                    std::vector<uint8_t> tmp = (data != nullptr && length > 0) ? std::vector<uint8_t>((uint8_t *) data, ((uint8_t *) data) + length) : std::vector<uint8_t>();
+                    const std::vector<uint8_t> tmp = (data != nullptr && length > 0) ? std::vector(static_cast<uint8_t *>(data), static_cast<uint8_t *>(data) + length) : std::vector<uint8_t>();
 
                     DEBUG_FUNCTION_LINE_VERBOSE("Store %s as binary: size %d", key, tmp.size());
                     return StorageUtils::Helper::StoreItemGeneric<std::vector<uint8_t>>(root, parent, key, tmp);
@@ -605,33 +594,39 @@ namespace StorageUtils {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
                     }
                     DEBUG_FUNCTION_LINE_VERBOSE("Store %s as bool: %d", key, *(bool *) data);
-                    return StorageUtils::Helper::StoreItemGeneric<bool>(root, parent, key, *(bool *) data);
+                    return StorageUtils::Helper::StoreItemGeneric<bool>(root, parent, key, *static_cast<bool *>(data));
                 }
                 case WUPS_STORAGE_ITEM_FLOAT: {
                     if (data == nullptr || length != sizeof(float)) {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
                     }
                     DEBUG_FUNCTION_LINE_VERBOSE("Store %s as float: %f", key, *(float *) data);
-                    return StorageUtils::Helper::StoreItemGeneric<float>(root, parent, key, *(float *) data);
+                    return StorageUtils::Helper::StoreItemGeneric<float>(root, parent, key, *static_cast<float *>(data));
                 }
                 case WUPS_STORAGE_ITEM_DOUBLE: {
                     if (data == nullptr || length != sizeof(double)) {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
                     }
                     DEBUG_FUNCTION_LINE_VERBOSE("Store %s as double: %f", key, *(double *) data);
-                    return StorageUtils::Helper::StoreItemGeneric<double>(root, parent, key, *(double *) data);
+                    return StorageUtils::Helper::StoreItemGeneric<double>(root, parent, key, *static_cast<double *>(data));
                 }
             }
             DEBUG_FUNCTION_LINE_ERR("Store failed!");
             return WUPS_STORAGE_ERROR_UNEXPECTED_DATA_TYPE;
         }
 
-        WUPSStorageError GetItem(wups_storage_root_item root, wups_storage_item parent, const char *key, WUPSStorageItemType itemType, void *data, uint32_t maxSize, uint32_t *outSize) {
+        WUPSStorageError GetItem(wups_storage_root_item root,
+                                 wups_storage_item parent,
+                                 const char *key,
+                                 WUPSStorageItemType itemType,
+                                 void *data,
+                                 const uint32_t maxSize,
+                                 uint32_t *outSize) {
             std::lock_guard lock(gStorageMutex);
             if (outSize) {
                 *outSize = 0;
             }
-            switch ((WUPSStorageItemTypes) itemType) {
+            switch (static_cast<WUPSStorageItemTypes>(itemType)) {
                 case WUPS_STORAGE_ITEM_STRING: {
                     if (!data || maxSize == 0) {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
@@ -645,43 +640,43 @@ namespace StorageUtils {
                     if (!data || maxSize != sizeof(bool)) {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
                     }
-                    return StorageUtils::Helper::GetItemGeneric<bool>(root, parent, key, (bool *) data, outSize);
+                    return StorageUtils::Helper::GetItemGeneric<bool>(root, parent, key, static_cast<bool *>(data), outSize);
                 }
                 case WUPS_STORAGE_ITEM_S32: {
                     if (!data || maxSize != sizeof(int32_t)) {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
                     }
-                    return StorageUtils::Helper::GetItemGeneric<int32_t>(root, parent, key, (int32_t *) data, outSize);
+                    return StorageUtils::Helper::GetItemGeneric<int32_t>(root, parent, key, static_cast<int32_t *>(data), outSize);
                 }
                 case WUPS_STORAGE_ITEM_S64: {
                     if (!data || maxSize != sizeof(int64_t)) {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
                     }
-                    return StorageUtils::Helper::GetItemGeneric<int64_t>(root, parent, key, (int64_t *) data, outSize);
+                    return StorageUtils::Helper::GetItemGeneric<int64_t>(root, parent, key, static_cast<int64_t *>(data), outSize);
                 }
                 case WUPS_STORAGE_ITEM_U32: {
                     if (!data || maxSize != sizeof(uint32_t)) {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
                     }
-                    return StorageUtils::Helper::GetItemGeneric<uint32_t>(root, parent, key, (uint32_t *) data, outSize);
+                    return StorageUtils::Helper::GetItemGeneric<uint32_t>(root, parent, key, static_cast<uint32_t *>(data), outSize);
                 }
                 case WUPS_STORAGE_ITEM_U64: {
                     if (!data || maxSize != sizeof(uint64_t)) {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
                     }
-                    return StorageUtils::Helper::GetItemGeneric<uint64_t>(root, parent, key, (uint64_t *) data, outSize);
+                    return StorageUtils::Helper::GetItemGeneric<uint64_t>(root, parent, key, static_cast<uint64_t *>(data), outSize);
                 }
                 case WUPS_STORAGE_ITEM_FLOAT: {
                     if (!data || maxSize != sizeof(float)) {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
                     }
-                    return StorageUtils::Helper::GetItemGeneric<float>(root, parent, key, (float *) data, outSize);
+                    return StorageUtils::Helper::GetItemGeneric<float>(root, parent, key, static_cast<float *>(data), outSize);
                 }
                 case WUPS_STORAGE_ITEM_DOUBLE: {
                     if (!data || maxSize != sizeof(double)) {
                         return WUPS_STORAGE_ERROR_INVALID_ARGS;
                     }
-                    return StorageUtils::Helper::GetItemGeneric<double>(root, parent, key, (double *) data, outSize);
+                    return StorageUtils::Helper::GetItemGeneric<double>(root, parent, key, static_cast<double *>(data), outSize);
                 }
             }
             return WUPS_STORAGE_ERROR_NOT_FOUND;

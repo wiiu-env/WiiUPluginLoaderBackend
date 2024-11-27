@@ -28,7 +28,7 @@ PluginInformation &PluginInformation::operator=(PluginInformation &&src) {
     return *this;
 }
 
-void PluginInformation::addHookData(HookData hook_data) {
+void PluginInformation::addHookData(const HookData &hook_data) {
     mHookDataList.push_back(hook_data);
 }
 
@@ -75,7 +75,7 @@ std::optional<SectionInfo> PluginInformation::getSectionInfo(const std::string &
     return std::nullopt;
 }
 
-void PluginInformation::setTrampolineId(uint8_t trampolineId) {
+void PluginInformation::setTrampolineId(const uint8_t trampolineId) {
     this->mTrampolineId = trampolineId;
 }
 
@@ -83,15 +83,15 @@ uint8_t PluginInformation::getTrampolineId() const {
     return mTrampolineId;
 }
 
-const FunctionSymbolData *PluginInformation::getNearestFunctionSymbolData(uint32_t address) const {
+const FunctionSymbolData *PluginInformation::getNearestFunctionSymbolData(const uint32_t address) const {
     const FunctionSymbolData *result = nullptr;
 
     bool foundHit = false;
     for (auto &cur : mSymbolDataList) {
-        if (foundHit && address < (uint32_t) cur.getAddress()) {
+        if (foundHit && address < reinterpret_cast<uint32_t>(cur.getAddress())) {
             break;
         }
-        if (address >= (uint32_t) cur.getAddress()) {
+        if (address >= reinterpret_cast<uint32_t>(cur.getAddress())) {
             result   = &cur;
             foundHit = true;
         }

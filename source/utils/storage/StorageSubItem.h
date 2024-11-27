@@ -1,12 +1,10 @@
 #pragma once
 
 #include "StorageItem.h"
-#include "utils/utils.h"
+
+#include <forward_list>
 #include <map>
-#include <memory>
-#include <optional>
-#include <utility>
-#include <vector>
+#include <string>
 #include <wups/storage.h>
 
 class StorageSubItem : public StorageItem {
@@ -17,8 +15,7 @@ public:
         STORAGE_SUB_ITEM_KEY_ALREADY_IN_USE  = 2,
     };
 
-    explicit StorageSubItem(std::string_view key) : StorageItem(key) {
-    }
+    explicit StorageSubItem(std::string_view key);
 
     StorageSubItem *getSubItem(wups_storage_item item);
 
@@ -26,19 +23,15 @@ public:
 
     bool deleteItem(const char *key);
 
-    StorageItem *createItem(const char *key, StorageSubItem::StorageSubItemError &error);
+    StorageItem *createItem(const char *key, StorageSubItemError &error);
 
-    StorageSubItem *createSubItem(const char *key, StorageSubItem::StorageSubItemError &error);
+    StorageSubItem *createSubItem(const char *key, StorageSubItemError &error);
 
     StorageItem *getItem(const char *name);
 
-    [[nodiscard]] const std::forward_list<StorageSubItem> &getSubItems() const {
-        return mSubCategories;
-    }
+    [[nodiscard]] const std::forward_list<StorageSubItem> &getSubItems() const;
 
-    [[nodiscard]] const std::map<std::string, StorageItem> &getItems() const {
-        return mItems;
-    }
+    [[nodiscard]] const std::map<std::string, StorageItem> &getItems() const;
 
 protected:
     std::forward_list<StorageSubItem> mSubCategories;

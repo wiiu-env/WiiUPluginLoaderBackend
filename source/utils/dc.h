@@ -5,20 +5,20 @@
 
 extern "C" uint32_t __OSPhysicalToEffectiveUncached(uint32_t);
 
-static inline uint32_t DCReadReg32(OSScreenID screen, uint32_t index) {
+static uint32_t DCReadReg32(const OSScreenID screen, const uint32_t index) {
     if (OSIsECOMode()) {
         return 0;
     }
-    auto regs = (uint32_t *) __OSPhysicalToEffectiveUncached(0xc200000);
+    const auto regs = reinterpret_cast<uint32_t *>(__OSPhysicalToEffectiveUncached(0xc200000));
     return regs[index + (screen * 0x200)];
 }
 
 
-static inline void DCWriteReg32(OSScreenID screen, uint32_t index, uint32_t val) {
+static void DCWriteReg32(const OSScreenID screen, const uint32_t index, const uint32_t val) {
     if (OSIsECOMode()) {
         return;
     }
-    auto regs                      = (uint32_t *) __OSPhysicalToEffectiveUncached(0xc200000);
+    const auto regs                = reinterpret_cast<uint32_t *>(__OSPhysicalToEffectiveUncached(0xc200000));
     regs[index + (screen * 0x200)] = val;
 }
 
@@ -30,7 +30,7 @@ static inline void DCWriteReg32(OSScreenID screen, uint32_t index, uint32_t val)
 #define D1GRPH_X_END_REG   0x184d
 #define D1GRPH_Y_END_REG   0x184e
 
-static inline void SetDCPitchReg(OSScreenID screen, uint16_t pitch) {
+static void SetDCPitchReg(const OSScreenID screen, const uint16_t pitch) {
     DCWriteReg32(screen, D1GRPH_PITCH_REG, pitch);
     DCWriteReg32(screen, D1OVL_PITCH_REG, pitch);
 }

@@ -1,16 +1,20 @@
 #pragma once
-#include "plugin/PluginContainer.h"
-#include "utils/config/ConfigUtils.h"
+
+#include "utils/config/ConfigDefines.h"
 #include "version.h"
 #include <coreinit/dynload.h>
-#include <forward_list>
+#include <coreinit/thread.h>
+#include <map>
 #include <memory>
-#include <mutex>
+#include <set>
 #include <vector>
 #include <wums/defines/relocation_defines.h>
 
-#define VERSION      "v0.3.4"
-#define VERSION_FULL VERSION VERSION_EXTRA
+#define MODULE_VERSION      "v0.3.4"
+#define MODULE_VERSION_FULL MODULE_VERSION MODULE_VERSION_EXTRA
+
+class PluginData;
+class PluginContainer;
 
 extern StoredBuffer gStoredTVBuffer;
 extern StoredBuffer gStoredDRCBuffer;

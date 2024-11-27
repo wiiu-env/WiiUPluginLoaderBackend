@@ -1,11 +1,13 @@
 #include "hooks_patcher_static.h"
+
+#include "globals.h"
+#include "utils/config/ConfigUtils.h"
+
 #include <coreinit/core.h>
 #include <coreinit/messagequeue.h>
+#include <hooks.h>
 #include <padscore/wpad.h>
 #include <vpad/input.h>
-
-#include "../globals.h"
-#include "../hooks.h"
 
 static uint8_t sVpadPressCooldown  = 0xFF;
 static bool sConfigMenuOpened      = false;
@@ -57,7 +59,7 @@ DECL_FUNCTION(BOOL, OSSendMessage, OSMessageQueue *queue, OSMessage *message, OS
 }
 
 DECL_FUNCTION(uint32_t, OSReceiveMessage, OSMessageQueue *queue, OSMessage *message, uint32_t flags) {
-    uint32_t res = real_OSReceiveMessage(queue, message, flags);
+    const uint32_t res = real_OSReceiveMessage(queue, message, flags);
     if (queue == OSGetSystemMessageQueue()) {
         if (message != nullptr && res) {
             if (lastData0 != message->args[0]) {
@@ -88,7 +90,7 @@ DECL_FUNCTION(int32_t, VPADRead, int32_t chan, VPADStatus *buffer, uint32_t buff
         }
     }
     VPADReadError real_error = VPAD_READ_SUCCESS;
-    int32_t result           = real_VPADRead(chan, buffer, buffer_size, &real_error);
+    const int32_t result     = real_VPADRead(chan, buffer, buffer_size, &real_error);
 
     if (result > 0 && real_error == VPAD_READ_SUCCESS && buffer && ((buffer[0].hold & 0xFFFFF) == (VPAD_BUTTON_L | VPAD_BUTTON_DOWN | VPAD_BUTTON_MINUS)) && sVpadPressCooldown == 0 && !sConfigMenuOpened) {
 
@@ -106,24 +108,24 @@ DECL_FUNCTION(int32_t, VPADRead, int32_t chan, VPADStatus *buffer, uint32_t buff
     return result;
 }
 
-DECL_FUNCTION(void, WPADRead, WPADChan chan, WPADStatusProController *data) {
+DECL_FUNCTION(void, WPADRead, WPADChan chan, WPADStatus *data) {
     real_WPADRead(chan, data);
 
-    if (!sConfigMenuOpened && data && data[0].err == 0) {
-        if (data[0].extensionType != 0xFF) {
-            if (data[0].extensionType == WPAD_EXT_CORE || data[0].extensionType == WPAD_EXT_NUNCHUK ||
-                data[0].extensionType == WPAD_EXT_MPLUS || data[0].extensionType == WPAD_EXT_MPLUS_NUNCHUK) {
-                // button data is in the first 2 bytes for wiimotes
-                if (((uint16_t *) data)[0] == (WPAD_BUTTON_B | WPAD_BUTTON_DOWN | WPAD_BUTTON_MINUS)) {
+    if (!sConfigMenuOpened && data && data[0].error == 0) {
+        if (const auto extensionType = data[0].extensionType; extensionType != 0xFF) {
+            if (extensionType == WPAD_EXT_CORE || extensionType == WPAD_EXT_NUNCHUK ||
+                extensionType == WPAD_EXT_MPLUS || extensionType == WPAD_EXT_MPLUS_NUNCHUK) {
+                if (data->buttons == (WPAD_BUTTON_B | WPAD_BUTTON_DOWN | WPAD_BUTTON_MINUS)) {
                     sWantsToOpenConfigMenu = true;
                 }
-            } else if (data[0].extensionType == WPAD_EXT_CLASSIC || data[0].extensionType == WPAD_EXT_MPLUS_CLASSIC) {
-                // TODO: figure out the real struct..
-                if ((((uint32_t *) data)[10] & 0xFFFF) == (WPAD_CLASSIC_BUTTON_L | WPAD_CLASSIC_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_MINUS)) {
+            } else if (extensionType == WPAD_EXT_CLASSIC || extensionType == WPAD_EXT_MPLUS_CLASSIC) {
+                const auto *classic = reinterpret_cast<WPADStatusClassic *>(data);
+                if (classic->buttons == (WPAD_CLASSIC_BUTTON_L | WPAD_CLASSIC_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_MINUS)) {
                     sWantsToOpenConfigMenu = true;
                 }
-            } else if (data[0].extensionType == WPAD_EXT_PRO_CONTROLLER) {
-                if (data[0].buttons == (WPAD_PRO_TRIGGER_L | WPAD_PRO_BUTTON_DOWN | WPAD_PRO_BUTTON_MINUS)) {
+            } else if (extensionType == WPAD_EXT_PRO_CONTROLLER) {
+                const auto *pro = reinterpret_cast<WPADStatusPro *>(data);
+                if (pro->buttons == (WPAD_PRO_TRIGGER_L | WPAD_PRO_BUTTON_DOWN | WPAD_PRO_BUTTON_MINUS)) {
                     sWantsToOpenConfigMenu = true;
                 }
             }
@@ -156,11 +158,10 @@ DECL_FUNCTION(uint32_t, SC17_FindClosestSymbol,
         }
 
         strncpy(moduleNameBuffer, plugin.getMetaInformation().getName().c_str(), moduleNameBufferLength - 1);
-        auto functionSymbolData = plugin.getPluginInformation().getNearestFunctionSymbolData(addr);
-        if (functionSymbolData) {
+        if (const auto functionSymbolData = plugin.getPluginInformation().getNearestFunctionSymbolData(addr)) {
             strncpy(symbolNameBuffer, functionSymbolData->getName().c_str(), moduleNameBufferLength - 1);
             if (outDistance) {
-                *outDistance = addr - (uint32_t) functionSymbolData->getAddress();
+                *outDistance = addr - reinterpret_cast<uint32_t>(functionSymbolData->getAddress());
             }
             return 0;
         }
@@ -168,7 +169,7 @@ DECL_FUNCTION(uint32_t, SC17_FindClosestSymbol,
         strncpy(symbolNameBuffer, ".text", symbolNameBufferLength);
 
         if (outDistance) {
-            *outDistance = addr - (uint32_t) sectionInfo->getAddress();
+            *outDistance = addr - sectionInfo->getAddress();
         }
 
         return 0;
@@ -188,15 +189,14 @@ DECL_FUNCTION(uint32_t, KiGetAppSymbolName, uint32_t addr, char *buffer, int32_t
             continue;
         }
 
-        auto pluginNameLen        = strlen(plugin.getMetaInformation().getName().c_str());
-        int32_t spaceLeftInBuffer = (int32_t) bufSize - (int32_t) pluginNameLen - 1;
+        const auto pluginNameLen  = strlen(plugin.getMetaInformation().getName().c_str());
+        int32_t spaceLeftInBuffer = bufSize - static_cast<int32_t>(pluginNameLen) - 1;
         if (spaceLeftInBuffer < 0) {
             spaceLeftInBuffer = 0;
         }
         strncpy(buffer, plugin.getMetaInformation().getName().c_str(), bufSize - 1);
 
-        const auto functionSymbolData = plugin.getPluginInformation().getNearestFunctionSymbolData(addr);
-        if (functionSymbolData) {
+        if (const auto functionSymbolData = plugin.getPluginInformation().getNearestFunctionSymbolData(addr)) {
             buffer[pluginNameLen]     = '|';
             buffer[pluginNameLen + 1] = '\0';
             strncpy(buffer + pluginNameLen + 1, functionSymbolData->getName().c_str(), spaceLeftInBuffer - 1);
@@ -221,7 +221,6 @@ function_replacement_data_t method_hooks_static[] __attribute__((section(".data"
         REPLACE_FUNCTION(WPADRead, LIBRARY_PADSCORE, WPADRead),
         REPLACE_FUNCTION_VIA_ADDRESS(SC17_FindClosestSymbol, 0xfff10218, 0xfff10218),
         REPLACE_FUNCTION_VIA_ADDRESS(KiGetAppSymbolName, 0xfff0e3a0, 0xfff0e3a0),
-
 };
 
 uint32_t method_hooks_static_size __attribute__((section(".data"))) = sizeof(method_hooks_static) / sizeof(function_replacement_data_t);

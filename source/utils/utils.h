@@ -4,7 +4,6 @@
 #include <coreinit/dynload.h>
 #include <cstdint>
 #include <forward_list>
-#include <malloc.h>
 #include <memory>
 #include <mutex>
 #include <set>

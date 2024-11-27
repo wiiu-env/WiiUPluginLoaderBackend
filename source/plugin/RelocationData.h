@@ -18,54 +18,36 @@
 #pragma once
 
 #include "ImportRPLInformation.h"
+#include <cstdint>
 #include <memory>
 #include <string>
-#include <utility>
 
 class RelocationData {
 
 public:
-    RelocationData(const char type, size_t offset, int32_t addend, void *destination, std::string name, std::shared_ptr<ImportRPLInformation> rplInfo) : type(type),
-                                                                                                                                                         offset(offset),
-                                                                                                                                                         addend(addend),
-                                                                                                                                                         destination(destination),
-                                                                                                                                                         name(std::move(name)),
-                                                                                                                                                         rplInfo(std::move(rplInfo)) {
-    }
+    RelocationData(char type, size_t offset, int32_t addend, void *destination, std::string name, std::shared_ptr<ImportRPLInformation> rplInfo);
 
-    RelocationData(const RelocationData &o2) = default;
+    RelocationData(const RelocationData &o2);
 
-    virtual ~RelocationData() = default;
+    virtual ~RelocationData();
 
-    [[nodiscard]] char getType() const {
-        return type;
-    }
+    [[nodiscard]] char getType() const;
 
-    [[nodiscard]] size_t getOffset() const {
-        return offset;
-    }
+    [[nodiscard]] size_t getOffset() const;
 
-    [[nodiscard]] int32_t getAddend() const {
-        return addend;
-    }
+    [[nodiscard]] int32_t getAddend() const;
 
-    [[nodiscard]] const void *getDestination() const {
-        return destination;
-    }
+    [[nodiscard]] const void *getDestination() const;
 
-    [[nodiscard]] const std::string &getName() const {
-        return name;
-    }
+    [[nodiscard]] const std::string &getName() const;
 
-    [[nodiscard]] const ImportRPLInformation &getImportRPLInformation() const {
-        return *rplInfo;
-    }
+    [[nodiscard]] const ImportRPLInformation &getImportRPLInformation() const;
 
 private:
-    char type;
-    size_t offset;
-    int32_t addend;
-    void *destination;
-    std::string name;
-    std::shared_ptr<ImportRPLInformation> rplInfo;
+    char mType;
+    size_t mOffset;
+    int32_t mAddend;
+    void *mDestination;
+    std::string mName;
+    std::shared_ptr<ImportRPLInformation> mRPLInfo;
 };

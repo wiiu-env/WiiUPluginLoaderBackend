@@ -1,8 +1,14 @@
 #include "WUPSConfigItemV2.h"
+#include "utils/StringTools.h"
+#include "utils/logger.h"
+
 #include <string>
 #include <wups/config.h>
+
 namespace WUPSConfigAPIBackend {
-    WUPSConfigItemV2::WUPSConfigItemV2(std::string_view displayName, WUPSConfigAPIItemCallbacksV2 callbacks, void *context) : WUPSConfigItem(std::string(displayName)) {
+    WUPSConfigItemV2::WUPSConfigItemV2(const std::string_view displayName,
+                                       const WUPSConfigAPIItemCallbacksV2 &callbacks,
+                                       void *context) : WUPSConfigItem(std::string(displayName)) {
         this->mDisplayName = displayName;
         this->mContext     = context;
         this->mCallbacks   = callbacks;
@@ -16,7 +22,7 @@ namespace WUPSConfigAPIBackend {
         this->mCallbacks.onDelete(mContext);
     }
 
-    void WUPSConfigItemV2::onSelected(bool isSelected) const {
+    void WUPSConfigItemV2::onSelected(const bool isSelected) const {
         if (this->mCallbacks.onSelected == nullptr) {
             DEBUG_FUNCTION_LINE_VERBOSE("onSelected callback not implemented. [%s]", mDisplayName.c_str());
             return;
@@ -50,7 +56,7 @@ namespace WUPSConfigAPIBackend {
         return buf;
     }
 
-    void WUPSConfigItemV2::onInput(WUPSConfigSimplePadData input) const {
+    void WUPSConfigItemV2::onInput(const WUPSConfigSimplePadData input) const {
         if (this->mCallbacks.onInput == nullptr) {
             DEBUG_FUNCTION_LINE_VERBOSE("onInput callback not implemented. [%s]", mDisplayName.c_str());
             return;
@@ -58,7 +64,7 @@ namespace WUPSConfigAPIBackend {
         this->mCallbacks.onInput(mContext, input);
     }
 
-    void WUPSConfigItemV2::onInputEx(WUPSConfigComplexPadData input) const {
+    void WUPSConfigItemV2::onInputEx(const WUPSConfigComplexPadData input) const {
         if (this->mCallbacks.onInputEx == nullptr) {
             DEBUG_FUNCTION_LINE_VERBOSE("onInputEx callback not implemented. [%s]", mDisplayName.c_str());
             return;

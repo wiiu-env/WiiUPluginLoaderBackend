@@ -1,7 +1,6 @@
 #pragma once
 
 #include "plugin/PluginContainer.h"
-#include <memory>
 #include <vector>
 #include <wups/hooks.h>
 

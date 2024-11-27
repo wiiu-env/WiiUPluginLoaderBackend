@@ -17,27 +17,20 @@
 
 #pragma once
 
-#include <string>
 #include <wups/hooks.h>
+
 class HookData {
 
 public:
-    HookData(void *function_pointer, wups_loader_hook_type_t type) {
-        this->function_pointer = function_pointer;
-        this->type             = type;
-    }
+    HookData(void *functionPointer, wups_loader_hook_type_t type);
 
-    ~HookData() = default;
+    ~HookData();
 
-    [[nodiscard]] void *getFunctionPointer() const {
-        return function_pointer;
-    }
+    [[nodiscard]] void *getFunctionPointer() const;
 
-    [[nodiscard]] wups_loader_hook_type_t getType() const {
-        return this->type;
-    }
+    [[nodiscard]] wups_loader_hook_type_t getType() const;
 
 private:
-    void *function_pointer;
-    wups_loader_hook_type_t type;
+    void *mFunctionPointer;
+    wups_loader_hook_type_t mType;
 };

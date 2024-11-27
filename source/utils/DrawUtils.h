@@ -8,11 +8,11 @@
 #define SCREEN_HEIGHT 480
 
 union Color {
-    explicit Color(uint32_t color) {
+    explicit Color(const uint32_t color) {
         this->color = color;
     }
 
-    Color(uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+    Color(const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) {
         this->r = r;
         this->g = g;
         this->b = b;
@@ -67,12 +67,12 @@ public:
     static uint32_t getTextWidth(const wchar_t *string);
 
 private:
-    static bool isBackBuffer;
+    static bool mIsBackBuffer;
 
-    static uint8_t *tvBuffer;
-    static uint32_t tvSize;
-    static uint8_t *drcBuffer;
-    static uint32_t drcSize;
-    static uint32_t usedTVWidth;
-    static float usedTVScale;
+    static uint8_t *mTVBuffer;
+    static uint32_t mTVSize;
+    static uint8_t *mDRCBuffer;
+    static uint32_t mDRCSize;
+    static uint32_t mUsedTVWidth;
+    static float mUsedTVScale;
 };

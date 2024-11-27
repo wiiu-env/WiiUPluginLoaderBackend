@@ -20,15 +20,12 @@
 #include "FunctionData.h"
 #include "FunctionSymbolData.h"
 #include "HookData.h"
-#include "PluginMetaInformation.h"
 #include "RelocationData.h"
 #include "SectionInfo.h"
 #include "utils/HeapMemoryFixedSize.h"
-#include "utils/utils.h"
+#include <cstdint>
 #include <map>
-#include <memory>
 #include <optional>
-#include <ranges>
 #include <set>
 #include <string>
 #include <vector>
@@ -71,7 +68,7 @@ public:
 private:
     PluginInformation() = default;
 
-    void addHookData(HookData hook_data);
+    void addHookData(const HookData &hook_data);
 
     void addFunctionData(FunctionData function_data);
 

@@ -19,98 +19,59 @@
 
 #include "WUPSVersion.h"
 #include <string>
-#include <vector>
 
 class PluginMetaInformation {
 public:
-    [[nodiscard]] const std::string &getName() const {
-        return name;
-    }
+    [[nodiscard]] const std::string &getName() const;
 
-    [[nodiscard]] const std::string &getAuthor() const {
-        return this->author;
-    }
+    [[nodiscard]] const std::string &getAuthor() const;
 
-    [[nodiscard]] const std::string &getVersion() const {
-        return this->version;
-    }
+    [[nodiscard]] const std::string &getVersion() const;
 
-    [[nodiscard]] const std::string &getLicense() const {
-        return this->license;
-    }
+    [[nodiscard]] const std::string &getLicense() const;
 
-    [[nodiscard]] const std::string &getBuildTimestamp() const {
-        return this->buildtimestamp;
-    }
+    [[nodiscard]] const std::string &getBuildTimestamp() const;
 
-    [[nodiscard]] const std::string &getDescription() const {
-        return this->description;
-    }
+    [[nodiscard]] const std::string &getDescription() const;
 
-    [[nodiscard]] const WUPSVersion &getWUPSVersion() const {
-        return this->wupsversion;
-    }
+    [[nodiscard]] const WUPSVersion &getWUPSVersion() const;
 
-    [[nodiscard]] const std::string &getStorageId() const {
-        return this->storageId;
-    }
+    [[nodiscard]] const std::string &getStorageId() const;
 
-    [[nodiscard]] size_t getSize() const {
-        return this->size;
-    }
+    [[nodiscard]] size_t getSize() const;
 
 private:
-    PluginMetaInformation() = default;
+    PluginMetaInformation();
 
-    void setName(std::string _name) {
-        this->name = std::move(_name);
-    }
+    void setName(std::string name);
 
-    void setAuthor(std::string _author) {
-        this->author = std::move(_author);
-    }
+    void setAuthor(std::string author);
 
-    void setVersion(std::string _version) {
-        this->version = std::move(_version);
-    }
+    void setVersion(std::string version);
 
-    void setLicense(std::string _license) {
-        this->license = std::move(_license);
-    }
+    void setLicense(std::string license);
 
-    void setBuildTimestamp(std::string _buildtimestamp) {
-        this->buildtimestamp = std::move(_buildtimestamp);
-    }
+    void setBuildTimestamp(std::string buildTimestamp);
 
-    void setDescription(std::string _description) {
-        this->description = std::move(_description);
-    }
+    void setDescription(std::string description);
 
-    void setWUPSVersion(uint16_t major, uint16_t minor, uint16_t revision) {
-        this->wupsversion = WUPSVersion(major, minor, revision);
-    }
+    void setWUPSVersion(uint16_t major, uint16_t minor, uint16_t revision);
 
-    void setWUPSVersion(WUPSVersion &_wupsversion) {
-        this->wupsversion = _wupsversion;
-    }
+    void setWUPSVersion(const WUPSVersion &wupsVersion);
 
-    void setSize(size_t _size) {
-        this->size = _size;
-    }
+    void setSize(size_t size);
 
-    void setStorageId(std::string _storageId) {
-        this->storageId = std::move(_storageId);
-    }
+    void setStorageId(std::string storageId);
 
-    std::string name;
-    std::string author;
-    std::string version;
-    std::string license;
-    std::string buildtimestamp;
-    std::string description;
-    std::string storageId;
-    size_t size{};
-    WUPSVersion wupsversion = WUPSVersion(0, 0, 0);
+    std::string mName;
+    std::string mAuthor;
+    std::string mVersion;
+    std::string mLicense;
+    std::string mBuildTimestamp;
+    std::string mDescription;
+    std::string mStorageId;
+    size_t mSize             = {};
+    WUPSVersion mWUPSVersion = WUPSVersion(0, 0, 0);
 
     friend class PluginMetaInformationFactory;
 

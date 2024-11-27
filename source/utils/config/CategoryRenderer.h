@@ -1,12 +1,14 @@
 #pragma once
-#include "../DrawUtils.h"
-#include "ConfigRendererItem.h"
-#include "ConfigRendererItemCategory.h"
+
+#include "ConfigDefines.h"
+#include "ConfigDisplayItem.h"
 #include "ConfigRendererItemGeneric.h"
-#include "ConfigUtils.h"
 #include "config/WUPSConfigCategory.h"
 #include "utils/input/Input.h"
+
+#include <cstdint>
 #include <memory>
+#include <vector>
 
 class CategoryRenderer {
 
@@ -24,7 +26,7 @@ public:
     void ResetNeedsRedraw();
 
 private:
-    ConfigSubState UpdateStateMain(Input &input, const WUPSConfigSimplePadData &simpleInputData, const WUPSConfigComplexPadData &complexInputData);
+    ConfigSubState UpdateStateMain(const Input &input, const WUPSConfigSimplePadData &simpleInputData, const WUPSConfigComplexPadData &complexInputData);
 
     void RenderStateMain() const;
 

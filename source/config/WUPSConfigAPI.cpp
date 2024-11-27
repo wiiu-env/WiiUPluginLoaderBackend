@@ -6,16 +6,19 @@
 #include "WUPSConfigItemV2.h"
 #include "globals.h"
 #include "plugin/PluginConfigData.h"
+#include "plugin/PluginContainer.h"
 #include "utils/logger.h"
 #include "utils/utils.h"
-#include <algorithm>
+
 #include <memory>
+#include <ranges>
 #include <vector>
 #include <wums/exports.h>
 #include <wups/config.h>
 #include <wups/config_api.h>
 
 namespace WUPSConfigAPIBackend {
+
     std::vector<std::unique_ptr<WUPSConfig>> sConfigs;
     std::mutex sConfigsMutex;
 
@@ -28,7 +31,7 @@ namespace WUPSConfigAPIBackend {
     namespace Intern {
         WUPSConfig *GetConfigByHandle(WUPSConfigHandle handle) {
             std::lock_guard lock(sConfigsMutex);
-            auto itr = std::find_if(sConfigs.begin(), sConfigs.end(), [&handle](auto &cur) { return handle == cur.get(); });
+            const auto itr = std::ranges::find_if(sConfigs, [&handle](auto &cur) { return handle == cur.get(); });
             if (itr == sConfigs.end()) {
                 return nullptr;
             }
@@ -44,23 +47,21 @@ namespace WUPSConfigAPIBackend {
                 return category;
             }
             for (const auto &cat : category->getCategories()) {
-                auto res = GetCategoryByHandleRecursive(cat.get(), handle);
-                if (res) {
+                if (const auto res = GetCategoryByHandleRecursive(cat.get(), handle)) {
                     return res;
                 }
             }
             return nullptr;
         }
 
-        WUPSConfigCategory *GetCategoryByHandle(WUPSConfigCategoryHandle handle, bool checkRecursive) {
+        WUPSConfigCategory *GetCategoryByHandle(WUPSConfigCategoryHandle handle, const bool checkRecursive) {
             std::lock_guard lock(sConfigCategoryMutex);
-            auto itr = std::find_if(sConfigCategories.begin(), sConfigCategories.end(), [&handle](auto &cur) { return handle == cur.get(); });
+            const auto itr = std::ranges::find_if(sConfigCategories, [&handle](auto &cur) { return handle == cur.get(); });
             if (itr == sConfigCategories.end()) {
                 if (checkRecursive) {
                     std::lock_guard config_lock(sConfigsMutex);
                     for (const auto &curConfig : sConfigs) {
-                        auto *category = Intern::GetCategoryByHandleRecursive(curConfig.get(), handle);
-                        if (category) {
+                        if (auto *category = GetCategoryByHandleRecursive(curConfig.get(), handle)) {
                             return category;
                         }
                     }
@@ -77,7 +78,7 @@ namespace WUPSConfigAPIBackend {
 
         WUPSConfigItem *GetItemByHandle(WUPSConfigItemHandle handle) {
             std::lock_guard lock(sConfigItemsMutex);
-            auto itr = std::find_if(sConfigItems.begin(), sConfigItems.end(), [&handle](auto &cur) { return handle == cur.get(); });
+            const auto itr = std::ranges::find_if(sConfigItems, [&handle](auto &cur) { return handle == cur.get(); });
             if (itr == sConfigItems.end()) {
                 return nullptr;
             }
@@ -135,7 +136,10 @@ namespace WUPSConfigAPIBackend {
      *         - WUPSCONFIG_API_RESULT_UNSUPPORTED_VERSION: The specified `options.version` is not supported.
      *         - WUPSCONFIG_API_RESULT_NOT_FOUND: The plugin with the given identifier was not found.
      */
-    WUPSConfigAPIStatus InitEx(uint32_t pluginIdentifier, WUPSConfigAPIOptions options, WUPSConfigAPI_MenuOpenedCallback openedCallback, WUPSConfigAPI_MenuClosedCallback closedCallback) {
+    WUPSConfigAPIStatus InitEx(const uint32_t pluginIdentifier,
+                               const WUPSConfigAPIOptions options,
+                               const WUPSConfigAPI_MenuOpenedCallback openedCallback,
+                               const WUPSConfigAPI_MenuClosedCallback closedCallback) {
         if (openedCallback == nullptr || closedCallback == nullptr) {
             return WUPSCONFIG_API_RESULT_INVALID_ARGUMENT;
         }
@@ -144,7 +148,7 @@ namespace WUPSConfigAPIBackend {
                 if (options.version != 1) {
                     return WUPSCONFIG_API_RESULT_UNSUPPORTED_VERSION;
                 }
-                auto configDat = PluginConfigData::create(options, openedCallback, closedCallback);
+                const auto configDat = PluginConfigData::create(options, openedCallback, closedCallback);
                 if (!configDat) {
                     DEBUG_FUNCTION_LINE_WARN("Failed to create config data for %08X", pluginIdentifier);
                     return WUPSCONFIG_API_RESULT_UNSUPPORTED_VERSION;
@@ -188,7 +192,7 @@ namespace WUPSConfigAPIBackend {
                 {
                     // Ignore any attempts to destroy the root item.
                     std::lock_guard lock(sConfigsMutex);
-                    if (std::any_of(sConfigs.begin(), sConfigs.end(), [&handle](auto &cur) { return handle == cur.get(); })) {
+                    if (std::ranges::any_of(sConfigs, [&handle](auto &cur) { return handle == cur.get(); })) {
                         return WUPSCONFIG_API_RESULT_SUCCESS;
                     }
                 }
@@ -198,7 +202,7 @@ namespace WUPSConfigAPIBackend {
             return WUPSCONFIG_API_RESULT_SUCCESS;
         }
 
-        WUPSConfigAPIStatus AddCategory(WUPSConfigCategoryHandle parentHandle, WUPSConfigCategoryHandle categoryHandle) {
+        WUPSConfigAPIStatus AddCategory(const WUPSConfigCategoryHandle parentHandle, const WUPSConfigCategoryHandle categoryHandle) {
             if (parentHandle == nullptr || categoryHandle == nullptr) {
                 DEBUG_FUNCTION_LINE("Invalid param: \"parentHandle\" or \"categoryHandle\" was NULL");
                 return WUPSCONFIG_API_RESULT_INVALID_ARGUMENT;
@@ -228,7 +232,7 @@ namespace WUPSConfigAPIBackend {
             return WUPSCONFIG_API_RESULT_SUCCESS;
         }
 
-        WUPSConfigAPIStatus AddItem(WUPSConfigCategoryHandle parentHandle, WUPSConfigItemHandle itemHandle) {
+        WUPSConfigAPIStatus AddItem(const WUPSConfigCategoryHandle parentHandle, const WUPSConfigItemHandle itemHandle) {
             if (parentHandle == nullptr || itemHandle == nullptr) {
                 DEBUG_FUNCTION_LINE("Invalid param: \"handle\" or \"item_Handle\" was NULL");
                 return WUPSCONFIG_API_RESULT_INVALID_ARGUMENT;

@@ -21,10 +21,10 @@
 #include "PluginData.h"
 #include "PluginInformation.h"
 #include "PluginMetaInformation.h"
-#include "utils/storage/StorageUtils.h"
+
 #include <memory>
-#include <utility>
-#include <wups/config_api.h>
+#include <optional>
+#include <wups/storage.h>
 
 class PluginContainer {
 public:
@@ -34,9 +34,9 @@ public:
     PluginContainer(const PluginContainer &) = delete;
 
 
-    PluginContainer(PluginContainer &&src);
+    PluginContainer(PluginContainer &&src) noexcept;
 
-    PluginContainer &operator=(PluginContainer &&src);
+    PluginContainer &operator=(PluginContainer &&src) noexcept;
 
 
     [[nodiscard]] const PluginMetaInformation &getMetaInformation() const;

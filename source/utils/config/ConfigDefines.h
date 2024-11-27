@@ -2,7 +2,6 @@
 
 #include <cstdint>
 #include <gx2/surface.h>
-#include <string>
 
 #define COLOR_BACKGROUND         Color(238, 238, 238, 255)
 #define COLOR_TEXT               Color(51, 51, 51, 255)
@@ -22,7 +21,6 @@ struct StoredBuffer {
     GX2SurfaceFormat surface_format;
     GX2BufferingMode buffering_mode;
 };
-
 
 enum ConfigSubState {
     SUB_STATE_RUNNING = 0,

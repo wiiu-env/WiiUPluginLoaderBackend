@@ -14,19 +14,20 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ****************************************************************************/
+
 #include "PluginDataFactory.h"
 #include "NotificationsUtils.h"
 #include "fs/FSUtils.h"
 #include "utils/StringTools.h"
 #include "utils/logger.h"
-#include "utils/utils.h"
-#include <dirent.h>
-#include <forward_list>
-#include <memory>
 
-std::set<std::shared_ptr<PluginData>> PluginDataFactory::loadDir(std::string_view path) {
+#include <memory>
+#include <set>
+#include <sys/dirent.h>
+
+std::set<std::shared_ptr<PluginData>> PluginDataFactory::loadDir(const std::string_view path) {
     std::set<std::shared_ptr<PluginData>> result;
-    struct dirent *dp;
+    dirent *dp;
     DIR *dfd;
 
     if (path.empty()) {
@@ -50,8 +51,7 @@ std::set<std::shared_ptr<PluginData>> PluginDataFactory::loadDir(std::string_vie
 
         auto full_file_path = string_format("%s/%s", path.data(), dp->d_name);
         DEBUG_FUNCTION_LINE("Loading plugin: %s", full_file_path.c_str());
-        auto pluginData = load(full_file_path);
-        if (pluginData) {
+        if (auto pluginData = load(full_file_path)) {
             result.insert(std::move(pluginData));
         } else {
             auto errMsg = string_format("Failed to load plugin: %s", full_file_path.c_str());
@@ -65,15 +65,15 @@ std::set<std::shared_ptr<PluginData>> PluginDataFactory::loadDir(std::string_vie
     return result;
 }
 
-std::unique_ptr<PluginData> PluginDataFactory::load(std::string_view filename) {
+std::unique_ptr<PluginData> PluginDataFactory::load(const std::string_view path) {
     std::vector<uint8_t> buffer;
-    if (FSUtils::LoadFileToMem(filename, buffer) < 0) {
-        DEBUG_FUNCTION_LINE_ERR("Failed to load %s into memory", filename.data());
+    if (FSUtils::LoadFileToMem(path, buffer) < 0) {
+        DEBUG_FUNCTION_LINE_ERR("Failed to load %s into memory", path.data());
         return nullptr;
     }
 
     DEBUG_FUNCTION_LINE_VERBOSE("Loaded file!");
-    return load(std::move(buffer), filename);
+    return load(std::move(buffer), path);
 }
 
 std::unique_ptr<PluginData> PluginDataFactory::load(std::vector<uint8_t> &&buffer, std::string_view source) {

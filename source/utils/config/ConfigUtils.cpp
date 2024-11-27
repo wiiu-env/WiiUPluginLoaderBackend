@@ -1,24 +1,25 @@
 #include "ConfigUtils.h"
-#include "../../globals.h"
-#include "../DrawUtils.h"
-#include "../dc.h"
-#include "../logger.h"
 #include "ConfigRenderer.h"
 #include "config/WUPSConfigAPI.h"
 #include "hooks.h"
+#include "utils/DrawUtils.h"
+#include "utils/dc.h"
 #include "utils/input/CombinedInput.h"
+#include "utils/input/Input.h"
 #include "utils/input/VPADInput.h"
 #include "utils/input/WPADInput.h"
+#include "utils/logger.h"
+#include "utils/utils.h"
+#include "version.h"
 
-#include <avm/tv.h>
-#include <coreinit/screen.h>
-#include <gx2/display.h>
+#include <algorithm>
+#include <globals.h>
 #include <memory/mappedmemory.h>
-#include <ranges>
-#include <string>
+#include <memory>
 #include <vector>
+#include <wups/config.h>
 
-WUPS_CONFIG_SIMPLE_INPUT ConfigUtils::convertInputs(uint32_t buttons) {
+WUPS_CONFIG_SIMPLE_INPUT ConfigUtils::convertInputs(const uint32_t buttons) {
     WUPSConfigButtons pressedButtons = WUPS_CONFIG_BUTTON_NONE;
     if (buttons & Input::eButtons::BUTTON_A) {
         pressedButtons |= WUPS_CONFIG_BUTTON_A;
@@ -68,7 +69,7 @@ WUPS_CONFIG_SIMPLE_INPUT ConfigUtils::convertInputs(uint32_t buttons) {
     if (buttons & Input::eButtons::BUTTON_DOWN) {
         pressedButtons |= WUPS_CONFIG_BUTTON_DOWN;
     }
-    return (WUPS_CONFIG_SIMPLE_INPUT) pressedButtons;
+    return static_cast<WUPS_CONFIG_SIMPLE_INPUT>(pressedButtons);
 }
 
 void ConfigUtils::displayMenu() {
@@ -82,11 +83,9 @@ void ConfigUtils::displayMenu() {
         info.version = plugin.getMetaInformation().getVersion();
 
         std::unique_ptr<WUPSConfigAPIBackend::WUPSConfig> config;
-        const auto configData = plugin.getConfigData();
-        if (configData) {
-            const auto configHandleOpt = configData->createConfig();
-            if (configHandleOpt) {
-                WUPSConfigAPIStatus callbackResult = configData->CallMenuOpenendCallback(configHandleOpt.value());
+        if (const auto configData = plugin.getConfigData()) {
+            if (const auto configHandleOpt = configData->createConfig()) {
+                WUPSConfigAPIStatus callbackResult = configData->CallMenuOpenedCallback(configHandleOpt.value());
                 config                             = WUPSConfigAPIBackend::Intern::PopConfigByHandle(configHandleOpt.value());
                 if (!config) {
                     DEBUG_FUNCTION_LINE_ERR("Failed to get config for handle: %08X", configHandleOpt.value().handle);
@@ -106,7 +105,7 @@ void ConfigUtils::displayMenu() {
                         DEBUG_FUNCTION_LINE_ERR("Hook had invalid ptr");
                         break;
                     }
-                    auto cur_config_handle = ((void *(*) ())((uint32_t *) hook.getFunctionPointer()))();
+                    auto cur_config_handle = reinterpret_cast<void *(*) ()>(static_cast<uint32_t *>(hook.getFunctionPointer()))();
                     if (cur_config_handle == nullptr) {
                         DEBUG_FUNCTION_LINE_WARN("Hook returned empty handle");
                         break;
@@ -127,19 +126,15 @@ void ConfigUtils::displayMenu() {
     }
 
     // Sort Configs by name
-    std::sort(
-            configs.begin(),
-            configs.end(),
-            [](const ConfigDisplayItem &lhs, const ConfigDisplayItem &rhs) {
-                auto &str1 = lhs.getConfigInformation().name;
-                auto &str2 = rhs.getConfigInformation().name;
-                return lexicographical_compare(
-                        begin(str1), end(str1),
-                        begin(str2), end(str2),
-                        [](const char &char1, const char &char2) {
-                            return tolower(char1) < tolower(char2);
-                        });
-            });
+    std::ranges::sort(configs,
+                      [](const ConfigDisplayItem &lhs, const ConfigDisplayItem &rhs) {
+                          auto &str1 = lhs.getConfigInformation().name;
+                          auto &str2 = rhs.getConfigInformation().name;
+                          return std::ranges::lexicographical_compare(str1, str2,
+                                                                      [](const char &char1, const char &char2) {
+                                                                          return tolower(char1) < tolower(char2);
+                                                                      });
+                      });
 
     ConfigRenderer renderer(std::move(configs));
     configs.clear();
@@ -156,7 +151,7 @@ void ConfigUtils::displayMenu() {
             WPAD_CHAN_6,
     };
 
-    auto startTime      = OSGetTime();
+    OSTime startTime;
     bool skipFirstInput = true;
 
     gOnlyAcceptFromThread = OSGetCurrentThread();
@@ -238,26 +233,26 @@ void ConfigUtils::displayMenu() {
 }
 
 void ConfigUtils::openConfigMenu() {
-    gOnlyAcceptFromThread         = OSGetCurrentThread();
-    bool wasHomeButtonMenuEnabled = OSIsHomeButtonMenuEnabled();
+    gOnlyAcceptFromThread               = OSGetCurrentThread();
+    const bool wasHomeButtonMenuEnabled = OSIsHomeButtonMenuEnabled();
 
     // Save copy of DC reg values
-    auto tvRender1 = DCReadReg32(SCREEN_TV, D1GRPH_CONTROL_REG);
-    auto tvRender2 = DCReadReg32(SCREEN_TV, D1GRPH_ENABLE_REG);
-    auto tvPitch1  = DCReadReg32(SCREEN_TV, D1GRPH_PITCH_REG);
-    auto tvPitch2  = DCReadReg32(SCREEN_TV, D1OVL_PITCH_REG);
+    const auto tvRender1 = DCReadReg32(SCREEN_TV, D1GRPH_CONTROL_REG);
+    const auto tvRender2 = DCReadReg32(SCREEN_TV, D1GRPH_ENABLE_REG);
+    const auto tvPitch1  = DCReadReg32(SCREEN_TV, D1GRPH_PITCH_REG);
+    const auto tvPitch2  = DCReadReg32(SCREEN_TV, D1OVL_PITCH_REG);
 
-    auto drcRender1 = DCReadReg32(SCREEN_DRC, D1GRPH_CONTROL_REG);
-    auto drcRender2 = DCReadReg32(SCREEN_DRC, D1GRPH_ENABLE_REG);
-    auto drcPitch1  = DCReadReg32(SCREEN_DRC, D1GRPH_PITCH_REG);
-    auto drcPitch2  = DCReadReg32(SCREEN_DRC, D1OVL_PITCH_REG);
+    const auto drcRender1 = DCReadReg32(SCREEN_DRC, D1GRPH_CONTROL_REG);
+    const auto drcRender2 = DCReadReg32(SCREEN_DRC, D1GRPH_ENABLE_REG);
+    const auto drcPitch1  = DCReadReg32(SCREEN_DRC, D1GRPH_PITCH_REG);
+    const auto drcPitch2  = DCReadReg32(SCREEN_DRC, D1OVL_PITCH_REG);
 
     OSScreenInit();
 
-    uint32_t screen_buf0_size = OSScreenGetBufferSizeEx(SCREEN_TV);
-    uint32_t screen_buf1_size = OSScreenGetBufferSizeEx(SCREEN_DRC);
-    void *screenbuffer0       = MEMAllocFromMappedMemoryForGX2Ex(screen_buf0_size, 0x100);
-    void *screenbuffer1       = MEMAllocFromMappedMemoryForGX2Ex(screen_buf1_size, 0x100);
+    const uint32_t screen_buf0_size = OSScreenGetBufferSizeEx(SCREEN_TV);
+    const uint32_t screen_buf1_size = OSScreenGetBufferSizeEx(SCREEN_DRC);
+    void *screenbuffer0             = MEMAllocFromMappedMemoryForGX2Ex(screen_buf0_size, 0x100);
+    void *screenbuffer1             = MEMAllocFromMappedMemoryForGX2Ex(screen_buf1_size, 0x100);
 
     bool skipScreen0Free = false;
     bool skipScreen1Free = false;
@@ -363,7 +358,7 @@ void ConfigUtils::renderBasicScreen(std::string_view text) {
     DrawUtils::setFontSize(24);
     DrawUtils::print(16, 6 + 24, "Wii U Plugin System Config Menu");
     DrawUtils::setFontSize(18);
-    DrawUtils::print(SCREEN_WIDTH - 16, 8 + 24, VERSION_FULL, true);
+    DrawUtils::print(SCREEN_WIDTH - 16, 8 + 24, MODULE_VERSION_FULL, true);
     DrawUtils::drawRectFilled(8, 8 + 24 + 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
 
     // draw bottom bar
@@ -373,13 +368,13 @@ void ConfigUtils::renderBasicScreen(std::string_view text) {
     DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Select", true);
 
     DrawUtils::setFontSize(24);
-    uint32_t sz = DrawUtils::getTextWidth(text.data());
+    const uint32_t sz = DrawUtils::getTextWidth(text.data());
 
     DrawUtils::print((SCREEN_WIDTH / 2) - (sz / 2), (SCREEN_HEIGHT / 2), text.data());
 
     // draw home button
     DrawUtils::setFontSize(18);
-    const char *exitHint = "\ue044 Exit";
+    const auto exitHint = "\ue044 Exit";
     DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHint) / 2, SCREEN_HEIGHT - 10, exitHint, true);
 
     DrawUtils::endDraw();

@@ -63,7 +63,7 @@ BOOL DirList::LoadPath(const std::string &folder, const char *filter, uint32_t f
     uint32_t length = folderpath.size();
 
     //! clear path of double slashes
-    StringTools::RemoveDoubleSlashs(folderpath);
+    StringTools::RemoveDoubleSlashes(folderpath);
 
     //! remove last slash if exists
     if (length > 0 && folderpath[length - 1] == '/')

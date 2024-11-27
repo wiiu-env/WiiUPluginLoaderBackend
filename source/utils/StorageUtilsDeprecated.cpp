@@ -7,6 +7,8 @@
 #include "utils/json.hpp"
 #include "utils/logger.h"
 
+#include <malloc.h>
+
 namespace WUPSStorageDeprecated {
     static void processJson(wups_storage_item_t *items, nlohmann::json json) {
         if (items == nullptr) {

@@ -16,13 +16,12 @@
  ****************************************************************************/
 
 #include "PluginInformationFactory.h"
-#include "../utils/ElfUtils.h"
-#include "utils/HeapMemoryFixedSize.h"
+#include "utils/ElfUtils.h"
+#include "utils/logger.h"
+#include "utils/utils.h"
 #include "utils/wiiu_zlib.hpp"
+
 #include <coreinit/cache.h>
-#include <map>
-#include <memory>
-#include <string>
 #include <wups/function_patching.h>
 
 using namespace ELFIO;
@@ -50,7 +49,7 @@ PluginInformationFactory::load(const PluginData &pluginData, std::vector<relocat
         DEBUG_FUNCTION_LINE_ERR("Failed alloc memory for destinations array");
         return std::nullopt;
     }
-    std::span<uint8_t *> destinations(destinationsData.get(), sec_num);
+    std::span destinations(destinationsData.get(), sec_num);
 
     uint32_t totalSize = 0;
 
@@ -265,7 +264,7 @@ PluginInformationFactory::load(const PluginData &pluginData, std::vector<relocat
     return pluginInfo;
 }
 
-bool PluginInformationFactory::addImportRelocationData(PluginInformation &pluginInfo, const elfio &reader, std::span<uint8_t *> destinations) {
+bool PluginInformationFactory::addImportRelocationData(PluginInformation &pluginInfo, const elfio &reader, const std::span<uint8_t *> destinations) {
     std::map<uint32_t, std::shared_ptr<ImportRPLInformation>> infoMap;
 
     uint32_t sec_num = reader.sections.size();

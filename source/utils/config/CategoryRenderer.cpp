@@ -1,12 +1,13 @@
 #include "CategoryRenderer.h"
-#include "ConfigDefines.h"
-#include "config/WUPSConfigCategory.h"
-#include "utils/input/Input.h"
+#include "ConfigRendererItem.h"
+#include "ConfigRendererItemCategory.h"
+#include "ConfigUtils.h"
+#include "utils/DrawUtils.h"
+#include "utils/StringTools.h"
+#include "utils/logger.h"
 #include "utils/utils.h"
-#include <vector>
-#include <wups/config.h>
 
-CategoryRenderer::CategoryRenderer(const GeneralConfigInformation *info, const WUPSConfigAPIBackend::WUPSConfigCategory *cat, bool isRoot)
+CategoryRenderer::CategoryRenderer(const GeneralConfigInformation *info, const WUPSConfigAPIBackend::WUPSConfigCategory *cat, const bool isRoot)
     : mInfo(info), mCat(cat), mIsRoot(isRoot) {
     for (uint32_t i = 0; i < cat->getCategories().size() + cat->getItems().size(); i++) {
         if (i < cat->getCategories().size()) {
@@ -14,8 +15,8 @@ CategoryRenderer::CategoryRenderer(const GeneralConfigInformation *info, const W
             assert(item);
             mItemRenderer.push_back(std::move(item));
         } else {
-            auto itemIndex = (int32_t) (i - cat->getCategories().size());
-            if (itemIndex < 0 || itemIndex >= (int32_t) cat->getItems().size()) {
+            const auto itemIndex = static_cast<int32_t>(i - cat->getCategories().size());
+            if (itemIndex < 0 || itemIndex >= static_cast<int32_t>(cat->getItems().size())) {
                 assert(false);
             }
             auto item = make_unique_nothrow<ConfigRendererItem>(cat->getItems()[itemIndex].get());
@@ -31,13 +32,13 @@ CategoryRenderer::CategoryRenderer(const GeneralConfigInformation *info, const W
 
     // Make sure to call Update to get the current text of an item.
     for (uint32_t i = 0; i < mItemRenderer.size(); i++) {
-        bool isHighlighted = ((int) i == mCursorPos);
+        const bool isHighlighted = (static_cast<int>(i) == mCursorPos);
         mItemRenderer[i]->Update(isHighlighted);
     }
 }
 
 CategoryRenderer::~CategoryRenderer() {
-    if (mCursorPos < (int32_t) mItemRenderer.size()) {
+    if (mCursorPos < static_cast<int32_t>(mItemRenderer.size())) {
         mItemRenderer[mCursorPos]->SetIsSelected(false);
     }
 }
@@ -45,14 +46,13 @@ CategoryRenderer::~CategoryRenderer() {
 ConfigSubState CategoryRenderer::Update(Input &input, const WUPSConfigSimplePadData &simpleInputData, const WUPSConfigComplexPadData &complexInputData) {
     switch (mState) {
         case STATE_MAIN: {
-            auto res    = UpdateStateMain(input, simpleInputData, complexInputData);
-            mFirstFrame = false;
+            const auto res = UpdateStateMain(input, simpleInputData, complexInputData);
+            mFirstFrame    = false;
             return res;
         }
         case STATE_SUB: {
             if (mSubCategoryRenderer) {
-                auto subResult = mSubCategoryRenderer->Update(input, simpleInputData, complexInputData);
-                if (subResult != SUB_STATE_RUNNING) {
+                if (const auto subResult = mSubCategoryRenderer->Update(input, simpleInputData, complexInputData); subResult != SUB_STATE_RUNNING) {
                     mNeedsRedraw = true;
                     mState       = STATE_MAIN;
                     mFirstFrame  = true;
@@ -69,7 +69,7 @@ ConfigSubState CategoryRenderer::Update(Input &input, const WUPSConfigSimplePadD
     return SUB_STATE_ERROR;
 }
 
-ConfigSubState CategoryRenderer::UpdateStateMain(Input &input, const WUPSConfigSimplePadData &simpleInputData, const WUPSConfigComplexPadData &complexInputData) {
+ConfigSubState CategoryRenderer::UpdateStateMain(const Input &input, const WUPSConfigSimplePadData &simpleInputData, const WUPSConfigComplexPadData &complexInputData) {
     if (mIsItemMovementAllowed && input.data.buttons_d & Input::eButtons::BUTTON_B) {
         return SUB_STATE_RETURN;
     }
@@ -77,8 +77,8 @@ ConfigSubState CategoryRenderer::UpdateStateMain(Input &input, const WUPSConfigS
         return SUB_STATE_RUNNING;
     }
 
-    auto totalElementSize    = mItemRenderer.size();
-    int32_t prevSelectedItem = mCursorPos;
+    const auto totalElementSize    = mItemRenderer.size();
+    const int32_t prevSelectedItem = mCursorPos;
 
     if (mIsItemMovementAllowed) {
         if (input.data.buttons_d & Input::eButtons::BUTTON_DOWN) {
@@ -86,7 +86,7 @@ ConfigSubState CategoryRenderer::UpdateStateMain(Input &input, const WUPSConfigS
         } else if (input.data.buttons_d & Input::eButtons::BUTTON_UP) {
             mCursorPos--;
         } else if (input.data.buttons_d & Input::eButtons::BUTTON_A) {
-            if (mCursorPos < (int32_t) mCat->getCategories().size()) {
+            if (mCursorPos < static_cast<int32_t>(mCat->getCategories().size())) {
                 if (mCurrentOpen != mCursorPos) {
                     mSubCategoryRenderer.reset();
                     mSubCategoryRenderer = make_unique_nothrow<CategoryRenderer>(mInfo, mCat->getCategories()[mCursorPos].get(), false);
@@ -100,8 +100,8 @@ ConfigSubState CategoryRenderer::UpdateStateMain(Input &input, const WUPSConfigS
     }
 
     if (mCursorPos < 0) {
-        mCursorPos = (int32_t) totalElementSize - 1;
-    } else if (mCursorPos > (int32_t) (totalElementSize - 1)) {
+        mCursorPos = static_cast<int32_t>(totalElementSize) - 1;
+    } else if (mCursorPos > static_cast<int32_t>(totalElementSize - 1)) {
         mCursorPos = 0;
     }
 
@@ -139,7 +139,7 @@ ConfigSubState CategoryRenderer::UpdateStateMain(Input &input, const WUPSConfigS
     mIsItemMovementAllowed = mItemRenderer[mCursorPos]->IsMovementAllowed();
 
     for (uint32_t i = 0; i < mItemRenderer.size(); i++) {
-        bool isHighlighted = ((int) i == mCursorPos);
+        const bool isHighlighted = (static_cast<int>(i) == mCursorPos);
         mItemRenderer[i]->Update(isHighlighted);
     }
 
@@ -152,7 +152,7 @@ void CategoryRenderer::ResetNeedsRedraw() {
     if (mSubCategoryRenderer) {
         mSubCategoryRenderer->ResetNeedsRedraw();
     }
-    for (auto &item : mItemRenderer) {
+    for (const auto &item : mItemRenderer) {
         item->ResetNeedsRedraw();
     }
 }
@@ -196,20 +196,20 @@ void CategoryRenderer::RenderStateMain() const {
         DrawUtils::beginDraw();
         RenderMainLayout();
 
-        std::string text(mIsRoot ? "This plugin can not be configured" : "This category is empty");
+        const std::string text(mIsRoot ? "This plugin can not be configured" : "This category is empty");
 
         DrawUtils::setFontSize(24);
-        uint32_t sz = DrawUtils::getTextWidth(text.c_str());
+        const uint32_t sz = DrawUtils::getTextWidth(text.c_str());
         DrawUtils::print((SCREEN_WIDTH / 2) - (sz / 2), (SCREEN_HEIGHT / 2), text.c_str());
 
         DrawUtils::endDraw();
         return;
     }
-    auto totalElementSize = static_cast<int>(mItemRenderer.size());
+    const auto totalElementSize = static_cast<int>(mItemRenderer.size());
 
     // Calculate the range of items to display
-    int start = std::max(0, mRenderOffset);
-    int end   = std::min(start + MAX_BUTTONS_ON_SCREEN, totalElementSize);
+    const int start = std::max(0, mRenderOffset);
+    const int end   = std::min(start + MAX_BUTTONS_ON_SCREEN, totalElementSize);
 
     DrawUtils::beginDraw();
 
@@ -217,7 +217,7 @@ void CategoryRenderer::RenderStateMain() const {
 
     uint32_t yOffset = 8 + 24 + 8 + 4;
     for (int32_t i = start; i < end; i++) {
-        bool isHighlighted = (i == mCursorPos);
+        const bool isHighlighted = (i == mCursorPos);
         mItemRenderer[i]->Draw(yOffset, isHighlighted);
         yOffset += 42 + 8;
     }
@@ -253,6 +253,6 @@ void CategoryRenderer::RenderMainLayout() const {
 
     // draw home button
     DrawUtils::setFontSize(18);
-    const char *exitHint = "\ue001 Back";
+    const auto exitHint = "\ue001 Back";
     DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHint) / 2, SCREEN_HEIGHT - 10, exitHint, true);
 }

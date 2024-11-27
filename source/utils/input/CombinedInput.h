@@ -1,6 +1,6 @@
 #pragma once
 #include "Input.h"
-class CombinedInput : public Input {
+class CombinedInput final : public Input {
 public:
     void combine(const Input &b) {
         data.buttons_d |= b.data.buttons_d;

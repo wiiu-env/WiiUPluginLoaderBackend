@@ -1,7 +1,7 @@
 #pragma once
 
-#include <stdint.h>
-#include <stdlib.h>
+#include <cstddef>
+#include <cstdint>
 
 // based on https://nachtimwald.com/2017/11/18/base64-encode-and-decode-in-c/
 

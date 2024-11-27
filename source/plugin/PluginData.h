@@ -17,21 +17,22 @@
 
 #pragma once
 
-#include <coreinit/memexpheap.h>
-#include <malloc.h>
-#include <memory>
-#include <optional>
+#include <cstdint>
 #include <span>
-#include <utility>
+#include <string>
 #include <vector>
 
 class PluginData {
 public:
-    explicit PluginData(std::vector<uint8_t> &&buffer, std::string_view source) : mBuffer(std::move(buffer)), mSource(source) {
-    }
+    explicit PluginData(std::vector<uint8_t> &&buffer, std::string_view source);
 
-    explicit PluginData(std::span<uint8_t> buffer, std::string_view source) : mBuffer(buffer.begin(), buffer.end()), mSource(source) {
-    }
+    explicit PluginData(std::span<uint8_t> buffer, std::string_view source);
+
+    PluginData(const PluginData &) = delete;
+
+    PluginData(PluginData &&src) noexcept;
+
+    PluginData &operator=(PluginData &&src) noexcept;
 
     [[nodiscard]] uint32_t getHandle() const;
 

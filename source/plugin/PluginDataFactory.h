@@ -16,14 +16,10 @@
  ****************************************************************************/
 
 #pragma once
-
 #include "PluginData.h"
-#include <coreinit/memexpheap.h>
-#include <forward_list>
+
 #include <memory>
-#include <optional>
 #include <set>
-#include <string>
 #include <vector>
 
 class PluginDataFactory {

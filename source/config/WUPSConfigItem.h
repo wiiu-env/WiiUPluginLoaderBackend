@@ -18,19 +18,13 @@
 #pragma once
 
 #include <string>
-#include <utility>
-#include <vector>
-
-#include "utils/StringTools.h"
-#include "utils/logger.h"
 #include <wups/config.h>
 
 namespace WUPSConfigAPIBackend {
     class WUPSConfigItem {
     public:
-        explicit WUPSConfigItem(std::string displayName) : mDisplayName(std::move(displayName)) {
-        }
-        virtual ~WUPSConfigItem() = default;
+        explicit WUPSConfigItem(std::string displayName);
+        virtual ~WUPSConfigItem();
 
         [[nodiscard]] virtual std::string getCurrentValueDisplay() const = 0;
 
@@ -38,7 +32,7 @@ namespace WUPSConfigAPIBackend {
 
         virtual void onSelected(bool isSelected) const = 0;
 
-        virtual void onButtonPressed(WUPSConfigButtons) const {}
+        virtual void onButtonPressed(WUPSConfigButtons) const;
 
         [[nodiscard]] virtual bool isMovementAllowed() const = 0;
 
@@ -46,23 +40,17 @@ namespace WUPSConfigAPIBackend {
 
         virtual void onCloseCallback() = 0;
 
-        [[nodiscard]] const std::string &getDisplayName() const {
-            return mDisplayName;
-        }
+        [[nodiscard]] const std::string &getDisplayName() const;
 
-        virtual void setConfigId(const std::string &) {}
+        virtual void setConfigId(const std::string &);
 
-        virtual const std::string &getConfigId() {
-            return mStubConfigId;
-        }
+        virtual const std::string &getConfigId();
 
-        void setDisplayName(std::string displayName) {
-            mDisplayName = std::move(displayName);
-        }
+        void setDisplayName(std::string displayName);
 
-        virtual void onInput(WUPSConfigSimplePadData) const {}
+        virtual void onInput(WUPSConfigSimplePadData) const;
 
-        virtual void onInputEx(WUPSConfigComplexPadData) const {}
+        virtual void onInputEx(WUPSConfigComplexPadData) const;
 
     protected:
         std::string mDisplayName;

@@ -1,13 +1,9 @@
 #pragma once
-
-#include "utils/base64.h"
-#include "utils/logger.h"
 #include <cstdint>
-#include <memory>
 #include <string>
-#include <utility>
 #include <variant>
 #include <vector>
+
 
 enum class StorageItemType { None,
                              Boolean,
@@ -19,12 +15,9 @@ enum class StorageItemType { None,
 
 class StorageItem {
 public:
-    explicit StorageItem(std::string_view key) : mData(std::monostate{}), mType(StorageItemType::None), mKey(key) {
-    }
+    explicit StorageItem(std::string_view key);
 
-    [[nodiscard]] uint32_t getHandle() const {
-        return (uint32_t) this;
-    }
+    [[nodiscard]] uint32_t getHandle() const;
 
     // Setters for different types
     void setValue(bool value);

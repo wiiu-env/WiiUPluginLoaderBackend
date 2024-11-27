@@ -1,6 +1,8 @@
 #include "base64.h"
 
-#include <string.h>
+#include <cstddef>
+#include <cstdlib>
+#include <cstring>
 
 static const char b64chars[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 

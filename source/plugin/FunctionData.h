@@ -16,45 +16,48 @@
  ****************************************************************************/
 #pragma once
 
-#include "utils/logger.h"
 #include <function_patcher/fpatching_defines.h>
-#include <function_patcher/function_patching.h>
 #include <string>
 
 class FunctionData {
 
 public:
-    FunctionData(void *paddress, void *vaddress, std::string_view name, function_replacement_library_type_t library, void *replaceAddr, void *replaceCall,
+    FunctionData(void *paddress,
+                 void *vaddress,
+                 std::string_view name,
+                 function_replacement_library_type_t library,
+                 void *replaceAddr,
+                 void *replaceCall,
                  FunctionPatcherTargetProcess targetProcess);
 
     ~FunctionData();
 
     [[nodiscard]] const std::string &getName() const;
 
-    [[maybe_unused]] [[nodiscard]] function_replacement_library_type_t getLibrary() const;
+    [[nodiscard]] function_replacement_library_type_t getLibrary() const;
 
-    [[maybe_unused]] [[nodiscard]] const void *getPhysicalAddress() const;
+    [[nodiscard]] const void *getPhysicalAddress() const;
 
-    [[maybe_unused]] [[nodiscard]] const void *getVirtualAddress() const;
+    [[nodiscard]] const void *getVirtualAddress() const;
 
-    [[maybe_unused]] [[nodiscard]] const void *getReplaceAddress() const;
+    [[nodiscard]] const void *getReplaceAddress() const;
 
-    [[maybe_unused]] [[nodiscard]] const void *getReplaceCall() const;
+    [[nodiscard]] const void *getReplaceCall() const;
 
-    [[maybe_unused]] [[nodiscard]] FunctionPatcherTargetProcess getTargetProcess() const;
+    [[nodiscard]] FunctionPatcherTargetProcess getTargetProcess() const;
 
     bool AddPatch();
 
     bool RemovePatch();
 
 private:
-    void *paddress = nullptr;
-    void *vaddress = nullptr;
-    std::string name;
-    function_replacement_library_type_t library;
-    FunctionPatcherTargetProcess targetProcess;
-    void *replaceAddr = nullptr;
-    void *replaceCall = nullptr;
+    void *mPAddress = nullptr;
+    void *mVAddress = nullptr;
+    std::string mName;
+    function_replacement_library_type_t mLibrary;
+    FunctionPatcherTargetProcess mTargetProcess;
+    void *mReplaceAddr = nullptr;
+    void *mReplaceCall = nullptr;
 
-    PatchedFunctionHandle handle = 0;
+    PatchedFunctionHandle mHandle = 0;
 };

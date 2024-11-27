@@ -5,9 +5,12 @@
 #include "hooks.h"
 #include "patcher/hooks_patcher_static.h"
 #include "plugin/PluginDataFactory.h"
+#include "utils/logger.h"
 #include "utils/utils.h"
+
 #include <coreinit/debug.h>
 #include <notifications/notifications.h>
+#include <version.h>
 #include <wums.h>
 
 WUMS_MODULE_EXPORT_NAME("homebrew_wupsbackend");
@@ -75,7 +78,7 @@ WUMS_APPLICATION_STARTS() {
         return;
     }
 
-    OSReport("Running WiiUPluginLoaderBackend " VERSION_FULL "\n");
+    OSReport("Running WiiUPluginLoaderBackend " MODULE_VERSION_FULL "\n");
     gStoredTVBuffer = {};
 
     gUsedRPLs.clear();

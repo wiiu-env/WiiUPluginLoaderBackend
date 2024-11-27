@@ -17,35 +17,25 @@
 
 #pragma once
 
+#include <cstdint>
 #include <string>
 
 class FunctionSymbolData {
 
 public:
-    FunctionSymbolData(const FunctionSymbolData &o2) = default;
+    FunctionSymbolData(const FunctionSymbolData &o2);
 
-    FunctionSymbolData(std::string_view name, void *address, uint32_t size) : mName(name),
-                                                                              mAddress(address),
-                                                                              mSize(size) {
-    }
+    FunctionSymbolData(std::string_view name, void *address, uint32_t size);
 
-    bool operator<(const FunctionSymbolData &rhs) const {
-        return (uint32_t) mAddress < (uint32_t) rhs.mAddress;
-    }
+    bool operator<(const FunctionSymbolData &rhs) const;
 
-    virtual ~FunctionSymbolData() = default;
+    virtual ~FunctionSymbolData();
 
-    [[nodiscard]] const std::string &getName() const {
-        return mName;
-    }
+    [[nodiscard]] const std::string &getName() const;
 
-    [[nodiscard]] void *getAddress() const {
-        return mAddress;
-    }
+    [[nodiscard]] void *getAddress() const;
 
-    [[nodiscard]] uint32_t getSize() const {
-        return mSize;
-    }
+    [[nodiscard]] uint32_t getSize() const;
 
 private:
     std::string mName;

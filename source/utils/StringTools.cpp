@@ -24,13 +24,12 @@
 * for WiiXplorer 2010
 ***************************************************************************/
 
+#include "StringTools.h"
 #include <cstring>
 #include <string>
 #include <strings.h>
-#include <utils/StringTools.h>
-#include <wut_types.h>
 
-std::string StringTools::truncate(const std::string &str, size_t width, bool show_ellipsis) {
+std::string StringTools::truncate(const std::string &str, const size_t width, const bool show_ellipsis) {
     if (str.length() > width - 3) {
         if (show_ellipsis) {
             return str.substr(0, width - 3) + "...";
@@ -59,4 +58,34 @@ int32_t StringTools::strtokcmp(const char *string, const char *compare, const ch
     }
 
     return -1;
+}
+
+const char *StringTools::FullpathToFilename(const char *path) {
+    if (!path)
+        return path;
+
+    const char *ptr      = path;
+    const char *Filename = ptr;
+
+    while (*ptr != '\0') {
+        if (ptr[0] == '/' && ptr[1] != '\0')
+            Filename = ptr + 1;
+
+        ++ptr;
+    }
+
+    return Filename;
+}
+
+void StringTools::RemoveDoubleSlashes(std::string &str) {
+    uint32_t length = str.size();
+
+    //! clear path of double slashes
+    for (uint32_t i = 1; i < length; ++i) {
+        if (str[i - 1] == '/' && str[i] == '/') {
+            str.erase(i, 1);
+            i--;
+            length--;
+        }
+    }
 }

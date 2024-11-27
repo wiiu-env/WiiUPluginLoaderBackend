@@ -19,11 +19,10 @@
 
 #include "PluginData.h"
 #include "PluginMetaInformation.h"
-#include "elfio/elfio.hpp"
-#include <memory>
+
 #include <optional>
-#include <string>
-#include <vector>
+#include <span>
+#include <string_view>
 
 enum PluginParseErrors {
     PLUGIN_PARSE_ERROR_NONE,

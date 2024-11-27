@@ -1,6 +1,6 @@
 #pragma once
 
-#include <stdint.h>
+#include <cstdint>
 #include <wums/defines/relocation_defines.h>
 
 #ifdef __cplusplus

@@ -1,62 +1,38 @@
 #pragma once
+
 #include "ConfigRendererItemGeneric.h"
 #include "config/WUPSConfigItem.h"
 
-class ConfigRendererItem : public ConfigRendererItemGeneric {
+#include <cstdint>
+#include <string>
+#include <wups/config.h>
+
+class ConfigRendererItem final : public ConfigRendererItemGeneric {
 public:
-    explicit ConfigRendererItem(const WUPSConfigAPIBackend::WUPSConfigItem *item) : mItem(item) {
-        assert(item);
-    }
+    explicit ConfigRendererItem(const WUPSConfigAPIBackend::WUPSConfigItem *item);
 
-    void Draw(uint32_t yOffset, bool isHighlighted) const override {
-        assert(mItem);
-        drawGenericBoxAndText(yOffset, mItem->getDisplayName(), isHighlighted);
-        DrawUtils::setFontSize(24);
-        DrawUtils::print(SCREEN_WIDTH - 16 * 2, yOffset + 8 + 24, mCurItemText.c_str(), true);
-    }
+    void Draw(uint32_t yOffset, bool isHighlighted) const override;
 
-    std::string GetValueToPrint(bool isHighlighted) {
-        return isHighlighted ? mItem->getCurrentValueSelectedDisplay() : mItem->getCurrentValueDisplay();
-    }
+    [[nodiscard]] std::string GetValueToPrint(bool isHighlighted) const;
 
-    void Update(bool isHighlighted) override {
-        const auto newText = GetValueToPrint(isHighlighted);
+    void Update(bool isHighlighted) override;
 
-        if (mCurItemText != newText) {
-            mNeedsDraw = true;
-        }
-        mCurItemText = newText;
-    }
+    void ResetNeedsRedraw() override;
 
-    void ResetNeedsRedraw() override {
-        mNeedsDraw = false;
-    }
+    [[nodiscard]] bool NeedsRedraw() const override;
 
-    [[nodiscard]] bool NeedsRedraw() const override {
-        return mNeedsDraw;
-    }
+    void SetIsSelected(bool isSelected) override;
 
-    void SetIsSelected(bool isSelected) override {
-        mItem->onSelected(isSelected);
-    }
+    void OnButtonPressed(WUPSConfigButtons buttons) override;
 
-    void OnButtonPressed(WUPSConfigButtons buttons) override {
-        mItem->onButtonPressed(buttons);
-    }
+    [[nodiscard]] bool IsMovementAllowed() const override;
 
-    [[nodiscard]] bool IsMovementAllowed() const override {
-        return mItem->isMovementAllowed();
-    }
+    void OnInput(WUPSConfigSimplePadData input) override;
 
-    void OnInput(WUPSConfigSimplePadData input) override {
-        mItem->onInput(input);
-    }
-    void OnInputEx(WUPSConfigComplexPadData input) override {
-        mItem->onInputEx(input);
-    }
+    void OnInputEx(WUPSConfigComplexPadData input) override;
 
 private:
-    const WUPSConfigAPIBackend::WUPSConfigItem *mItem;
+    const WUPSConfigAPIBackend::WUPSConfigItem *mItem = nullptr;
     std::string mCurItemText;
     bool mNeedsDraw = true;
 };

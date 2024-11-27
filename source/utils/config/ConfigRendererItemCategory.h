@@ -1,8 +1,9 @@
 #pragma once
 #include "ConfigRendererItemGeneric.h"
 #include "config/WUPSConfigCategory.h"
+#include <cassert>
 
-class ConfigRendererItemCategory : public ConfigRendererItemGeneric {
+class ConfigRendererItemCategory final : public ConfigRendererItemGeneric {
 public:
     explicit ConfigRendererItemCategory(const WUPSConfigAPIBackend::WUPSConfigCategory *category) : mCategory(category) {
         assert(category);

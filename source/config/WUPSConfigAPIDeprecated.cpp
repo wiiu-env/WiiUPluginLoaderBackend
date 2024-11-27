@@ -1,5 +1,6 @@
 #include "WUPSConfig.h"
 #include "WUPSConfigAPI.h"
+#include "utils/logger.h"
 #include <wums.h>
 #include <wups/config.h>
 

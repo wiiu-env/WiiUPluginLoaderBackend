@@ -1,8 +1,8 @@
 #pragma once
 
-#include "config/WUPSConfigAPI.h"
 #include <optional>
 #include <string>
+#include <wups/config.h>
 #include <wups/config_api.h>
 
 class PluginConfigData {
@@ -13,7 +13,7 @@ public:
 
     [[nodiscard]] std::optional<WUPSConfigHandle> createConfig() const;
 
-    [[nodiscard]] WUPSConfigAPIStatus CallMenuOpenendCallback(WUPSConfigHandle config) const;
+    [[nodiscard]] WUPSConfigAPIStatus CallMenuOpenedCallback(WUPSConfigHandle config) const;
 
     [[nodiscard]] WUPSConfigAPIStatus CallMenuClosedCallback() const;
 

@@ -1,43 +1,27 @@
 #pragma once
-#include "utils.h"
+
 #include <cstdint>
 #include <memory>
 
 class HeapMemoryFixedSize {
 public:
-    HeapMemoryFixedSize() = default;
+    HeapMemoryFixedSize();
 
-    explicit HeapMemoryFixedSize(std::size_t size) : mData(make_unique_nothrow<uint8_t[]>(size)), mSize(mData ? size : 0) {}
+    explicit HeapMemoryFixedSize(std::size_t size);
 
     // Delete the copy constructor and copy assignment operator
     HeapMemoryFixedSize(const HeapMemoryFixedSize &) = delete;
     HeapMemoryFixedSize &operator=(const HeapMemoryFixedSize &) = delete;
 
-    HeapMemoryFixedSize(HeapMemoryFixedSize &&other) noexcept
-        : mData(std::move(other.mData)), mSize(other.mSize) {
-        other.mSize = 0;
-    }
+    HeapMemoryFixedSize(HeapMemoryFixedSize &&other) noexcept;
 
-    HeapMemoryFixedSize &operator=(HeapMemoryFixedSize &&other) noexcept {
-        if (this != &other) {
-            mData       = std::move(other.mData);
-            mSize       = other.mSize;
-            other.mSize = 0;
-        }
-        return *this;
-    }
+    HeapMemoryFixedSize &operator=(HeapMemoryFixedSize &&other) noexcept;
 
-    explicit operator bool() const {
-        return mData != nullptr;
-    }
+    explicit operator bool() const;
 
-    [[nodiscard]] const void *data() const {
-        return mData.get();
-    }
+    [[nodiscard]] const void *data() const;
 
-    [[nodiscard]] std::size_t size() const {
-        return mSize;
-    }
+    [[nodiscard]] std::size_t size() const;
 
 private:
     std::unique_ptr<uint8_t[]> mData{};

@@ -18,14 +18,12 @@
 #pragma once
 
 #include "WUPSConfigCategory.h"
-#include <optional>
-#include <string>
-#include <vector>
+#include <string_view>
 
 namespace WUPSConfigAPIBackend {
-    class WUPSConfig : public WUPSConfigCategory {
+    class WUPSConfig final : public WUPSConfigCategory {
     public:
-        explicit WUPSConfig(std::string_view name) : WUPSConfigCategory(name) {
+        explicit WUPSConfig(const std::string_view name) : WUPSConfigCategory(name) {
         }
     };
 } // namespace WUPSConfigAPIBackend

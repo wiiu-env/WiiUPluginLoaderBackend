@@ -1,7 +1,12 @@
 #include "WUPSConfigItemV1.h"
+#include "utils/StringTools.h"
+#include "utils/logger.h"
 
 namespace WUPSConfigAPIBackend {
-    WUPSConfigItemV1::WUPSConfigItemV1(std::string_view configId, std::string_view _displayName, WUPSConfigAPIItemCallbacksV1 callbacks, void *context) : WUPSConfigItem(std::string(_displayName)) {
+    WUPSConfigItemV1::WUPSConfigItemV1(const std::string_view configId,
+                                       const std::string_view displayName,
+                                       const WUPSConfigAPIItemCallbacksV1 &callbacks,
+                                       void *context) : WUPSConfigItem(std::string(displayName)) {
         this->mConfigId     = configId;
         this->mContext      = context;
         this->mCallbacks    = callbacks;
@@ -46,7 +51,7 @@ namespace WUPSConfigAPIBackend {
         return buf;
     }
 
-    void WUPSConfigItemV1::onSelected(bool isSelected) const {
+    void WUPSConfigItemV1::onSelected(const bool isSelected) const {
         if (this->mCallbacks.onSelected == nullptr) {
             DEBUG_FUNCTION_LINE_VERBOSE("onSelected callback not implemented. [%s]", mDisplayName.c_str());
             return;
@@ -54,7 +59,7 @@ namespace WUPSConfigAPIBackend {
         this->mCallbacks.onSelected(mContext, isSelected);
     }
 
-    void WUPSConfigItemV1::onButtonPressed(WUPSConfigButtons buttons) const {
+    void WUPSConfigItemV1::onButtonPressed(const WUPSConfigButtons buttons) const {
         if (this->mCallbacks.onButtonPressed == nullptr) {
             DEBUG_FUNCTION_LINE_VERBOSE("onButtonPressed callback not implemented. [%s]", mDisplayName.c_str());
             return;

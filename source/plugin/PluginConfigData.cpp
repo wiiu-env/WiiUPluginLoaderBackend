@@ -1,8 +1,12 @@
 #include "PluginConfigData.h"
 
-PluginConfigData::PluginConfigData(std::string_view name, WUPSConfigAPI_MenuOpenedCallback openedCallback, WUPSConfigAPI_MenuClosedCallback closedCallback) : mName(name),
-                                                                                                                                                              mOpenedCallback(openedCallback),
-                                                                                                                                                              mClosedCallback(closedCallback) {
+#include <config/WUPSConfigAPI.h>
+
+PluginConfigData::PluginConfigData(const std::string_view name,
+                                   const WUPSConfigAPI_MenuOpenedCallback openedCallback,
+                                   const WUPSConfigAPI_MenuClosedCallback closedCallback) : mName(name),
+                                                                                            mOpenedCallback(openedCallback),
+                                                                                            mClosedCallback(closedCallback) {
 }
 
 std::optional<WUPSConfigHandle> PluginConfigData::createConfig() const {
@@ -13,7 +17,7 @@ std::optional<WUPSConfigHandle> PluginConfigData::createConfig() const {
     return std::nullopt;
 }
 
-WUPSConfigAPIStatus PluginConfigData::CallMenuOpenendCallback(WUPSConfigHandle config) const {
+WUPSConfigAPIStatus PluginConfigData::CallMenuOpenedCallback(const WUPSConfigHandle config) const {
     if (mOpenedCallback == nullptr) {
         return WUPSCONFIG_API_RESULT_MISSING_CALLBACK;
     }
@@ -31,7 +35,9 @@ WUPSConfigAPIStatus PluginConfigData::CallMenuClosedCallback() const {
     return WUPSCONFIG_API_RESULT_SUCCESS;
 }
 
-std::optional<PluginConfigData> PluginConfigData::create(WUPSConfigAPIOptions options, WUPSConfigAPI_MenuOpenedCallback openedCallback, WUPSConfigAPI_MenuClosedCallback closedCallback) {
+std::optional<PluginConfigData> PluginConfigData::create(const WUPSConfigAPIOptions options,
+                                                         const WUPSConfigAPI_MenuOpenedCallback openedCallback,
+                                                         const WUPSConfigAPI_MenuClosedCallback closedCallback) {
     if (options.version != 1) {
         return std::nullopt;
     }

@@ -1,22 +1,24 @@
 #include "PluginContainer.h"
 
+#include <utils/storage/StorageUtils.h>
+
 PluginContainer::PluginContainer(PluginMetaInformation metaInformation, PluginInformation pluginInformation, std::shared_ptr<PluginData> pluginData)
     : mMetaInformation(std::move(metaInformation)),
       mPluginInformation(std::move(pluginInformation)),
       mPluginData(std::move(pluginData)) {
 }
 
-PluginContainer::PluginContainer(PluginContainer &&src) : mMetaInformation(std::move(src.mMetaInformation)),
-                                                          mPluginInformation(std::move(src.mPluginInformation)),
-                                                          mPluginData(std::move(src.mPluginData)),
-                                                          mPluginConfigData(std::move(src.mPluginConfigData)),
-                                                          storageRootItem(src.storageRootItem)
+PluginContainer::PluginContainer(PluginContainer &&src) noexcept : mMetaInformation(std::move(src.mMetaInformation)),
+                                                                   mPluginInformation(std::move(src.mPluginInformation)),
+                                                                   mPluginData(std::move(src.mPluginData)),
+                                                                   mPluginConfigData(std::move(src.mPluginConfigData)),
+                                                                   storageRootItem(src.storageRootItem)
 
 {
     src.storageRootItem = {};
 }
 
-PluginContainer &PluginContainer::operator=(PluginContainer &&src) {
+PluginContainer &PluginContainer::operator=(PluginContainer &&src) noexcept {
     if (this != &src) {
         this->mMetaInformation   = src.mMetaInformation;
         this->mPluginInformation = std::move(src.mPluginInformation);

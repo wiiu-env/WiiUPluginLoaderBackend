@@ -1,13 +1,13 @@
 #pragma once
+
 #include "WUPSConfigItem.h"
 #include <string>
 #include <wups/config.h>
 
 namespace WUPSConfigAPIBackend {
-
-    class WUPSConfigItemV2 : public WUPSConfigItem {
+    class WUPSConfigItemV2 final : public WUPSConfigItem {
     public:
-        WUPSConfigItemV2(std::string_view displayName, WUPSConfigAPIItemCallbacksV2 callbacks, void *context);
+        WUPSConfigItemV2(std::string_view displayName, const WUPSConfigAPIItemCallbacksV2 &callbacks, void *context);
 
         ~WUPSConfigItemV2() override;
 

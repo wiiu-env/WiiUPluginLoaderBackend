@@ -3,6 +3,8 @@
 #include "utils/StorageUtilsDeprecated.h"
 #include "utils/logger.h"
 #include "utils/storage/StorageUtils.h"
+
+#include <functional>
 #include <wups/storage.h>
 
 static const char **hook_names = (const char *[]){
@@ -35,10 +37,16 @@ static const char **hook_names = (const char *[]){
         "WUPS_LOADER_HOOK_INIT_STORAGE",
         "WUPS_LOADER_HOOK_INIT_CONFIG"};
 
-void CallHook(const std::vector<PluginContainer> &plugins, wups_loader_hook_type_t hook_type) {
+void CallHook(const std::vector<PluginContainer> &plugins, const wups_loader_hook_type_t hook_type) {
+    CallHook(plugins, hook_type, [](const auto &) { return true; });
+}
+
+void CallHook(const std::vector<PluginContainer> &plugins, const wups_loader_hook_type_t hook_type, const std::function<bool(const PluginContainer &)> &pred) {
     DEBUG_FUNCTION_LINE_VERBOSE("Calling hook of type %s [%d]", hook_names[hook_type], hook_type);
     for (const auto &plugin : plugins) {
-        CallHook(plugin, hook_type);
+        if (pred(plugin)) {
+            CallHook(plugin, hook_type);
+        }
     }
 }
 

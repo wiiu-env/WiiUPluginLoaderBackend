@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <gx2/surface.h>
 
-#define MAX_BUTTONS_ON_SCREEN    8
+#define MAX_BUTTONS_ON_SCREEN 8
 
 struct StoredBuffer {
     void *buffer;
@@ -16,6 +16,6 @@ struct StoredBuffer {
 enum ConfigSubState {
     SUB_STATE_RUNNING                   = 0,
     SUB_STATE_RETURN                    = 1,
-    SUB_STATE_RETURN_WITH_PLUGIN_RELOAD = 1,
-    SUB_STATE_ERROR                     = 2,
+    SUB_STATE_RETURN_WITH_PLUGIN_RELOAD = 2,
+    SUB_STATE_ERROR                     = 3,
 };

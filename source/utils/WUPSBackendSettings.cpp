@@ -19,7 +19,7 @@ namespace WUPSBackendSettings {
         std::string folderPath = getModulePath() + "/configs/";
         std::string filePath   = folderPath + "wupsbackend.json";
 
-        if (!ParseJsonFromFile(filePath, j)) {
+        if (ParseJsonFromFile(filePath, j) != UTILS_IO_ERROR_SUCCESS) {
             return false;
         }
 

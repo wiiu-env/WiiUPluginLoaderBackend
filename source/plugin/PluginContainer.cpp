@@ -76,7 +76,8 @@ WUPSStorageError PluginContainer::OpenStorage() {
     if (storageId.empty()) {
         return WUPS_STORAGE_ERROR_SUCCESS;
     }
-    auto res = StorageUtils::API::Internal::OpenStorage(storageId, mStorageRootItem);
+
+    const auto res = StorageUtils::API::Internal::OpenStorage(storageId, mStorageRootItem);
     if (res != WUPS_STORAGE_ERROR_SUCCESS) {
         mStorageRootItem = nullptr;
     }

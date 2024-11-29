@@ -436,8 +436,8 @@ uint32_t DrawUtils::getTextWidth(const wchar_t *string) {
     return width;
 }
 
-void DrawUtils::RenderScreen(const std::function<void()>& callback) {
-    gOnlyAcceptFromThread = OSGetCurrentThread();
+void DrawUtils::RenderScreen(const std::function<void()> &callback) {
+    gOnlyAcceptFromThread         = OSGetCurrentThread();
     bool wasHomeButtonMenuEnabled = OSIsHomeButtonMenuEnabled();
 
     // Save copy of DC reg values

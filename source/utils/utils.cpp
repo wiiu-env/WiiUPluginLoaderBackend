@@ -116,22 +116,22 @@ void CustomDynLoadFree(void *addr) {
     }
 }
 
-bool ParseJsonFromFile(const std::string &filePath, nlohmann::json &outJson) {
+UtilsIOError ParseJsonFromFile(const std::string &filePath, nlohmann::json &outJson) {
     CFile file(filePath, CFile::ReadOnly);
     if (!file.isOpen() || file.size() == 0) {
-        return false;
+        return UTILS_IO_ERROR_NOT_FOUND;
     }
-    auto *json_data = (uint8_t *) memalign(0x40, ROUNDUP(file.size() + 1, 0x40));
+    auto *json_data = static_cast<uint8_t *>(memalign(0x40, ROUNDUP(file.size() + 1, 0x40)));
     if (!json_data) {
-        return false;
+        return UTILS_IO_ERROR_MALLOC_FAILED;
     }
-    bool result      = true;
+    auto result      = UTILS_IO_ERROR_SUCCESS;
     uint64_t readRes = file.read(json_data, file.size());
     if (readRes == file.size()) {
         json_data[file.size()] = '\0';
         outJson                = nlohmann::json::parse(json_data, nullptr, false);
     } else {
-        result = false;
+        result = UTILS_IO_ERROR_GENERIC;
     }
     file.close();
     free(json_data);

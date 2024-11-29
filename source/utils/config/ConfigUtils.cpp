@@ -238,6 +238,11 @@ void ConfigUtils::displayMenu() {
                 }
             }
         }
+        DEBUG_FUNCTION_LINE_INFO("Save new plugin list");
+        for (const auto &cur : newActivePluginsList) {
+            DEBUG_FUNCTION_LINE_ERR("%08X %s", cur.getPluginData()->getHandle(), cur.isLoadAndLink() ? "active" : "inactive");
+        }
+        DEBUG_FUNCTION_LINE_INFO("===");
         gLoadOnNextLaunch = newActivePluginsList;
         WUPSBackendSettings::SetInactivePluginFilenames(newInactivePluginsList);
         if (!WUPSBackendSettings::SaveSettings()) {
@@ -255,8 +260,7 @@ void ConfigUtils::displayMenu() {
         renderBasicScreen("Saving configs...");
     }
     for (const auto &plugin : gLoadedPlugins) {
-        const auto configData = plugin.getConfigData();
-        if (configData) {
+        if (const auto configData = plugin.getConfigData()) {
             if (configData->CallMenuClosedCallback() == WUPSCONFIG_API_RESULT_MISSING_CALLBACK) {
                 DEBUG_FUNCTION_LINE_WARN("CallMenuClosedCallback is missing for %s", plugin.getMetaInformation().getName().c_str());
             }
@@ -264,7 +268,6 @@ void ConfigUtils::displayMenu() {
             CallHook(plugin, WUPS_LOADER_HOOK_CONFIG_CLOSED_DEPRECATED);
         }
     }
-
 
     WUPSConfigAPIBackend::Intern::CleanAllHandles();
 

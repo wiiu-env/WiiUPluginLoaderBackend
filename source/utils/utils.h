@@ -136,6 +136,14 @@ void append_move_all_values(Container &dest, Container &src) {
     src.clear();
 }
 
+typedef enum {
+    UTILS_IO_ERROR_SUCCESS       = 0,     /**< Success. */
+    UTILS_IO_ERROR_INVALID_ARGS  = -0x01, /**< Invalid arguments passed to the function. */
+    UTILS_IO_ERROR_MALLOC_FAILED = -0x02, /**< Memory allocation failed. */
+    UTILS_IO_ERROR_GENERIC       = -0x03, /**< Generic IO error during saving or loading. */
+    UTILS_IO_ERROR_NOT_FOUND     = -0x4,  /**< Item not found. */
+} UtilsIOError;
+
 std::string getPluginPath();
 
 std::string getModulePath();
@@ -144,7 +152,7 @@ OSDynLoad_Error CustomDynLoadAlloc(int32_t size, int32_t align, void **outAddr);
 
 void CustomDynLoadFree(void *addr);
 
-bool ParseJsonFromFile(const std::string &filePath, nlohmann::json &outJson);
+UtilsIOError ParseJsonFromFile(const std::string &filePath, nlohmann::json &outJson);
 
 std::vector<std::string> getPluginFilePaths(std::string_view basePath);
 

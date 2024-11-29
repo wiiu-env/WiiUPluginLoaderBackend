@@ -316,8 +316,8 @@ namespace WUPSConfigAPIBackend {
             return WUPSCONFIG_API_RESULT_INVALID_ARGUMENT;
         }
         *status = gConfigMenuOpened
-            ? WUPSCONFIG_API_MENU_STATUS_OPENED
-            : WUPSCONFIG_API_MENU_STATUS_CLOSED;
+                          ? WUPSCONFIG_API_MENU_STATUS_OPENED
+                          : WUPSCONFIG_API_MENU_STATUS_CLOSED;
         return WUPSCONFIG_API_RESULT_SUCCESS;
     }
 

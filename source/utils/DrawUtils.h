@@ -5,8 +5,8 @@
 #include <functional>
 
 // visible screen sizes
-#define SCREEN_WIDTH  854
-#define SCREEN_HEIGHT 480
+#define SCREEN_WIDTH             854
+#define SCREEN_HEIGHT            480
 
 #define COLOR_BACKGROUND         Color(238, 238, 238, 255)
 #define COLOR_BACKGROUND_WARN    Color(255, 251, 4, 255)
@@ -78,7 +78,7 @@ public:
 
     static uint32_t getTextWidth(const wchar_t *string);
 
-    static void RenderScreen(const std::function<void()>& callback);
+    static void RenderScreen(const std::function<void()> &callback);
 
 private:
     static bool mIsBackBuffer;

@@ -26,8 +26,9 @@ ConfigSubState ConfigRenderer::Update(Input &input, const WUPSConfigSimplePadDat
             if (mCategoryRenderer) {
                 auto subResult = mCategoryRenderer->Update(input, simpleInputData, complexInputData);
                 if (subResult != SUB_STATE_RUNNING) {
-                    mNeedRedraw = true;
-                    mState      = STATE_MAIN;
+                    mNeedRedraw         = true;
+                    mActivePluginsDirty = false;
+                    mState              = STATE_MAIN;
                     return SUB_STATE_RUNNING;
                 }
                 return SUB_STATE_RUNNING;
@@ -76,7 +77,13 @@ void ConfigRenderer::ResetNeedsRedraw() {
 ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
     auto &configs = GetConfigList();
 
-    auto prevSelectedItem = mCursorPos;
+    const auto prevSelectedItem = mCursorPos;
+
+    const auto &savePendingConfigFn = [&configs, this]() {
+        for (const auto &element : configs) {
+            CallOnCloseCallback(element.get().getConfigInformation(), element.get().getConfig());
+        }
+    };
 
     if (input.data.buttons_d & Input::eButtons::BUTTON_DOWN) {
         mCursorPos++;
@@ -86,6 +93,7 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
         if (mSetActivePluginsMode) {
             mNeedRedraw = true;
             mCategoryRenderer.reset();
+            savePendingConfigFn();
             return SUB_STATE_RETURN_WITH_PLUGIN_RELOAD;
         }
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_X) {
@@ -115,15 +123,14 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
             for (auto &cur : mConfigs) {
                 cur.resetIsActivePlugin();
             }
+            mActivePluginsDirty   = false;
             mNeedRedraw           = true;
             mSetActivePluginsMode = false;
             return SUB_STATE_RUNNING;
         } else {
             mNeedRedraw = true;
             mCategoryRenderer.reset();
-            for (const auto &element : configs) {
-                CallOnCloseCallback(element.get().getConfigInformation(), element.get().getConfig());
-            }
+            savePendingConfigFn();
             return SUB_STATE_RETURN;
         }
     }

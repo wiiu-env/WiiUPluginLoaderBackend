@@ -48,8 +48,8 @@ WUMS_INITIALIZE() {
 
     VPadInput vpadInput;
     vpadInput.update(1280, 720);
-    auto buttomComboSafeMode = Input::eButtons::BUTTON_L | Input::eButtons::BUTTON_UP | Input::eButtons::BUTTON_MINUS;
-    if ((vpadInput.data.buttons_h & (buttomComboSafeMode)) == buttomComboSafeMode) {
+    constexpr auto buttonComboSafeMode = Input::eButtons::BUTTON_L | Input::eButtons::BUTTON_UP | Input::eButtons::BUTTON_MINUS;
+    if ((vpadInput.data.buttons_h & (buttonComboSafeMode)) == buttonComboSafeMode) {
         DrawUtils::RenderScreen([&vpadInput] {
             DrawUtils::beginDraw();
             DrawUtils::clear(COLOR_BACKGROUND_WARN);
@@ -57,12 +57,12 @@ WUMS_INITIALIZE() {
 
             // draw top bar
             DrawUtils::setFontSize(48);
-            const char *title = "! Plugin System Safe Mode triggered !";
+            const auto title = "! Plugin System Safe Mode triggered !";
             DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(title) / 2, 48 + 8, title, true);
             DrawUtils::drawRectFilled(8, 48 + 8 + 16, SCREEN_WIDTH - 8 * 2, 3, COLOR_WHITE);
 
             DrawUtils::setFontSize(24);
-            const char *message = "The Safe Mode of the Plugin System has been triggered.";
+            auto message = "The Safe Mode of the Plugin System has been triggered.";
             DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(message) / 2, SCREEN_HEIGHT / 2 - 48, message, true);
             message = "Any plugins 3rd party plugins have been disabled!";
             DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(message) / 2, SCREEN_HEIGHT / 2 - 24, message, true);
@@ -75,7 +75,7 @@ WUMS_INITIALIZE() {
             // draw bottom bar
             DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_WHITE);
             DrawUtils::setFontSize(18);
-            const char *exitHints = "Continuing in 10 seconds.";
+            const auto exitHints = "Continuing in 10 seconds.";
             DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHints) / 2, SCREEN_HEIGHT - 8, exitHints, true);
 
             DrawUtils::endDraw();
@@ -87,6 +87,9 @@ WUMS_INITIALIZE() {
                 }
                 std::this_thread::sleep_for(16ms);
             }
+            DrawUtils::beginDraw();
+            DrawUtils::clear(COLOR_BLACK);
+            DrawUtils::endDraw();
         });
         DEBUG_FUNCTION_LINE_INFO("Safe Mode activated!");
         auto tobeIgnoredFilePath = getNonBaseAromaPluginFilenames(getPluginPath());
@@ -94,8 +97,8 @@ WUMS_INITIALIZE() {
         std::set<std::string> inactivePlugins = WUPSBackendSettings::GetInactivePluginFilenames();
 
         inactivePlugins.insert(tobeIgnoredFilePath.begin(), tobeIgnoredFilePath.end());
-        for (const auto &d : inactivePlugins) {
-            DEBUG_FUNCTION_LINE_INFO("safemode: %s should be ignored", d.c_str());
+        for (const auto &plugin : inactivePlugins) {
+            DEBUG_FUNCTION_LINE_INFO("safemode: %s will be deactivated", plugin.c_str());
         }
         WUPSBackendSettings::SetInactivePluginFilenames(inactivePlugins);
         WUPSBackendSettings::SaveSettings();
@@ -179,16 +182,18 @@ WUMS_APPLICATION_STARTS() {
     }
 
     if (!gLoadOnNextLaunch.empty()) {
+        DEBUG_FUNCTION_LINE_INFO("Got new list of plugins to load");
         std::vector<PluginContainer> pluginsToKeep;
         std::vector<PluginLoadWrapper> toBeLoaded;
 
         // Check which plugins are already loaded and which needs to be
         for (const auto &pluginLoadWrapper : gLoadOnNextLaunch) {
+            const auto &pluginNeedsNoReloadFn = [&pluginLoadWrapper](const PluginContainer &container) {
+                return (container.getPluginDataCopy()->getHandle() == pluginLoadWrapper.getPluginData()->getHandle()) &&
+                       (container.isLinkedAndLoaded() == pluginLoadWrapper.isLoadAndLink());
+            };
             // Check if the plugin data is already loaded
-            if (auto it = std::ranges::find_if(gLoadedPlugins,
-                                               [&pluginLoadWrapper](const PluginContainer &container) {
-                                                   return container.getPluginDataCopy()->getHandle() == pluginLoadWrapper.getPluginData()->getHandle();
-                                               });
+            if (auto it = std::ranges::find_if(gLoadedPlugins, pluginNeedsNoReloadFn);
                 it != gLoadedPlugins.end()) {
                 pluginsToKeep.push_back(std::move(*it));
                 gLoadedPlugins.erase(it);
@@ -198,8 +203,17 @@ WUMS_APPLICATION_STARTS() {
             }
         }
 
+        // deinit all plugins that are still in gLoadedPlugins list.
         std::vector<PluginContainer> pluginsToDeinit = std::move(gLoadedPlugins);
         gLoadedPlugins                               = std::move(pluginsToKeep);
+
+        for (const auto &p : pluginsToKeep) {
+            DEBUG_FUNCTION_LINE_INFO("KEEP: %s", p.getMetaInformation().getName().c_str());
+        }
+
+        for (const auto &p : pluginsToDeinit) {
+            DEBUG_FUNCTION_LINE_ERR("DEINIT: %s", p.getMetaInformation().getName().c_str());
+        }
 
         DEBUG_FUNCTION_LINE("Deinit unused plugins");
         CleanupPlugins(std::move(pluginsToDeinit));

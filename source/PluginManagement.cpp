@@ -24,7 +24,7 @@ PluginManagement::loadPlugins(const std::vector<PluginLoadWrapper> &pluginDataLi
         auto metaInfo           = PluginMetaInformationFactory::loadPlugin(*pluginDataWrapper.getPluginData(), error);
         if (metaInfo && error == PLUGIN_PARSE_ERROR_NONE) {
             if (pluginDataWrapper.isLoadAndLink()) {
-                DEBUG_FUNCTION_LINE_INFO("We want to link %s by %s", metaInfo->getName().c_str(), metaInfo->getAuthor().c_str());
+                DEBUG_FUNCTION_LINE_INFO("LOAD (ACTIVE)   %s", metaInfo->getName().c_str());
 
                 auto linkInfo = PluginLinkInformationFactory::load(*pluginDataWrapper.getPluginData(), trampolineData, sTrampolineID++);
                 if (!linkInfo) {
@@ -35,7 +35,7 @@ PluginManagement::loadPlugins(const std::vector<PluginLoadWrapper> &pluginDataLi
                 }
                 plugins.emplace_back(std::move(*metaInfo), std::move(*linkInfo), pluginDataWrapper.getPluginData());
             } else {
-                DEBUG_FUNCTION_LINE_INFO("We want to skip %s by %s", metaInfo->getName().c_str(), metaInfo->getAuthor().c_str());
+                DEBUG_FUNCTION_LINE_INFO("LOAD (INACTIVE) %s", metaInfo->getName().c_str());
                 plugins.emplace_back(std::move(*metaInfo), PluginLinkInformation::CreateStub(), pluginDataWrapper.getPluginData());
             }
         } else {

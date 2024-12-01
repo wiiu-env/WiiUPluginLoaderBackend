@@ -19,3 +19,4 @@ bool gNotificationModuleLoaded = false;
 OSThread *gOnlyAcceptFromThread = nullptr;
 
 bool gConfigMenuShouldClose = false;
+bool gConfigMenuOpened = false;

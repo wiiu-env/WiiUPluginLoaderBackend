@@ -35,3 +35,4 @@ extern bool gNotificationModuleLoaded;
 extern OSThread *gOnlyAcceptFromThread;
 
 extern bool gConfigMenuShouldClose;
+extern bool gConfigMenuOpened;

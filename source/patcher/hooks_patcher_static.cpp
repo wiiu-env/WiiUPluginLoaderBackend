@@ -10,16 +10,15 @@
 #include <vpad/input.h>
 
 static uint8_t sVpadPressCooldown  = 0xFF;
-static bool sConfigMenuOpened      = false;
 static bool sWantsToOpenConfigMenu = false;
 
 DECL_FUNCTION(void, GX2SwapScanBuffers, void) {
     real_GX2SwapScanBuffers();
 
-    if (sWantsToOpenConfigMenu && !sConfigMenuOpened) {
-        sConfigMenuOpened = true;
+    if (sWantsToOpenConfigMenu && !gConfigMenuOpened) {
+        gConfigMenuOpened = true;
         ConfigUtils::openConfigMenu();
-        sConfigMenuOpened      = false;
+        gConfigMenuOpened      = false;
         sWantsToOpenConfigMenu = false;
     }
 }
@@ -48,7 +47,7 @@ static uint32_t lastData0 = 0;
 
 
 DECL_FUNCTION(BOOL, OSSendMessage, OSMessageQueue *queue, OSMessage *message, OSMessageFlags flags) {
-    if (sConfigMenuOpened && queue == OSGetSystemMessageQueue()) {
+    if (gConfigMenuOpened && queue == OSGetSystemMessageQueue()) {
         if (message != nullptr) {
             if (message->args[0] == 0xfacebacc) { // Release foreground
                 gConfigMenuShouldClose = true;
@@ -83,7 +82,7 @@ DECL_FUNCTION(void, OSReleaseForeground) {
 }
 
 DECL_FUNCTION(int32_t, VPADRead, int32_t chan, VPADStatus *buffer, uint32_t buffer_size, VPADReadError *error) {
-    if (sConfigMenuOpened) {
+    if (gConfigMenuOpened) {
         // Ignore reading vpad input only from other threads if the config menu is opened
         if (OSGetCurrentThread() != gOnlyAcceptFromThread) {
             return 0;
@@ -92,7 +91,7 @@ DECL_FUNCTION(int32_t, VPADRead, int32_t chan, VPADStatus *buffer, uint32_t buff
     VPADReadError real_error = VPAD_READ_SUCCESS;
     const int32_t result     = real_VPADRead(chan, buffer, buffer_size, &real_error);
 
-    if (result > 0 && real_error == VPAD_READ_SUCCESS && buffer && ((buffer[0].hold & 0xFFFFF) == (VPAD_BUTTON_L | VPAD_BUTTON_DOWN | VPAD_BUTTON_MINUS)) && sVpadPressCooldown == 0 && !sConfigMenuOpened) {
+    if (result > 0 && real_error == VPAD_READ_SUCCESS && buffer && ((buffer[0].hold & 0xFFFFF) == (VPAD_BUTTON_L | VPAD_BUTTON_DOWN | VPAD_BUTTON_MINUS)) && sVpadPressCooldown == 0 && !gConfigMenuOpened) {
 
         sWantsToOpenConfigMenu = true;
         sVpadPressCooldown     = 0x3C;
@@ -111,8 +110,8 @@ DECL_FUNCTION(int32_t, VPADRead, int32_t chan, VPADStatus *buffer, uint32_t buff
 DECL_FUNCTION(void, WPADRead, WPADChan chan, WPADStatus *data) {
     real_WPADRead(chan, data);
 
-    if (!sConfigMenuOpened && data && data[0].error == 0) {
-        if (const auto extensionType = data[0].extensionType; extensionType != 0xFF) {
+    if (!gConfigMenuOpened && data && data->error == 0) {
+        if (const auto extensionType = data->extensionType; extensionType != 0xFF) {
             if (extensionType == WPAD_EXT_CORE || extensionType == WPAD_EXT_NUNCHUK ||
                 extensionType == WPAD_EXT_MPLUS || extensionType == WPAD_EXT_MPLUS_NUNCHUK) {
                 if (data->buttons == (WPAD_BUTTON_B | WPAD_BUTTON_DOWN | WPAD_BUTTON_MINUS)) {

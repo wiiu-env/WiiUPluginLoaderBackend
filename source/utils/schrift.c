@@ -1108,11 +1108,11 @@ simple_outline(SFT_Font *font, uint_fast32_t offset, unsigned int numContours, O
             goto failure;
     }
 
-    endPts = calloc(sizeof(uint_fast16_t), numContours);
+    endPts = calloc(numContours, sizeof(uint_fast16_t));
     if (endPts == NULL) {
         goto failure;
     }
-    flags = calloc(sizeof(uint8_t), numPts);
+    flags = calloc(numPts, sizeof(uint8_t));
     if (flags == NULL) {
         goto failure;
     }
@@ -1433,11 +1433,10 @@ render_outline(Outline *outl, double transform[6], SFT_Image image) {
 
     numPixels = (unsigned int) image.width * (unsigned int) image.height;
 
-    cells = calloc(sizeof(Cell), numPixels);
+    cells = calloc(numPixels, sizeof(Cell));
     if (!cells) {
         return -1;
     }
-    memset(cells, 0, numPixels * sizeof *cells);
     buf.cells  = cells;
     buf.width  = image.width;
     buf.height = image.height;

@@ -105,29 +105,58 @@ DECL_FUNCTION(int32_t, VPADRead, int32_t chan, VPADStatus *buffer, uint32_t buff
     return result;
 }
 
-DECL_FUNCTION(void, WPADRead, WPADChan chan, WPADStatusProController *data) {
+DECL_FUNCTION(void, WPADRead, WPADChan chan, WPADStatus *data) {
     real_WPADRead(chan, data);
-
-    if (!gConfigMenuOpened && data && data[0].err == 0) {
-        if (data[0].extensionType != 0xFF) {
-            if (data[0].extensionType == WPAD_EXT_CORE || data[0].extensionType == WPAD_EXT_NUNCHUK ||
-                data[0].extensionType == WPAD_EXT_MPLUS || data[0].extensionType == WPAD_EXT_MPLUS_NUNCHUK) {
+#if 0
+    if (!gConfigMenuOpened && data && data->error == 0) {
+        if (data->extensionType != WPAD_EXT_UNKNOWN) {
+            if (data->extensionType == WPAD_EXT_CORE || data->extensionType == WPAD_EXT_NUNCHUK ||
+                data->extensionType == WPAD_EXT_MPLUS || data->extensionType == WPAD_EXT_MPLUS_NUNCHUK) {
                 // button data is in the first 2 bytes for wiimotes
-                if (((uint16_t *) data)[0] == (WPAD_BUTTON_B | WPAD_BUTTON_DOWN | WPAD_BUTTON_MINUS)) {
+                if (data->buttons == (WPAD_BUTTON_B | WPAD_BUTTON_DOWN | WPAD_BUTTON_MINUS)) {
                     sWantsToOpenConfigMenu = true;
                 }
-            } else if (data[0].extensionType == WPAD_EXT_CLASSIC || data[0].extensionType == WPAD_EXT_MPLUS_CLASSIC) {
-                // TODO: figure out the real struct..
-                if ((((uint32_t *) data)[10] & 0xFFFF) == (WPAD_CLASSIC_BUTTON_L | WPAD_CLASSIC_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_MINUS)) {
+            } else if (data->extensionType == WPAD_EXT_CLASSIC || data->extensionType == WPAD_EXT_MPLUS_CLASSIC) {
+                if (((WPADStatusClassic *) data)->buttons == (WPAD_CLASSIC_BUTTON_L | WPAD_CLASSIC_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_MINUS)) {
                     sWantsToOpenConfigMenu = true;
                 }
-            } else if (data[0].extensionType == WPAD_EXT_PRO_CONTROLLER) {
-                if (data[0].buttons == (WPAD_PRO_TRIGGER_L | WPAD_PRO_BUTTON_DOWN | WPAD_PRO_BUTTON_MINUS)) {
+            } else if (data->extensionType == WPAD_EXT_PRO_CONTROLLER) {
+                if (((WPADStatusProController*) data)->buttons == (WPAD_PRO_TRIGGER_L | WPAD_PRO_BUTTON_DOWN | WPAD_PRO_BUTTON_MINUS)) {
                     sWantsToOpenConfigMenu = true;
                 }
             }
         }
     }
+#else
+    if (gConfigMenuOpened || !data || data->error)
+        return;
+
+    constexpr auto core_combo = WPAD_BUTTON_B | WPAD_BUTTON_DOWN | WPAD_BUTTON_MINUS;
+    constexpr auto classic_combo = WPAD_CLASSIC_BUTTON_L | WPAD_CLASSIC_BUTTON_DOWN | WPAD_CLASSIC_BUTTON_MINUS;
+    constexpr auto pro_combo = WPAD_PRO_TRIGGER_L | WPAD_PRO_BUTTON_DOWN | WPAD_PRO_BUTTON_MINUS;
+
+    switch (data->extensionType) {
+    case WPAD_EXT_CORE:
+    case WPAD_EXT_NUNCHUK:
+    case WPAD_EXT_MPLUS:
+    case WPAD_EXT_MPLUS_NUNCHUK:
+        if (data->buttons == core_combo) {
+            sWantsToOpenConfigMenu = true;
+        }
+        break;
+    case WPAD_EXT_CLASSIC:
+    case WPAD_EXT_MPLUS_CLASSIC:
+        if (((WPADStatusClassic *) data)->buttons == classic_combo) {
+            sWantsToOpenConfigMenu = true;
+        }
+        break;
+    case WPAD_EXT_PRO_CONTROLLER:
+        if (((WPADStatusProController*) data)->buttons == pro_combo) {
+            sWantsToOpenConfigMenu = true;
+        }
+        break;
+    }
+#endif
 }
 
 // clang-format off

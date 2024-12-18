@@ -108,12 +108,10 @@ void ConfigUtils::displayMenu() {
                 for (const auto &hook : plugin.getPluginLinkInformation().getHookDataList()) {
                     if (hook.getType() == WUPS_LOADER_HOOK_GET_CONFIG_DEPRECATED) {
                         if (hook.getFunctionPointer() == nullptr) {
-                            DEBUG_FUNCTION_LINE_ERR("Hook had invalid ptr");
                             break;
                         }
                         auto cur_config_handle = ((void *(*) ())((uint32_t *) hook.getFunctionPointer()))();
                         if (cur_config_handle == nullptr) {
-                            DEBUG_FUNCTION_LINE_WARN("Hook returned empty handle");
                             break;
                         }
                         config = WUPSConfigAPIBackend::Intern::PopConfigByHandle(WUPSConfigHandle(cur_config_handle));
@@ -238,11 +236,6 @@ void ConfigUtils::displayMenu() {
                 }
             }
         }
-        DEBUG_FUNCTION_LINE_INFO("Save new plugin list");
-        for (const auto &cur : newActivePluginsList) {
-            DEBUG_FUNCTION_LINE_ERR("%08X %s", cur.getPluginData()->getHandle(), cur.isLoadAndLink() ? "active" : "inactive");
-        }
-        DEBUG_FUNCTION_LINE_INFO("===");
         gLoadOnNextLaunch = newActivePluginsList;
         WUPSBackendSettings::SetInactivePluginFilenames(newInactivePluginsList);
         if (!WUPSBackendSettings::SaveSettings()) {

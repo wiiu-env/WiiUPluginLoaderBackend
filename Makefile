@@ -31,7 +31,8 @@ SOURCES		:=	source \
                 source/utils \
                 source/utils/config \
                 source/utils/storage \
-                source/uitls/input
+                source/utils/buttoncombo \
+                source/utils/input
 DATA		:=	data
 INCLUDES	:=	source
 
@@ -58,7 +59,7 @@ CXXFLAGS += -DDEBUG -DVERBOSE_DEBUG -g
 CFLAGS += -DDEBUG -DVERBOSE_DEBUG -g
 endif
 
-LIBS	:= -lwums -lwups -lwut -lfunctionpatcher -lmappedmemory -lz -lnotifications
+LIBS	:= -lwums -lwups -lwut -lfunctionpatcher -lmappedmemory -lz -lnotifications -lbuttoncombo
 
 #-------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level

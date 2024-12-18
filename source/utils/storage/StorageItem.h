@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <variant>
 #include <vector>
@@ -78,4 +79,6 @@ private:
     std::string mKey                                                                                       = {};
 
     bool mBinaryConversionDone = true;
+
+    std::unique_ptr<uint32_t> mHandle = std::make_unique<uint32_t>();
 };

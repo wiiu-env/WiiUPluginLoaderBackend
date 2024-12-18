@@ -4,10 +4,12 @@
 #include "utils/logger.h"
 
 StorageItem::StorageItem(const std::string_view key) : mKey(key) {
+    // Abuse this as a stable handle that references itself and survives std::move
+    *mHandle = reinterpret_cast<uint32_t>(mHandle.get());
 }
 
 uint32_t StorageItem::getHandle() const {
-    return reinterpret_cast<uint32_t>(this);
+    return *mHandle;
 }
 
 void StorageItem::setValue(const std::string &value) {

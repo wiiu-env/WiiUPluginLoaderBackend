@@ -44,6 +44,7 @@ public:
 private:
     std::vector<uint8_t> mBuffer;
     std::string mSource;
+    std::unique_ptr<uint32_t> mHandle = std::make_unique<uint32_t>();
 };
 
 struct PluginDataSharedPtrComparator {

@@ -186,6 +186,7 @@ bool PluginManagement::DoFunctionPatches(std::vector<PluginContainer> &plugins) 
 }
 
 void PluginManagement::callInitHooks(const std::vector<PluginContainer> &plugins, const std::function<bool(const PluginContainer &)> &pred) {
+    CallHook(plugins, WUPS_LOADER_HOOK_INIT_BUTTON_COMBO, pred);
     CallHook(plugins, WUPS_LOADER_HOOK_INIT_CONFIG, pred);
     CallHook(plugins, WUPS_LOADER_HOOK_INIT_STORAGE_DEPRECATED, pred);
     CallHook(plugins, WUPS_LOADER_HOOK_INIT_STORAGE, pred);

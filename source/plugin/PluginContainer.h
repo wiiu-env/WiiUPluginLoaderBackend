@@ -32,9 +32,9 @@ public:
 
     PluginContainer(const PluginContainer &) = delete;
 
-    PluginContainer(PluginContainer &&src);
+    PluginContainer(PluginContainer &&src) noexcept;
 
-    PluginContainer &operator=(PluginContainer &&src);
+    PluginContainer &operator=(PluginContainer &&src) noexcept;
 
     [[nodiscard]] const PluginMetaInformation &getMetaInformation() const;
 
@@ -62,12 +62,20 @@ public:
 
     [[nodiscard]] bool isInitDone() const;
 
+    void InitButtonComboData();
+    void DeinitButtonComboData();
+
+    [[nodiscard]] uint32_t getButtonComboManagerHandle() const;
+
 private:
     PluginMetaInformation mMetaInformation;
     PluginLinkInformation mPluginLinkInformation;
     std::shared_ptr<PluginData> mPluginData;
 
+    std::unique_ptr<uint32_t> mHandle = std::make_unique<uint32_t>();
+
     std::optional<PluginConfigData> mPluginConfigData = std::nullopt;
     wups_storage_root_item mStorageRootItem           = nullptr;
     bool mInitDone                                    = false;
+    uint32_t mButtonComboManagerHandle                = 0;
 };

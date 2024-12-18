@@ -1,10 +1,13 @@
 #include "hooks.h"
 #include "plugin/PluginContainer.h"
 #include "utils/StorageUtilsDeprecated.h"
+#include "utils/buttoncombo/ButtonComboUtils.h"
 #include "utils/logger.h"
 #include "utils/storage/StorageUtils.h"
 
 #include <functional>
+#include <wups/button_combo.h>
+#include <wups/button_combo_internal.h>
 #include <wups/storage.h>
 
 static const char **hook_names = (const char *[]){
@@ -123,6 +126,35 @@ void CallHook(const PluginContainer &plugin, wups_loader_hook_type_t hook_type) 
                         if (res != WUPSCONFIG_API_RESULT_SUCCESS) {
                             // TODO: More error handling? Notification?
                             DEBUG_FUNCTION_LINE_ERR("WUPS_LOADER_HOOK_INIT_CONFIG failed for plugin %s: %s", plugin.getMetaInformation().getName().c_str(), WUPSConfigAPI_GetStatusStr(res));
+                        }
+                        break;
+                    }
+                    case WUPS_LOADER_HOOK_INIT_BUTTON_COMBO: {
+                        if (plugin.getMetaInformation().getWUPSVersion() <= WUPSVersion(0, 8, 1)) {
+                            break;
+                        }
+                        wups_loader_init_button_combo_args_t args;
+                        args.version                                   = WUPS_BUTTON_COMBO_CUR_API_VERSION;
+                        args.identifier                                = reinterpret_cast<void *>(plugin.getButtonComboManagerHandle());
+                        args.add_button_combo_function_ptr             = &ButtonComboUtils::API::AddButtonCombo;
+                        args.remove_button_combo_function_ptr          = &ButtonComboUtils::API::RemoveButtonCombo;
+                        args.get_button_combo_status_function_ptr      = &ButtonComboUtils::API::GetButtonComboStatus;
+                        args.update_button_combo_meta_function_ptr     = &ButtonComboUtils::API::UpdateButtonComboMeta;
+                        args.update_button_combo_callback_function_ptr = &ButtonComboUtils::API::UpdateButtonComboCallback;
+                        args.update_controller_mask_function_ptr       = &ButtonComboUtils::API::UpdateControllerMask;
+                        args.update_button_combo_function_ptr          = &ButtonComboUtils::API::UpdateButtonCombo;
+                        args.update_hold_duration_function_ptr         = &ButtonComboUtils::API::UpdateHoldDuration;
+                        args.get_button_combo_meta_function_ptr        = &ButtonComboUtils::API::GetButtonComboMeta;
+                        args.get_button_combo_callback_function_ptr    = &ButtonComboUtils::API::GetButtonComboCallback;
+                        args.get_button_combo_info_ex_function_ptr     = &ButtonComboUtils::API::GetButtonComboInfoEx;
+                        args.check_button_combo_available_function_ptr = &ButtonComboUtils::API::CheckComboAvailable;
+                        args.detect_button_combo_blocking_function_ptr = &ButtonComboUtils::API::DetectButtonCombo_Blocking;
+
+                        auto res = ((WUPSButtonCombo_Error(*)(wups_loader_init_button_combo_args_t))((uint32_t *) func_ptr))(args);
+                        // clang-format on
+                        if (res != WUPS_BUTTON_COMBO_ERROR_SUCCESS) {
+                            // TODO: More error handling? Notification?
+                            DEBUG_FUNCTION_LINE_ERR("WUPS_LOADER_HOOK_INIT_BUTTON_COMBO failed for plugin %s: %s", plugin.getMetaInformation().getName().c_str(), WUPSButtonComboAPI_GetStatusStr(res));
                         }
                         break;
                     }

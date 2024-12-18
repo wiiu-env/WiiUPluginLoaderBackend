@@ -12,6 +12,7 @@
 #include "utils/utils.h"
 #include "version.h"
 
+#include <buttoncombo/manager.h>
 #include <coreinit/debug.h>
 #include <notifications/notifications.h>
 #include <ranges>
@@ -30,6 +31,10 @@ WUMS_INITIALIZE() {
 
     if (FunctionPatcher_InitLibrary() != FUNCTION_PATCHER_RESULT_SUCCESS) {
         OSFatal("homebrew_wupsbackend: FunctionPatcher_InitLibrary failed");
+    }
+
+    if (ButtonComboModule_InitLibrary() != BUTTON_COMBO_MODULE_ERROR_SUCCESS) {
+        OSFatal("homebrew_wupsbackend: ButtonComboModule_InitLibrary failed");
     }
 
     if (const NotificationModuleStatus res = NotificationModule_InitLibrary(); res != NOTIFICATION_MODULE_RESULT_SUCCESS) {
@@ -207,14 +212,6 @@ WUMS_APPLICATION_STARTS() {
         std::vector<PluginContainer> pluginsToDeinit = std::move(gLoadedPlugins);
         gLoadedPlugins                               = std::move(pluginsToKeep);
 
-        for (const auto &p : pluginsToKeep) {
-            DEBUG_FUNCTION_LINE_INFO("KEEP: %s", p.getMetaInformation().getName().c_str());
-        }
-
-        for (const auto &p : pluginsToDeinit) {
-            DEBUG_FUNCTION_LINE_ERR("DEINIT: %s", p.getMetaInformation().getName().c_str());
-        }
-
         DEBUG_FUNCTION_LINE("Deinit unused plugins");
         CleanupPlugins(std::move(pluginsToDeinit));
 
@@ -255,6 +252,7 @@ WUMS_APPLICATION_STARTS() {
             if (const WUPSStorageError err = plugin.OpenStorage(); err != WUPS_STORAGE_ERROR_SUCCESS) {
                 DEBUG_FUNCTION_LINE_ERR("Failed to open storage for plugin: %s. (%s)", plugin.getMetaInformation().getName().c_str(), WUPSStorageAPI_GetStatusStr(err));
             }
+            plugin.InitButtonComboData();
         }
         PluginManagement::callInitHooks(gLoadedPlugins, needsInitsCheck);
 
@@ -287,9 +285,11 @@ void CleanupPlugins(std::vector<PluginContainer> &&pluginsToDeinit) {
     PluginManagement::RestoreFunctionPatches(pluginsToDeinit);
 
     for (auto &plugin : pluginsToDeinit) {
+        if (!plugin.isInitDone()) { continue; }
         if (const WUPSStorageError err = plugin.CloseStorage(); err != WUPS_STORAGE_ERROR_SUCCESS) {
             DEBUG_FUNCTION_LINE_ERR("Failed to close storage for plugin: %s", plugin.getMetaInformation().getName().c_str());
         }
+        plugin.DeinitButtonComboData();
     }
 
     for (const auto &pluginContainer : pluginsToDeinit) {

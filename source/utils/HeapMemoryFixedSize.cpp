@@ -3,7 +3,7 @@
 
 HeapMemoryFixedSize::HeapMemoryFixedSize() = default;
 
-HeapMemoryFixedSize::HeapMemoryFixedSize(std::size_t size) : mData(make_unique_nothrow<uint8_t[]>(size)), mSize(mData ? size : 0) {}
+HeapMemoryFixedSize::HeapMemoryFixedSize(const std::size_t size) : mData(make_unique_nothrow<uint8_t[]>(size)), mSize(mData ? size : 0) {}
 
 HeapMemoryFixedSize::HeapMemoryFixedSize(HeapMemoryFixedSize &&other) noexcept
     : mData(std::move(other.mData)), mSize(other.mSize) {

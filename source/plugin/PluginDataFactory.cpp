@@ -17,6 +17,7 @@
 
 #include "PluginDataFactory.h"
 #include "NotificationsUtils.h"
+#include "PluginData.h"
 #include "PluginLoadWrapper.h"
 #include "fs/FSUtils.h"
 #include "utils/StringTools.h"
@@ -24,6 +25,7 @@
 
 #include <memory>
 #include <set>
+
 #include <sys/dirent.h>
 
 std::vector<PluginLoadWrapper> PluginDataFactory::loadDir(const std::string_view path, const std::set<std::string> &inactivePluginsFilenames) {

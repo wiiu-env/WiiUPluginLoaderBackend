@@ -2,6 +2,8 @@
 
 #include <wups/button_combo.h>
 
+#include <cstdint>
+
 namespace ButtonComboUtils::API {
     namespace Internal {
         uint32_t CreateButtonComboData();

@@ -1,11 +1,14 @@
 #pragma once
 
 #include "ConfigRendererItemGeneric.h"
-#include "config/WUPSConfigItem.h"
+
+#include <string>
 
 #include <cstdint>
-#include <string>
-#include <wups/config.h>
+
+namespace WUPSConfigAPIBackend {
+    class WUPSConfigItem;
+}
 
 class ConfigRendererItem final : public ConfigRendererItemGeneric {
 public:

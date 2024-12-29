@@ -27,9 +27,10 @@
 #ifndef ___DIRLIST_H_
 #define ___DIRLIST_H_
 
+#include <wut_types.h>
+
 #include <string>
 #include <vector>
-#include <wut_types.h>
 
 typedef struct {
     char *FilePath;

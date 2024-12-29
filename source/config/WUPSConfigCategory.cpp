@@ -1,5 +1,9 @@
 #include "WUPSConfigCategory.h"
+#include "WUPSConfigItem.h"
 
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace WUPSConfigAPIBackend {
 

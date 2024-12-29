@@ -1,17 +1,28 @@
 #include "PluginManagement.h"
+
 #include "NotificationsUtils.h"
 #include "hooks.h"
+#include "plugin/FunctionData.h"
+#include "plugin/HookData.h"
+#include "plugin/PluginConfigData.h"
 #include "plugin/PluginContainer.h"
+#include "plugin/PluginData.h"
 #include "plugin/PluginLinkInformationFactory.h"
 #include "plugin/PluginLoadWrapper.h"
 #include "plugin/PluginMetaInformationFactory.h"
+#include "plugin/RelocationData.h"
+#include "plugin/SectionInfo.h"
 #include "utils/ElfUtils.h"
 #include "utils/StringTools.h"
-#include "utils/utils.h"
+#include "utils/logger.h"
+
+#include <wums/defines/relocation_defines.h>
+
 #include <coreinit/cache.h>
-#include <coreinit/dynload.h>
-#include <memory.h>
-#include <ranges>
+
+#include <vector>
+
+#include <cstdint>
 
 static uint32_t sTrampolineID = 0;
 

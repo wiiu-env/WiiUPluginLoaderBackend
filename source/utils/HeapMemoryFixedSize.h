@@ -1,7 +1,8 @@
 #pragma once
 
-#include <cstdint>
 #include <memory>
+
+#include <cstdint>
 
 class HeapMemoryFixedSize {
 public:

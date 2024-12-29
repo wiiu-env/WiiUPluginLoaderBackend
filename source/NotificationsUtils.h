@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string>
+#include <string_view>
 
 bool DisplayInfoNotificationMessage(std::string_view text, float duration);
 

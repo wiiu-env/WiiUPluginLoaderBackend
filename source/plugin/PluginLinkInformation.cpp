@@ -1,5 +1,10 @@
 #include "PluginLinkInformation.h"
 
+#include "FunctionData.h"
+#include "HookData.h"
+#include "RelocationData.h"
+#include "SectionInfo.h"
+
 PluginLinkInformation::PluginLinkInformation(PluginLinkInformation &&src) : mHookDataList(std::move(src.mHookDataList)),
                                                                             mFunctionDataList(std::move(src.mFunctionDataList)),
                                                                             mRelocationDataList(std::move(src.mRelocationDataList)),
@@ -13,7 +18,7 @@ PluginLinkInformation::PluginLinkInformation(PluginLinkInformation &&src) : mHoo
     src.mTrampolineId = {};
 }
 
-PluginLinkInformation &PluginLinkInformation::operator=(PluginLinkInformation &&src) {
+PluginLinkInformation &PluginLinkInformation::operator=(PluginLinkInformation &&src) noexcept {
     if (this != &src) {
         this->mHookDataList               = std::move(src.mHookDataList);
         this->mFunctionDataList           = std::move(src.mFunctionDataList);

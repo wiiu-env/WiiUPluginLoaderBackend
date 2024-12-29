@@ -1,8 +1,10 @@
 #pragma once
 
 #include "schrift.h"
-#include <cstdint>
+
 #include <functional>
+
+#include <cstdint>
 
 // visible screen sizes
 #define SCREEN_WIDTH             854

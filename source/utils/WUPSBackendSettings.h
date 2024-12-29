@@ -1,7 +1,6 @@
 #pragma once
 
 #include <set>
-#include <span>
 #include <string>
 
 namespace WUPSBackendSettings {

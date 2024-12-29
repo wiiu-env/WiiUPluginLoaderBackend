@@ -1,8 +1,10 @@
 #pragma once
 
-#include <cstdint>
-#include <string_view>
 #include <wups/storage.h>
+
+#include <string_view>
+
+#include <cstdint>
 
 namespace StorageUtils::API {
     namespace Internal {

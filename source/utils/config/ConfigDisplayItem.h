@@ -2,6 +2,7 @@
 
 #include "config/WUPSConfig.h"
 #include "plugin/PluginData.h"
+
 #include <memory>
 #include <string>
 

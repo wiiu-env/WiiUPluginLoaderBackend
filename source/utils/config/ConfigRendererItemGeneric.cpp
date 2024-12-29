@@ -1,7 +1,9 @@
 #include "ConfigRendererItemGeneric.h"
 
-#include "ConfigDefines.h"
 #include "utils/DrawUtils.h"
+
+#include <string>
+#include <wups/config.h>
 
 ConfigRendererItemGeneric::~ConfigRendererItemGeneric() = default;
 

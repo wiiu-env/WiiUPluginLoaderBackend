@@ -4,14 +4,18 @@
 #include "globals.h"
 #include "logger.h"
 #include "utils.h"
+
+#include <png.h>
+
+#include <memory/mappedmemory.h>
+
 #include <avm/tv.h>
 #include <coreinit/cache.h>
 #include <coreinit/memory.h>
 #include <coreinit/screen.h>
-#include <cstdlib>
-#include <memory/mappedmemory.h>
 #include <padscore/kpad.h>
-#include <png.h>
+
+#include <cstdlib>
 
 // buffer width
 #define DRC_WIDTH 0x380

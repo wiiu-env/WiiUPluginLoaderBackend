@@ -1,8 +1,9 @@
 #pragma once
 
+#include <wut_types.h>
+
 #include <string>
 #include <vector>
-#include <wut_types.h>
 
 class FSUtils {
 public:

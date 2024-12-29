@@ -1,11 +1,13 @@
 #pragma once
 
-#include "WUPSConfig.h"
-#include "WUPSConfigCategory.h"
-#include "WUPSConfigItem.h"
 #include <wups/config.h>
 
+#include <memory>
+
 namespace WUPSConfigAPIBackend {
+    class WUPSConfigItem;
+    class WUPSConfig;
+    class WUPSConfigCategory;
     namespace Intern {
         /**
          * @brief Retrieves a WUPSConfig pointer based on a given handle.

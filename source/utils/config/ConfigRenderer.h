@@ -1,17 +1,23 @@
 #pragma once
 
-#include "CategoryRenderer.h"
 #include "ConfigDefines.h"
 #include "ConfigDisplayItem.h"
-#include "plugin/PluginLoadWrapper.h"
-#include "utils/input/Input.h"
 
-#include <cstdint>
-#include <functional>
-#include <memory>
-#include <vector>
 #include <wups/config.h>
 
+#include <memory>
+#include <vector>
+
+#include <cstdint>
+
+namespace WUPSConfigAPIBackend {
+    class WUPSConfig;
+    class WUPSConfigCategory;
+} // namespace WUPSConfigAPIBackend
+class PluginLoadWrapper;
+class Input;
+class CategoryRenderer;
+class ConfigDisplayItem;
 class ConfigRenderer {
 
 public:
@@ -39,7 +45,7 @@ private:
     void CallOnCloseCallback(const GeneralConfigInformation &info, const std::vector<std::unique_ptr<WUPSConfigAPIBackend::WUPSConfigCategory>> &categories);
     void CallOnCloseCallback(const GeneralConfigInformation &info, const WUPSConfigAPIBackend::WUPSConfig &config);
 
-    const std::vector<std::reference_wrapper<ConfigDisplayItem>> &GetConfigList() const;
+    [[nodiscard]] const std::vector<std::reference_wrapper<ConfigDisplayItem>> &GetConfigList() const;
 
     enum State {
         STATE_MAIN = 0,
@@ -49,7 +55,7 @@ private:
     std::vector<ConfigDisplayItem> mConfigs;
     std::vector<std::reference_wrapper<ConfigDisplayItem>> mAllConfigs;
     std::vector<std::reference_wrapper<ConfigDisplayItem>> mActiveConfigs;
-    std::unique_ptr<CategoryRenderer> mCategoryRenderer = {};
+    std::unique_ptr<CategoryRenderer> mCategoryRenderer;
 
     State mState = STATE_MAIN;
 

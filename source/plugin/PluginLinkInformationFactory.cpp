@@ -16,13 +16,22 @@
  ****************************************************************************/
 
 #include "PluginLinkInformationFactory.h"
+
+#include "FunctionData.h"
+#include "HookData.h"
+#include "PluginData.h"
+#include "PluginLinkInformation.h"
+#include "RelocationData.h"
+#include "SectionInfo.h"
 #include "utils/ElfUtils.h"
+#include "utils/HeapMemoryFixedSize.h"
 #include "utils/logger.h"
 #include "utils/utils.h"
 #include "utils/wiiu_zlib.hpp"
 
-#include <coreinit/cache.h>
 #include <wups/function_patching.h>
+
+#include <coreinit/cache.h>
 
 using namespace ELFIO;
 

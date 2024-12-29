@@ -18,9 +18,11 @@
 #pragma once
 
 #include "ImportRPLInformation.h"
-#include <cstdint>
+
 #include <memory>
 #include <string>
+
+#include <cstdint>
 
 class RelocationData {
 

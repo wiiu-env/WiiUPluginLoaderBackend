@@ -1,6 +1,8 @@
 #pragma once
-#include "ConfigRendererItemGeneric.h"
-#include "config/WUPSConfigCategory.h"
+
+//#include "ConfigRendererItemGeneric.h"
+//#include "config/WUPSConfigCategory.h"
+
 #include <cassert>
 
 class ConfigRendererItemCategory final : public ConfigRendererItemGeneric {

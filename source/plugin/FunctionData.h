@@ -17,6 +17,7 @@
 #pragma once
 
 #include <function_patcher/fpatching_defines.h>
+
 #include <string>
 
 class FunctionData {

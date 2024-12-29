@@ -1,7 +1,8 @@
 #pragma once
 
-#include <cstdint>
 #include <wums/defines/relocation_defines.h>
+
+#include <cstdint>
 
 #ifdef __cplusplus
 extern "C" {

@@ -17,6 +17,7 @@
  ****************************************************************************/
 
 #include "Input.h"
+
 #include <padscore/kpad.h>
 #include <padscore/wpad.h>
 

@@ -1,8 +1,10 @@
 #pragma once
 
-#include <cstdint>
-#include <string>
 #include <wups/config.h>
+
+#include <string>
+
+#include <cstdint>
 
 class ConfigRendererItemGeneric {
 public:

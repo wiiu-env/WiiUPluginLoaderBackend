@@ -18,13 +18,15 @@
 #pragma once
 
 #include "PluginConfigData.h"
-#include "PluginData.h"
 #include "PluginLinkInformation.h"
 #include "PluginMetaInformation.h"
 
+#include <wups/storage.h>
+
 #include <memory>
 #include <optional>
-#include <wups/storage.h>
+
+class PluginData;
 
 class PluginContainer {
 public:

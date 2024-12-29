@@ -6,12 +6,15 @@
 #include "json.hpp"
 #include "logger.h"
 
-#include <algorithm>
 #include <coreinit/ios.h>
-#include <malloc.h>
-#include <string>
-#include <sys/dirent.h>
+
 #include <wups/storage.h>
+
+#include <algorithm>
+#include <string>
+
+#include <malloc.h>
+#include <sys/dirent.h>
 
 static std::string sPluginPath;
 static std::string sModulePath;

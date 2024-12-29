@@ -27,7 +27,9 @@
 
 #include "logger.h"
 #include "utils.h"
+
 #include <coreinit/debug.h>
+
 #include <memory>
 #include <string>
 

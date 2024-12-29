@@ -19,11 +19,11 @@
 
 #include "PluginData.h"
 #include "PluginMetaInformation.h"
+#include "elfio/elfio.hpp"
 #include "fs/FSUtils.h"
 #include "utils/logger.h"
 #include "utils/wiiu_zlib.hpp"
 
-#include <elfio/elfio.hpp>
 #include <optional>
 
 std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(const PluginData &pluginData, PluginParseErrors &error) {

@@ -1,12 +1,16 @@
 #pragma once
 
-#include "plugin/PluginContainer.h"
-#include "plugin/PluginLoadWrapper.h"
+#include <wums/defines/relocation_defines.h>
+
 #include <coreinit/dynload.h>
+
 #include <functional>
 #include <map>
-#include <set>
-#include <wums/defines/relocation_defines.h>
+#include <string>
+
+class RelocationData;
+class PluginLoadWrapper;
+class PluginContainer;
 
 class PluginManagement {
 public:

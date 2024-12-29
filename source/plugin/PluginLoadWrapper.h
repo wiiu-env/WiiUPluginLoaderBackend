@@ -1,6 +1,8 @@
 #pragma once
-#include "PluginData.h"
+
 #include <memory>
+
+class PluginData;
 
 class PluginLoadWrapper {
 public:

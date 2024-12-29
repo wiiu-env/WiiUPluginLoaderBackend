@@ -1,11 +1,15 @@
 #include "hooks_patcher_static.h"
 
 #include "globals.h"
+#include "hooks.h"
+#include "plugin/PluginConfigData.h"
+#include "plugin/PluginContainer.h"
+#include "plugin/PluginData.h"
+#include "plugin/SectionInfo.h"
 #include "utils/config/ConfigUtils.h"
 
 #include <coreinit/core.h>
 #include <coreinit/messagequeue.h>
-#include <hooks.h>
 #include <padscore/wpad.h>
 #include <vpad/input.h>
 

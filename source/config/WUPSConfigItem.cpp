@@ -1,5 +1,7 @@
 #include "WUPSConfigItem.h"
 
+#include <string>
+
 namespace WUPSConfigAPIBackend {
     WUPSConfigItem::WUPSConfigItem(std::string displayName) : mDisplayName(std::move(displayName)) {
     }

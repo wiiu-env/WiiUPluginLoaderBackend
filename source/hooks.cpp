@@ -1,14 +1,19 @@
 #include "hooks.h"
+
+#include "plugin/HookData.h"
+#include "plugin/PluginConfigData.h"
 #include "plugin/PluginContainer.h"
+#include "plugin/PluginData.h"
 #include "utils/StorageUtilsDeprecated.h"
 #include "utils/buttoncombo/ButtonComboUtils.h"
 #include "utils/logger.h"
 #include "utils/storage/StorageUtils.h"
 
-#include <functional>
 #include <wups/button_combo.h>
 #include <wups/button_combo_internal.h>
 #include <wups/storage.h>
+
+#include <functional>
 
 static const char **hook_names = (const char *[]){
         "WUPS_LOADER_HOOK_INIT_WUT_MALLOC",

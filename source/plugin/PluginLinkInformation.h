@@ -17,18 +17,19 @@
 
 #pragma once
 
-#include "FunctionData.h"
 #include "FunctionSymbolData.h"
-#include "HookData.h"
-#include "RelocationData.h"
-#include "SectionInfo.h"
 #include "utils/HeapMemoryFixedSize.h"
-#include <cstdint>
+
 #include <map>
 #include <optional>
 #include <set>
-#include <string>
 #include <vector>
+
+class HeapMemoryFixedSize;
+class SectionInfo;
+class RelocationData;
+class FunctionData;
+class HookData;
 
 struct FunctionSymbolDataComparator {
     bool operator()(const FunctionSymbolData &lhs,
@@ -45,7 +46,7 @@ public:
 
     PluginLinkInformation(PluginLinkInformation &&src) noexcept;
 
-    PluginLinkInformation &operator=(PluginLinkInformation &&src);
+    PluginLinkInformation &operator=(PluginLinkInformation &&src) noexcept;
 
     [[nodiscard]] const std::vector<HookData> &getHookDataList() const;
 

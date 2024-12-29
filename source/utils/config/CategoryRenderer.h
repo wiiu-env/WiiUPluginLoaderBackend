@@ -2,13 +2,20 @@
 
 #include "ConfigDefines.h"
 #include "ConfigDisplayItem.h"
-#include "ConfigRendererItemGeneric.h"
-#include "config/WUPSConfigCategory.h"
-#include "utils/input/Input.h"
 
-#include <cstdint>
+#include <wups/config.h>
+
 #include <memory>
 #include <vector>
+
+#include <cstdint>
+
+namespace WUPSConfigAPIBackend {
+    class WUPSConfigCategory;
+}
+
+class Input;
+class ConfigRendererItemGeneric;
 
 class CategoryRenderer {
 
@@ -45,9 +52,9 @@ private:
     const GeneralConfigInformation *mInfo                  = {};
     const WUPSConfigAPIBackend::WUPSConfigCategory *mCat   = {};
 
-    std::vector<std::unique_ptr<ConfigRendererItemGeneric>> mItemRenderer = {};
-    bool mIsItemMovementAllowed                                           = true;
-    bool mFirstFrame                                                      = true;
-    bool mIsRoot                                                          = false;
-    bool mNeedsRedraw                                                     = true;
+    std::vector<std::unique_ptr<ConfigRendererItemGeneric>> mItemRenderer;
+    bool mIsItemMovementAllowed = true;
+    bool mFirstFrame            = true;
+    bool mIsRoot                = false;
+    bool mNeedsRedraw           = true;
 };

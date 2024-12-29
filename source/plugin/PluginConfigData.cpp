@@ -1,6 +1,6 @@
 #include "PluginConfigData.h"
-
-#include <config/WUPSConfigAPI.h>
+#include "config/WUPSConfigAPI.h"
+#include "plugin/PluginData.h"
 
 PluginConfigData::PluginConfigData(const std::string_view name,
                                    const WUPSConfigAPI_MenuOpenedCallback openedCallback,

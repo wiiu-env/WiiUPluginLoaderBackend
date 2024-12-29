@@ -3,13 +3,16 @@
 #include "plugin/PluginContainer.h"
 #include "plugin/PluginData.h"
 #include "plugin/PluginDataFactory.h"
+#include "plugin/PluginLoadWrapper.h"
 #include "plugin/PluginMetaInformation.h"
 #include "plugin/PluginMetaInformationFactory.h"
+#include "plugin/SectionInfo.h"
 #include "utils.h"
 
-#include <ranges>
 #include <wums.h>
 #include <wups_backend/import_defines.h>
+
+#include <ranges>
 
 static void fillPluginInformation(wups_backend_plugin_information *out, const PluginMetaInformation &metaInformation) {
     out->plugin_information_version = WUPS_BACKEND_PLUGIN_INFORMATION_VERSION;

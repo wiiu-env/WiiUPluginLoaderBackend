@@ -17,12 +17,14 @@
 
 #pragma once
 
-#include "PluginData.h"
-#include "PluginMetaInformation.h"
-
 #include <optional>
 #include <span>
 #include <string_view>
+
+#include <cstdint>
+
+class PluginData;
+class PluginMetaInformation;
 
 enum PluginParseErrors {
     PLUGIN_PARSE_ERROR_NONE,

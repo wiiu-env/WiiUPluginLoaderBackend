@@ -1,6 +1,9 @@
-#include <cstdint>
+#pragma once
+
 #include <optional>
 #include <string>
+
+#include <cstdint>
 
 class WUPSVersion {
 public:

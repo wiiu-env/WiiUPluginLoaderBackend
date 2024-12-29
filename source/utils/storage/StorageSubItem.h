@@ -2,10 +2,11 @@
 
 #include "StorageItem.h"
 
+#include <wups/storage.h>
+
 #include <forward_list>
 #include <map>
 #include <string>
-#include <wups/storage.h>
 
 class StorageSubItem : public StorageItem {
 public:

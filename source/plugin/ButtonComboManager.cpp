@@ -1,7 +1,9 @@
 #include "ButtonComboManager.h"
+#include "utils/logger.h"
+#include "utils/utils.h"
+
 #include <buttoncombo/manager.h>
-#include <utils/logger.h>
-#include <utils/utils.h>
+
 #include <wups/button_combo_internal.h>
 
 namespace {

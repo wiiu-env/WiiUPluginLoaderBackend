@@ -2,6 +2,8 @@
 
 #include <function_patcher/function_patching.h>
 
+#include <cstdint>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

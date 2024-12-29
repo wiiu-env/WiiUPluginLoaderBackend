@@ -1,12 +1,14 @@
 #include "fs/FSUtils.h"
 #include "utils/logger.h"
+
 #include "utils/utils.h"
+#include <filesystem>
+#include <vector>
+
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h>
-#include <filesystem>
 #include <unistd.h>
-#include <vector>
 
 int32_t FSUtils::LoadFileToMem(std::string_view filepath, std::vector<uint8_t> &buffer) {
     //! always initialize input

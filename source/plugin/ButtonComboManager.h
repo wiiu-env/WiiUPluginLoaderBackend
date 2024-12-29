@@ -1,11 +1,14 @@
 #pragma once
 
 #include <buttoncombo/defines.h>
-#include <cstdint>
+
+#include <wups/button_combo.h>
+
 #include <functional>
 #include <memory>
 #include <vector>
-#include <wups/button_combo.h>
+
+#include <cstdint>
 
 
 class ButtonComboWrapper;

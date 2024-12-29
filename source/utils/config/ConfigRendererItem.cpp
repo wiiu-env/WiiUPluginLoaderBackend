@@ -1,5 +1,8 @@
 #include "ConfigRendererItem.h"
+
 #include "utils/DrawUtils.h"
+#include <config/WUPSConfigItem.h>
+
 #include <cassert>
 
 ConfigRendererItem::ConfigRendererItem(const WUPSConfigAPIBackend::WUPSConfigItem *item) : mItem(item) {

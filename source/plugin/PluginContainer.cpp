@@ -1,7 +1,15 @@
 #include "PluginContainer.h"
+#include "plugin/FunctionData.h"
+#include "plugin/HookData.h"
+#include "plugin/PluginConfigData.h"
+#include "plugin/PluginData.h"
+#include "plugin/PluginLinkInformation.h"
+#include "plugin/RelocationData.h"
+#include "plugin/SectionInfo.h"
+#include "utils/buttoncombo/ButtonComboUtils.h"
 #include "utils/storage/StorageUtils.h"
 
-#include <utils/buttoncombo/ButtonComboUtils.h>
+#include <optional>
 
 PluginContainer::PluginContainer(PluginMetaInformation metaInformation, PluginLinkInformation pluginLinkInformation, std::shared_ptr<PluginData> pluginData)
     : mMetaInformation(std::move(metaInformation)),

@@ -1,5 +1,7 @@
 #include "PluginMetaInformation.h"
 
+#include <cstdint>
+
 [[nodiscard]] const std::string &PluginMetaInformation::getName() const {
     return mName;
 }

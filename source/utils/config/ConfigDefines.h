@@ -1,7 +1,8 @@
 #pragma once
 
-#include <cstdint>
 #include <gx2/surface.h>
+
+#include <cstdint>
 
 #define MAX_BUTTONS_ON_SCREEN 8
 

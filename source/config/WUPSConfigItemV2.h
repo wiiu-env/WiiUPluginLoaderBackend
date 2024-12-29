@@ -1,8 +1,10 @@
 #pragma once
 
 #include "WUPSConfigItem.h"
-#include <string>
+
 #include <wups/config.h>
+
+#include <string>
 
 namespace WUPSConfigAPIBackend {
     class WUPSConfigItemV2 final : public WUPSConfigItem {

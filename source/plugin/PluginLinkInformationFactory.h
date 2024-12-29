@@ -16,12 +16,16 @@
  ****************************************************************************/
 
 #pragma once
-#include "PluginData.h"
-#include "PluginLinkInformation.h"
+
+#include <wums/defines/relocation_defines.h>
 
 #include <elfio/elfio.hpp>
+
 #include <optional>
-#include <wums/defines/relocation_defines.h>
+#include <span>
+
+class PluginData;
+class PluginLinkInformation;
 
 class PluginLinkInformationFactory {
 public:

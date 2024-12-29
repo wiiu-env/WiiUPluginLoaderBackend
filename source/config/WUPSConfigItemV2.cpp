@@ -1,9 +1,10 @@
 #include "WUPSConfigItemV2.h"
+
+#include <wups/config.h>
+
 #include "utils/StringTools.h"
 #include "utils/logger.h"
-
 #include <string>
-#include <wups/config.h>
 
 namespace WUPSConfigAPIBackend {
     WUPSConfigItemV2::WUPSConfigItemV2(const std::string_view displayName,

@@ -6,9 +6,9 @@
 
 #include <functional>
 #include <memory>
-#include <vector>
 
 #include <cstdint>
+#include <forward_list>
 
 
 class ButtonComboWrapper;
@@ -71,6 +71,6 @@ public:
     [[nodiscard]] uint32_t getHandle() const;
 
 private:
-    std::vector<ButtonComboWrapper> mComboWrappers;
+    std::forward_list<ButtonComboWrapper> mComboWrappers;
     std::unique_ptr<uint32_t> mHandle = std::make_unique<uint32_t>();
 };

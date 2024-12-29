@@ -1,4 +1,5 @@
 #include "WUPSConfigAPI.h"
+
 #include "WUPSConfig.h"
 #include "WUPSConfigCategory.h"
 #include "WUPSConfigItem.h"
@@ -10,12 +11,13 @@
 #include "utils/logger.h"
 #include "utils/utils.h"
 
-#include <memory>
-#include <ranges>
-#include <vector>
 #include <wums/exports.h>
-#include <wups/config.h>
 #include <wups/config_api.h>
+
+#include <bits/ranges_algo.h>
+#include <memory>
+#include <mutex>
+#include <vector>
 
 namespace WUPSConfigAPIBackend {
 

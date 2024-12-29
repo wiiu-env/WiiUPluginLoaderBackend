@@ -1,22 +1,34 @@
 #include "PluginManagement.h"
-#include "coreinit/interrupts.h"
-#include "coreinit/scheduler.h"
 #include "globals.h"
 #include "hooks.h"
 #include "patcher/hooks_patcher_static.h"
+#include "plugin/FunctionData.h"
+#include "plugin/HookData.h"
+#include "plugin/PluginConfigData.h"
+#include "plugin/PluginContainer.h"
+#include "plugin/PluginData.h"
 #include "plugin/PluginDataFactory.h"
+#include "plugin/PluginLoadWrapper.h"
+#include "plugin/RelocationData.h"
+#include "plugin/SectionInfo.h"
 #include "utils/DrawUtils.h"
 #include "utils/WUPSBackendSettings.h"
 #include "utils/input/VPADInput.h"
 #include "utils/logger.h"
 #include "utils/utils.h"
-#include "version.h"
 
 #include <buttoncombo/manager.h>
-#include <coreinit/debug.h>
+#include <function_patcher/function_patching.h>
+#include <notifications/notification_defines.h>
 #include <notifications/notifications.h>
-#include <ranges>
-#include <wums.h>
+
+#include <wums/meta.h>
+#include <wups/hooks.h>
+
+#include <coreinit/interrupts.h>
+#include <coreinit/scheduler.h>
+
+#include <thread>
 
 WUMS_MODULE_EXPORT_NAME("homebrew_wupsbackend");
 WUMS_USE_WUT_DEVOPTAB();

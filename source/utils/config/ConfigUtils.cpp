@@ -1,26 +1,31 @@
 #include "ConfigUtils.h"
+
+#include "ConfigDisplayItem.h"
 #include "ConfigRenderer.h"
 #include "config/WUPSConfigAPI.h"
+#include "globals.h"
 #include "hooks.h"
+#include "plugin/HookData.h"
+#include "plugin/PluginContainer.h"
 #include "plugin/PluginLoadWrapper.h"
 #include "utils/DrawUtils.h"
 #include "utils/WUPSBackendSettings.h"
-#include "utils/dc.h"
 #include "utils/input/CombinedInput.h"
 #include "utils/input/Input.h"
 #include "utils/input/VPADInput.h"
 #include "utils/input/WPADInput.h"
 #include "utils/logger.h"
 #include "utils/utils.h"
-#include "version.h"
 
-#include <algorithm>
-#include <coreinit/title.h>
-#include <globals.h>
-#include <memory>
-#include <sysapp/launch.h>
-#include <vector>
 #include <wups/config.h>
+#include <wups/hooks.h>
+
+#include <coreinit/title.h>
+#include <sysapp/launch.h>
+
+#include <bits/ranges_algo.h>
+#include <memory>
+#include <vector>
 
 WUPS_CONFIG_SIMPLE_INPUT ConfigUtils::convertInputs(const uint32_t buttons) {
     WUPSConfigButtons pressedButtons = WUPS_CONFIG_BUTTON_NONE;

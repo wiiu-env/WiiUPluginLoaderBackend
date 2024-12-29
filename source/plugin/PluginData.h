@@ -17,11 +17,12 @@
 
 #pragma once
 
-#include <cstdint>
 #include <memory>
 #include <span>
 #include <string>
 #include <vector>
+
+#include <cstdint>
 
 class PluginData {
 public:

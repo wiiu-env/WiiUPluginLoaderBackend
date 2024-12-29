@@ -1,14 +1,17 @@
 #pragma once
 
 #include "json.hpp"
-#include <algorithm>
+
 #include <coreinit/dynload.h>
-#include <cstdint>
+
+#include <algorithm>
 #include <forward_list>
 #include <memory>
 #include <mutex>
 #include <set>
 #include <vector>
+
+#include <cstdint>
 
 #ifdef __cplusplus
 extern "C" {

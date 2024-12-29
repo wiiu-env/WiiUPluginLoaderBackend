@@ -1,5 +1,10 @@
 #include "ConfigDisplayItem.h"
+
 #include "config/WUPSConfig.h"
+
+#include <memory>
+
+#include <cassert>
 
 ConfigDisplayItem::ConfigDisplayItem(GeneralConfigInformation &info,
                                      std::unique_ptr<WUPSConfigAPIBackend::WUPSConfig> config,

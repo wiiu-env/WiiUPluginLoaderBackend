@@ -1,11 +1,12 @@
 #include "ButtonComboUtils.h"
 
+#include "plugin/ButtonComboManager.h"
+#include "plugin/PluginContainer.h"
+#include "utils/logger.h"
+#include "utils/utils.h"
+
 #include <forward_list>
 #include <mutex>
-#include <plugin/ButtonComboManager.h>
-#include <plugin/PluginContainer.h>
-#include <utils/logger.h>
-#include <utils/utils.h>
 
 namespace ButtonComboUtils::API {
     static std::forward_list<ButtonComboManager> sButtonComboManager;
@@ -118,7 +119,7 @@ namespace ButtonComboUtils::API {
 
     WUPSButtonCombo_Error UpdateButtonCombo(void *identifier,
                                             const WUPSButtonCombo_ComboHandle handle,
-                                            WUPSButtonCombo_Buttons combo,
+                                            const WUPSButtonCombo_Buttons combo,
                                             WUPSButtonCombo_ComboStatus *outStatus) {
         WUPSButtonCombo_ComboStatus tmpStatus;
         const auto res = ExecuteForIdentifierLocked(identifier,

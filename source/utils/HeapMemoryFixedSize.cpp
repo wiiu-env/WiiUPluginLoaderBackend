@@ -1,4 +1,5 @@
 #include "HeapMemoryFixedSize.h"
+
 #include "utils.h"
 
 HeapMemoryFixedSize::HeapMemoryFixedSize() = default;

@@ -16,12 +16,13 @@
  ****************************************************************************/
 
 #pragma once
-#include "PluginData.h"
-#include "PluginLoadWrapper.h"
 
 #include <memory>
 #include <set>
 #include <vector>
+
+class PluginData;
+class PluginLoadWrapper;
 
 class PluginDataFactory {
 public:

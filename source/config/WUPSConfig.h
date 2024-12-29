@@ -18,6 +18,7 @@
 #pragma once
 
 #include "WUPSConfigCategory.h"
+
 #include <string_view>
 
 namespace WUPSConfigAPIBackend {

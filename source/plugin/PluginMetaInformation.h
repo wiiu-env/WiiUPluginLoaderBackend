@@ -18,7 +18,12 @@
 #pragma once
 
 #include "WUPSVersion.h"
+
 #include <string>
+
+#include <cstdint>
+
+class WUPSVersion;
 
 class PluginMetaInformation {
 public:

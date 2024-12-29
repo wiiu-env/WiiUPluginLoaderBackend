@@ -1,6 +1,11 @@
 #include "WUPSConfigItemV1.h"
+
 #include "utils/StringTools.h"
 #include "utils/logger.h"
+
+#include <wups/config.h>
+
+#include <string>
 
 namespace WUPSConfigAPIBackend {
     WUPSConfigItemV1::WUPSConfigItemV1(const std::string_view configId,

@@ -25,9 +25,10 @@
 ***************************************************************************/
 
 #include "StringTools.h"
-#include <cstring>
+
 #include <string>
-#include <strings.h>
+
+#include <cstring>
 
 std::string StringTools::truncate(const std::string &str, const size_t width, const bool show_ellipsis) {
     if (str.length() > width - 3) {

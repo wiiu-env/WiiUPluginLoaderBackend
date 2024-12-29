@@ -2,6 +2,7 @@
 #include "utils/logger.h"
 
 #include <function_patcher/function_patching.h>
+
 #include <string>
 
 FunctionData::FunctionData(void *paddress, void *vaddress,

@@ -1,19 +1,25 @@
 #include "ConfigRenderer.h"
+
+#include "CategoryRenderer.h"
+#include "ConfigDisplayItem.h"
+#include "config/WUPSConfigItem.h"
 #include "globals.h"
 #include "plugin/PluginLoadWrapper.h"
 #include "utils/DrawUtils.h"
 #include "utils/StringTools.h"
+#include "utils/input/Input.h"
 #include "utils/logger.h"
-#include "utils/utils.h"
+
+#include <algorithm>
 
 ConfigRenderer::ConfigRenderer(std::vector<ConfigDisplayItem> &&vec) : mConfigs(std::move(vec)) {
-    std::copy(mConfigs.begin(), mConfigs.end(),
-              std::back_inserter(mAllConfigs));
-    std::copy_if(mConfigs.begin(), mConfigs.end(),
-                 std::back_inserter(mActiveConfigs),
-                 [&](const auto &value) {
-                     return value.isActivePlugin();
-                 });
+    std::ranges::copy(mConfigs,
+                      std::back_inserter(mAllConfigs));
+    std::ranges::copy_if(mConfigs,
+                         std::back_inserter(mActiveConfigs),
+                         [&](const auto &value) {
+                             return value.isActivePlugin();
+                         });
 }
 
 ConfigRenderer::~ConfigRenderer() = default;
@@ -205,7 +211,7 @@ void ConfigRenderer::RenderStateMain() const {
         auto countInactivePlugins = mAllConfigs.size() - mActiveConfigs.size();
         if (countInactivePlugins > 0) {
             DrawUtils::setFontSize(14);
-            std::string plugin_unloaded = string_format("Found %d inactive plugins", countInactivePlugins);
+            const std::string plugin_unloaded = string_format("Found %d inactive plugins", countInactivePlugins);
             DrawUtils::print(SCREEN_WIDTH - 16 - DrawUtils::getTextWidth(MODULE_VERSION_FULL) - 32, 8 + 24, plugin_unloaded.c_str(), true);
         }
     }

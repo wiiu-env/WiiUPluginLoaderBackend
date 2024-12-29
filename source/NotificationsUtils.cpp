@@ -1,8 +1,11 @@
 #include "NotificationsUtils.h"
+
 #include "globals.h"
 #include "utils/logger.h"
-#include <cstring>
+
 #include <notifications/notifications.h>
+
+#include <cstring>
 
 bool DisplayNotificationMessage(std::string_view text, NotificationModuleNotificationType type, float duration) {
     if (!gNotificationModuleLoaded) {

@@ -1,9 +1,11 @@
 
+#include "fs/CFile.hpp"
 #include "utils/utils.h"
+
 #include <cstdarg>
 #include <cstdio>
-#include <fs/CFile.hpp>
-#include <strings.h>
+#include <sys/_default_fcntl.h>
+
 
 CFile::CFile() {
     iFd      = -1;

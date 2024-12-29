@@ -1,7 +1,15 @@
 #include "globals.h"
+
+#include "plugin/FunctionData.h"
+#include "plugin/HookData.h"
+#include "plugin/PluginConfigData.h"
 #include "plugin/PluginContainer.h"
 #include "plugin/PluginData.h"
+#include "plugin/PluginLinkInformation.h"
 #include "plugin/PluginLoadWrapper.h"
+#include "plugin/RelocationData.h"
+#include "plugin/SectionInfo.h"
+
 
 StoredBuffer gStoredTVBuffer  = {};
 StoredBuffer gStoredDRCBuffer = {};

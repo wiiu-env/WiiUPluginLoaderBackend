@@ -2,13 +2,16 @@
 
 #include "utils/config/ConfigDefines.h"
 #include "version.h"
+
+#include <wums/defines/relocation_defines.h>
+
 #include <coreinit/dynload.h>
 #include <coreinit/thread.h>
+
 #include <map>
 #include <memory>
 #include <set>
 #include <vector>
-#include <wums/defines/relocation_defines.h>
 
 #define MODULE_VERSION      "v0.3.5"
 #define MODULE_VERSION_FULL MODULE_VERSION MODULE_VERSION_EXTRA

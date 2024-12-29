@@ -1,9 +1,10 @@
 #pragma once
 
-#include <optional>
-#include <string>
 #include <wups/config.h>
 #include <wups/config_api.h>
+
+#include <optional>
+#include <string>
 
 class PluginConfigData {
 public:

@@ -16,13 +16,13 @@
 ****************************************************************************/
 
 #pragma once
-#include "WUPSConfigItem.h"
 
 #include <memory>
 #include <string>
 #include <vector>
 
 namespace WUPSConfigAPIBackend {
+    class WUPSConfigItem;
     class WUPSConfigCategory {
     public:
         explicit WUPSConfigCategory(std::string_view name);

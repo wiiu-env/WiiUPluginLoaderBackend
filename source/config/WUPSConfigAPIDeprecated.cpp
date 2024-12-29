@@ -1,7 +1,9 @@
 #include "WUPSConfig.h"
 #include "WUPSConfigAPI.h"
+#include "WUPSConfigItem.h"
 #include "utils/logger.h"
-#include <wums.h>
+
+#include <wums/exports.h>
 #include <wups/config.h>
 
 int32_t WUPSConfig_Create(void **out, const char *name) {

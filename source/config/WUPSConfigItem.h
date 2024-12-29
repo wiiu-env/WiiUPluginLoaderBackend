@@ -17,8 +17,9 @@
 
 #pragma once
 
-#include <string>
 #include <wups/config.h>
+
+#include <string>
 
 namespace WUPSConfigAPIBackend {
     class WUPSConfigItem {

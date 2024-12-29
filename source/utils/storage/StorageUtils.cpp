@@ -1,6 +1,6 @@
-#include "StorageItem.h"
+#include "StorageUtils.h"
+
 #include "StorageItemRoot.h"
-#include "StorageSubItem.h"
 #include "fs/CFile.hpp"
 #include "fs/FSUtils.h"
 #include "utils/base64.h"
@@ -9,9 +9,9 @@
 #include "utils/utils.h"
 
 #include <forward_list>
-#include <malloc.h>
 #include <mutex>
-#include <wups/storage.h>
+
+#include <cstring>
 
 namespace StorageUtils {
     std::forward_list<StorageItemRoot> gStorage;

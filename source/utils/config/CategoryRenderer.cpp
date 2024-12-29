@@ -1,11 +1,21 @@
 #include "CategoryRenderer.h"
+
+#include "ConfigDefines.h"
 #include "ConfigRendererItem.h"
 #include "ConfigRendererItemCategory.h"
+#include "ConfigRendererItemGeneric.h"
 #include "ConfigUtils.h"
 #include "utils/DrawUtils.h"
 #include "utils/StringTools.h"
+#include "utils/input/Input.h"
 #include "utils/logger.h"
-#include "utils/utils.h"
+
+#include <wups/config.h>
+
+#include <algorithm>
+
+#include <cassert>
+#include <cstdint>
 
 CategoryRenderer::CategoryRenderer(const GeneralConfigInformation *info, const WUPSConfigAPIBackend::WUPSConfigCategory *cat, const bool isRoot)
     : mInfo(info), mCat(cat), mIsRoot(isRoot) {

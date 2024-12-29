@@ -10,7 +10,7 @@
 #include <vector>
 #include <wums/defines/relocation_defines.h>
 
-#define MODULE_VERSION      "v0.3.4"
+#define MODULE_VERSION      "v0.3.5"
 #define MODULE_VERSION_FULL MODULE_VERSION MODULE_VERSION_EXTRA
 
 class PluginDataSharedPtrComparator;

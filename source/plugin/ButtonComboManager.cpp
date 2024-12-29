@@ -328,32 +328,42 @@ public:
     }
 
     ~ButtonComboWrapper() {
+        ReleaseButtonComboHandle();
+    }
+
+    void ReleaseButtonComboHandle() {
         if (mButtonComboHandle != nullptr) {
             if (const auto res = ButtonComboModule_RemoveButtonCombo(mButtonComboHandle); res != BUTTON_COMBO_MODULE_ERROR_SUCCESS) {
                 DEBUG_FUNCTION_LINE_WARN("ButtonComboModule_RemoveButtonCombo for %08X returned: %s", mButtonComboHandle, ButtonComboModule_GetStatusStr(res));
             }
+            mButtonComboHandle = ButtonComboModule_ComboHandle(nullptr);
         }
     }
 
     ButtonComboWrapper(const ButtonComboWrapper &) = delete;
+    ButtonComboWrapper &operator=(ButtonComboWrapper &src) = delete;
 
     ButtonComboWrapper(ButtonComboWrapper &&src) noexcept : mCreationError(src.mCreationError),
-                                                            mButtonComboHandle(src.mButtonComboHandle),
                                                             mContextData(std::move(src.mContextData)),
                                                             mHandle(std::move(src.mHandle)) {
-        this->mCreationError     = BUTTON_COMBO_MODULE_ERROR_UNKNOWN_ERROR;
-        this->mButtonComboHandle = ButtonComboModule_ComboHandle(nullptr);
+        ReleaseButtonComboHandle();
+
+        mButtonComboHandle = ButtonComboModule_ComboHandle(src.mButtonComboHandle.handle);
+
+        src.mCreationError     = BUTTON_COMBO_MODULE_ERROR_UNKNOWN_ERROR;
+        src.mButtonComboHandle = ButtonComboModule_ComboHandle(nullptr);
     }
 
     ButtonComboWrapper &operator=(ButtonComboWrapper &&src) noexcept {
         if (this != &src) {
+            ReleaseButtonComboHandle();
             this->mCreationError     = src.mCreationError;
-            this->mButtonComboHandle = src.mButtonComboHandle;
+            this->mButtonComboHandle = ButtonComboModule_ComboHandle(src.mButtonComboHandle.handle);
             this->mContextData       = std::move(src.mContextData);
             this->mHandle            = std::move(src.mHandle);
 
-            this->mCreationError     = BUTTON_COMBO_MODULE_ERROR_UNKNOWN_ERROR;
-            this->mButtonComboHandle = ButtonComboModule_ComboHandle(nullptr);
+            src.mCreationError     = BUTTON_COMBO_MODULE_ERROR_UNKNOWN_ERROR;
+            src.mButtonComboHandle = ButtonComboModule_ComboHandle(nullptr);
         }
         return *this;
     }
@@ -453,8 +463,8 @@ ButtonComboManager &ButtonComboManager::operator=(ButtonComboManager &&src) {
 WUPSButtonCombo_Error ButtonComboManager::AddButtonComboHandle(const WUPSButtonCombo_ComboOptions &options,
                                                                WUPSButtonCombo_ComboHandle &outHandle,
                                                                WUPSButtonCombo_ComboStatus &outStatus) {
-    mComboWrappers.emplace_back(options, outStatus);
-    const auto &addedItem = mComboWrappers.back();
+    mComboWrappers.emplace_front(options, outStatus);
+    const auto &addedItem = mComboWrappers.front();
     const auto handle     = addedItem.getHandle();
     if (const auto res = addedItem.GetCreationError(); res != WUPS_BUTTON_COMBO_ERROR_SUCCESS) {
         if (!remove_first_if(mComboWrappers, [&handle](const auto &comboWrapper) { return comboWrapper.getHandle() == handle; })) {

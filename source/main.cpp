@@ -17,7 +17,7 @@
 #include "utils/logger.h"
 #include "utils/utils.h"
 
-#include <buttoncombo/manager.h>
+#include <buttoncombo/api.h>
 #include <function_patcher/function_patching.h>
 #include <notifications/notification_defines.h>
 #include <notifications/notifications.h>

@@ -1,15 +1,12 @@
 #pragma once
 
-#include <buttoncombo/defines.h>
-
-#include <wups/button_combo.h>
+#include <wups/button_combo/defines.h>
 
 #include <functional>
 #include <memory>
 
 #include <cstdint>
 #include <forward_list>
-
 
 class ButtonComboWrapper;
 
@@ -60,11 +57,11 @@ public:
     WUPSButtonCombo_Error GetButtonComboInfoEx(WUPSButtonCombo_ComboHandle handle,
                                                WUPSButtonCombo_ButtonComboInfoEx &outOptions);
 
-    WUPSButtonCombo_Error CheckComboAvailable(const WUPSButtonCombo_ButtonComboOptions &options,
-                                              WUPSButtonCombo_ComboStatus &outStatus);
+    static WUPSButtonCombo_Error CheckComboAvailable(const WUPSButtonCombo_ButtonComboOptions &options,
+                                                     WUPSButtonCombo_ComboStatus &outStatus);
 
-    WUPSButtonCombo_Error DetectButtonCombo_Blocking(const WUPSButtonCombo_DetectButtonComboOptions &options,
-                                                     WUPSButtonCombo_Buttons &outButtonCombo);
+    static WUPSButtonCombo_Error DetectButtonCombo_Blocking(const WUPSButtonCombo_DetectButtonComboOptions &options,
+                                                            WUPSButtonCombo_Buttons &outButtonCombo);
 
     WUPSButtonCombo_Error ExecuteForWrapper(const WUPSButtonCombo_ComboHandle &handle, const std::function<WUPSButtonCombo_Error(ButtonComboWrapper &)> &callback);
 

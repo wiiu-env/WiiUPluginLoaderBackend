@@ -9,7 +9,7 @@
 #include "utils/logger.h"
 #include "utils/storage/StorageUtils.h"
 
-#include <wups/button_combo.h>
+#include <wups/button_combo/api.h>
 #include <wups/button_combo_internal.h>
 #include <wups/storage.h>
 
@@ -159,7 +159,7 @@ void CallHook(const PluginContainer &plugin, wups_loader_hook_type_t hook_type) 
                         // clang-format on
                         if (res != WUPS_BUTTON_COMBO_ERROR_SUCCESS) {
                             // TODO: More error handling? Notification?
-                            DEBUG_FUNCTION_LINE_ERR("WUPS_LOADER_HOOK_INIT_BUTTON_COMBO failed for plugin %s: %s", plugin.getMetaInformation().getName().c_str(), WUPSButtonComboAPI_GetStatusStr(res));
+                            DEBUG_FUNCTION_LINE_ERR("WUPS_LOADER_HOOK_INIT_BUTTON_COMBO failed for plugin %s: %s", plugin.getMetaInformation().getName().c_str(), WUPSButtonComboAPI::GetStatusStr(res));
                         }
                         break;
                     }

@@ -2,9 +2,12 @@
 #include "utils/logger.h"
 #include "utils/utils.h"
 
-#include <buttoncombo/manager.h>
+#include <buttoncombo/api.h>
+#include <buttoncombo/defines.h>
 
 #include <wups/button_combo_internal.h>
+
+#include <optional>
 
 namespace {
     WUPSButtonCombo_Error convertError(const ButtonComboModule_Error other) {
@@ -304,66 +307,49 @@ namespace {
         void *context                          = nullptr;
     };
 
-    void ButtonComboCallbackWrapper(const ButtonComboModule_ComboHandle handle, void *context) {
+    void ButtonComboCallbackWrapper(const ButtonComboModule_ControllerTypes triggeredBy, const ButtonComboModule_ComboHandle handle, void *context) {
         const auto *data = static_cast<ComboCallbackWrapperData *>(context);
-        data->callback(WUPSButtonCombo_ComboHandle(handle.handle), data->context);
+        data->callback(convert(triggeredBy), WUPSButtonCombo_ComboHandle(handle.handle), data->context);
     }
 } // namespace
 
 class ButtonComboWrapper {
 public:
-    ButtonComboWrapper(const WUPSButtonCombo_ComboOptions &otherOptions, WUPSButtonCombo_ComboStatus &outStatus) {
-        // Abuse this as a stable handle that references itself and survives std::move
-        *mHandle = reinterpret_cast<uint32_t>(mHandle.get());
-
+    static std::optional<ButtonComboWrapper> Create(const WUPSButtonCombo_ComboOptions &otherOptions, WUPSButtonCombo_ComboStatus &outStatus, WUPSButtonCombo_Error &outError) {
         ButtonComboModule_ComboStatus status = BUTTON_COMBO_MODULE_COMBO_STATUS_INVALID_STATUS;
-        mContextData                         = std::make_unique<ComboCallbackWrapperData>(otherOptions.callbackOptions.callback, otherOptions.callbackOptions.context);
+        auto contextData                     = std::make_unique<ComboCallbackWrapperData>(otherOptions.callbackOptions.callback, otherOptions.callbackOptions.context);
         ButtonComboModule_ComboOptions convertedOptions;
         convertedOptions.version            = BUTTON_COMBO_MODULE_COMBO_OPTIONS_VERSION;
         convertedOptions.metaOptions        = convert(otherOptions.metaOptions);
-        convertedOptions.callbackOptions    = {.callback = ButtonComboCallbackWrapper, .context = mContextData.get()};
+        convertedOptions.callbackOptions    = {.callback = ButtonComboCallbackWrapper, .context = contextData.get()};
         convertedOptions.buttonComboOptions = convert(otherOptions.buttonComboOptions);
-        mCreationError                      = ButtonComboModule_AddButtonCombo(&convertedOptions, &mButtonComboHandle, &status);
-        outStatus                           = convertStatus(status);
-    }
 
-    ~ButtonComboWrapper() {
-        ReleaseButtonComboHandle();
-    }
+        ButtonComboModule_Error err;
+        auto res = ButtonComboModule::ButtonCombo::Create(convertedOptions, status, err);
 
-    void ReleaseButtonComboHandle() {
-        if (mButtonComboHandle != nullptr) {
-            if (const auto res = ButtonComboModule_RemoveButtonCombo(mButtonComboHandle); res != BUTTON_COMBO_MODULE_ERROR_SUCCESS) {
-                DEBUG_FUNCTION_LINE_WARN("ButtonComboModule_RemoveButtonCombo for %08X returned: %s", mButtonComboHandle, ButtonComboModule_GetStatusStr(res));
-            }
-            mButtonComboHandle = ButtonComboModule_ComboHandle(nullptr);
+        outError  = convertError(err);
+        outStatus = convertStatus(status);
+
+        if (!res || err != BUTTON_COMBO_MODULE_ERROR_SUCCESS) {
+            return {};
         }
+        return ButtonComboWrapper(std::move(*res), std::move(contextData));
     }
+
 
     ButtonComboWrapper(const ButtonComboWrapper &) = delete;
     ButtonComboWrapper &operator=(ButtonComboWrapper &src) = delete;
 
-    ButtonComboWrapper(ButtonComboWrapper &&src) noexcept : mCreationError(src.mCreationError),
+    ButtonComboWrapper(ButtonComboWrapper &&src) noexcept : mButtonComboModuleCombo(std::move(src.mButtonComboModuleCombo)),
                                                             mContextData(std::move(src.mContextData)),
                                                             mHandle(std::move(src.mHandle)) {
-        ReleaseButtonComboHandle();
-
-        mButtonComboHandle = ButtonComboModule_ComboHandle(src.mButtonComboHandle.handle);
-
-        src.mCreationError     = BUTTON_COMBO_MODULE_ERROR_UNKNOWN_ERROR;
-        src.mButtonComboHandle = ButtonComboModule_ComboHandle(nullptr);
     }
 
     ButtonComboWrapper &operator=(ButtonComboWrapper &&src) noexcept {
         if (this != &src) {
-            ReleaseButtonComboHandle();
-            this->mCreationError     = src.mCreationError;
-            this->mButtonComboHandle = ButtonComboModule_ComboHandle(src.mButtonComboHandle.handle);
-            this->mContextData       = std::move(src.mContextData);
-            this->mHandle            = std::move(src.mHandle);
-
-            src.mCreationError     = BUTTON_COMBO_MODULE_ERROR_UNKNOWN_ERROR;
-            src.mButtonComboHandle = ButtonComboModule_ComboHandle(nullptr);
+            this->mButtonComboModuleCombo = std::move(src.mButtonComboModuleCombo);
+            this->mContextData            = std::move(src.mContextData);
+            this->mHandle                 = std::move(src.mHandle);
         }
         return *this;
     }
@@ -374,7 +360,7 @@ public:
 
     WUPSButtonCombo_Error GetButtonComboStatus(WUPSButtonCombo_ComboStatus &outStatus) const {
         ButtonComboModule_ComboStatus status = BUTTON_COMBO_MODULE_COMBO_STATUS_INVALID_STATUS;
-        const auto res                       = ButtonComboModule_GetButtonComboStatus(mButtonComboHandle, &status);
+        const auto res                       = mButtonComboModuleCombo.GetButtonComboStatus(status);
         if (res == BUTTON_COMBO_MODULE_ERROR_SUCCESS) {
             outStatus = convertStatus(status);
         }
@@ -383,7 +369,7 @@ public:
 
     [[nodiscard]] WUPSButtonCombo_Error UpdateButtonComboMeta(const WUPSButtonCombo_MetaOptions &metaOptions) const {
         const auto convertedOptions = convert(metaOptions);
-        return convertError(ButtonComboModule_UpdateButtonComboMeta(mButtonComboHandle, &convertedOptions));
+        return convertError(mButtonComboModuleCombo.UpdateButtonComboMeta(convertedOptions));
     }
 
     [[nodiscard]] WUPSButtonCombo_Error UpdateButtonComboCallback(const WUPSButtonCombo_CallbackOptions &callbackOptions) const {
@@ -395,7 +381,7 @@ public:
     [[nodiscard]] WUPSButtonCombo_Error UpdateControllerMask(const WUPSButtonCombo_ControllerTypes controllerMask,
                                                              WUPSButtonCombo_ComboStatus &outStatus) const {
         ButtonComboModule_ComboStatus comboStatus = BUTTON_COMBO_MODULE_COMBO_STATUS_INVALID_STATUS;
-        const auto res                            = convertError(ButtonComboModule_UpdateControllerMask(mButtonComboHandle, convert(controllerMask), &comboStatus));
+        const auto res                            = convertError(mButtonComboModuleCombo.UpdateControllerMask(convert(controllerMask), comboStatus));
         outStatus                                 = convertStatus(comboStatus);
         return res;
     }
@@ -403,18 +389,18 @@ public:
     [[nodiscard]] WUPSButtonCombo_Error UpdateButtonCombo(const WUPSButtonCombo_Buttons combo,
                                                           WUPSButtonCombo_ComboStatus &outStatus) const {
         ButtonComboModule_ComboStatus comboStatus = BUTTON_COMBO_MODULE_COMBO_STATUS_INVALID_STATUS;
-        const auto res                            = convertError(ButtonComboModule_UpdateButtonCombo(mButtonComboHandle, convert(combo), &comboStatus));
+        const auto res                            = convertError(mButtonComboModuleCombo.UpdateButtonCombo(convert(combo), comboStatus));
         outStatus                                 = convertStatus(comboStatus);
         return res;
     }
 
     [[nodiscard]] WUPSButtonCombo_Error UpdateHoldDuration(const uint32_t holdDurationInMs) const {
-        return convertError(ButtonComboModule_UpdateHoldDuration(mButtonComboHandle, holdDurationInMs));
+        return convertError(mButtonComboModuleCombo.UpdateHoldDuration(holdDurationInMs));
     }
 
     [[nodiscard]] WUPSButtonCombo_Error GetButtonComboMeta(WUPSButtonCombo_MetaOptionsOut &outOptions) const {
         ButtonComboModule_MetaOptionsOut options = {.labelBuffer = outOptions.labelBuffer, .labelBufferLength = outOptions.labelBufferLength};
-        return convertError(ButtonComboModule_GetButtonComboMeta(mButtonComboHandle, &options));
+        return convertError(mButtonComboModuleCombo.GetButtonComboMeta(options));
     }
 
     WUPSButtonCombo_Error GetButtonComboCallback(WUPSButtonCombo_CallbackOptions &outOptions) const {
@@ -426,18 +412,19 @@ public:
 
     WUPSButtonCombo_Error GetButtonComboInfoEx(WUPSButtonCombo_ButtonComboInfoEx &outOptions) const {
         ButtonComboModule_ButtonComboInfoEx tmpOptions;
-        const auto res = convertError(ButtonComboModule_GetButtonComboInfoEx(mButtonComboHandle, &tmpOptions));
+        const auto res = convertError(mButtonComboModuleCombo.GetButtonComboInfoEx(tmpOptions));
         outOptions     = convert(tmpOptions);
         return res;
     }
 
-    WUPSButtonCombo_Error GetCreationError() const {
-        return convertError(mCreationError);
+private:
+    ButtonComboWrapper(ButtonComboModule::ButtonCombo combo, std::unique_ptr<ComboCallbackWrapperData> contextData) : mButtonComboModuleCombo(std::move(combo)),
+                                                                                                                      mContextData(std::move(contextData)) {
+        // Abuse this as a stable handle that references itself and survives std::move
+        *mHandle = reinterpret_cast<uint32_t>(mHandle.get());
     }
 
-private:
-    ButtonComboModule_Error mCreationError;
-    ButtonComboModule_ComboHandle mButtonComboHandle;
+    ButtonComboModule::ButtonCombo mButtonComboModuleCombo;
     std::unique_ptr<ComboCallbackWrapperData> mContextData;
     std::unique_ptr<uint32_t> mHandle = std::make_unique<uint32_t>();
 };
@@ -463,17 +450,15 @@ ButtonComboManager &ButtonComboManager::operator=(ButtonComboManager &&src) {
 WUPSButtonCombo_Error ButtonComboManager::AddButtonComboHandle(const WUPSButtonCombo_ComboOptions &options,
                                                                WUPSButtonCombo_ComboHandle &outHandle,
                                                                WUPSButtonCombo_ComboStatus &outStatus) {
-    mComboWrappers.emplace_front(options, outStatus);
-    const auto &addedItem = mComboWrappers.front();
-    const auto handle     = addedItem.getHandle();
-    if (const auto res = addedItem.GetCreationError(); res != WUPS_BUTTON_COMBO_ERROR_SUCCESS) {
-        if (!remove_first_if(mComboWrappers, [&handle](const auto &comboWrapper) { return comboWrapper.getHandle() == handle; })) {
-            DEBUG_FUNCTION_LINE_INFO("Failed to re removed from mComboWrappers");
-        }
-        return res;
+    WUPSButtonCombo_Error err = WUPS_BUTTON_COMBO_ERROR_UNKNOWN_ERROR;
+    auto comboOpt             = ButtonComboWrapper::Create(options, outStatus, err);
+    if (!comboOpt || err != WUPS_BUTTON_COMBO_ERROR_SUCCESS) {
+        return err;
     }
 
-    outHandle = handle;
+    outHandle = comboOpt->getHandle();
+
+    mComboWrappers.emplace_front(std::move(*comboOpt));
 
     return WUPS_BUTTON_COMBO_ERROR_SUCCESS;
 }
@@ -557,7 +542,7 @@ WUPSButtonCombo_Error ButtonComboManager::CheckComboAvailable(const WUPSButtonCo
                                                               WUPSButtonCombo_ComboStatus &outStatus) {
     const auto convertedOptions          = convert(options);
     ButtonComboModule_ComboStatus status = BUTTON_COMBO_MODULE_COMBO_STATUS_INVALID_STATUS;
-    const auto res                       = convertError(ButtonComboModule_CheckComboAvailable(&convertedOptions, &status));
+    const auto res                       = convertError(ButtonComboModule::CheckComboAvailable(convertedOptions, status));
     outStatus                            = convertStatus(status);
     return res;
 }
@@ -565,7 +550,7 @@ WUPSButtonCombo_Error ButtonComboManager::CheckComboAvailable(const WUPSButtonCo
 WUPSButtonCombo_Error ButtonComboManager::DetectButtonCombo_Blocking(const WUPSButtonCombo_DetectButtonComboOptions &options, WUPSButtonCombo_Buttons &outButtonCombo) {
     const auto convertedOptions = convert(options);
     auto combo                  = static_cast<ButtonComboModule_Buttons>(0);
-    const auto res              = convertError(ButtonComboModule_DetectButtonCombo_Blocking(&convertedOptions, &combo));
+    const auto res              = convertError(ButtonComboModule::DetectButtonCombo_Blocking(convertedOptions, combo));
     outButtonCombo              = convert(combo);
     return res;
 }

@@ -182,9 +182,10 @@ namespace ButtonComboUtils::API {
         if (outStatus == nullptr) {
             return WUPS_BUTTON_COMBO_ERROR_INVALID_ARGS;
         }
+        // CheckComboAvailable is a static function, but we still want to make sure the identifier is valid
         return ExecuteForIdentifierLocked(identifier,
-                                          [&](ButtonComboManager &manager) {
-                                              return manager.CheckComboAvailable(*options, *outStatus);
+                                          [&](ButtonComboManager &) {
+                                              return ButtonComboManager::CheckComboAvailable(*options, *outStatus);
                                           });
     }
     WUPSButtonCombo_Error DetectButtonCombo_Blocking(void *identifier,
@@ -193,9 +194,10 @@ namespace ButtonComboUtils::API {
         if (options == nullptr || outButtonCombo == nullptr) {
             return WUPS_BUTTON_COMBO_ERROR_INVALID_ARGS;
         }
+        // DetectButtonCombo_Blocking is a static function, but we still want to make sure the identifier is valid
         return ExecuteForIdentifierLocked(identifier,
-                                          [&](ButtonComboManager &manager) {
-                                              return manager.DetectButtonCombo_Blocking(*options, *outButtonCombo);
+                                          [&](ButtonComboManager &) {
+                                              return ButtonComboManager::DetectButtonCombo_Blocking(*options, *outButtonCombo);
                                           });
     }
 } // namespace ButtonComboUtils::API

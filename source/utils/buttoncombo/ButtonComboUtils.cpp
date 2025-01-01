@@ -132,10 +132,10 @@ namespace ButtonComboUtils::API {
 
     WUPSButtonCombo_Error UpdateHoldDuration(void *identifier,
                                              const WUPSButtonCombo_ComboHandle handle,
-                                             const uint32_t holdDurationInFrames) {
+                                             const uint32_t holdDurationInMs) {
         const auto res = ExecuteForIdentifierLocked(identifier,
                                                     [&](ButtonComboManager &manager) {
-                                                        return manager.UpdateHoldDuration(handle, holdDurationInFrames);
+                                                        return manager.UpdateHoldDuration(handle, holdDurationInMs);
                                                     });
         return res;
     }

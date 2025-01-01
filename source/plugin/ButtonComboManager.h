@@ -49,7 +49,7 @@ public:
                                             WUPSButtonCombo_ComboStatus &outStatus);
 
     WUPSButtonCombo_Error UpdateHoldDuration(WUPSButtonCombo_ComboHandle handle,
-                                             uint32_t holdDurationInFrames);
+                                             uint32_t holdDurationInMs);
 
     WUPSButtonCombo_Error GetButtonComboMeta(WUPSButtonCombo_ComboHandle handle,
                                              WUPSButtonCombo_MetaOptionsOut &outOptions);

@@ -42,7 +42,7 @@ namespace ButtonComboUtils::API {
 
     WUPSButtonCombo_Error UpdateHoldDuration(void *identifier,
                                              WUPSButtonCombo_ComboHandle handle,
-                                             uint32_t holdDurationInFrames);
+                                             uint32_t holdDurationInMs);
 
     WUPSButtonCombo_Error GetButtonComboMeta(void *identifier,
                                              WUPSButtonCombo_ComboHandle handle,

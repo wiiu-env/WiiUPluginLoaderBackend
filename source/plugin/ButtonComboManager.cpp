@@ -270,7 +270,7 @@ namespace {
         options.basicCombo.combo          = convert(other.basicCombo.combo);
         options.basicCombo.controllerMask = convert(other.basicCombo.controllerMask);
         options.type                      = convertType(other.type);
-        options.optionalHoldForXFrames    = other.optionalHoldForXFrames;
+        options.optionalHoldForXMs        = other.optionalHoldForXMs;
         return options;
     }
 
@@ -279,7 +279,7 @@ namespace {
         options.type                      = convertType(other.type);
         options.basicCombo.combo          = convert(other.basicCombo.combo);
         options.basicCombo.controllerMask = convert(other.basicCombo.controllerMask);
-        options.optionalHoldForXFrames    = other.optionalHoldForXFrames;
+        options.optionalHoldForXMs        = other.optionalHoldForXMs;
         return options;
     }
 
@@ -408,8 +408,8 @@ public:
         return res;
     }
 
-    [[nodiscard]] WUPSButtonCombo_Error UpdateHoldDuration(const uint32_t holdDurationInFrames) const {
-        return convertError(ButtonComboModule_UpdateHoldDuration(mButtonComboHandle, holdDurationInFrames));
+    [[nodiscard]] WUPSButtonCombo_Error UpdateHoldDuration(const uint32_t holdDurationInMs) const {
+        return convertError(ButtonComboModule_UpdateHoldDuration(mButtonComboHandle, holdDurationInMs));
     }
 
     [[nodiscard]] WUPSButtonCombo_Error GetButtonComboMeta(WUPSButtonCombo_MetaOptionsOut &outOptions) const {
@@ -526,9 +526,9 @@ WUPSButtonCombo_Error ButtonComboManager::UpdateButtonCombo(const WUPSButtonComb
 }
 
 WUPSButtonCombo_Error ButtonComboManager::UpdateHoldDuration(const WUPSButtonCombo_ComboHandle handle,
-                                                             const uint32_t holdDurationInFrames) {
+                                                             const uint32_t holdDurationInMs) {
     return ExecuteForWrapper(handle, [&](const ButtonComboWrapper &wrapper) {
-        return wrapper.UpdateHoldDuration(holdDurationInFrames);
+        return wrapper.UpdateHoldDuration(holdDurationInMs);
     });
 }
 

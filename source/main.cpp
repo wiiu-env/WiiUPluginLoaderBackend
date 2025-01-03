@@ -28,6 +28,7 @@
 #include <coreinit/interrupts.h>
 #include <coreinit/scheduler.h>
 
+#include <coreinit/cache.h>
 #include <thread>
 
 WUMS_MODULE_EXPORT_NAME("homebrew_wupsbackend");
@@ -309,9 +310,12 @@ void CleanupPlugins(std::vector<PluginContainer> &&pluginsToDeinit) {
             if (!pluginContainer.isLinkedAndLoaded() || cur.id != pluginContainer.getPluginLinkInformation().getTrampolineId()) {
                 continue;
             }
-            cur.status = RELOC_TRAMP_FREE;
+            cur = {};
         }
     }
+    DCFlushRange((void *) gTrampData.data(), gTrampData.size() * sizeof(relocation_trampoline_entry_t));
+    ICInvalidateRange((void *) gTrampData.data(), gTrampData.size() * sizeof(relocation_trampoline_entry_t));
+    OSMemoryBarrier();
 }
 void CheckCleanupCallbackUsage(const std::vector<PluginContainer> &plugins) {
     auto *curThread = OSGetCurrentThread();

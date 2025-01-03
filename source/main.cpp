@@ -36,6 +36,7 @@ WUMS_USE_WUT_DEVOPTAB();
 WUMS_DEPENDS_ON(homebrew_functionpatcher);
 WUMS_DEPENDS_ON(homebrew_memorymapping);
 WUMS_DEPENDS_ON(homebrew_notifications);
+WUMS_DEPENDS_ON(homebrew_buttoncombo);
 
 using namespace std::chrono_literals;
 

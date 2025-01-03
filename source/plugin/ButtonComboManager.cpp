@@ -168,10 +168,10 @@ namespace {
             res |= WUPS_BUTTON_COMBO_BUTTON_B;
         }
         if (other & BCMPAD_BUTTON_X) {
-            res |= WUPS_BUTTON_COMBO_BUTTON_B;
+            res |= WUPS_BUTTON_COMBO_BUTTON_X;
         }
         if (other & BCMPAD_BUTTON_Y) {
-            res |= WUPS_BUTTON_COMBO_BUTTON_B;
+            res |= WUPS_BUTTON_COMBO_BUTTON_Y;
         }
         if (other & BCMPAD_BUTTON_LEFT) {
             res |= WUPS_BUTTON_COMBO_BUTTON_LEFT;

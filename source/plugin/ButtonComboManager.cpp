@@ -156,6 +156,18 @@ namespace {
         if (other & WUPS_BUTTON_COMBO_BUTTON_RESERVED_BIT) {
             res |= BCMPAD_BUTTON_RESERVED_BIT;
         }
+        if (other & WUPS_BUTTON_COMBO_BUTTON_1) {
+            res |= BCMPAD_BUTTON_1;
+        }
+        if (other & WUPS_BUTTON_COMBO_BUTTON_2) {
+            res |= BCMPAD_BUTTON_2;
+        }
+        if (other & WUPS_BUTTON_COMBO_BUTTON_C) {
+            res |= BCMPAD_BUTTON_C;
+        }
+        if (other & WUPS_BUTTON_COMBO_BUTTON_Z) {
+            res |= BCMPAD_BUTTON_Z;
+        }
         return static_cast<ButtonComboModule_Buttons>(res);
     }
 
@@ -214,6 +226,18 @@ namespace {
         }
         if (other & BCMPAD_BUTTON_RESERVED_BIT) {
             res |= WUPS_BUTTON_COMBO_BUTTON_RESERVED_BIT;
+        }
+        if (other & BCMPAD_BUTTON_1) {
+            res |= WUPS_BUTTON_COMBO_BUTTON_1;
+        }
+        if (other & BCMPAD_BUTTON_2) {
+            res |= WUPS_BUTTON_COMBO_BUTTON_2;
+        }
+        if (other & BCMPAD_BUTTON_C) {
+            res |= WUPS_BUTTON_COMBO_BUTTON_C;
+        }
+        if (other & BCMPAD_BUTTON_Z) {
+            res |= WUPS_BUTTON_COMBO_BUTTON_Z;
         }
         return static_cast<WUPSButtonCombo_Buttons>(res);
     }

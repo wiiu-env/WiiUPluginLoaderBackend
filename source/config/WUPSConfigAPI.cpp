@@ -313,7 +313,7 @@ namespace WUPSConfigAPIBackend {
         if (out == nullptr) {
             return WUPSCONFIG_API_RESULT_INVALID_ARGUMENT;
         }
-        *out = 1;
+        *out = 2;
         return WUPSCONFIG_API_RESULT_SUCCESS;
     }
 

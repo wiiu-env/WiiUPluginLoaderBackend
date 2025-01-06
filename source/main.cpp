@@ -88,7 +88,7 @@ WUMS_INITIALIZE() {
 
             message = "To enable them again, open the plugin config menu (\ue004 + \ue07a + \ue046).";
             DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(message) / 2, SCREEN_HEIGHT / 2 + 24, message, true);
-            message = "Then press \ue002 to manage active plugins";
+            message = "Then press \ue002 or \uE048 to manage active plugins";
             DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(message) / 2, SCREEN_HEIGHT / 2 + 48, message, true);
 
             // draw bottom bar

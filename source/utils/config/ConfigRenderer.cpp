@@ -25,6 +25,25 @@ ConfigRenderer::ConfigRenderer(std::vector<ConfigDisplayItem> &&vec) : mConfigs(
 ConfigRenderer::~ConfigRenderer() = default;
 
 ConfigSubState ConfigRenderer::Update(Input &input, const WUPSConfigSimplePadData &simpleInputData, const WUPSConfigComplexPadData &complexInputData) {
+    // Check if the last input was on a wiimote
+    for (uint32_t i = 0; i < std::size(complexInputData.kpad.data); i++) {
+        const KPADError &kpadError = complexInputData.kpad.kpadError[i];
+        const KPADStatus &status   = complexInputData.kpad.data[i];
+
+        const bool isWiimote = status.extensionType == WPAD_EXT_CORE || status.extensionType == WPAD_EXT_NUNCHUK ||
+                               status.extensionType == WPAD_EXT_MPLUS || status.extensionType == WPAD_EXT_MPLUS_NUNCHUK;
+
+        if (kpadError == KPAD_ERROR_OK) {
+            if (isWiimote && status.hold != 0) {
+                mLastInputWasOnWiimote = true;
+            } else if (!isWiimote && status.classic.hold != 0) {
+                mLastInputWasOnWiimote = false;
+            }
+        }
+    }
+    if (complexInputData.vpad.vpadError == VPAD_READ_SUCCESS && complexInputData.vpad.data.hold != 0) {
+        mLastInputWasOnWiimote = false;
+    }
     switch (mState) {
         case STATE_MAIN:
             return UpdateStateMain(input);
@@ -183,8 +202,8 @@ void ConfigRenderer::RenderStateMain() const {
         uint32_t szNoConfig      = DrawUtils::getTextWidth(noConfigText.data());
 
         if (!mAllConfigs.empty()) {
-            std::string activateHint = "Press \ue002 to activate inactive plugins";
-            auto szHint              = DrawUtils::getTextWidth(activateHint.c_str());
+            const auto activateHint = string_format("Press %s to activate inactive plugins", mLastInputWasOnWiimote ? "\uE048" : "\uE002");
+            const auto szHint       = DrawUtils::getTextWidth(activateHint.c_str());
 
             DrawUtils::print((SCREEN_WIDTH / 2) - (szNoConfig / 2), (SCREEN_HEIGHT / 2) - 16, noConfigText.data());
             DrawUtils::print((SCREEN_WIDTH / 2) - (szHint / 2), (SCREEN_HEIGHT / 2) + 16, activateHint.data());
@@ -226,7 +245,8 @@ void ConfigRenderer::RenderStateMain() const {
     if (mSetActivePluginsMode) {
         DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Activate | \uE045 Apply", true);
     } else if (totalElementSize > 0) {
-        DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Select | \uE002 Manage plugins", true);
+        const auto text = string_format("\ue000 Select | %s Manage plugins", mLastInputWasOnWiimote ? "\uE048" : "\uE002");
+        DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, text.c_str(), true);
     }
 
     // draw scroll indicator

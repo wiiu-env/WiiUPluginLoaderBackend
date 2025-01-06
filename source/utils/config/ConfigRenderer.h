@@ -63,7 +63,8 @@ private:
     int32_t mRenderOffset = 0;
     int32_t mCurrentOpen  = -1;
 
-    bool mNeedRedraw           = true;
-    bool mSetActivePluginsMode = false;
-    bool mActivePluginsDirty   = false;
+    bool mNeedRedraw            = true;
+    bool mSetActivePluginsMode  = false;
+    bool mActivePluginsDirty    = false;
+    bool mLastInputWasOnWiimote = false;
 };

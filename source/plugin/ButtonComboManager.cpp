@@ -340,6 +340,11 @@ namespace {
 class ButtonComboWrapper {
 public:
     static std::optional<ButtonComboWrapper> Create(const WUPSButtonCombo_ComboOptions &otherOptions, WUPSButtonCombo_ComboStatus &outStatus, WUPSButtonCombo_Error &outError) {
+        if (otherOptions.callbackOptions.callback == nullptr) {
+            outStatus = WUPS_BUTTON_COMBO_COMBO_STATUS_INVALID_STATUS;
+            outError  = WUPS_BUTTON_COMBO_ERROR_INVALID_ARGS;
+            return {};
+        }
         ButtonComboModule_ComboStatus status = BUTTON_COMBO_MODULE_COMBO_STATUS_INVALID_STATUS;
         auto contextData                     = std::make_unique<ComboCallbackWrapperData>(otherOptions.callbackOptions.callback, otherOptions.callbackOptions.context);
         ButtonComboModule_ComboOptions convertedOptions;

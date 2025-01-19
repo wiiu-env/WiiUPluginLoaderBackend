@@ -20,12 +20,14 @@
 #include "FunctionSymbolData.h"
 #include "utils/HeapMemoryFixedSize.h"
 
+#include <iosfwd>
 #include <map>
 #include <optional>
 #include <set>
 #include <vector>
+#include <wums/defines/relocation_defines.h>
 
-class HeapMemoryFixedSize;
+class HeapMemoryFixedSizePool;
 class SectionInfo;
 class RelocationData;
 class FunctionData;
@@ -60,15 +62,17 @@ public:
 
     [[nodiscard]] std::optional<SectionInfo> getSectionInfo(const std::string &sectionName) const;
 
-    [[nodiscard]] uint8_t getTrampolineId() const;
-
     [[nodiscard]] const FunctionSymbolData *getNearestFunctionSymbolData(uint32_t address) const;
 
-    [[nodiscard]] const HeapMemoryFixedSize &getTextMemory() const;
+    [[nodiscard]] HeapMemoryFixedSizePool::MemorySegmentInfo getTextMemory() const;
 
-    [[nodiscard]] const HeapMemoryFixedSize &getDataMemory() const;
+    [[nodiscard]] HeapMemoryFixedSizePool::MemorySegmentInfo getDataMemory() const;
 
     [[nodiscard]] bool hasValidData() const;
+
+    [[nodiscard]] int numberOfSegments() const;
+
+    [[nodiscard]] std::span<relocation_trampoline_entry_t> getTrampData() const;
 
 private:
     PluginLinkInformation() = default;
@@ -83,18 +87,14 @@ private:
 
     void addSectionInfo(const SectionInfo &sectionInfo);
 
-    void setTrampolineId(uint8_t trampolineId);
-
     std::vector<HookData> mHookDataList;
     std::vector<FunctionData> mFunctionDataList;
     std::vector<RelocationData> mRelocationDataList;
     std::set<FunctionSymbolData, FunctionSymbolDataComparator> mSymbolDataList;
     std::map<std::string, SectionInfo> mSectionInfoList;
 
-    uint8_t mTrampolineId = 0;
-
-    HeapMemoryFixedSize mAllocatedTextMemoryAddress;
-    HeapMemoryFixedSize mAllocatedDataMemoryAddress;
+    HeapMemoryFixedSizePool mAllocatedTextAndTrampMemoryAddress;
+    HeapMemoryFixedSizePool mAllocatedDataMemoryAddress;
 
     friend class PluginLinkInformationFactory;
 };

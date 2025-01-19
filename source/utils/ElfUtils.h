@@ -2,6 +2,8 @@
 
 #include <wums/defines/relocation_defines.h>
 
+#include <span>
+
 #include <cstdint>
 
 #ifdef __cplusplus
@@ -47,6 +49,6 @@ uint32_t load_loader_elf(unsigned char *baseAddress, char *elf_data, uint32_t fi
 class ElfUtils {
 
 public:
-    static bool elfLinkOne(char type, size_t offset, int32_t addend, uint32_t destination, uint32_t symbol_addr, std::vector<relocation_trampoline_entry_t> &trampolineData,
-                           RelocationType reloc_type, uint8_t trampolineId);
+    static bool elfLinkOne(char type, size_t offset, int32_t addend, uint32_t destination, uint32_t symbol_addr, std::span<relocation_trampoline_entry_t> trampolineData,
+                           RelocationType reloc_type);
 };

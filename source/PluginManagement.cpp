@@ -24,10 +24,8 @@
 
 #include <cstdint>
 
-static uint32_t sTrampolineID = 0;
-
 std::vector<PluginContainer>
-PluginManagement::loadPlugins(const std::vector<PluginLoadWrapper> &pluginDataList, std::vector<relocation_trampoline_entry_t> &trampolineData) {
+PluginManagement::loadPlugins(const std::vector<PluginLoadWrapper> &pluginDataList) {
     std::vector<PluginContainer> plugins;
 
     for (const auto &pluginDataWrapper : pluginDataList) {
@@ -37,7 +35,7 @@ PluginManagement::loadPlugins(const std::vector<PluginLoadWrapper> &pluginDataLi
             if (pluginDataWrapper.isLoadAndLink()) {
                 DEBUG_FUNCTION_LINE_INFO("LOAD (ACTIVE)   %s", metaInfo->getName().c_str());
 
-                auto linkInfo = PluginLinkInformationFactory::load(*pluginDataWrapper.getPluginData(), trampolineData, sTrampolineID++);
+                auto linkInfo = PluginLinkInformationFactory::load(*pluginDataWrapper.getPluginData());
                 if (!linkInfo) {
                     auto errMsg = string_format("Failed to load plugin: %s", pluginDataWrapper.getPluginData()->getSource().c_str());
                     DEBUG_FUNCTION_LINE_ERR("%s", errMsg.c_str());
@@ -68,8 +66,7 @@ PluginManagement::loadPlugins(const std::vector<PluginLoadWrapper> &pluginDataLi
 }
 
 bool PluginManagement::doRelocation(const std::vector<RelocationData> &relocData,
-                                    std::vector<relocation_trampoline_entry_t> &trampData,
-                                    const uint32_t trampolineID,
+                                    std::span<relocation_trampoline_entry_t> trampData,
                                     std::map<std::string, OSDynLoad_Module> &usedRPls) {
     for (auto const &cur : relocData) {
         uint32_t functionAddress = 0;
@@ -118,7 +115,7 @@ bool PluginManagement::doRelocation(const std::vector<RelocationData> &relocData
             //DEBUG_FUNCTION_LINE("Found export for %s %s", rplName.c_str(), functionName.c_str());
         }
 
-        if (!ElfUtils::elfLinkOne(cur.getType(), cur.getOffset(), cur.getAddend(), reinterpret_cast<uint32_t>(cur.getDestination()), functionAddress, trampData, RELOC_TYPE_IMPORT, trampolineID)) {
+        if (!ElfUtils::elfLinkOne(cur.getType(), cur.getOffset(), cur.getAddend(), reinterpret_cast<uint32_t>(cur.getDestination()), functionAddress, trampData, RELOC_TYPE_IMPORT)) {
             DEBUG_FUNCTION_LINE_ERR("elfLinkOne failed");
             return false;
         }
@@ -140,13 +137,8 @@ bool PluginManagement::doRelocation(const std::vector<RelocationData> &relocData
 }
 
 bool PluginManagement::doRelocations(const std::vector<PluginContainer> &plugins,
-                                     std::vector<relocation_trampoline_entry_t> &trampData,
                                      std::map<std::string, OSDynLoad_Module> &usedRPls) {
-    for (auto &cur : trampData) {
-        if (cur.status == RELOC_TRAMP_IMPORT_DONE) {
-            cur.status = RELOC_TRAMP_FREE;
-        }
-    }
+
 
     OSDynLoadAllocFn prevDynLoadAlloc = nullptr;
     OSDynLoadFreeFn prevDynLoadFree   = nullptr;
@@ -158,10 +150,16 @@ bool PluginManagement::doRelocations(const std::vector<PluginContainer> &plugins
         if (!pluginContainer.isLinkedAndLoaded()) {
             continue;
         }
+        const auto &trampData = pluginContainer.getPluginLinkInformation().getTrampData();
+        for (auto &cur : trampData) {
+            if (cur.status == RELOC_TRAMP_IMPORT_DONE) {
+                cur.status = RELOC_TRAMP_FREE;
+            }
+        }
+
         DEBUG_FUNCTION_LINE_VERBOSE("Doing relocations for plugin: %s", pluginContainer.getMetaInformation().getName().c_str());
         if (!PluginManagement::doRelocation(pluginContainer.getPluginLinkInformation().getRelocationDataList(),
                                             trampData,
-                                            pluginContainer.getPluginLinkInformation().getTrampolineId(),
                                             usedRPls)) {
             return false;
         }

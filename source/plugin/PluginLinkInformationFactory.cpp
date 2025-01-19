@@ -35,8 +35,70 @@
 
 using namespace ELFIO;
 
+namespace {
+    bool predictRequiredTrampolineCount(const elfio &reader, uint32_t &outTrampCount) {
+        Elf_Word symbol = 0;
+        Elf64_Addr offset;
+        Elf_Word type;
+        Elf_Sxword addend;
+        std::string sym_name;
+        Elf64_Addr sym_value;
+        Elf_Xword size;
+        unsigned char bind;
+        unsigned char symbolType;
+        Elf_Half sym_section_index;
+        unsigned char other;
+
+        for (const auto &parentSec : reader.sections) {
+            if ((parentSec->get_type() == SHT_PROGBITS || parentSec->get_type() == SHT_NOBITS) && (parentSec->get_flags() & SHF_ALLOC)) {
+                for (const auto &psec : reader.sections) {
+                    if (psec->get_info() == parentSec->get_info()) {
+                        const relocation_section_accessor rel(reader, psec.get());
+                        for (uint32_t j = 0; j < static_cast<uint32_t>(rel.get_entries_num()); ++j) {
+                            if (!rel.get_entry(j, offset, symbol, type, addend)) {
+                                DEBUG_FUNCTION_LINE_ERR("Failed to get relocation");
+                                return false;
+                            }
+                            const symbol_section_accessor symbols(reader, reader.sections[static_cast<Elf_Half>(psec->get_link())]);
+
+                            if (!symbols.get_symbol(symbol, sym_name, sym_value, size,
+                                                    bind, symbolType, sym_section_index, other)) {
+                                DEBUG_FUNCTION_LINE_ERR("Failed to get symbol");
+                                return false;
+                            }
+
+                            if (sym_section_index == SHN_ABS) {
+                                //
+                            } else if (sym_section_index > SHN_LORESERVE) {
+                                DEBUG_FUNCTION_LINE_ERR("NOT IMPLEMENTED: %04X", sym_section_index);
+                                return false;
+                            }
+                            if (type == R_PPC_REL24) {
+                                const auto target = static_cast<int32_t>(offset);
+                                const auto value  = static_cast<int32_t>(sym_value + addend);
+
+                                const auto newDistance = value - target;
+                                // The tramps are placed right after the .text section. We can cover 0x1FFFFFC
+                                constexpr auto maxJumpDistance = 0x1FFFFFC;
+                                // Subtract 0x10000 because it could be at the end of our tramp section.
+                                constexpr auto maxUsedJumpDistance = maxJumpDistance - 0x10000;
+                                if (newDistance > maxUsedJumpDistance || newDistance < -maxUsedJumpDistance) {
+                                    outTrampCount++;
+                                }
+                            }
+                        }
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+} // namespace
+
 std::optional<PluginLinkInformation>
-PluginLinkInformationFactory::load(const PluginData &pluginData, std::vector<relocation_trampoline_entry_t> &trampolineData, uint8_t trampolineId) {
+PluginLinkInformationFactory::load(const PluginData &pluginData) {
     auto buffer = pluginData.getBuffer();
     if (buffer.empty()) {
         DEBUG_FUNCTION_LINE_ERR("Buffer was empty");
@@ -85,20 +147,41 @@ PluginLinkInformationFactory::load(const PluginData &pluginData, std::vector<rel
         }
     }
 
-    HeapMemoryFixedSize text_data(text_size);
-    if (!text_data) {
-        DEBUG_FUNCTION_LINE_ERR("Failed to alloc memory for the .text section (%d bytes)", text_size);
-        return std::nullopt;
+    uint32_t expectedTramps = 0;
+    if (!predictRequiredTrampolineCount(reader, expectedTramps)) {
+        DEBUG_FUNCTION_LINE_WARN("Failed to predict required trampoline count");
     }
 
-    HeapMemoryFixedSize data_data(data_size);
-    if (!data_data) {
+    // Add 20 tramp slots by default to any plugin to be safe.
+    // This alone should already be more than enough from my current observations
+    expectedTramps += 20;
+
+    size_t trampDataSize = (expectedTramps) * sizeof(relocation_trampoline_entry_t);
+
+    // We have to have the .text section and trampolines as close as possible in memory
+    // Lets create a shared memory pool for both of them
+    HeapMemoryFixedSizePool textAndTrampDataPool({text_size, trampDataSize});
+    if (!textAndTrampDataPool) {
+        DEBUG_FUNCTION_LINE_ERR("Failed to alloc memory for the .text section (%d bytes) and tramp data", text_size, trampDataSize);
+        return std::nullopt;
+    }
+    // Segment 0 is the .text data
+    const auto &text_data = textAndTrampDataPool[0];
+    // Segment 1 the tramp data
+    const auto &tramp_data = textAndTrampDataPool[1];
+    memset(tramp_data.data(), 0, trampDataSize);
+
+    std::span trampolineList(static_cast<relocation_trampoline_entry_t *>(tramp_data.data()), expectedTramps);
+
+    // For .data create a separate memory pool with just one try.
+    HeapMemoryFixedSizePool dataHeapPool({data_size});
+    if (!dataHeapPool) {
         DEBUG_FUNCTION_LINE_ERR("Failed to alloc memory for the .data section (%d bytes)", data_size);
         return std::nullopt;
     }
+    const auto &data_data = dataHeapPool[0];
 
-    for (uint32_t i = 0; i < sec_num; ++i) {
-        section *psec = reader.sections[i];
+    for (const auto &psec : reader.sections) {
         if (psec->get_type() == 0x80000002 || psec->get_name() == ".wut_load_bounds") {
             continue;
         }
@@ -165,12 +248,13 @@ PluginLinkInformationFactory::load(const PluginData &pluginData, std::vector<rel
         }
     }
 
+
     for (uint32_t i = 0; i < sec_num; ++i) {
         section *psec = reader.sections[i];
-        if ((psec->get_type() == SHT_PROGBITS || psec->get_type() == SHT_NOBITS) && (psec->get_flags() & SHF_ALLOC)) {
+        if (psec && (psec->get_type() == SHT_PROGBITS || psec->get_type() == SHT_NOBITS) && (psec->get_flags() & SHF_ALLOC)) {
             DEBUG_FUNCTION_LINE_VERBOSE("Linking (%d)... %s at %08X", i, psec->get_name().c_str(), destinations[psec->get_index()]);
-            if (!linkSection(reader, psec->get_index(), (uint32_t) destinations[psec->get_index()], (uint32_t) text_data.data(), (uint32_t) data_data.data(), trampolineData,
-                             trampolineId)) {
+
+            if (!linkSection(reader, psec->get_index(), (uint32_t) destinations[psec->get_index()], (uint32_t) text_data.data(), (uint32_t) data_data.data(), trampolineList)) {
                 DEBUG_FUNCTION_LINE_ERR("linkSection failed");
                 return std::nullopt;
             }
@@ -186,8 +270,6 @@ PluginLinkInformationFactory::load(const PluginData &pluginData, std::vector<rel
     ICInvalidateRange((void *) text_data.data(), text_data.size());
     DCFlushRange((void *) data_data.data(), data_data.size());
     ICInvalidateRange((void *) data_data.data(), data_data.size());
-
-    pluginInfo.setTrampolineId(trampolineId);
 
     auto secInfo = pluginInfo.getSectionInfo(".wups.hooks");
     if (secInfo && secInfo->getSize() > 0) {
@@ -225,11 +307,9 @@ PluginLinkInformationFactory::load(const PluginData &pluginData, std::vector<rel
     }
 
     // Get the symbol for functions.
-    Elf_Half n = reader.sections.size();
-    for (Elf_Half i = 0; i < n; ++i) {
-        section *sec = reader.sections[i];
+    for (const auto &sec : reader.sections) {
         if (SHT_SYMTAB == sec->get_type()) {
-            symbol_section_accessor symbols(reader, sec);
+            symbol_section_accessor symbols(reader, sec.get());
             auto sym_no = (uint32_t) symbols.get_symbols_num();
             if (sym_no > 0) {
                 for (Elf_Half j = 0; j < sym_no; ++j) {
@@ -267,8 +347,8 @@ PluginLinkInformationFactory::load(const PluginData &pluginData, std::vector<rel
 
 
     // Save the addresses for the allocated memory. This way we can free it again :)
-    pluginInfo.mAllocatedDataMemoryAddress = std::move(data_data);
-    pluginInfo.mAllocatedTextMemoryAddress = std::move(text_data);
+    pluginInfo.mAllocatedDataMemoryAddress         = std::move(dataHeapPool);
+    pluginInfo.mAllocatedTextAndTrampMemoryAddress = std::move(textAndTrampDataPool);
 
     return pluginInfo;
 }
@@ -289,11 +369,10 @@ bool PluginLinkInformationFactory::addImportRelocationData(PluginLinkInformation
         }
     }
 
-    for (uint32_t i = 0; i < sec_num; ++i) {
-        section *psec = reader.sections[i];
+    for (const auto &psec : reader.sections) {
         if (psec->get_type() == SHT_RELA || psec->get_type() == SHT_REL) {
             DEBUG_FUNCTION_LINE_VERBOSE("Found relocation section %s", psec->get_name().c_str());
-            relocation_section_accessor rel(reader, psec);
+            relocation_section_accessor rel(reader, psec.get());
             for (uint32_t j = 0; j < (uint32_t) rel.get_entries_num(); ++j) {
                 Elf_Word symbol = 0;
                 Elf64_Addr offset;
@@ -345,14 +424,11 @@ bool PluginLinkInformationFactory::addImportRelocationData(PluginLinkInformation
 }
 
 bool PluginLinkInformationFactory::linkSection(const elfio &reader, uint32_t section_index, uint32_t destination, uint32_t base_text, uint32_t base_data,
-                                               std::vector<relocation_trampoline_entry_t> &trampolineData, uint8_t trampolineId) {
-    uint32_t sec_num = reader.sections.size();
-
-    for (uint32_t i = 0; i < sec_num; ++i) {
-        section *psec = reader.sections[i];
+                                               std::span<relocation_trampoline_entry_t> trampolineData) {
+    for (const auto &psec : reader.sections) {
         if (psec->get_info() == section_index) {
             DEBUG_FUNCTION_LINE_VERBOSE("Found relocation section %s", psec->get_name().c_str());
-            relocation_section_accessor rel(reader, psec);
+            relocation_section_accessor rel(reader, psec.get());
             for (uint32_t j = 0; j < (uint32_t) rel.get_entries_num(); ++j) {
                 Elf_Word symbol = 0;
                 Elf64_Addr offset;
@@ -415,11 +491,12 @@ bool PluginLinkInformationFactory::linkSection(const elfio &reader, uint32_t sec
                 }
                 // DEBUG_FUNCTION_LINE_VERBOSE("sym_value %08X adjusted_sym_value %08X offset %08X adjusted_offset %08X", (uint32_t) sym_value, adjusted_sym_value, (uint32_t) offset, adjusted_offset);
 
-                if (!ElfUtils::elfLinkOne(type, adjusted_offset, addend, destination, adjusted_sym_value, trampolineData, RELOC_TYPE_FIXED, trampolineId)) {
+                if (!ElfUtils::elfLinkOne(type, adjusted_offset, addend, destination, adjusted_sym_value, trampolineData, RELOC_TYPE_FIXED)) {
                     DEBUG_FUNCTION_LINE_ERR("Link failed");
                     return false;
                 }
             }
+
             DEBUG_FUNCTION_LINE_VERBOSE("done");
             return true;
         }

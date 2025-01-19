@@ -4,31 +4,28 @@
 #include "HookData.h"
 #include "RelocationData.h"
 #include "SectionInfo.h"
+#include "utils/logger.h"
 
 PluginLinkInformation::PluginLinkInformation(PluginLinkInformation &&src) : mHookDataList(std::move(src.mHookDataList)),
                                                                             mFunctionDataList(std::move(src.mFunctionDataList)),
                                                                             mRelocationDataList(std::move(src.mRelocationDataList)),
                                                                             mSymbolDataList(std::move(src.mSymbolDataList)),
                                                                             mSectionInfoList(std::move(src.mSectionInfoList)),
-                                                                            mTrampolineId(src.mTrampolineId),
-                                                                            mAllocatedTextMemoryAddress(std::move(src.mAllocatedTextMemoryAddress)),
+                                                                            mAllocatedTextAndTrampMemoryAddress(std::move(src.mAllocatedTextAndTrampMemoryAddress)),
                                                                             mAllocatedDataMemoryAddress(std::move(src.mAllocatedDataMemoryAddress))
 
 {
-    src.mTrampolineId = {};
 }
 
 PluginLinkInformation &PluginLinkInformation::operator=(PluginLinkInformation &&src) noexcept {
     if (this != &src) {
-        this->mHookDataList               = std::move(src.mHookDataList);
-        this->mFunctionDataList           = std::move(src.mFunctionDataList);
-        this->mRelocationDataList         = std::move(src.mRelocationDataList);
-        this->mSymbolDataList             = std::move(src.mSymbolDataList);
-        this->mSectionInfoList            = std::move(src.mSectionInfoList);
-        this->mTrampolineId               = src.mTrampolineId;
-        this->mAllocatedTextMemoryAddress = std::move(src.mAllocatedTextMemoryAddress);
-        this->mAllocatedDataMemoryAddress = std::move(src.mAllocatedDataMemoryAddress);
-        src.mTrampolineId                 = {};
+        this->mHookDataList                       = std::move(src.mHookDataList);
+        this->mFunctionDataList                   = std::move(src.mFunctionDataList);
+        this->mRelocationDataList                 = std::move(src.mRelocationDataList);
+        this->mSymbolDataList                     = std::move(src.mSymbolDataList);
+        this->mSectionInfoList                    = std::move(src.mSectionInfoList);
+        this->mAllocatedTextAndTrampMemoryAddress = std::move(src.mAllocatedTextAndTrampMemoryAddress);
+        this->mAllocatedDataMemoryAddress         = std::move(src.mAllocatedDataMemoryAddress);
     }
     return *this;
 }
@@ -80,15 +77,6 @@ std::optional<SectionInfo> PluginLinkInformation::getSectionInfo(const std::stri
     return std::nullopt;
 }
 
-
-void PluginLinkInformation::setTrampolineId(const uint8_t trampolineId) {
-    this->mTrampolineId = trampolineId;
-}
-
-uint8_t PluginLinkInformation::getTrampolineId() const {
-    return mTrampolineId;
-}
-
 const FunctionSymbolData *PluginLinkInformation::getNearestFunctionSymbolData(uint32_t address) const {
     const FunctionSymbolData *result = nullptr;
 
@@ -109,12 +97,12 @@ const FunctionSymbolData *PluginLinkInformation::getNearestFunctionSymbolData(ui
     return result;
 }
 
-const HeapMemoryFixedSize &PluginLinkInformation::getTextMemory() const {
-    return mAllocatedTextMemoryAddress;
+HeapMemoryFixedSizePool::MemorySegmentInfo PluginLinkInformation::getTextMemory() const {
+    return mAllocatedTextAndTrampMemoryAddress[0]; // 0 is .text data
 }
 
-const HeapMemoryFixedSize &PluginLinkInformation::getDataMemory() const {
-    return mAllocatedDataMemoryAddress;
+HeapMemoryFixedSizePool::MemorySegmentInfo PluginLinkInformation::getDataMemory() const {
+    return mAllocatedDataMemoryAddress[0]; // 0 is .data data
 }
 
 PluginLinkInformation PluginLinkInformation::CreateStub() {
@@ -122,5 +110,13 @@ PluginLinkInformation PluginLinkInformation::CreateStub() {
 }
 
 bool PluginLinkInformation::hasValidData() const {
-    return mAllocatedDataMemoryAddress.size() > 0 && mAllocatedTextMemoryAddress.size() > 0;
+    return mAllocatedDataMemoryAddress && mAllocatedTextAndTrampMemoryAddress && mAllocatedTextAndTrampMemoryAddress.numberOfSegments() == 2;
+}
+std::span<relocation_trampoline_entry_t> PluginLinkInformation::getTrampData() const {
+    if (mAllocatedTextAndTrampMemoryAddress && mAllocatedTextAndTrampMemoryAddress.numberOfSegments() < 2) {
+        DEBUG_FUNCTION_LINE_ERR("Failed to return trampoline data. Memory is either not valid or has not enough segments");
+        return {};
+    }
+    const auto &entry = mAllocatedTextAndTrampMemoryAddress[1]; // 1 is tramp data
+    return std::span(static_cast<relocation_trampoline_entry_t *>(entry.data()), entry.size() / sizeof(relocation_trampoline_entry_t));
 }

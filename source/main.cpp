@@ -180,13 +180,6 @@ WUMS_APPLICATION_STARTS() {
 
     std::lock_guard lock(gLoadedDataMutex);
 
-    if (gTrampData.empty()) {
-        gTrampData = std::vector<relocation_trampoline_entry_t>(TRAMP_DATA_SIZE);
-        for (auto &cur : gTrampData) {
-            cur.status = RELOC_TRAMP_FREE;
-        }
-    }
-
     std::vector<PluginContainer> newLoadedPlugins;
 
     if (gLoadedPlugins.empty()) {
@@ -197,7 +190,7 @@ WUMS_APPLICATION_STARTS() {
         WUPSBackendSettings::LoadSettings();
         auto &inactiveList    = WUPSBackendSettings::GetInactivePluginFilenames();
         const auto pluginData = PluginDataFactory::loadDir(pluginPath, inactiveList);
-        newLoadedPlugins      = PluginManagement::loadPlugins(pluginData, gTrampData);
+        newLoadedPlugins      = PluginManagement::loadPlugins(pluginData);
     }
 
     if (!gLoadOnNextLaunch.empty()) {
@@ -230,7 +223,7 @@ WUMS_APPLICATION_STARTS() {
         CleanupPlugins(std::move(pluginsToDeinit));
 
         DEBUG_FUNCTION_LINE("Load new plugins");
-        newLoadedPlugins = PluginManagement::loadPlugins(toBeLoaded, gTrampData);
+        newLoadedPlugins = PluginManagement::loadPlugins(toBeLoaded);
     }
 
     DEBUG_FUNCTION_LINE("Clear plugin data lists.");
@@ -245,7 +238,7 @@ WUMS_APPLICATION_STARTS() {
         // Move all new plugin containers into gLoadedPlugins
         append_move_all_values(gLoadedPlugins, newLoadedPlugins);
 
-        if (!PluginManagement::doRelocations(gLoadedPlugins, gTrampData, gUsedRPLs)) {
+        if (!PluginManagement::doRelocations(gLoadedPlugins, gUsedRPLs)) {
             DEBUG_FUNCTION_LINE_ERR("Relocations failed");
             OSFatal("WiiUPluginLoaderBackend: Relocations failed.\n See crash logs for more information.");
         }
@@ -305,18 +298,6 @@ void CleanupPlugins(std::vector<PluginContainer> &&pluginsToDeinit) {
         }
         plugin.DeinitButtonComboData();
     }
-
-    for (const auto &pluginContainer : pluginsToDeinit) {
-        for (auto &cur : gTrampData) {
-            if (!pluginContainer.isLinkedAndLoaded() || cur.id != pluginContainer.getPluginLinkInformation().getTrampolineId()) {
-                continue;
-            }
-            cur = {};
-        }
-    }
-    DCFlushRange((void *) gTrampData.data(), gTrampData.size() * sizeof(relocation_trampoline_entry_t));
-    ICInvalidateRange((void *) gTrampData.data(), gTrampData.size() * sizeof(relocation_trampoline_entry_t));
-    OSMemoryBarrier();
 }
 void CheckCleanupCallbackUsage(const std::vector<PluginContainer> &plugins) {
     auto *curThread = OSGetCurrentThread();

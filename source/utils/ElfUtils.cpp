@@ -1,14 +1,16 @@
-#include <coreinit/cache.h>
-#include <cstdlib>
-#include <cstring>
-#include <vector>
-
 #include "ElfUtils.h"
 #include "utils/logger.h"
 
+#include <coreinit/cache.h>
+
+#include <span>
+
+#include <cstdlib>
+#include <cstring>
+
 // See https://github.com/decaf-emu/decaf-emu/blob/43366a34e7b55ab9d19b2444aeb0ccd46ac77dea/src/libdecaf/src/cafe/loader/cafe_loader_reloc.cpp#L144
 bool ElfUtils::elfLinkOne(char type, size_t offset, int32_t addend, uint32_t destination, uint32_t symbol_addr,
-                          std::vector<relocation_trampoline_entry_t> &trampolineData, RelocationType reloc_type, uint8_t trampolineId) {
+                          std::span<relocation_trampoline_entry_t> trampolineData, RelocationType reloc_type) {
     if (type == R_PPC_NONE) {
         return true;
     }
@@ -85,11 +87,10 @@ bool ElfUtils::elfLinkOne(char type, size_t offset, int32_t addend, uint32_t des
                     relocation_trampoline_entry_t *freeSlot = nullptr;
                     for (auto &cur : trampolineData) {
                         // We want to override "old" relocations of imports
-                        // Pending relocations have the status RELOC_TRAMP_IMPORT_IN_PROGRESS.
                         // When all relocations are done successfully, they will be turned into RELOC_TRAMP_IMPORT_DONE
                         // so they can be overridden/updated/reused on the next application launch.
                         //
-                        // Relocations that won't change will have the status RELOC_TRAMP_FIXED and are set to free when the module is unloaded.
+                        // Relocations that won't change will have the status RELOC_TRAMP_FIXED and are set to free when the plugin is unloaded.
                         if (cur.status == RELOC_TRAMP_FREE) {
                             freeSlot = &cur;
                             break;
@@ -118,9 +119,6 @@ bool ElfUtils::elfLinkOne(char type, size_t offset, int32_t addend, uint32_t des
                     freeSlot->trampoline[2] = 0x7D6903A6;                                             // mtctr   r11
                     freeSlot->trampoline[3] = 0x4E800420;                                             // bctr
                     ICInvalidateRange((unsigned char *) freeSlot->trampoline, sizeof(freeSlot->trampoline));
-
-                    freeSlot->id = trampolineId;
-                    ICInvalidateRange((unsigned char *) &freeSlot->id, sizeof(freeSlot->id));
 
                     if (reloc_type == RELOC_TYPE_FIXED) {
                         freeSlot->status = RELOC_TRAMP_FIXED;

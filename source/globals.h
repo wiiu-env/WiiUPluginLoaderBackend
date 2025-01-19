@@ -24,8 +24,6 @@ class PluginLoadWrapper;
 extern StoredBuffer gStoredTVBuffer;
 extern StoredBuffer gStoredDRCBuffer;
 
-#define TRAMP_DATA_SIZE 1024
-extern std::vector<relocation_trampoline_entry_t> gTrampData;
 extern std::vector<PluginContainer> gLoadedPlugins;
 
 extern std::set<std::shared_ptr<PluginData>, PluginDataSharedPtrComparator> gLoadedData;

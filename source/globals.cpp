@@ -10,12 +10,10 @@
 #include "plugin/RelocationData.h"
 #include "plugin/SectionInfo.h"
 
-
 StoredBuffer gStoredTVBuffer  = {};
 StoredBuffer gStoredDRCBuffer = {};
 
 std::vector<PluginContainer> gLoadedPlugins;
-std::vector<relocation_trampoline_entry_t> gTrampData;
 
 std::set<std::shared_ptr<PluginData>, PluginDataSharedPtrComparator> gLoadedData;
 std::vector<PluginLoadWrapper> gLoadOnNextLaunch;

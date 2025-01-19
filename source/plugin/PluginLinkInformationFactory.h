@@ -30,12 +30,12 @@ class PluginLinkInformation;
 class PluginLinkInformationFactory {
 public:
     static std::optional<PluginLinkInformation>
-    load(const PluginData &pluginData, std::vector<relocation_trampoline_entry_t> &trampolineData, uint8_t trampolineId);
+    load(const PluginData &pluginData);
 
 private:
     static bool
     linkSection(const ELFIO::elfio &reader, uint32_t section_index, uint32_t destination, uint32_t base_text, uint32_t base_data,
-                std::vector<relocation_trampoline_entry_t> &trampolineData, uint8_t trampolineId);
+                std::span<relocation_trampoline_entry_t> trampolineData);
 
     static bool
     addImportRelocationData(PluginLinkInformation &pluginInfo, const ELFIO::elfio &reader, std::span<uint8_t *> destinations);

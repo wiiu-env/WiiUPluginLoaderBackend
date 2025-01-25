@@ -196,16 +196,16 @@ namespace StorageUtils {
                 return err;
             }
 
-            std::unique_ptr<StorageItemRoot> storage;
+            std::unique_ptr<StorageItemRoot> newStorage;
             if (j.empty() || !j.is_object() || !j.contains("storageitems") || j["storageitems"].empty() || !j["storageitems"].is_object()) {
-                storage = make_unique_nothrow<StorageItemRoot>(plugin_id);
+                newStorage = make_unique_nothrow<StorageItemRoot>(plugin_id);
             } else {
-                storage = StorageUtils::Helper::deserializeFromJson(j["storageitems"], plugin_id);
-                if (!storage) {
-                    storage = make_unique_nothrow<StorageItemRoot>(plugin_id);
+                newStorage = deserializeFromJson(j["storageitems"], plugin_id);
+                if (!newStorage) {
+                    newStorage = make_unique_nothrow<StorageItemRoot>(plugin_id);
                 }
             }
-            rootItem = std::move(*storage);
+            rootItem.migrate(std::move(*newStorage));
             return WUPS_STORAGE_ERROR_SUCCESS;
         }
 

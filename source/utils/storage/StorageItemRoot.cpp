@@ -11,3 +11,9 @@ void StorageItemRoot::wipe() {
     mSubCategories.clear();
     mItems.clear();
 }
+
+void StorageItemRoot::migrate(StorageItemRoot &&other) {
+    mPluginName    = std::move(other.mPluginName);
+    mSubCategories = std::move(other.mSubCategories);
+    mItems         = std::move(other.mItems);
+}

@@ -34,7 +34,7 @@ namespace StorageUtils {
             for (auto it = json.begin(); it != json.end(); ++it) {
                 StorageSubItem::StorageSubItemError subItemError = StorageSubItem::STORAGE_SUB_ITEM_ERROR_NONE;
                 if (it.value().is_object()) {
-                    auto res = item.createSubItem(it.key().c_str(), subItemError);
+                    const auto res = item.createSubItem(it.key().c_str(), subItemError);
                     if (!res) {
                         DEBUG_FUNCTION_LINE_WARN("Failed to create sub item: Error %d", subItemError);
                         return false;
@@ -46,26 +46,26 @@ namespace StorageUtils {
                         }
                     }
                 } else {
-                    auto res = item.createItem(it.key().c_str(), subItemError);
+                    const auto res = item.createItem(it.key().c_str(), subItemError);
 
                     if (!res) {
                         DEBUG_FUNCTION_LINE_WARN("Failed to create Item for key %s. Error %d", it.key().c_str(), subItemError);
                         return false;
                     }
                     if (it.value().is_string()) {
-                        auto val = it.value().get<std::string>();
+                        const auto val = it.value().get<std::string>();
                         res->setValue(val);
                     } else if (it.value().is_boolean()) {
-                        auto val = it.value().get<bool>();
+                        const auto val = it.value().get<bool>();
                         res->setValue(val);
                     } else if (it.value().is_number_unsigned()) {
-                        auto val = it.value().get<std::uint64_t>();
+                        const auto val = it.value().get<std::uint64_t>();
                         res->setValue(val);
                     } else if (it.value().is_number_integer()) {
-                        auto val = it.value().get<std::int64_t>();
+                        const auto val = it.value().get<std::int64_t>();
                         res->setValue(val);
                     } else if (it.value().is_number_float()) {
-                        auto val = it.value().get<std::double_t>();
+                        const auto val = it.value().get<std::double_t>();
                         res->setValue(val);
                     } else {
                         DEBUG_FUNCTION_LINE_ERR("Unknown type %s for value %s", it.value().type_name(), it.key().c_str());
@@ -97,36 +97,31 @@ namespace StorageUtils {
             for (const auto &[key, value] : baseItem.getItems()) {
                 switch ((StorageItemType) value.getType()) {
                     case StorageItemType::String: {
-                        std::string res;
-                        if (value.getValue(res)) {
+                        if (std::string res; value.getValue(res)) {
                             json[key] = res;
                         }
                         break;
                     }
                     case StorageItemType::Boolean: {
-                        bool res;
-                        if (value.getValue(res)) {
+                        if (bool res; value.getValue(res)) {
                             json[key] = res;
                         }
                         break;
                     }
                     case StorageItemType::S64: {
-                        int64_t res;
-                        if (value.getValue(res)) {
+                        if (int64_t res; value.getValue(res)) {
                             json[key] = res;
                         }
                         break;
                     }
                     case StorageItemType::U64: {
-                        uint64_t res;
-                        if (value.getValue(res)) {
+                        if (uint64_t res; value.getValue(res)) {
                             json[key] = res;
                         }
                         break;
                     }
                     case StorageItemType::Double: {
-                        double res;
-                        if (value.getValue(res)) {
+                        if (double res; value.getValue(res)) {
                             json[key] = res;
                         }
                         break;
@@ -209,14 +204,8 @@ namespace StorageUtils {
             return WUPS_STORAGE_ERROR_SUCCESS;
         }
 
-        static WUPSStorageError WriteStorageToSD(wups_storage_root_item root, bool forceSave) {
-            const StorageItemRoot *rootItem = nullptr;
-            for (const auto &cur : gStorage) {
-                if (cur.getHandle() == reinterpret_cast<uint32_t>(root)) {
-                    rootItem = &cur;
-                    break;
-                }
-            }
+        static WUPSStorageError WriteStorageToSD(wups_storage_root_item root, const bool forceSave) {
+            const auto rootItem = Helper::getRootItem(root);
             if (!rootItem) {
                 return WUPS_STORAGE_ERROR_INTERNAL_NOT_INITIALIZED;
             }

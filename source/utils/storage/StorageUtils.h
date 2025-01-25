@@ -9,7 +9,7 @@
 namespace StorageUtils::API {
     namespace Internal {
         WUPSStorageError OpenStorage(std::string_view plugin_id, wups_storage_root_item &outItem);
-        WUPSStorageError CloseStorage(wups_storage_root_item item);
+        WUPSStorageError CloseStorage(wups_storage_root_item root);
     } // namespace Internal
 
     WUPSStorageError SaveStorage(wups_storage_root_item root, bool force);

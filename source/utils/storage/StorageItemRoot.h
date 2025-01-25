@@ -12,6 +12,8 @@ public:
 
     void wipe();
 
+    void migrate(StorageItemRoot &&other);
+
 private:
     std::string mPluginName;
 };

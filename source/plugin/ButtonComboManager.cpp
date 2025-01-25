@@ -245,30 +245,30 @@ namespace {
     ButtonComboModule_ComboType convertType(const WUPSButtonCombo_ComboType other) {
         switch (other) {
             case WUPS_BUTTON_COMBO_COMBO_TYPE_INVALID:
-                return BUTTON_COMBO_MODULE_TYPE_INVALID;
+                return BUTTON_COMBO_MODULE_COMBO_TYPE_INVALID;
             case WUPS_BUTTON_COMBO_COMBO_TYPE_HOLD:
-                return BUTTON_COMBO_MODULE_TYPE_HOLD;
+                return BUTTON_COMBO_MODULE_COMBO_TYPE_HOLD;
             case WUPS_BUTTON_COMBO_COMBO_TYPE_PRESS_DOWN:
-                return BUTTON_COMBO_MODULE_TYPE_PRESS_DOWN;
+                return BUTTON_COMBO_MODULE_COMBO_TYPE_PRESS_DOWN;
             case WUPS_BUTTON_COMBO_COMBO_TYPE_HOLD_OBSERVER:
-                return BUTTON_COMBO_MODULE_TYPE_HOLD_OBSERVER;
+                return BUTTON_COMBO_MODULE_COMBO_TYPE_HOLD_OBSERVER;
             case WUPS_BUTTON_COMBO_COMBO_TYPE_PRESS_DOWN_OBSERVER:
-                return BUTTON_COMBO_MODULE_TYPE_PRESS_DOWN_OBSERVER;
+                return BUTTON_COMBO_MODULE_COMBO_TYPE_PRESS_DOWN_OBSERVER;
         }
-        return BUTTON_COMBO_MODULE_TYPE_INVALID;
+        return BUTTON_COMBO_MODULE_COMBO_TYPE_INVALID;
     }
 
     WUPSButtonCombo_ComboType convertType(const ButtonComboModule_ComboType other) {
         switch (other) {
-            case BUTTON_COMBO_MODULE_TYPE_INVALID:
+            case BUTTON_COMBO_MODULE_COMBO_TYPE_INVALID:
                 return WUPS_BUTTON_COMBO_COMBO_TYPE_INVALID;
-            case BUTTON_COMBO_MODULE_TYPE_HOLD:
+            case BUTTON_COMBO_MODULE_COMBO_TYPE_HOLD:
                 return WUPS_BUTTON_COMBO_COMBO_TYPE_HOLD;
-            case BUTTON_COMBO_MODULE_TYPE_PRESS_DOWN:
+            case BUTTON_COMBO_MODULE_COMBO_TYPE_PRESS_DOWN:
                 return WUPS_BUTTON_COMBO_COMBO_TYPE_PRESS_DOWN;
-            case BUTTON_COMBO_MODULE_TYPE_HOLD_OBSERVER:
+            case BUTTON_COMBO_MODULE_COMBO_TYPE_HOLD_OBSERVER:
                 return WUPS_BUTTON_COMBO_COMBO_TYPE_HOLD_OBSERVER;
-            case BUTTON_COMBO_MODULE_TYPE_PRESS_DOWN_OBSERVER:
+            case BUTTON_COMBO_MODULE_COMBO_TYPE_PRESS_DOWN_OBSERVER:
                 return WUPS_BUTTON_COMBO_COMBO_TYPE_PRESS_DOWN_OBSERVER;
         }
         return WUPS_BUTTON_COMBO_COMBO_TYPE_INVALID;

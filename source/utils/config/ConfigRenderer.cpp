@@ -243,7 +243,7 @@ void ConfigRenderer::RenderStateMain() const {
     DrawUtils::setFontSize(18);
     DrawUtils::print(16, SCREEN_HEIGHT - 10, "\ue07d Navigate ");
     if (mSetActivePluginsMode) {
-        DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Activate | \uE045 Apply", true);
+        DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Toggle | \uE045 Apply", true);
     } else if (totalElementSize > 0) {
         const auto text = string_format("\ue000 Select | %s Manage plugins", mLastInputWasOnWiimote ? "\uE048" : "\uE002");
         DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, text.c_str(), true);

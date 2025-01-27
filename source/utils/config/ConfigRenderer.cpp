@@ -110,8 +110,21 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
         }
     };
 
+    auto totalElementSize = (int32_t) configs.size();
     if (input.data.buttons_d & Input::eButtons::BUTTON_DOWN) {
         mCursorPos++;
+    } else if (input.data.buttons_d & Input::eButtons::BUTTON_LEFT) {
+        // Paging up
+        mCursorPos -= MAX_BUTTONS_ON_SCREEN - 1;
+        // Don't jump past the top
+        if (mCursorPos < 0)
+            mCursorPos = 0;
+    } else if (input.data.buttons_d & Input::eButtons::BUTTON_RIGHT) {
+        // Paging down
+        mCursorPos += MAX_BUTTONS_ON_SCREEN - 1;
+        // Don't jump past the bottom
+        if (mCursorPos >= totalElementSize)
+            mCursorPos = totalElementSize - 1;
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_UP) {
         mCursorPos--;
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_PLUS) {
@@ -160,10 +173,9 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
         }
     }
 
-    auto totalElementSize = (int32_t) configs.size();
     if (mCursorPos < 0) {
         mCursorPos = totalElementSize - 1;
-    } else if (mCursorPos > (totalElementSize - 1)) {
+    } else if (mCursorPos >= totalElementSize) {
         mCursorPos = 0;
     }
     if (mCursorPos < 0) {
@@ -241,9 +253,9 @@ void ConfigRenderer::RenderStateMain() const {
     // draw bottom bar
     DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
     DrawUtils::setFontSize(18);
-    DrawUtils::print(16, SCREEN_HEIGHT - 10, "\ue07d Navigate ");
+    DrawUtils::print(16, SCREEN_HEIGHT - 10, "\uE07D/\uE07E Navigate ");
     if (mSetActivePluginsMode) {
-        DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\ue000 Toggle | \uE045 Apply", true);
+        DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\uE000 Toggle | \uE045 Apply", true);
     } else if (totalElementSize > 0) {
         const auto text = string_format("\ue000 Select | %s Manage plugins", mLastInputWasOnWiimote ? "\uE048" : "\uE002");
         DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, text.c_str(), true);

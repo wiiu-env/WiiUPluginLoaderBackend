@@ -60,7 +60,10 @@ void CallHook(const std::vector<PluginContainer> &plugins, const wups_loader_hoo
     }
 }
 
-void CallHook(const PluginContainer &plugin, wups_loader_hook_type_t hook_type) {
+void CallHook(const PluginContainer &plugin, const wups_loader_hook_type_t hook_type) {
+    if (!plugin.isLinkedAndLoaded()) {
+        return;
+    }
     for (const auto &hook : plugin.getPluginLinkInformation().getHookDataList()) {
         if (hook.getType() == hook_type) {
             DEBUG_FUNCTION_LINE_VERBOSE("Calling hook of type %s for plugin %s [%d]", hook_names[hook.getType()], plugin.getMetaInformation().getName().c_str(), hook_type);

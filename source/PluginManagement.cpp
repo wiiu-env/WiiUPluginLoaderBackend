@@ -172,6 +172,9 @@ bool PluginManagement::doRelocations(const std::vector<PluginContainer> &plugins
 
 bool PluginManagement::RestoreFunctionPatches(std::vector<PluginContainer> &plugins) {
     for (auto &cur : std::ranges::reverse_view(plugins)) {
+        if (!cur.isLinkedAndLoaded()) {
+            continue;
+        }
         for (auto &curFunction : std::ranges::reverse_view(cur.getPluginLinkInformation().getFunctionDataList())) {
             if (!curFunction.RemovePatch()) {
                 DEBUG_FUNCTION_LINE_ERR("Failed to remove function patch for: plugin %s", cur.getMetaInformation().getName().c_str());

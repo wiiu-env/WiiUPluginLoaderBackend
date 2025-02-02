@@ -9,6 +9,7 @@
 #include "plugin/PluginData.h"
 #include "plugin/PluginDataFactory.h"
 #include "plugin/PluginLoadWrapper.h"
+#include "plugin/PluginMetaInformationFactory.h"
 #include "plugin/RelocationData.h"
 #include "plugin/SectionInfo.h"
 #include "utils/DrawUtils.h"
@@ -197,15 +198,81 @@ WUMS_APPLICATION_STARTS() {
         DEBUG_FUNCTION_LINE_INFO("Got new list of plugins to load");
         std::vector<PluginContainer> pluginsToKeep;
         std::vector<PluginLoadWrapper> toBeLoaded;
+        std::vector<PluginLoadWrapper> filteredLoadOnNextLaunch;
+
+        {
+            struct MetaInfoShort {
+                MetaInfoShort() = default;
+                MetaInfoShort(const PluginMetaInformation &metaInfo) : name(metaInfo.getName()), author(metaInfo.getAuthor()) {}
+                bool operator==(const MetaInfoShort &other) const {
+                    return name == other.name && author == other.author;
+                }
+
+                std::string name;
+                std::string author;
+            };
+            // Build a meta info cache for
+            std::map<uint32_t, MetaInfoShort> pluginMetaInformationCache;
+            for (const auto &pluginLoadWrapper : gLoadOnNextLaunch) {
+                const auto &pluginData = pluginLoadWrapper.getPluginData();
+                // Skip already cached entries
+                if (pluginMetaInformationCache.contains(pluginData->getHandle())) {
+                    DEBUG_FUNCTION_LINE_ERR("Skip parsing meta information for %08X because it's already cached", pluginData->getHandle());
+                    continue;
+                }
+                // First to get a copy of meta information from the already loaded plugins
+                if (const auto it = std::ranges::find_if(gLoadedPlugins, [&pluginLoadWrapper](const PluginContainer &plugin) {
+                        return plugin.getPluginDataCopy()->getHandle() == pluginLoadWrapper.getPluginData()->getHandle();
+                    });
+                    it != gLoadedPlugins.end()) {
+                    pluginMetaInformationCache[pluginData->getHandle()] = it->getMetaInformation();
+                    continue;
+                }
+                // If this fails, we parse try to parse it instead
+                PluginParseErrors err;
+                if (const auto metaInfoOpt = PluginMetaInformationFactory::loadPlugin(*pluginData, err)) {
+                    pluginMetaInformationCache[pluginData->getHandle()] = *metaInfoOpt;
+                } else {
+                    DEBUG_FUNCTION_LINE_WARN("Failed to parse meta data for plugin data handle %08X", pluginData->getHandle());
+                }
+            }
+
+            // Check if we want to link a plugin that's currently unloaded
+            // E.g. if you disable a plugin from the config menu and then wiiload it, the disabled plugin copy should be unloaded
+            for (const auto &pluginLoadWrapper : gLoadOnNextLaunch) {
+                if (!pluginLoadWrapper.isLoadAndLink()) {
+                    const auto unloadedMetaInfoIt = pluginMetaInformationCache.find(pluginLoadWrapper.getPluginData()->getHandle());
+                    if (unloadedMetaInfoIt == pluginMetaInformationCache.end()) {
+                        DEBUG_FUNCTION_LINE_WARN("Failed to find meta information for plugin data handle %08X", pluginLoadWrapper.getPluginData()->getHandle());
+                        continue;
+                    }
+                    if (const auto it = std::ranges::find_if(gLoadOnNextLaunch, [&pluginLoadWrapper, &pluginMetaInformationCache, &unloadedMetaInfoIt](const PluginLoadWrapper &plugin) {
+                            const bool differentPluginData = plugin.getPluginData()->getHandle() != pluginLoadWrapper.getPluginData()->getHandle();
+                            const bool otherWillBeLinked   = plugin.isLoadAndLink();
+                            bool sameAuthorAndName         = false;
+                            if (const auto otherMetaInfoIt = pluginMetaInformationCache.find(plugin.getPluginData()->getHandle()); otherMetaInfoIt != pluginMetaInformationCache.end()) {
+                                const auto &otherMetaInfo    = otherMetaInfoIt->second;
+                                const auto &unloadedMetaInfo = unloadedMetaInfoIt->second;
+                                sameAuthorAndName            = otherMetaInfo == unloadedMetaInfo;
+                            }
+                            return differentPluginData && otherWillBeLinked && sameAuthorAndName;
+                        });
+                        it != gLoadOnNextLaunch.end()) {
+                        continue;
+                    }
+                }
+                filteredLoadOnNextLaunch.push_back(pluginLoadWrapper);
+            }
+        }
 
         // Check which plugins are already loaded and which needs to be
-        for (const auto &pluginLoadWrapper : gLoadOnNextLaunch) {
+        for (const auto &pluginLoadWrapper : filteredLoadOnNextLaunch) {
             const auto &pluginNeedsNoReloadFn = [&pluginLoadWrapper](const PluginContainer &container) {
                 return (container.getPluginDataCopy()->getHandle() == pluginLoadWrapper.getPluginData()->getHandle()) &&
                        (container.isLinkedAndLoaded() == pluginLoadWrapper.isLoadAndLink());
             };
             // Check if the plugin data is already loaded
-            if (auto it = std::ranges::find_if(gLoadedPlugins, pluginNeedsNoReloadFn);
+            if (const auto it = std::ranges::find_if(gLoadedPlugins, pluginNeedsNoReloadFn);
                 it != gLoadedPlugins.end()) {
                 pluginsToKeep.push_back(std::move(*it));
                 gLoadedPlugins.erase(it);
@@ -255,7 +322,7 @@ WUMS_APPLICATION_STARTS() {
         CallHook(gLoadedPlugins, WUPS_LOADER_HOOK_INIT_WRAPPER, needsInitsCheck);
 
         for (auto &plugin : gLoadedPlugins) {
-            if (plugin.isInitDone()) { continue; }
+            if (plugin.isInitDone() && !plugin.isLinkedAndLoaded()) { continue; }
             if (const WUPSStorageError err = plugin.OpenStorage(); err != WUPS_STORAGE_ERROR_SUCCESS) {
                 DEBUG_FUNCTION_LINE_ERR("Failed to open storage for plugin: %s. (%s)", plugin.getMetaInformation().getName().c_str(), WUPSStorageAPI_GetStatusStr(err));
             }
@@ -275,6 +342,10 @@ void CleanupPlugins(std::vector<PluginContainer> &&pluginsToDeinit) {
     const auto saved_reent           = currentThread->reserved[4];
     const auto saved_cleanupCallback = currentThread->cleanupCallback;
 
+    for (const auto &pluginContainer : pluginsToDeinit) {
+        DEBUG_FUNCTION_LINE_INFO("De-init plugin %s from %s. PluginData: %08X", pluginContainer.getMetaInformation().getName().c_str(), pluginContainer.getMetaInformation().getAuthor().c_str(), pluginContainer.getPluginDataCopy()->getHandle());
+    }
+
     currentThread->reserved[4] = 0;
 
     CallHook(pluginsToDeinit, WUPS_LOADER_HOOK_DEINIT_PLUGIN);
@@ -292,7 +363,7 @@ void CleanupPlugins(std::vector<PluginContainer> &&pluginsToDeinit) {
     PluginManagement::RestoreFunctionPatches(pluginsToDeinit);
 
     for (auto &plugin : pluginsToDeinit) {
-        if (!plugin.isInitDone()) { continue; }
+        if (!plugin.isInitDone() || !plugin.isLinkedAndLoaded()) { continue; }
         if (const WUPSStorageError err = plugin.CloseStorage(); err != WUPS_STORAGE_ERROR_SUCCESS) {
             DEBUG_FUNCTION_LINE_ERR("Failed to close storage for plugin: %s", plugin.getMetaInformation().getName().c_str());
         }

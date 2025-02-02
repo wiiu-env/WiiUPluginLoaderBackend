@@ -146,6 +146,9 @@ namespace WUPSConfigAPIBackend {
             return WUPSCONFIG_API_RESULT_INVALID_ARGUMENT;
         }
         for (auto &cur : gLoadedPlugins) {
+            if (!cur.isLinkedAndLoaded()) {
+                continue;
+            }
             if (cur.getHandle() == pluginIdentifier) {
                 if (options.version != 1) {
                     return WUPSCONFIG_API_RESULT_UNSUPPORTED_VERSION;

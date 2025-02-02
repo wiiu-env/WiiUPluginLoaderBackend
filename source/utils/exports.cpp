@@ -49,8 +49,7 @@ extern "C" PluginBackendApiErrorType WUPSLoadAndLinkByDataHandle(const wups_back
         }
     }
 
-    // TODO: What happens when we wiiload a new version of an inactive plugin? Do we consider that a problem?
-    // add all loaded plugins that are not active as inactive
+    // Keep inactive plugins loaded. Duplicates will be eliminated by comparing name/author
     for (const auto &plugin : gLoadedPlugins) {
         if (!plugin.isLinkedAndLoaded()) {
             gLoadOnNextLaunch.emplace_back(plugin.getPluginDataCopy(), false);
@@ -178,6 +177,9 @@ extern "C" PluginBackendApiErrorType WUPSGetPluginDataForContainerHandles(const 
         const auto handle = plugin_container_handle_list[i];
         bool found        = false;
         for (const auto &curContainer : gLoadedPlugins) {
+            if (!curContainer.isLinkedAndLoaded()) {
+                continue;
+            }
             if (curContainer.getHandle() == handle) {
                 auto pluginData     = curContainer.getPluginDataCopy();
                 plugin_data_list[i] = pluginData->getHandle();
@@ -202,6 +204,9 @@ extern "C" PluginBackendApiErrorType WUPSGetMetaInformation(const wups_backend_p
             auto handle = plugin_container_handle_list[i];
             bool found  = false;
             for (const auto &curContainer : gLoadedPlugins) {
+                if (!curContainer.isLinkedAndLoaded()) {
+                    continue;
+                }
                 if (curContainer.getHandle() == handle) {
                     const auto &metaInfo = curContainer.getMetaInformation();
 
@@ -278,7 +283,7 @@ extern "C" PluginBackendApiErrorType WUPSGetNumberOfLoadedPlugins(uint32_t *outC
     if (outCount == nullptr) {
         return PLUGIN_BACKEND_API_ERROR_INVALID_ARG;
     }
-    *outCount = std::count_if(gLoadedPlugins.begin(), gLoadedPlugins.end(), [](const auto &cur) { return cur.isLinkedAndLoaded(); });
+    *outCount = std::ranges::count_if(gLoadedPlugins, [](const auto &cur) { return cur.isLinkedAndLoaded(); });
     return PLUGIN_BACKEND_API_ERROR_NONE;
 }
 

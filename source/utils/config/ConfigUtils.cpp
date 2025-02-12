@@ -166,8 +166,8 @@ void ConfigUtils::displayMenu() {
     bool skipFirstInput = true;
 
     gOnlyAcceptFromThread              = OSGetCurrentThread();
-    OSMemoryBarrier();
     ConfigSubState subStateReturnValue = SUB_STATE_ERROR;
+    OSMemoryBarrier();
     while (true) {
         startTime = OSGetTime();
         if (gConfigMenuShouldClose) {

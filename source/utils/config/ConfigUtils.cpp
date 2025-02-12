@@ -20,6 +20,7 @@
 #include <wups/config.h>
 #include <wups/hooks.h>
 
+#include <coreinit/cache.h>
 #include <coreinit/title.h>
 #include <sysapp/launch.h>
 
@@ -165,6 +166,7 @@ void ConfigUtils::displayMenu() {
     bool skipFirstInput = true;
 
     gOnlyAcceptFromThread              = OSGetCurrentThread();
+    OSMemoryBarrier();
     ConfigSubState subStateReturnValue = SUB_STATE_ERROR;
     while (true) {
         startTime = OSGetTime();

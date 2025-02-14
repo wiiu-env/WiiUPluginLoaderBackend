@@ -12,6 +12,7 @@
 #include <coreinit/core.h>
 #include <coreinit/messagequeue.h>
 #include <coreinit/time.h>
+#include <coreinit/title.h>
 #include <padscore/wpad.h>
 #include <vpad/input.h>
 
@@ -93,8 +94,14 @@ DECL_FUNCTION(int32_t, VPADRead, int32_t chan, VPADStatus *buffer, uint32_t buff
     if (gConfigMenuOpened) {
         // Ignore reading vpad input only from other threads if the config menu is opened
         if (OSGetCurrentThread() != gOnlyAcceptFromThread) {
-            while (gConfigMenuOpened)
-                OSSleepTicks(OSMillisecondsToTicks(10));
+            // Quick fix for Hyrule Warriors: block VPADRead() in non-rendering threads.
+            switch (OSGetTitleID()) {
+                case 0x00050000'1017CD00: // Hyrule Warriors JPN
+                case 0x00050000'1017D800: // Hyrule Warriors USA
+                case 0x00050000'1017D900: // Hyrule Warriors EUR
+                    while (gConfigMenuOpened)
+                        OSSleepTicks(OSMillisecondsToTicks(10));
+            }
             return 0;
         }
     }

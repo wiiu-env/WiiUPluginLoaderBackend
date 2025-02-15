@@ -101,6 +101,11 @@ DECL_FUNCTION(int32_t, VPADRead, int32_t chan, VPADStatus *buffer, uint32_t buff
                 case 0x00050000'1017D900: // Hyrule Warriors EUR
                     while (gConfigMenuOpened)
                         OSSleepTicks(OSMillisecondsToTicks(10));
+                default:
+                    break; // nothing
+            }
+            if (error) {
+                *error = VPAD_READ_NO_SAMPLES;
             }
             return 0;
         }
@@ -109,10 +114,17 @@ DECL_FUNCTION(int32_t, VPADRead, int32_t chan, VPADStatus *buffer, uint32_t buff
     const int32_t result     = real_VPADRead(chan, buffer, buffer_size, &real_error);
 
     if (result > 0 && real_error == VPAD_READ_SUCCESS && buffer && ((buffer[0].hold & 0xFFFFF) == (VPAD_BUTTON_L | VPAD_BUTTON_DOWN | VPAD_BUTTON_MINUS)) && sVpadPressCooldown == 0 && !gConfigMenuOpened) {
-
         sWantsToOpenConfigMenu = true;
         sVpadPressCooldown     = 0x3C;
-        return 0;
+        if (error) {
+            *error = VPAD_READ_SUCCESS;
+        }
+
+        buffer->hold    = 0;
+        buffer->trigger = 0;
+        buffer->release = 0;
+
+        return 1;
     }
     if (error) {
         *error = real_error;

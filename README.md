@@ -1,7 +1,7 @@
-﻿[![CI-Release](https://github.com/wiiu-env/WiiUPluginLoaderBackend/actions/workflows/ci.yml/badge.svg)](https://github.com/wiiu-env/WiiUPluginLoaderBackend/actions/workflows/ci.yml)
+﻿[![CI release](https://github.com/wiiu-env/WiiUPluginLoaderBackend/actions/workflows/ci.yml/badge.svg)](https://github.com/wiiu-env/WiiUPluginLoaderBackend/actions/workflows/ci.yml)
 
 # Wii U Plugin Loader Backend
-This is the backend for the [WiiUPluginSystem](https://github.com/wiiu-env/WiiUPluginSystem). Check out the readme for more information about the Plugin System.
+This is the backend for the [WiiUPluginSystem](https://github.com/wiiu-env/WiiUPluginSystem). Check out the README for more information about the plugin system.
 
 ## Usage
 (`[ENVIRONMENT]` is a placeholder for the actual environment name.)
@@ -35,7 +35,7 @@ DEVKITPPC=/opt/devkitpro/devkitPPC
 
 Also make sure to install [wut](https://github.com/decaf-emu/wut), [WiiUPluginSystem](https://github.com/wiiu-env/WiiUPluginSystem), [WiiUModuleSystem](https://github.com/wiiu-env/WiiUModuleSystem), [libfunctionpatcher](https://github.com/wiiu-env/libfunctionpatcher), [libnotifications](https://github.com/wiiu-env/libnotifications) and [libmappedmemory](https://github.com/wiiu-env/libmappedmemory).
 
-## Buildflags
+## Build flags
 
 ### Logging
 Building via `make` only logs errors (via OSReport). To enable logging via the [LoggingModule](https://github.com/wiiu-env/LoggingModule) set `DEBUG` to `1` or `VERBOSE`.
@@ -61,7 +61,7 @@ docker run -it --rm -v ${PWD}:/project wiiupluginloaderbackend-builder make
 docker run -it --rm -v ${PWD}:/project wiiupluginloaderbackend-builder make clean
 ```
 
-## Format the code via docker
+## Format the code via Docker
 
 `docker run --rm -v ${PWD}:/src ghcr.io/wiiu-env/clang-format:13.0.0-2 -r ./source  --exclude ./source/elfio --exclude ./source/utils/json.hpp -i`
 

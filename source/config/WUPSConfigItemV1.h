@@ -5,6 +5,8 @@
 #include <wups/config.h>
 
 #include <string>
+#include <string_view>
+
 namespace WUPSConfigAPIBackend {
     class WUPSConfigItemV1 final : public WUPSConfigItem {
     public:

@@ -111,14 +111,14 @@ remove_first_if(Container &container, Predicate pred) {
 }
 
 template<typename Container, typename Predicate>
-bool remove_locked_first_if(std::mutex &mutex, Container &container, Predicate pred) {
-    std::lock_guard<std::mutex> lock(mutex);
+bool remove_locked_first_if(std::recursive_mutex &mutex, Container &container, Predicate pred) {
+    std::lock_guard<std::recursive_mutex> lock(mutex);
     return remove_first_if(container, pred);
 }
 
 template<typename T, typename Predicate>
-T pop_locked_first_if(std::mutex &mutex, std::vector<T> &container, Predicate pred) {
-    std::lock_guard<std::mutex> lock(mutex);
+T pop_locked_first_if(std::recursive_mutex &mutex, std::vector<T> &container, Predicate pred) {
+    std::lock_guard<std::recursive_mutex> lock(mutex);
     T result;
     auto it = container.begin();
     while (it != container.end()) {

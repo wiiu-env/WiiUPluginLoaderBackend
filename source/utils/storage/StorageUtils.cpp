@@ -15,7 +15,7 @@
 
 namespace StorageUtils {
     std::forward_list<StorageItemRoot> gStorage;
-    std::mutex gStorageMutex;
+    std::recursive_mutex gStorageMutex;
 
     namespace Helper {
         static WUPSStorageError ConvertToWUPSError(const StorageSubItem::StorageSubItemError &error) {

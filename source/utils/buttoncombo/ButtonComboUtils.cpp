@@ -10,7 +10,7 @@
 
 namespace ButtonComboUtils::API {
     static std::forward_list<ButtonComboManager> sButtonComboManager;
-    static std::mutex sButtonComboMutex;
+    static std::recursive_mutex sButtonComboMutex;
 
     namespace Internal {
         uint32_t CreateButtonComboData() {

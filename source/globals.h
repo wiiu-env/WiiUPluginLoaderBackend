@@ -10,6 +10,7 @@
 
 #include <map>
 #include <memory>
+#include <mutex>
 #include <set>
 #include <vector>
 
@@ -28,7 +29,7 @@ extern std::vector<PluginContainer> gLoadedPlugins;
 
 extern std::set<std::shared_ptr<PluginData>, PluginDataSharedPtrComparator> gLoadedData;
 extern std::vector<PluginLoadWrapper> gLoadOnNextLaunch;
-extern std::mutex gLoadedDataMutex;
+extern std::recursive_mutex gLoadedDataMutex;
 extern std::map<std::string, OSDynLoad_Module> gUsedRPLs;
 extern std::vector<void *> gAllocatedAddresses;
 

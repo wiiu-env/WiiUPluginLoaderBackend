@@ -3,6 +3,7 @@
 #include <wut_types.h>
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 class FSUtils {

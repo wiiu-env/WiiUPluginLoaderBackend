@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <coreinit/debug.h>
 #include <string.h>
 #include <whb/log.h>

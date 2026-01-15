@@ -61,7 +61,7 @@ void dumpHex(const void *data, const size_t size) {
     char ascii[17];
     size_t i, j;
     ascii[16] = '\0';
-    DEBUG_FUNCTION_LINE("0x%08X (0x0000): ", data);
+    DEBUG_FUNCTION_LINE("0x%p (0x0000): ", data);
     for (i = 0; i < size; ++i) {
         WHBLogWritef("%02X ", ((unsigned char *) data)[i]);
         if (((unsigned char *) data)[i] >= ' ' && ((unsigned char *) data)[i] <= '~') {

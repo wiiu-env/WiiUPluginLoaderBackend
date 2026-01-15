@@ -22,13 +22,13 @@
 namespace WUPSConfigAPIBackend {
 
     std::vector<std::unique_ptr<WUPSConfig>> sConfigs;
-    std::mutex sConfigsMutex;
+    std::recursive_mutex sConfigsMutex;
 
     std::vector<std::unique_ptr<WUPSConfigCategory>> sConfigCategories;
-    std::mutex sConfigCategoryMutex;
+    std::recursive_mutex sConfigCategoryMutex;
 
     std::vector<std::unique_ptr<WUPSConfigItem>> sConfigItems;
-    std::mutex sConfigItemsMutex;
+    std::recursive_mutex sConfigItemsMutex;
 
     namespace Intern {
         WUPSConfig *GetConfigByHandle(WUPSConfigHandle handle) {
@@ -201,7 +201,7 @@ namespace WUPSConfigAPIBackend {
                         return WUPSCONFIG_API_RESULT_SUCCESS;
                     }
                 }
-                DEBUG_FUNCTION_LINE_WARN("Failed to destroy WUPSConfigCategory (for handle: \"%08X\")", handle.handle);
+                DEBUG_FUNCTION_LINE_WARN("Failed to destroy WUPSConfigCategory (for handle: \"%p\")", handle.handle);
                 return WUPSCONFIG_API_RESULT_NOT_FOUND;
             }
             return WUPSCONFIG_API_RESULT_SUCCESS;
@@ -218,20 +218,20 @@ namespace WUPSConfigAPIBackend {
             if (!parentCat) {
                 parentCat = Intern::GetCategoryByHandle(parentHandle);
                 if (!parentCat) {
-                    DEBUG_FUNCTION_LINE_WARN("Failed to find parent for handle %08X", parentHandle.handle);
+                    DEBUG_FUNCTION_LINE_WARN("Failed to find parent for handle %p", parentHandle.handle);
                     return WUPSCONFIG_API_RESULT_NOT_FOUND;
                 }
             }
 
             auto category = Intern::PopCategoryByHandle(categoryHandle);
             if (!category) {
-                DEBUG_FUNCTION_LINE_WARN("Failed to find category. parentHandle: %08X categoryHandle: %08X", parentHandle.handle, categoryHandle.handle);
+                DEBUG_FUNCTION_LINE_WARN("Failed to find category. parentHandle: %p categoryHandle: %p", parentHandle.handle, categoryHandle.handle);
                 return WUPSCONFIG_API_RESULT_NOT_FOUND;
             }
 
             if (!parentCat->addCategory(category)) {
                 sConfigCategories.push_back(std::move(category));
-                DEBUG_FUNCTION_LINE_WARN("Failed to add category to parent. parentHandle: %08X categoryHandle: %08X", parentHandle.handle, categoryHandle.handle);
+                DEBUG_FUNCTION_LINE_WARN("Failed to add category to parent. parentHandle: %p categoryHandle: %p", parentHandle.handle, categoryHandle.handle);
                 return WUPSCONFIG_API_RESULT_UNKNOWN_ERROR; // TODO!!!
             }
             return WUPSCONFIG_API_RESULT_SUCCESS;
@@ -249,21 +249,21 @@ namespace WUPSConfigAPIBackend {
             if (!parentCat) {
                 parentCat = Intern::GetCategoryByHandle(parentHandle, true);
                 if (!parentCat) {
-                    DEBUG_FUNCTION_LINE_WARN("Failed to find parent for handle %08X", parentHandle.handle);
+                    DEBUG_FUNCTION_LINE_WARN("Failed to find parent for handle %p", parentHandle.handle);
                     return WUPSCONFIG_API_RESULT_NOT_FOUND;
                 }
             }
 
             auto item = Intern::PopItemByHandle(itemHandle);
             if (!item) {
-                DEBUG_FUNCTION_LINE_ERR("Failed to get item for handle %08X", itemHandle.handle);
+                DEBUG_FUNCTION_LINE_ERR("Failed to get item for handle %p", itemHandle.handle);
                 return WUPSCONFIG_API_RESULT_NOT_FOUND;
             }
 
             if (!parentCat->addItem(item)) {
                 std::lock_guard lockItems(sConfigItemsMutex);
                 sConfigItems.push_back(std::move(item));
-                DEBUG_FUNCTION_LINE_ERR("Failed to add item %08X to category %08X", itemHandle.handle, parentHandle.handle);
+                DEBUG_FUNCTION_LINE_ERR("Failed to add item %p to category %p", itemHandle.handle, parentHandle.handle);
                 return WUPSCONFIG_API_RESULT_UNKNOWN_ERROR; // TODO
             }
 
@@ -305,7 +305,7 @@ namespace WUPSConfigAPIBackend {
             }
 
             if (!remove_locked_first_if(sConfigItemsMutex, sConfigItems, [&handle](auto &cur) { return cur.get() == handle; })) {
-                DEBUG_FUNCTION_LINE_WARN("Failed to destroy WUPSConfigItem (handle: \"%08X\")", handle);
+                DEBUG_FUNCTION_LINE_WARN("Failed to destroy WUPSConfigItem (handle: \"%p\")", handle.handle);
                 return WUPSCONFIG_API_RESULT_NOT_FOUND;
             }
             return WUPSCONFIG_API_RESULT_SUCCESS;

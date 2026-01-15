@@ -404,7 +404,7 @@ namespace StorageUtils {
                 // TODO: handle write error?
 
                 if (!remove_first_if(gStorage, [&root](auto &cur) { return cur.getHandle() == reinterpret_cast<uint32_t>(root); })) {
-                    DEBUG_FUNCTION_LINE_WARN("Failed to close storage: Not opened (\"%08X\")", root);
+                    DEBUG_FUNCTION_LINE_WARN("Failed to close storage: Not opened (\"%pX\")", root);
                     return WUPS_STORAGE_ERROR_NOT_FOUND;
                 }
                 return res;

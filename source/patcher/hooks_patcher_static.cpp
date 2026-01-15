@@ -175,68 +175,92 @@ DECL_FUNCTION(uint32_t, SC17_FindClosestSymbol,
               uint32_t symbolNameBufferLength,
               char *moduleNameBuffer,
               uint32_t moduleNameBufferLength) {
-    for (const auto &plugin : gLoadedPlugins) {
-        if (!plugin.isLinkedAndLoaded()) {
-            continue;
-        }
-        const auto sectionInfo = plugin.getPluginLinkInformation().getSectionInfo(".text");
-        if (!sectionInfo) {
-            continue;
-        }
-
-        if (!sectionInfo->isInSection(addr)) {
-            continue;
-        }
-
-        strncpy(moduleNameBuffer, plugin.getMetaInformation().getName().c_str(), moduleNameBufferLength - 1);
-        if (const auto functionSymbolData = plugin.getPluginLinkInformation().getNearestFunctionSymbolData(addr)) {
-            strncpy(symbolNameBuffer, functionSymbolData->getName().c_str(), moduleNameBufferLength - 1);
-            if (outDistance) {
-                *outDistance = addr - reinterpret_cast<uint32_t>(functionSymbolData->getAddress());
+    if (symbolNameBuffer && symbolNameBufferLength > 0 && moduleNameBuffer && moduleNameBufferLength > 0) {
+        for (const auto &plugin : gLoadedPlugins) {
+            if (!plugin.isLinkedAndLoaded()) {
+                continue;
             }
+            const auto sectionInfo = plugin.getPluginLinkInformation().getSectionInfo(".text");
+            if (!sectionInfo) {
+                continue;
+            }
+
+            if (!sectionInfo->isInSection(addr)) {
+                continue;
+            }
+
+            strncpy(moduleNameBuffer, plugin.getMetaInformation().getName().c_str(), moduleNameBufferLength - 1);
+            moduleNameBuffer[moduleNameBufferLength - 1] = '\0';
+            if (const auto functionSymbolData = plugin.getPluginLinkInformation().getNearestFunctionSymbolData(addr)) {
+                strncpy(symbolNameBuffer, functionSymbolData->getName().c_str(), symbolNameBufferLength - 1);
+                symbolNameBuffer[symbolNameBufferLength - 1] = '\0';
+                if (outDistance) {
+                    *outDistance = addr - reinterpret_cast<uint32_t>(functionSymbolData->getAddress());
+                }
+                return 0;
+            }
+
+            strncpy(symbolNameBuffer, ".text", symbolNameBufferLength - 1);
+            symbolNameBuffer[symbolNameBufferLength - 1] = '\0';
+            if (outDistance) {
+                *outDistance = addr - sectionInfo->getAddress();
+            }
+
             return 0;
         }
-
-        strncpy(symbolNameBuffer, ".text", symbolNameBufferLength);
-
-        if (outDistance) {
-            *outDistance = addr - sectionInfo->getAddress();
-        }
-
-        return 0;
     }
 
     return real_SC17_FindClosestSymbol(addr, outDistance, symbolNameBuffer, symbolNameBufferLength, moduleNameBuffer, moduleNameBufferLength);
 }
 
 DECL_FUNCTION(uint32_t, KiGetAppSymbolName, uint32_t addr, char *buffer, int32_t bufSize) {
-    for (const auto &plugin : gLoadedPlugins) {
-        if (!plugin.isLinkedAndLoaded()) {
-            continue;
-        }
-        const auto sectionInfo = plugin.getPluginLinkInformation().getSectionInfo(".text");
-        if (!sectionInfo) {
-            continue;
-        }
+    if (buffer && bufSize > 0) {
+        for (const auto &plugin : gLoadedPlugins) {
+            if (!plugin.isLinkedAndLoaded()) {
+                continue;
+            }
+            const auto sectionInfo = plugin.getPluginLinkInformation().getSectionInfo(".text");
+            if (!sectionInfo) {
+                continue;
+            }
 
-        if (!sectionInfo->isInSection(addr)) {
-            continue;
-        }
+            if (!sectionInfo->isInSection(addr)) {
+                continue;
+            }
 
-        const auto pluginNameLen  = strlen(plugin.getMetaInformation().getName().c_str());
-        int32_t spaceLeftInBuffer = bufSize - static_cast<int32_t>(pluginNameLen) - 1;
-        if (spaceLeftInBuffer < 0) {
-            spaceLeftInBuffer = 0;
-        }
-        strncpy(buffer, plugin.getMetaInformation().getName().c_str(), bufSize - 1);
+            const char *pluginName = plugin.getMetaInformation().getName().c_str();
 
-        if (const auto functionSymbolData = plugin.getPluginLinkInformation().getNearestFunctionSymbolData(addr)) {
-            buffer[pluginNameLen]     = '|';
-            buffer[pluginNameLen + 1] = '\0';
-            strncpy(buffer + pluginNameLen + 1, functionSymbolData->getName().c_str(), spaceLeftInBuffer - 1);
-        }
+            // Copy plugin name, always leave space for '\0'
+            strncpy(buffer, pluginName, bufSize - 1);
+            buffer[bufSize - 1] = '\0';
 
-        return 0;
+            if (const auto functionSymbolData = plugin.getPluginLinkInformation().getNearestFunctionSymbolData(addr)) {
+                size_t currentLen = strlen(buffer);
+                if (currentLen >= static_cast<size_t>(bufSize)) {
+                    currentLen = static_cast<size_t>(bufSize) - 1;
+                }
+
+                // Check if there is space for at least the separator '|' and the null terminator.
+                // currentLen is the index where '|' would go. currentLen + 1 is where '\0' would go.
+                if (currentLen + 1 < static_cast<size_t>(bufSize)) {
+                    buffer[currentLen] = '|';
+                    currentLen++; // Increment length to account for '|'
+
+                    // Calculate remaining space for the function name.
+                    // -1 is for the final null terminator.
+                    size_t remainingSpace = static_cast<size_t>(bufSize) - currentLen - 1;
+
+                    if (remainingSpace > 0) {
+                        const char *funcName = functionSymbolData->getName().c_str();
+                        strncpy(buffer + currentLen, funcName, remainingSpace);
+                    }
+
+                    buffer[bufSize - 1] = '\0';
+                }
+            }
+
+            return 0;
+        }
     }
 
     return real_KiGetAppSymbolName(addr, buffer, bufSize);

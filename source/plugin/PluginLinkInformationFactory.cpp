@@ -162,7 +162,7 @@ PluginLinkInformationFactory::load(const PluginData &pluginData) {
     // Lets create a shared memory pool for both of them
     HeapMemoryFixedSizePool textAndTrampDataPool({text_size, trampDataSize});
     if (!textAndTrampDataPool) {
-        DEBUG_FUNCTION_LINE_ERR("Failed to alloc memory for the .text section (%d bytes) and tramp data", text_size, trampDataSize);
+        DEBUG_FUNCTION_LINE_ERR("Failed to alloc memory for the .text section (%d bytes) and tramp data (%d bytes)", text_size, trampDataSize);
         return std::nullopt;
     }
     // Segment 0 is the .text data
@@ -235,7 +235,7 @@ PluginLinkInformationFactory::load(const PluginData &pluginData) {
                 DEBUG_FUNCTION_LINE_VERBOSE("memset section %s %08X to 0 (%d bytes)", psec->get_name().c_str(), destination, sectionSize);
                 memset((void *) destination, 0, sectionSize);
             } else if (psec->get_type() == SHT_PROGBITS) {
-                DEBUG_FUNCTION_LINE_VERBOSE("Copy section %s %08X -> %08X (%d bytes)", psec->get_name().c_str(), p, destination, sectionSize);
+                DEBUG_FUNCTION_LINE_VERBOSE("Copy section %s %p -> %08X (%d bytes)", psec->get_name().c_str(), p, destination, sectionSize);
                 memcpy((void *) destination, p, sectionSize);
             }
             pluginInfo.addSectionInfo(SectionInfo(psec->get_name(), destination, sectionSize));
@@ -252,7 +252,7 @@ PluginLinkInformationFactory::load(const PluginData &pluginData) {
     for (uint32_t i = 0; i < sec_num; ++i) {
         section *psec = reader.sections[i];
         if (psec && (psec->get_type() == SHT_PROGBITS || psec->get_type() == SHT_NOBITS) && (psec->get_flags() & SHF_ALLOC)) {
-            DEBUG_FUNCTION_LINE_VERBOSE("Linking (%d)... %s at %08X", i, psec->get_name().c_str(), destinations[psec->get_index()]);
+            DEBUG_FUNCTION_LINE_VERBOSE("Linking (%d)... %s at %p", i, psec->get_name().c_str(), destinations[psec->get_index()]);
 
             if (!linkSection(reader, psec->get_index(), (uint32_t) destinations[psec->get_index()], (uint32_t) text_data.data(), (uint32_t) data_data.data(), trampolineList)) {
                 DEBUG_FUNCTION_LINE_ERR("linkSection failed");
@@ -278,7 +278,7 @@ PluginLinkInformationFactory::load(const PluginData &pluginData) {
         if (entries != nullptr) {
             for (size_t j = 0; j < entries_count; j++) {
                 wups_loader_hook_t *hook = &entries[j];
-                DEBUG_FUNCTION_LINE_VERBOSE("Saving hook of plugin Type: %08X, target: %08X", hook->type, (void *) hook->target);
+                DEBUG_FUNCTION_LINE_VERBOSE("Saving hook of plugin Type: %08X, target: %p", hook->type, (void *) hook->target);
                 pluginInfo.addHookData(HookData((void *) hook->target, hook->type));
             }
         }
@@ -291,7 +291,7 @@ PluginLinkInformationFactory::load(const PluginData &pluginData) {
         if (entries != nullptr) {
             for (size_t j = 0; j < entries_count; j++) {
                 wups_loader_entry_t *cur_function = &entries[j];
-                DEBUG_FUNCTION_LINE_VERBOSE("Saving function \"%s\" of plugin . PA:%08X VA:%08X Library: %08X, target: %08X, call_addr: %08X",
+                DEBUG_FUNCTION_LINE_VERBOSE("Saving function \"%s\" of plugin . PA:%p VA:%p Library: %08X, target: %p, call_addr: %p",
                                             cur_function->_function.name /*,mPluginData->getPluginInformation()->getName().c_str()*/,
                                             cur_function->_function.physical_address, cur_function->_function.virtual_address, cur_function->_function.library, cur_function->_function.target,
                                             (void *) cur_function->_function.call_addr);
@@ -407,7 +407,7 @@ bool PluginLinkInformationFactory::addImportRelocationData(PluginLinkInformation
 
                 uint32_t section_index = psec->get_info();
                 if (!infoMap.contains(sym_section_index)) {
-                    DEBUG_FUNCTION_LINE_ERR("Relocation is referencing a unknown section. %d destination: %08X sym_name %s", section_index, destinations[section_index], sym_name.c_str());
+                    DEBUG_FUNCTION_LINE_ERR("Relocation is referencing a unknown section. %d destination: %p sym_name %s", section_index, destinations[section_index], sym_name.c_str());
                     return false;
                 }
 

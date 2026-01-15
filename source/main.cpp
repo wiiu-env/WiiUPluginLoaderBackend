@@ -112,11 +112,11 @@ WUMS_INITIALIZE() {
             DrawUtils::endDraw();
         });
         DEBUG_FUNCTION_LINE_INFO("Safe Mode activated!");
-        auto tobeIgnoredFilePath = getNonBaseAromaPluginFilenames(getPluginPath());
+        auto toBeIgnoredFilePath = getNonBaseAromaPluginFilenames(getPluginPath());
         WUPSBackendSettings::LoadSettings();
         std::set<std::string> inactivePlugins = WUPSBackendSettings::GetInactivePluginFilenames();
 
-        inactivePlugins.insert(tobeIgnoredFilePath.begin(), tobeIgnoredFilePath.end());
+        inactivePlugins.insert(toBeIgnoredFilePath.begin(), toBeIgnoredFilePath.end());
         for (const auto &plugin : inactivePlugins) {
             DEBUG_FUNCTION_LINE_INFO("safemode: %s will be deactivated", plugin.c_str());
         }
@@ -172,7 +172,7 @@ WUMS_APPLICATION_STARTS() {
     // If an allocated rpl was not released properly (e.g. if something else calls OSDynload_Acquire without releasing it) memory get leaked.
     // Let's clean this up!
     for (const auto &addr : gAllocatedAddresses) {
-        DEBUG_FUNCTION_LINE_WARN("Memory allocated by OSDynload was not freed properly, let's clean it up! (%08X)", addr);
+        DEBUG_FUNCTION_LINE_WARN("Memory allocated by OSDynload was not freed properly, let's clean it up! (%p)", addr);
         free(addr);
     }
     gAllocatedAddresses.clear();
@@ -391,7 +391,7 @@ void CheckCleanupCallbackUsage(const std::vector<PluginContainer> &plugins) {
             while (t) {
                 const auto address = reinterpret_cast<uint32_t>(t->cleanupCallback);
                 if (address != 0 && address >= startAddress && address <= endAddress) {
-                    OSReport("[WARN] PluginBackend: Thread 0x%08X is using a function from plugin %s for the threadCleanupCallback\n", t, pluginName);
+                    OSReport("[WARN] PluginBackend: Thread 0x%p is using a function from plugin %s for the threadCleanupCallback\n", t, pluginName);
                 }
                 t = t->activeLink.next;
             }

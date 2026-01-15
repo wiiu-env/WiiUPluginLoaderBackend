@@ -70,7 +70,7 @@ bool FunctionData::AddPatch() {
                 }};
 
         if (FunctionPatcher_AddFunctionPatch(&functionData, &mHandle, nullptr) != FUNCTION_PATCHER_RESULT_SUCCESS) {
-            DEBUG_FUNCTION_LINE_ERR("Failed to add patch for function (\"%s\" PA:%08X VA:%08X)", this->mName.c_str(), this->mPAddress, this->mVAddress);
+            DEBUG_FUNCTION_LINE_ERR("Failed to add patch for function (\"%s\" PA:%p VA:%p)", this->mName.c_str(), this->mPAddress, this->mVAddress);
             return false;
         }
     } else {

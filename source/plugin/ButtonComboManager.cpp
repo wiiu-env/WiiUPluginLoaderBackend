@@ -497,7 +497,7 @@ WUPSButtonCombo_Error ButtonComboManager::RemoveButtonCombo(const WUPSButtonComb
         // Destructor removes it from the button combo module
         return WUPS_BUTTON_COMBO_ERROR_SUCCESS;
     }
-    DEBUG_FUNCTION_LINE_WARN("Could not remove button combo: not found! %08X", handle);
+    DEBUG_FUNCTION_LINE_WARN("Could not remove button combo: not found! %p", handle.handle);
 
     return WUPS_BUTTON_COMBO_ERROR_NOT_FOUND;
 }

@@ -3,6 +3,7 @@
 #include "StorageSubItem.h"
 
 #include <string>
+#include <string_view>
 
 class StorageItemRoot : public StorageSubItem {
 public:

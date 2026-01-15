@@ -19,7 +19,11 @@
 
 #include <memory>
 #include <set>
+#include <string>
+#include <string_view>
 #include <vector>
+
+#include <cstdint>
 
 class PluginData;
 class PluginLoadWrapper;

@@ -2,11 +2,11 @@
 
 #include <wups/button_combo/defines.h>
 
+#include <forward_list>
 #include <functional>
 #include <memory>
 
 #include <cstdint>
-#include <forward_list>
 
 class ButtonComboWrapper;
 

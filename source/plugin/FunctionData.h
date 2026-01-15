@@ -19,6 +19,7 @@
 #include <function_patcher/fpatching_defines.h>
 
 #include <string>
+#include <string_view>
 
 class FunctionData {
 

@@ -100,7 +100,7 @@ void ConfigUtils::displayMenu() {
                     WUPSConfigAPIStatus callbackResult = configData->CallMenuOpenedCallback(configHandleOpt.value());
                     config                             = WUPSConfigAPIBackend::Intern::PopConfigByHandle(configHandleOpt.value());
                     if (!config) {
-                        DEBUG_FUNCTION_LINE_ERR("Failed to get config for handle: %08X", configHandleOpt.value().handle);
+                        DEBUG_FUNCTION_LINE_ERR("Failed to get config for handle: %p", configHandleOpt.value().handle);
                     } else if (callbackResult != WUPSCONFIG_API_RESULT_SUCCESS) {
                         DEBUG_FUNCTION_LINE_ERR("Callback failed for %s: %s", info.name.c_str(), WUPSConfigAPI_GetStatusStr(callbackResult));
                         config.reset();
@@ -122,7 +122,7 @@ void ConfigUtils::displayMenu() {
                         }
                         config = WUPSConfigAPIBackend::Intern::PopConfigByHandle(WUPSConfigHandle(cur_config_handle));
                         if (!config) {
-                            DEBUG_FUNCTION_LINE_ERR("Failed to find config for handle: %08X", cur_config_handle);
+                            DEBUG_FUNCTION_LINE_ERR("Failed to find config for handle: %p", cur_config_handle);
                         }
                         break;
                     }

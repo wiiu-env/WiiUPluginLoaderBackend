@@ -31,7 +31,7 @@ int32_t WUPSConfig_GetName(void *handle, char *out_buf, int32_t out_len) {
     }
     auto config = WUPSConfigAPIBackend::Intern::GetConfigByHandle(WUPSConfigHandle(handle));
     if (!config) {
-        DEBUG_FUNCTION_LINE_WARN("Failed to find WUPSConfig by handle %08X", handle);
+        DEBUG_FUNCTION_LINE_WARN("Failed to find WUPSConfig by handle %p", handle);
         return -1;
     }
     snprintf(out_buf, out_len, "%s", config->getName().c_str());
@@ -117,7 +117,7 @@ int32_t WUPSConfigCategory_GetName(void *handle, char *out_buf, int32_t out_len)
 
     auto *category = WUPSConfigAPIBackend::Intern::GetCategoryByHandle(WUPSConfigCategoryHandle(handle), true);
     if (!category) {
-        DEBUG_FUNCTION_LINE_WARN("Failed to find existing category for handle %08X", handle);
+        DEBUG_FUNCTION_LINE_WARN("Failed to find existing category for handle %p", handle);
         return -2;
     }
     snprintf(out_buf, out_len, "%s", category->getName().c_str());
@@ -176,7 +176,7 @@ int32_t WUPSConfigItem_SetDisplayName(void *handle, const char *displayName) {
 
     auto *config = WUPSConfigAPIBackend::Intern::GetItemByHandle(WUPSConfigItemHandle(handle));
     if (!config) {
-        DEBUG_FUNCTION_LINE_ERR("Failed to find item for handle %08X", handle);
+        DEBUG_FUNCTION_LINE_ERR("Failed to find item for handle %p", handle);
         return -2;
     }
     config->setDisplayName(displayName);
@@ -190,7 +190,7 @@ int32_t WUPSConfigItem_GetDisplayName(void *handle, char *out_buf, int32_t out_l
     }
     auto *config = WUPSConfigAPIBackend::Intern::GetItemByHandle(WUPSConfigItemHandle(handle));
     if (!config) {
-        DEBUG_FUNCTION_LINE_ERR("Failed to find item for handle %08X", handle);
+        DEBUG_FUNCTION_LINE_ERR("Failed to find item for handle %p", handle);
         return -2;
     }
     snprintf(out_buf, out_len, "%s", config->getDisplayName().c_str());
@@ -205,7 +205,7 @@ int32_t WUPSConfigItem_SetConfigID(void *handle, const char *configId) {
 
     auto *config = WUPSConfigAPIBackend::Intern::GetItemByHandle(WUPSConfigItemHandle(handle));
     if (!config) {
-        DEBUG_FUNCTION_LINE_ERR("Failed to find item for handle %08X", handle);
+        DEBUG_FUNCTION_LINE_ERR("Failed to find item for handle %p", handle);
         return -2;
     }
     config->setConfigId(configId);
@@ -219,7 +219,7 @@ int32_t WUPSConfigItem_GetConfigID(void *handle, char *out_buf, int32_t out_len)
     }
     auto *config = WUPSConfigAPIBackend::Intern::GetItemByHandle(WUPSConfigItemHandle(handle));
     if (!config) {
-        DEBUG_FUNCTION_LINE_ERR("Failed to find item for handle %08X", handle);
+        DEBUG_FUNCTION_LINE_ERR("Failed to find item for handle %p", handle);
         return -2;
     }
     snprintf(out_buf, out_len, "%s", config->getConfigId().c_str());

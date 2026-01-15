@@ -17,7 +17,7 @@ std::vector<PluginContainer> gLoadedPlugins;
 
 std::set<std::shared_ptr<PluginData>, PluginDataSharedPtrComparator> gLoadedData;
 std::vector<PluginLoadWrapper> gLoadOnNextLaunch;
-std::mutex gLoadedDataMutex;
+std::recursive_mutex gLoadedDataMutex;
 std::map<std::string, OSDynLoad_Module> gUsedRPLs;
 std::vector<void *> gAllocatedAddresses;
 

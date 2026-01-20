@@ -91,6 +91,7 @@ void CallHook(const PluginContainer &plugin, const wups_loader_hook_type_t hook_
                     case WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND:
                     case WUPS_LOADER_HOOK_APPLICATION_REQUESTS_EXIT:
                     case WUPS_LOADER_HOOK_APPLICATION_ENDS:
+                    case WUPS_LOADER_HOOK_INIT_WUT_THREAD:
                         // clang-format off
                         ((void(*)())((uint32_t *) func_ptr))();
                         // clang-format on

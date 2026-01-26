@@ -14,7 +14,7 @@
 #include <set>
 #include <vector>
 
-#define MODULE_VERSION      "v0.3.5"
+#define MODULE_VERSION      "v0.3.6"
 #define MODULE_VERSION_FULL MODULE_VERSION MODULE_VERSION_EXTRA
 
 class PluginDataSharedPtrComparator;

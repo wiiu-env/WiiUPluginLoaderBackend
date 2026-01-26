@@ -45,6 +45,7 @@ static const char **hook_names = (const char *[]){
         "WUPS_LOADER_HOOK_INIT_STORAGE",
         "WUPS_LOADER_HOOK_INIT_CONFIG",
         "WUPS_LOADER_HOOK_INIT_BUTTON_COMBO",
+        "WUPS_LOADER_HOOK_INIT_WUT_THREAD",
 };
 
 void CallHook(const std::vector<PluginContainer> &plugins, const wups_loader_hook_type_t hook_type) {

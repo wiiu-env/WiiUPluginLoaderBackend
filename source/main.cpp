@@ -154,7 +154,7 @@ WUMS_APPLICATION_ENDS() {
 }
 
 void CheckCleanupCallbackUsage(const std::vector<PluginContainer> &plugins);
-void CleanupPlugins(std::vector<PluginContainer> &&pluginsToDeinit);
+void CleanupPlugins(std::vector<PluginContainer> &pluginsToDeinit);
 
 
 WUMS_APPLICATION_STARTS() {
@@ -283,11 +283,12 @@ WUMS_APPLICATION_STARTS() {
         }
 
         // deinit all plugins that are still in gLoadedPlugins list.
-        std::vector<PluginContainer> pluginsToDeinit = std::move(gLoadedPlugins);
-        gLoadedPlugins                               = std::move(pluginsToKeep);
+        gPluginsToBeDeInitialized = std::move(gLoadedPlugins);
+        gLoadedPlugins            = std::move(pluginsToKeep);
 
         DEBUG_FUNCTION_LINE("Deinit unused plugins");
-        CleanupPlugins(std::move(pluginsToDeinit));
+        CleanupPlugins(gPluginsToBeDeInitialized);
+        gPluginsToBeDeInitialized.clear();
 
         DEBUG_FUNCTION_LINE("Load new plugins");
         newLoadedPlugins = PluginManagement::loadPlugins(toBeLoaded);
@@ -338,7 +339,7 @@ WUMS_APPLICATION_STARTS() {
     }
 }
 
-void CleanupPlugins(std::vector<PluginContainer> &&pluginsToDeinit) {
+void CleanupPlugins(std::vector<PluginContainer> &pluginsToDeinit) {
     auto *currentThread              = OSGetCurrentThread();
     const auto saved_reent           = currentThread->reserved[4];
     const auto saved_cleanupCallback = currentThread->cleanupCallback;

@@ -26,6 +26,7 @@ extern StoredBuffer gStoredTVBuffer;
 extern StoredBuffer gStoredDRCBuffer;
 
 extern std::vector<PluginContainer> gLoadedPlugins;
+extern std::vector<PluginContainer> gPluginsToBeDeInitialized;
 
 extern std::set<std::shared_ptr<PluginData>, PluginDataSharedPtrComparator> gLoadedData;
 extern std::vector<PluginLoadWrapper> gLoadOnNextLaunch;

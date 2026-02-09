@@ -7,6 +7,7 @@
 #include "plugin/PluginData.h"
 #include "plugin/SectionInfo.h"
 #include "utils/config/ConfigUtils.h"
+#include "utils/logger.h"
 
 #include <coreinit/cache.h>
 #include <coreinit/core.h>
@@ -176,37 +177,43 @@ DECL_FUNCTION(uint32_t, SC17_FindClosestSymbol,
               char *moduleNameBuffer,
               uint32_t moduleNameBufferLength) {
     if (symbolNameBuffer && symbolNameBufferLength > 0 && moduleNameBuffer && moduleNameBufferLength > 0) {
-        for (const auto &plugin : gLoadedPlugins) {
-            if (!plugin.isLinkedAndLoaded()) {
-                continue;
-            }
-            const auto sectionInfo = plugin.getPluginLinkInformation().getSectionInfo(".text");
-            if (!sectionInfo) {
-                continue;
-            }
+        const std::vector<PluginContainer> *pluginLists[] = {&gLoadedPlugins, &gPluginsToBeDeInitialized};
+        for (const auto *list : pluginLists) {
+            for (const auto &plugin : *list) {
+                if (!plugin.isLinkedAndLoaded()) {
+                    continue;
+                }
 
-            if (!sectionInfo->isInSection(addr)) {
-                continue;
-            }
 
-            strncpy(moduleNameBuffer, plugin.getMetaInformation().getName().c_str(), moduleNameBufferLength - 1);
-            moduleNameBuffer[moduleNameBufferLength - 1] = '\0';
-            if (const auto functionSymbolData = plugin.getPluginLinkInformation().getNearestFunctionSymbolData(addr)) {
-                strncpy(symbolNameBuffer, functionSymbolData->getName().c_str(), symbolNameBufferLength - 1);
+                const auto sectionInfo = plugin.getPluginLinkInformation().getSectionInfo(".text");
+                if (!sectionInfo) {
+                    continue;
+                }
+
+                if (!sectionInfo->isInSection(addr)) {
+                    continue;
+                }
+
+
+                strncpy(moduleNameBuffer, plugin.getMetaInformation().getName().c_str(), moduleNameBufferLength - 1);
+                moduleNameBuffer[moduleNameBufferLength - 1] = '\0';
+                if (const auto functionSymbolData = plugin.getPluginLinkInformation().getNearestFunctionSymbolData(addr)) {
+                    strncpy(symbolNameBuffer, functionSymbolData->getName().c_str(), symbolNameBufferLength - 1);
+                    symbolNameBuffer[symbolNameBufferLength - 1] = '\0';
+                    if (outDistance) {
+                        *outDistance = addr - reinterpret_cast<uint32_t>(functionSymbolData->getAddress());
+                    }
+                    return 0;
+                }
+
+                strncpy(symbolNameBuffer, ".text", symbolNameBufferLength - 1);
                 symbolNameBuffer[symbolNameBufferLength - 1] = '\0';
                 if (outDistance) {
-                    *outDistance = addr - reinterpret_cast<uint32_t>(functionSymbolData->getAddress());
+                    *outDistance = addr - sectionInfo->getAddress();
                 }
+
                 return 0;
             }
-
-            strncpy(symbolNameBuffer, ".text", symbolNameBufferLength - 1);
-            symbolNameBuffer[symbolNameBufferLength - 1] = '\0';
-            if (outDistance) {
-                *outDistance = addr - sectionInfo->getAddress();
-            }
-
-            return 0;
         }
     }
 
@@ -219,6 +226,7 @@ DECL_FUNCTION(uint32_t, KiGetAppSymbolName, uint32_t addr, char *buffer, int32_t
             if (!plugin.isLinkedAndLoaded()) {
                 continue;
             }
+
             const auto sectionInfo = plugin.getPluginLinkInformation().getSectionInfo(".text");
             if (!sectionInfo) {
                 continue;

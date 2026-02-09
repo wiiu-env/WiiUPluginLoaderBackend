@@ -14,6 +14,7 @@ StoredBuffer gStoredTVBuffer  = {};
 StoredBuffer gStoredDRCBuffer = {};
 
 std::vector<PluginContainer> gLoadedPlugins;
+std::vector<PluginContainer> gPluginsToBeDeInitialized;
 
 std::set<std::shared_ptr<PluginData>, PluginDataSharedPtrComparator> gLoadedData;
 std::vector<PluginLoadWrapper> gLoadOnNextLaunch;

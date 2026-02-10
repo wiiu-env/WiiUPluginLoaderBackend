@@ -351,6 +351,7 @@ void CleanupPlugins(std::vector<PluginContainer> &pluginsToDeinit) {
     currentThread->reserved[4] = 0;
 
     CallHook(pluginsToDeinit, WUPS_LOADER_HOOK_DEINIT_PLUGIN);
+    CallHook(pluginsToDeinit, WUPS_LOADER_HOOK_FINI_WRAPPER);
 
     CheckCleanupCallbackUsage(pluginsToDeinit);
 

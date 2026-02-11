@@ -171,7 +171,7 @@ DECL_FUNCTION(void, WPADRead, WPADChan chan, WPADStatus *data) {
 
 DECL_FUNCTION(uint32_t, SC17_FindClosestSymbol,
               uint32_t addr,
-              uint32_t *outDistance,
+              int32_t *outDistance,
               char *symbolNameBuffer,
               uint32_t symbolNameBufferLength,
               char *moduleNameBuffer,

@@ -28,24 +28,10 @@
 #include "logger.h"
 #include "utils.h"
 
-#include <coreinit/debug.h>
-
-#include <memory>
 #include <string>
 
-template<typename... Args>
-std::string string_format(const std::string_view format, Args... args) {
-    const int size_s = std::snprintf(nullptr, 0, format.data(), args...) + 1; // Extra space for '\0'
-    const auto size  = static_cast<size_t>(size_s);
-    const auto buf   = make_unique_nothrow<char[]>(size);
-    if (!buf) {
-        DEBUG_FUNCTION_LINE_ERR("string_format failed, not enough memory");
-        OSFatal("string_format failed, not enough memory");
-        return std::string("");
-    }
-    std::snprintf(buf.get(), size, format.data(), args...);
-    return std::string(buf.get(), buf.get() + size - 1); // We don't want the '\0' inside
-}
+std::string string_format(const char *format, ...)
+        WUT_FORMAT_PRINTF(1, 2);
 
 class StringTools {
 public:

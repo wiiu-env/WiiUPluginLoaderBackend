@@ -48,7 +48,7 @@ PluginManagement::loadPlugins(const std::vector<PluginLoadWrapper> &pluginDataLi
                 plugins.emplace_back(std::move(*metaInfo), PluginLinkInformation::CreateStub(), pluginDataWrapper.getPluginData());
             }
         } else {
-            auto errMsg = string_format("Failed to load plugin: %s", *pluginDataWrapper.getPluginData()->getSource().c_str());
+            auto errMsg = string_format("Failed to load plugin: %s", pluginDataWrapper.getPluginData()->getSource().c_str());
             if (error == PLUGIN_PARSE_ERROR_INCOMPATIBLE_VERSION) {
                 errMsg += ". Incompatible version.";
             }

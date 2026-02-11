@@ -28,7 +28,40 @@
 
 #include <string>
 
+#include <memory>
+
+#include <cstdarg>
+#include <cstdio>
 #include <cstring>
+
+std::string string_format(const char *format, ...) {
+    char stack_buf[128];
+    va_list args;
+    va_start(args, format);
+    int len = std::vsnprintf(stack_buf, sizeof(stack_buf), format, args);
+    va_end(args);
+
+    if (len >= 0 && static_cast<size_t>(len) < sizeof(stack_buf)) {
+        return std::string(stack_buf, len);
+    }
+
+    // on error return the unformatted string
+    if (len < 0) {
+        return std::string(format);
+    }
+
+    const auto buf = make_unique_nothrow<char[]>(static_cast<size_t>(len));
+    if (!buf) {
+        DEBUG_FUNCTION_LINE_ERR("string_format failed, not enough memory");
+        OSFatal("WiiUPluginBackend: string_format failed, not enough memory");
+        return std::string("");
+    }
+
+    va_start(args, format);
+    std::vsnprintf(buf.get(), len, format, args);
+    va_end(args);
+    return std::string(buf.get(), len);
+}
 
 std::string StringTools::truncate(const std::string &str, const size_t width, const bool show_ellipsis) {
     if (str.length() > width - 3) {

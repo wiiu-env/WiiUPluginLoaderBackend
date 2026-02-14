@@ -240,26 +240,31 @@ WUMS_APPLICATION_STARTS() {
             // Check if we want to link a plugin that's currently unloaded
             // E.g. if you disable a plugin from the config menu and then wiiload it, the disabled plugin copy should be unloaded
             for (const auto &pluginLoadWrapper : gLoadOnNextLaunch) {
+                // If a plugin is not enabled...
                 if (!pluginLoadWrapper.isLoadAndLink()) {
                     const auto unloadedMetaInfoIt = pluginMetaInformationCache.find(pluginLoadWrapper.getPluginData()->getHandle());
                     if (unloadedMetaInfoIt == pluginMetaInformationCache.end()) {
                         DEBUG_FUNCTION_LINE_WARN("Failed to find meta information for plugin data handle %08X", pluginLoadWrapper.getPluginData()->getHandle());
                         continue;
                     }
-                    if (const auto it = std::ranges::find_if(gLoadOnNextLaunch, [&pluginLoadWrapper, &pluginMetaInformationCache, &unloadedMetaInfoIt](const PluginLoadWrapper &plugin) {
-                            const bool differentPluginData = plugin.getPluginData()->getHandle() != pluginLoadWrapper.getPluginData()->getHandle();
-                            const bool otherWillBeLinked   = plugin.isLoadAndLink();
-                            bool sameAuthorAndName         = false;
-                            if (const auto otherMetaInfoIt = pluginMetaInformationCache.find(plugin.getPluginData()->getHandle()); otherMetaInfoIt != pluginMetaInformationCache.end()) {
-                                const auto &otherMetaInfo    = otherMetaInfoIt->second;
-                                const auto &unloadedMetaInfo = unloadedMetaInfoIt->second;
-                                sameAuthorAndName            = otherMetaInfo == unloadedMetaInfo;
-                            }
-                            return differentPluginData && otherWillBeLinked && sameAuthorAndName;
-                        });
+                    // Check if there is another plugin which will be loaded and has the same author/name
+                    const auto isPluginWithSameMetaLoaded = [&pluginLoadWrapper, &pluginMetaInformationCache, &unloadedMetaInfoIt](const PluginLoadWrapper &plugin) {
+                        const bool differentPluginData = plugin.getPluginData()->getHandle() != pluginLoadWrapper.getPluginData()->getHandle();
+                        const bool otherWillBeLinked   = plugin.isLoadAndLink();
+                        bool sameAuthorAndName         = false;
+                        if (const auto otherMetaInfoIt = pluginMetaInformationCache.find(plugin.getPluginData()->getHandle()); otherMetaInfoIt != pluginMetaInformationCache.end()) {
+                            const auto &otherMetaInfo    = otherMetaInfoIt->second;
+                            const auto &unloadedMetaInfo = unloadedMetaInfoIt->second;
+                            sameAuthorAndName            = otherMetaInfo == unloadedMetaInfo;
+                        }
+                        return differentPluginData && otherWillBeLinked && sameAuthorAndName;
+                    };
+                    if (const auto it = std::ranges::find_if(gLoadOnNextLaunch, isPluginWithSameMetaLoaded);
                         it != gLoadOnNextLaunch.end()) {
+                        // If yes, we want to drop the currently unloaded one, so lets NOT add it to the list
                         continue;
                     }
+                    // otherwise add it to the list to keep it added.
                 }
                 filteredLoadOnNextLaunch.push_back(pluginLoadWrapper);
             }

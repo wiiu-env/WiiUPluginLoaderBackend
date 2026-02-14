@@ -38,6 +38,10 @@
     return mSize;
 }
 
+[[nodiscard]] PluginMetaInformation::HeapTrackingOptions PluginMetaInformation::getHeapTrackingOptions() const {
+    return mHeapTrackingOptions;
+}
+
 PluginMetaInformation::PluginMetaInformation() = default;
 
 void PluginMetaInformation::setName(std::string name) {
@@ -78,4 +82,8 @@ void PluginMetaInformation::setSize(const size_t size) {
 
 void PluginMetaInformation::setStorageId(std::string storageId) {
     mStorageId = std::move(storageId);
+}
+
+void PluginMetaInformation::setHeapTrackingOptions(HeapTrackingOptions value) {
+    mHeapTrackingOptions = value;
 }

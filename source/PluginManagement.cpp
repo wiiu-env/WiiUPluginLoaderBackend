@@ -12,6 +12,7 @@
 #include "plugin/PluginMetaInformationFactory.h"
 #include "plugin/RelocationData.h"
 #include "plugin/SectionInfo.h"
+#include "plugin/TrackingPluginHeapMemoryAllocator.h"
 #include "utils/ElfUtils.h"
 #include "utils/StringTools.h"
 #include "utils/logger.h"
@@ -67,23 +68,18 @@ PluginManagement::loadPlugins(const std::vector<PluginLoadWrapper> &pluginDataLi
 
 bool PluginManagement::doRelocation(const std::vector<RelocationData> &relocData,
                                     std::span<relocation_trampoline_entry_t> trampData,
-                                    std::map<std::string, OSDynLoad_Module> &usedRPls) {
+                                    std::map<std::string, OSDynLoad_Module> &usedRPls,
+                                    const IPluginHeapMemoryAllocator &memory_allocator) {
     for (auto const &cur : relocData) {
         uint32_t functionAddress = 0;
         auto &functionName       = cur.getName();
 
         if (functionName == "MEMAllocFromDefaultHeap") {
-            OSDynLoad_Module rplHandle;
-            OSDynLoad_Acquire("homebrew_memorymapping", &rplHandle);
-            OSDynLoad_FindExport(rplHandle, OS_DYNLOAD_EXPORT_DATA, "MEMAllocFromMappedMemory", (void **) &functionAddress);
+            functionAddress = reinterpret_cast<uint32_t>(memory_allocator.GetAllocFunctionAddress());
         } else if (functionName == "MEMAllocFromDefaultHeapEx") {
-            OSDynLoad_Module rplHandle;
-            OSDynLoad_Acquire("homebrew_memorymapping", &rplHandle);
-            OSDynLoad_FindExport(rplHandle, OS_DYNLOAD_EXPORT_DATA, "MEMAllocFromMappedMemoryEx", (void **) &functionAddress);
+            functionAddress = reinterpret_cast<uint32_t>(memory_allocator.GetAllocExFunctionAddress());
         } else if (functionName == "MEMFreeToDefaultHeap") {
-            OSDynLoad_Module rplHandle;
-            OSDynLoad_Acquire("homebrew_memorymapping", &rplHandle);
-            OSDynLoad_FindExport(rplHandle, OS_DYNLOAD_EXPORT_DATA, "MEMFreeToMappedMemory", (void **) &functionAddress);
+            functionAddress = reinterpret_cast<uint32_t>(memory_allocator.GetFreeFunctionAddress());
         }
 
         if (functionAddress == 0) {
@@ -160,7 +156,7 @@ bool PluginManagement::doRelocations(const std::vector<PluginContainer> &plugins
         DEBUG_FUNCTION_LINE_VERBOSE("Doing relocations for plugin: %s", pluginContainer.getMetaInformation().getName().c_str());
         if (!PluginManagement::doRelocation(pluginContainer.getPluginLinkInformation().getRelocationDataList(),
                                             trampData,
-                                            usedRPls)) {
+                                            usedRPls, pluginContainer.getMemoryAllocator())) {
             return false;
         }
     }

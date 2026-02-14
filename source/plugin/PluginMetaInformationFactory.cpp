@@ -108,6 +108,12 @@ std::optional<PluginMetaInformation> PluginMetaInformationFactory::loadPlugin(st
                         pluginInfo.setDescription(value);
                     } else if (key == "storage_id") {
                         pluginInfo.setStorageId(value);
+                    } else if (key == "debug") {
+                        if (value == "track_heap") {
+                            pluginInfo.setHeapTrackingOptions(PluginMetaInformation::TRACK_HEAP_OPTIONS_TRACK_SIZE);
+                        } else if (value == "track_heap_with_stack_trace") {
+                            pluginInfo.setHeapTrackingOptions(PluginMetaInformation::TRACK_HEAP_OPTIONS_TRACK_SIZE_AND_COLLECT_STACK_TRACES);
+                        }
                     } else if (key == "wups") {
                         if (value == "0.7.1") {
                             pluginInfo.setWUPSVersion(0, 7, 1);

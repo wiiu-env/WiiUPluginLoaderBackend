@@ -6,6 +6,7 @@
 #include "json.hpp"
 #include "logger.h"
 
+#include <coreinit/debug.h>
 #include <coreinit/ios.h>
 
 #include <wups/storage.h>
@@ -198,4 +199,70 @@ std::vector<std::string> getNonBaseAromaPluginFilenames(std::string_view basePat
         }
     }
     return result;
+}
+
+__attribute__((noinline))
+std::vector<uint32_t>
+CaptureStackTrace(uint32_t maxDepth) {
+    std::vector<uint32_t> trace;
+    trace.reserve(maxDepth);
+
+    uint32_t *stackPointer;
+    // Grab the current Stack Pointer (r1)
+    asm volatile("mr %0, 1"
+                 : "=r"(stackPointer));
+
+    for (uint32_t i = 0; i < maxDepth + 1; ++i) {
+        // Basic alignment check
+        if (!stackPointer || (reinterpret_cast<uintptr_t>(stackPointer) & 0x3)) {
+            break;
+        }
+
+        uint32_t backChain  = stackPointer[0];
+        uint32_t returnAddr = stackPointer[1];
+
+        if (returnAddr == 0) break;
+        if (i != 0) {
+            trace.push_back(returnAddr);
+        }
+
+        if (backChain == 0) break;
+        stackPointer = reinterpret_cast<uint32_t *>(backChain);
+    }
+
+    return trace;
+}
+
+#define SC17_FindClosestSymbol ((uint32_t(*)(uint32_t addr, int32_t * outDistance, char *symbolNameBuffer, uint32_t symbolNameBufferLength, char *moduleNameBuffer, uint32_t moduleNameBufferLength))(0x101C400 + 0x1f934))
+
+void PrintCapturedStackTrace(std::span<uint32_t> trace) {
+    if (trace.empty()) {
+        DEBUG_FUNCTION_LINE_INFO("┌────────────────────── CAPTURED TRACE ──────────────────────┐");
+        DEBUG_FUNCTION_LINE_INFO("│ <Empty Trace>");
+        DEBUG_FUNCTION_LINE_INFO("└────────────────────────────────────────────────────────────┘");
+        return;
+    }
+
+    DEBUG_FUNCTION_LINE_INFO("┌────────────────────── CAPTURED TRACE ──────────────────────┐");
+    for (size_t i = 0; i < trace.size(); ++i) {
+        uint32_t addr        = trace[i];
+        int distance         = 0;
+        char moduleName[100] = {};
+        char symbolName[100] = {};
+
+        if (SC17_FindClosestSymbol(addr, &distance, symbolName, sizeof(symbolName) - 1, moduleName, sizeof(moduleName) - 1) != 0) {
+            DEBUG_FUNCTION_LINE_INFO("│ [%02d] 0x%08X", i, addr);
+        } else {
+            moduleName[sizeof(moduleName) - 1] = '\0';
+            symbolName[sizeof(symbolName) - 1] = '\0';
+            DEBUG_FUNCTION_LINE_INFO("│ [%02d] %s : %s + 0x%X (0x%08X)",
+                                     i,
+                                     moduleName,
+                                     symbolName,
+                                     distance,
+                                     addr);
+        }
+    }
+
+    DEBUG_FUNCTION_LINE_INFO("└────────────────────────────────────────────────────────────┘");
 }

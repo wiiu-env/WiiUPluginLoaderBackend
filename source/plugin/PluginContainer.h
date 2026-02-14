@@ -20,6 +20,7 @@
 #include "PluginConfigData.h"
 #include "PluginLinkInformation.h"
 #include "PluginMetaInformation.h"
+#include "TrackingPluginHeapMemoryAllocator.h"
 
 #include <wups/storage.h>
 
@@ -69,9 +70,19 @@ public:
 
     [[nodiscard]] uint32_t getButtonComboManagerHandle() const;
 
+    /**
+     * @return Returns true if setting the value was successful
+     */
+    bool useTrackingPluginHeapMemoryAllocator(PluginMetaInformation::HeapTrackingOptions options);
+
+    [[nodiscard]] bool isUsingTrackingPluginHeapMemoryAllocator() const;
+
+    [[nodiscard]] const IPluginHeapMemoryAllocator &getMemoryAllocator() const;
+
 private:
     PluginMetaInformation mMetaInformation;
     PluginLinkInformation mPluginLinkInformation;
+    std::optional<TrackingPluginHeapMemoryAllocator> mTrackingHeapAllocatorOpt;
     std::shared_ptr<PluginData> mPluginData;
 
     std::unique_ptr<uint32_t> mHandle = std::make_unique<uint32_t>();

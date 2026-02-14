@@ -9,6 +9,7 @@
 #include <span>
 #include <string>
 
+class IPluginHeapMemoryAllocator;
 class RelocationData;
 class PluginLoadWrapper;
 class PluginContainer;
@@ -25,7 +26,8 @@ public:
 
     static bool doRelocation(const std::vector<RelocationData> &relocData,
                              std::span<relocation_trampoline_entry_t> trampData,
-                             std::map<std::string, OSDynLoad_Module> &usedRPls);
+                             std::map<std::string, OSDynLoad_Module> &usedRPls,
+                             const IPluginHeapMemoryAllocator &);
 
     static bool DoFunctionPatches(std::vector<PluginContainer> &plugins);
 

@@ -162,3 +162,7 @@ UtilsIOError ParseJsonFromFile(const std::string &filePath, nlohmann::json &outJ
 std::vector<std::string> getPluginFilePaths(std::string_view basePath);
 
 std::vector<std::string> getNonBaseAromaPluginFilenames(std::string_view basePath);
+
+std::vector<uint32_t> CaptureStackTrace(uint32_t maxDepth);
+
+void PrintCapturedStackTrace(std::span<uint32_t> trace);

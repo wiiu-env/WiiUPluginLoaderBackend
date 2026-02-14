@@ -1,4 +1,5 @@
 #include "PluginContainer.h"
+
 #include "plugin/FunctionData.h"
 #include "plugin/HookData.h"
 #include "plugin/PluginConfigData.h"
@@ -6,7 +7,9 @@
 #include "plugin/PluginLinkInformation.h"
 #include "plugin/RelocationData.h"
 #include "plugin/SectionInfo.h"
+
 #include "utils/buttoncombo/ButtonComboUtils.h"
+#include "utils/logger.h"
 #include "utils/storage/StorageUtils.h"
 
 #include <optional>
@@ -17,10 +20,15 @@ PluginContainer::PluginContainer(PluginMetaInformation metaInformation, PluginLi
       mPluginData(std::move(pluginData)) {
     // Abuse this as a stable handle that references itself and survives std::move
     *mHandle = reinterpret_cast<uint32_t>(mHandle.get());
+
+    if (const bool res = useTrackingPluginHeapMemoryAllocator(mMetaInformation.getHeapTrackingOptions()); !res) {
+        DEBUG_FUNCTION_LINE_WARN("Failed to set heap tracking options for \"%s\"", mMetaInformation.getName().c_str());
+    }
 }
 
 PluginContainer::PluginContainer(PluginContainer &&src) noexcept : mMetaInformation(std::move(src.mMetaInformation)),
                                                                    mPluginLinkInformation(std::move(src.mPluginLinkInformation)),
+                                                                   mTrackingHeapAllocatorOpt(std::move(src.mTrackingHeapAllocatorOpt)),
                                                                    mPluginData(std::move(src.mPluginData)),
                                                                    mHandle(std::move(src.mHandle)),
                                                                    mPluginConfigData(std::move(src.mPluginConfigData)),
@@ -39,6 +47,7 @@ PluginContainer &PluginContainer::operator=(PluginContainer &&src) noexcept {
         this->mPluginData               = std::move(src.mPluginData);
         this->mPluginConfigData         = std::move(src.mPluginConfigData);
         this->mHandle                   = std::move(src.mHandle);
+        this->mTrackingHeapAllocatorOpt = std::move(src.mTrackingHeapAllocatorOpt);
         this->mStorageRootItem          = src.mStorageRootItem;
         this->mInitDone                 = src.mInitDone;
         this->mButtonComboManagerHandle = src.mButtonComboManagerHandle;
@@ -135,4 +144,31 @@ void PluginContainer::DeinitButtonComboData() {
 
 uint32_t PluginContainer::getButtonComboManagerHandle() const {
     return mButtonComboManagerHandle;
+}
+
+bool PluginContainer::useTrackingPluginHeapMemoryAllocator(PluginMetaInformation::HeapTrackingOptions options) {
+    if (options != PluginMetaInformation::TRACK_HEAP_OPTIONS_NONE) {
+        if (!this->mTrackingHeapAllocatorOpt) {
+            uint32_t stackTraceDepth = 0;
+            if (options == PluginMetaInformation::TRACK_HEAP_OPTIONS_TRACK_SIZE_AND_COLLECT_STACK_TRACES) {
+                stackTraceDepth = 8;
+            }
+            this->mTrackingHeapAllocatorOpt = TrackingPluginHeapMemoryAllocator::Create(this->mMetaInformation.getName(), stackTraceDepth);
+        }
+
+        return this->mTrackingHeapAllocatorOpt.has_value();
+    }
+    this->mTrackingHeapAllocatorOpt.reset();
+    return true;
+}
+
+bool PluginContainer::isUsingTrackingPluginHeapMemoryAllocator() const {
+    return mTrackingHeapAllocatorOpt.has_value();
+}
+
+const IPluginHeapMemoryAllocator &PluginContainer::getMemoryAllocator() const {
+    if (mTrackingHeapAllocatorOpt) {
+        return *mTrackingHeapAllocatorOpt;
+    }
+    return DefaultPluginHeapMemoryAllocator::gDefaultPluginHeapMemoryAllocator;
 }

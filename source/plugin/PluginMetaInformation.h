@@ -26,7 +26,14 @@
 class WUPSVersion;
 
 class PluginMetaInformation {
+
 public:
+    enum HeapTrackingOptions {
+        TRACK_HEAP_OPTIONS_NONE                                = 0,
+        TRACK_HEAP_OPTIONS_TRACK_SIZE                          = 1,
+        TRACK_HEAP_OPTIONS_TRACK_SIZE_AND_COLLECT_STACK_TRACES = 2,
+    };
+
     [[nodiscard]] const std::string &getName() const;
 
     [[nodiscard]] const std::string &getAuthor() const;
@@ -44,6 +51,8 @@ public:
     [[nodiscard]] const std::string &getStorageId() const;
 
     [[nodiscard]] size_t getSize() const;
+
+    [[nodiscard]] HeapTrackingOptions getHeapTrackingOptions() const;
 
 private:
     PluginMetaInformation();
@@ -68,6 +77,8 @@ private:
 
     void setStorageId(std::string storageId);
 
+    void setHeapTrackingOptions(HeapTrackingOptions value);
+
     std::string mName;
     std::string mAuthor;
     std::string mVersion;
@@ -75,8 +86,9 @@ private:
     std::string mBuildTimestamp;
     std::string mDescription;
     std::string mStorageId;
-    size_t mSize             = {};
-    WUPSVersion mWUPSVersion = WUPSVersion(0, 0, 0);
+    size_t mSize                             = {};
+    WUPSVersion mWUPSVersion                 = WUPSVersion(0, 0, 0);
+    HeapTrackingOptions mHeapTrackingOptions = TRACK_HEAP_OPTIONS_NONE;
 
     friend class PluginMetaInformationFactory;
 

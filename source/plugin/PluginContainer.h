@@ -81,6 +81,8 @@ public:
 
     [[nodiscard]] const TrackingPluginHeapMemoryAllocator *getTrackingMemoryAllocator() const;
 
+    [[nodiscard]] size_t getMemoryFootprint() const;
+
 private:
     PluginMetaInformation mMetaInformation;
     PluginLinkInformation mPluginLinkInformation;

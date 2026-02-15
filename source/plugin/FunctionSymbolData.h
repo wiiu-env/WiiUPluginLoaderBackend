@@ -40,7 +40,11 @@ public:
     [[nodiscard]] uint32_t getSize() const;
 
 private:
+    [[nodiscard]] size_t getMemoryFootprint() const;
+
     std::string mName;
     void *mAddress;
     uint32_t mSize;
+
+    friend class PluginLinkInformation;
 };

@@ -79,6 +79,8 @@ private:
 
     void setHeapTrackingOptions(HeapTrackingOptions value);
 
+    size_t getMemoryFootprint() const;
+
     std::string mName;
     std::string mAuthor;
     std::string mVersion;

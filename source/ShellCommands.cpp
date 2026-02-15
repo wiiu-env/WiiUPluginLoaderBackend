@@ -36,6 +36,7 @@ namespace ShellCommands {
             }
 
             void Print() {
+                OSReport("\n");
                 PrintSeparator();
 
                 OSReport("|");
@@ -115,12 +116,12 @@ namespace ShellCommands {
     void PrintHeapUsage() {
         ConsoleTable table;
 
-        table.AddColumn("Plugin Name", ConsoleTable::LEFT);
+        table.AddColumn("Plugin name", ConsoleTable::LEFT);
         table.AddColumn("Current usage", ConsoleTable::RIGHT);
         table.AddColumn("Peak usage", ConsoleTable::RIGHT);
-        table.AddColumn("Currently allocated", ConsoleTable::RIGHT);
-        table.AddColumn("Total allocated", ConsoleTable::RIGHT);
-        table.AddColumn("Total freed", ConsoleTable::RIGHT);
+        table.AddColumn("Current allocations", ConsoleTable::RIGHT);
+        table.AddColumn("Total allocations", ConsoleTable::RIGHT);
+        table.AddColumn("Total frees", ConsoleTable::RIGHT);
 
         uint32_t totalCurrentBytes = 0;
         uint32_t totalPeakBytes    = 0;
@@ -164,10 +165,78 @@ namespace ShellCommands {
     }
 
 
+    void ListPlugins(int argc, char **argv) {
+        bool showAll = false;
+        if (argc > 1 && (std::string_view(argv[1]) == "-a" || std::string_view(argv[1]) == "--all")) {
+            showAll = true;
+        }
+
+        ConsoleTable table;
+
+        // Define Columns
+        table.AddColumn("Name", ConsoleTable::LEFT);
+        table.AddColumn("Author", ConsoleTable::LEFT);
+        table.AddColumn("Version", ConsoleTable::LEFT);
+        if (showAll) {
+            table.AddColumn("Active", ConsoleTable::LEFT);
+        }
+        table.AddColumn("API", ConsoleTable::LEFT);
+        table.AddColumn("Memory footprint", ConsoleTable::RIGHT);
+        table.AddColumn("Heap usage", ConsoleTable::RIGHT);
+        uint32_t totalSizeOther = 0;
+        for (const auto &plugin : gLoadedPlugins) {
+            if (!showAll && !plugin.isLinkedAndLoaded()) {
+                totalSizeOther += plugin.getMemoryFootprint();
+                continue;
+            }
+
+            auto meta = plugin.getMetaInformation();
+
+            std::string heapUsage = "unknown";
+            if (const auto tracking = plugin.getTrackingMemoryAllocator()) {
+                uint32_t heapUsageSize = 0;
+                if (const auto stats = tracking->GetHeapMemoryUsageSnapshot()) {
+                    heapUsageSize = stats->currentAllocated;
+                }
+                heapUsage = BytesToHumanReadable(heapUsageSize);
+            }
+
+            std::vector<std::string> rowData;
+            rowData.emplace_back(meta.getName());
+            rowData.emplace_back(meta.getAuthor());
+            rowData.emplace_back(meta.getVersion());
+            if (showAll) {
+                rowData.emplace_back(plugin.isLinkedAndLoaded() ? "Yes" : "No");
+            }
+            rowData.emplace_back(meta.getWUPSVersion().toString());
+            rowData.emplace_back("~ " + BytesToHumanReadable(plugin.getMemoryFootprint()));
+            rowData.emplace_back(heapUsage);
+
+            table.AddRow(rowData);
+        }
+
+        if (totalSizeOther > 0 && !showAll) {
+            std::vector<std::string> rowData;
+            rowData.emplace_back("Inactive Plugins");
+            rowData.emplace_back("-");
+            rowData.emplace_back("-");
+
+            rowData.emplace_back("-");
+            rowData.emplace_back("~ " + BytesToHumanReadable(totalSizeOther));
+            rowData.emplace_back("-");
+
+            table.AddFooter(rowData);
+        }
+
+        table.Print();
+    }
+
     void Init() {
         sPluginGroup = std::make_unique<IOPShellModule::CommandGroup>("plugins", "Manage aroma plugins");
 
         sPluginGroup->AddCommand("heap_usage", PrintHeapUsage, "Show current heap usage for tracked plugins");
+
+        sPluginGroup->AddRawCommand("list", ListPlugins, "Lists active plugins", "Usage: \"list -a\" to list all plugins");
 
         sPluginCmdHandle = sPluginGroup->Register();
     }

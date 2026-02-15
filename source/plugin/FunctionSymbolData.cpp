@@ -24,3 +24,9 @@ FunctionSymbolData::~FunctionSymbolData() = default;
 [[nodiscard]] uint32_t FunctionSymbolData::getSize() const {
     return mSize;
 }
+
+size_t FunctionSymbolData::getMemoryFootprint() const {
+    size_t totalSize = sizeof(*this);
+    totalSize += mName.capacity();
+    return totalSize;
+}

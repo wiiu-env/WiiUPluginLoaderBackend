@@ -35,7 +35,11 @@ public:
     [[nodiscard]] uint32_t isInSection(uint32_t addr) const;
 
 private:
+    [[nodiscard]] size_t getMemoryFootprint() const;
+
     std::string mName;
     uint32_t mAddress     = {};
     uint32_t mSectionSize = {};
+
+    friend class PluginLinkInformation;
 };

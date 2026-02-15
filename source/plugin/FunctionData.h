@@ -53,6 +53,8 @@ public:
     bool RemovePatch();
 
 private:
+    [[nodiscard]] size_t getMemoryFootprint() const;
+
     void *mPAddress = nullptr;
     void *mVAddress = nullptr;
     std::string mName;
@@ -62,4 +64,6 @@ private:
     void *mReplaceCall = nullptr;
 
     PatchedFunctionHandle mHandle = 0;
+
+    friend class PluginLinkInformation;
 };

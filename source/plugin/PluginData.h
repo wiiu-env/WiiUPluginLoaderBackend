@@ -43,6 +43,8 @@ public:
 
     [[nodiscard]] const std::string &getSource() const;
 
+    size_t getMemoryFootprint() const;
+
 private:
     std::vector<uint8_t> mBuffer;
     std::string mSource;

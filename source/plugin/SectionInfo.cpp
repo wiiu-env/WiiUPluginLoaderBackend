@@ -22,3 +22,9 @@ SectionInfo::SectionInfo(std::string name,
 [[nodiscard]] uint32_t SectionInfo::isInSection(uint32_t addr) const {
     return addr >= mAddress && addr < mAddress + mSectionSize;
 }
+
+size_t SectionInfo::getMemoryFootprint() const {
+    size_t totalSize = sizeof(*this);
+    totalSize += mName.capacity();
+    return totalSize;
+}

@@ -172,3 +172,10 @@ const IPluginHeapMemoryAllocator &PluginContainer::getMemoryAllocator() const {
     }
     return DefaultPluginHeapMemoryAllocator::gDefaultPluginHeapMemoryAllocator;
 }
+
+const TrackingPluginHeapMemoryAllocator *PluginContainer::getTrackingMemoryAllocator() const {
+    if (mTrackingHeapAllocatorOpt) {
+        return &(mTrackingHeapAllocatorOpt.value());
+    }
+    return nullptr;
+}

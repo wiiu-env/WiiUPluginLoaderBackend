@@ -59,7 +59,7 @@ CXXFLAGS += -DDEBUG -DVERBOSE_DEBUG -g
 CFLAGS += -DDEBUG -DVERBOSE_DEBUG -g
 endif
 
-LIBS	:= -lwums -lwups -lwut -lfunctionpatcher -lmappedmemory -lz -lnotifications -lbuttoncombo
+LIBS	:= -lwums -lwups -lwut -lfunctionpatcher -lmappedmemory -lz -lnotifications -lbuttoncombo -liopshell
 
 #-------------------------------------------------------------------------------
 # list of directories containing libraries, this must be the top level

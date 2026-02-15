@@ -40,3 +40,11 @@ RelocationData::~RelocationData() = default;
 [[nodiscard]] const ImportRPLInformation &RelocationData::getImportRPLInformation() const {
     return *mRPLInfo;
 }
+
+size_t RelocationData::getMemoryFootprint() const {
+    size_t totalSize = sizeof(*this);
+
+    totalSize += mName.capacity();
+
+    return totalSize;
+}

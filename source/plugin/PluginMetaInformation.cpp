@@ -87,3 +87,17 @@ void PluginMetaInformation::setStorageId(std::string storageId) {
 void PluginMetaInformation::setHeapTrackingOptions(HeapTrackingOptions value) {
     mHeapTrackingOptions = value;
 }
+
+size_t PluginMetaInformation::getMemoryFootprint() const {
+    size_t totalSize = sizeof(*this);
+
+    totalSize += mName.capacity();
+    totalSize += mAuthor.capacity();
+    totalSize += mVersion.capacity();
+    totalSize += mLicense.capacity();
+    totalSize += mBuildTimestamp.capacity();
+    totalSize += mDescription.capacity();
+    totalSize += mStorageId.capacity();
+
+    return totalSize;
+}

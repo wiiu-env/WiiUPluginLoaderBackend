@@ -33,3 +33,17 @@ std::span<const uint8_t> PluginData::getBuffer() const {
 const std::string &PluginData::getSource() const {
     return mSource;
 }
+
+size_t PluginData::getMemoryFootprint() const {
+    size_t totalSize = sizeof(*this);
+
+    totalSize += mBuffer.capacity() * sizeof(uint8_t);
+
+    totalSize += mSource.capacity() * sizeof(char);
+
+    if (mHandle) {
+        totalSize += sizeof(uint32_t);
+    }
+
+    return totalSize;
+}

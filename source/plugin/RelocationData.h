@@ -46,10 +46,13 @@ public:
     [[nodiscard]] const ImportRPLInformation &getImportRPLInformation() const;
 
 private:
+    [[nodiscard]] size_t getMemoryFootprint() const;
+
     char mType;
     size_t mOffset;
     int32_t mAddend;
     void *mDestination;
     std::string mName;
     std::shared_ptr<ImportRPLInformation> mRPLInfo;
+    friend class PluginLinkInformation;
 };

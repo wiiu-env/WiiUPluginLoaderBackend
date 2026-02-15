@@ -39,7 +39,11 @@ public:
     MemorySegmentInfo operator[](int idx) const;
 
 private:
+    [[nodiscard]] size_t getMemoryFootprint() const;
+
     std::unique_ptr<uint8_t[]> mData{};
     std::size_t mTotalSize{};
     std::vector<MemorySegmentInfo> mSegmentInfos;
+
+    friend class PluginLinkInformation;
 };

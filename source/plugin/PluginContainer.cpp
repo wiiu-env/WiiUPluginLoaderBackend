@@ -179,3 +179,36 @@ const TrackingPluginHeapMemoryAllocator *PluginContainer::getTrackingMemoryAlloc
     }
     return nullptr;
 }
+
+size_t PluginContainer::getMemoryFootprint() const {
+    size_t totalSize = sizeof(*this);
+
+    if (mHandle) {
+        totalSize += sizeof(uint32_t);
+    }
+
+    if (mPluginData) {
+        totalSize += mPluginData->getMemoryFootprint();
+    }
+
+    if (mPluginConfigData.has_value()) {
+        size_t configFootprint = mPluginConfigData->getMemoryFootprint();
+        if (configFootprint > sizeof(PluginConfigData)) {
+            totalSize += (configFootprint - sizeof(PluginConfigData));
+        }
+    }
+    {
+        size_t metaFootprint = mMetaInformation.getMemoryFootprint();
+        if (metaFootprint > sizeof(PluginMetaInformation)) {
+            totalSize += (metaFootprint - sizeof(PluginMetaInformation));
+        }
+    }
+    {
+        size_t linkFootprint = mPluginLinkInformation.getMemoryFootprint();
+        if (linkFootprint > sizeof(PluginLinkInformation)) {
+            totalSize += (linkFootprint - sizeof(PluginLinkInformation));
+        }
+    }
+
+    return totalSize;
+}

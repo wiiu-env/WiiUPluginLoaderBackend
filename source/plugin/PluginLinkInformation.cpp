@@ -120,3 +120,35 @@ std::span<relocation_trampoline_entry_t> PluginLinkInformation::getTrampData() c
     const auto &entry = mAllocatedTextAndTrampMemoryAddress[1]; // 1 is tramp data
     return std::span(static_cast<relocation_trampoline_entry_t *>(entry.data()), entry.size() / sizeof(relocation_trampoline_entry_t));
 }
+
+size_t PluginLinkInformation::getMemoryFootprint() const {
+    size_t totalSize = sizeof(*this);
+
+    totalSize += mHookDataList.capacity() * sizeof(HookData);
+
+    totalSize += mFunctionDataList.capacity() * sizeof(FunctionData);
+    for (const auto &func : mFunctionDataList) {
+        totalSize += (func.getMemoryFootprint() - sizeof(FunctionData));
+    }
+
+    totalSize += mRelocationDataList.capacity() * sizeof(RelocationData);
+    for (const auto &reloc : mRelocationDataList) {
+        totalSize += (reloc.getMemoryFootprint() - sizeof(RelocationData));
+    }
+
+    for (const auto &symbol : mSymbolDataList) {
+        totalSize += sizeof(FunctionSymbolData);
+        totalSize += (symbol.getMemoryFootprint() - sizeof(FunctionSymbolData));
+    }
+
+    for (const auto &[key, section] : mSectionInfoList) {
+        totalSize += sizeof(std::string) + sizeof(SectionInfo);
+        totalSize += key.capacity();
+        totalSize += (section.getMemoryFootprint() - sizeof(SectionInfo));
+    }
+
+    totalSize += (mAllocatedTextAndTrampMemoryAddress.getMemoryFootprint() - sizeof(HeapMemoryFixedSizePool));
+    totalSize += (mAllocatedDataMemoryAddress.getMemoryFootprint() - sizeof(HeapMemoryFixedSizePool));
+
+    return totalSize;
+}

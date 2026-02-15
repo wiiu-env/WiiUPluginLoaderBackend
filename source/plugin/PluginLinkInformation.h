@@ -70,9 +70,9 @@ public:
 
     [[nodiscard]] bool hasValidData() const;
 
-    [[nodiscard]] int numberOfSegments() const;
-
     [[nodiscard]] std::span<relocation_trampoline_entry_t> getTrampData() const;
+
+    size_t getMemoryFootprint() const;
 
 private:
     PluginLinkInformation() = default;

@@ -92,3 +92,10 @@ bool FunctionData::RemovePatch() {
 
     return true;
 }
+
+size_t FunctionData::getMemoryFootprint() const {
+    size_t totalSize = sizeof(*this);
+
+    totalSize += mName.capacity();
+    return totalSize;
+}

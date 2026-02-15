@@ -21,7 +21,10 @@ public:
     static std::optional<PluginConfigData> create(WUPSConfigAPIOptions options, WUPSConfigAPI_MenuOpenedCallback openedCallback, WUPSConfigAPI_MenuClosedCallback closedCallback);
 
 private:
+    [[nodiscard]] size_t getMemoryFootprint() const;
+
     std::string mName;
     WUPSConfigAPI_MenuOpenedCallback mOpenedCallback;
     WUPSConfigAPI_MenuClosedCallback mClosedCallback;
+    friend class PluginContainer;
 };

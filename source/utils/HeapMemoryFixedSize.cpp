@@ -67,3 +67,15 @@ HeapMemoryFixedSizePool::MemorySegmentInfo HeapMemoryFixedSizePool::operator[](c
     }
     return mSegmentInfos[idx];
 }
+
+size_t HeapMemoryFixedSizePool::getMemoryFootprint() const {
+    size_t totalSize = sizeof(*this);
+
+    if (mData) {
+        totalSize += mTotalSize;
+    }
+
+    totalSize += mSegmentInfos.capacity() * sizeof(MemorySegmentInfo);
+
+    return totalSize;
+}

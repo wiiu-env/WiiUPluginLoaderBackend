@@ -35,6 +35,14 @@ WUPSConfigAPIStatus PluginConfigData::CallMenuClosedCallback() const {
     return WUPSCONFIG_API_RESULT_SUCCESS;
 }
 
+size_t PluginConfigData::getMemoryFootprint() const {
+    size_t totalSize = sizeof(*this);
+
+    totalSize += mName.capacity() * sizeof(char);
+
+    return totalSize;
+}
+
 std::optional<PluginConfigData> PluginConfigData::create(const WUPSConfigAPIOptions options,
                                                          const WUPSConfigAPI_MenuOpenedCallback openedCallback,
                                                          const WUPSConfigAPI_MenuClosedCallback closedCallback) {

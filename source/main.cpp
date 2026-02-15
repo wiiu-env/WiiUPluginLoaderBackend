@@ -1,4 +1,5 @@
 #include "PluginManagement.h"
+#include "ShellCommands.h"
 #include "globals.h"
 #include "hooks.h"
 #include "patcher/hooks_patcher_static.h"
@@ -20,6 +21,7 @@
 
 #include <buttoncombo/api.h>
 #include <function_patcher/function_patching.h>
+#include <iopshell/api.h>
 #include <notifications/notification_defines.h>
 #include <notifications/notifications.h>
 
@@ -39,6 +41,9 @@ WUMS_DEPENDS_ON(homebrew_memorymapping);
 WUMS_DEPENDS_ON(homebrew_notifications);
 WUMS_DEPENDS_ON(homebrew_buttoncombo);
 
+// This should be a soft dependency
+//WUMS_DEPENDS_ON(homebrew_iopshell);
+
 using namespace std::chrono_literals;
 
 WUMS_INITIALIZE() {
@@ -57,6 +62,12 @@ WUMS_INITIALIZE() {
         gNotificationModuleLoaded = false;
     } else {
         gNotificationModuleLoaded = true;
+    }
+
+    if (const auto res = IOPShellModule::Init(); res != IOPSHELL_MODULE_ERROR_SUCCESS) {
+        DEBUG_FUNCTION_LINE_ERR("Failed to init IOPShellModule: %s (%d)", IOPShellModule::GetErrorString(res), res);
+    } else {
+        ShellCommands::Init();
     }
 
     DEBUG_FUNCTION_LINE("Patching functions");

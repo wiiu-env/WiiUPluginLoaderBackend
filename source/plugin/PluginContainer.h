@@ -79,6 +79,8 @@ public:
 
     [[nodiscard]] const IPluginHeapMemoryAllocator &getMemoryAllocator() const;
 
+    [[nodiscard]] const TrackingPluginHeapMemoryAllocator *getTrackingMemoryAllocator() const;
+
 private:
     PluginMetaInformation mMetaInformation;
     PluginLinkInformation mPluginLinkInformation;

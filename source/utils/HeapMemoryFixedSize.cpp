@@ -64,6 +64,7 @@ HeapMemoryFixedSizePool::operator bool() const {
 HeapMemoryFixedSizePool::MemorySegmentInfo HeapMemoryFixedSizePool::operator[](const int idx) const {
     if (idx < 0 || idx >= static_cast<int>(mSegmentInfos.size())) {
         DEBUG_FUNCTION_LINE_ERR("Out of bounce access (tried to access index %d; size is %d", idx, mSegmentInfos.size());
+        return {nullptr, 0};
     }
     return mSegmentInfos[idx];
 }

@@ -9,6 +9,7 @@
 #include <coreinit/debug.h>
 #include <coreinit/ios.h>
 
+#include <wups/hooks.h>
 #include <wups/storage.h>
 
 #include <algorithm>
@@ -265,4 +266,62 @@ void PrintCapturedStackTrace(std::span<uint32_t> trace) {
     }
 
     DEBUG_FUNCTION_LINE_INFO("└────────────────────────────────────────────────────────────┘");
+}
+
+std::string hookNameToString(const wups_loader_hook_type_t type) {
+    switch (type) {
+        case WUPS_LOADER_HOOK_INIT_WUT_MALLOC:
+            return "WUPS_LOADER_HOOK_INIT_WUT_MALLOC";
+        case WUPS_LOADER_HOOK_FINI_WUT_MALLOC:
+            return "WUPS_LOADER_HOOK_FINI_WUT_MALLOC";
+        case WUPS_LOADER_HOOK_INIT_WUT_NEWLIB:
+            return "WUPS_LOADER_HOOK_INIT_WUT_NEWLIB";
+        case WUPS_LOADER_HOOK_FINI_WUT_NEWLIB:
+            return "WUPS_LOADER_HOOK_FINI_WUT_NEWLIB";
+        case WUPS_LOADER_HOOK_INIT_WUT_STDCPP:
+            return "WUPS_LOADER_HOOK_INIT_WUT_STDCPP";
+        case WUPS_LOADER_HOOK_FINI_WUT_STDCPP:
+            return "WUPS_LOADER_HOOK_FINI_WUT_STDCPP";
+        case WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB:
+            return "WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB";
+        case WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB:
+            return "WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB";
+        case WUPS_LOADER_HOOK_INIT_WUT_SOCKETS:
+            return "WUPS_LOADER_HOOK_INIT_WUT_SOCKETS";
+        case WUPS_LOADER_HOOK_FINI_WUT_SOCKETS:
+            return "WUPS_LOADER_HOOK_FINI_WUT_SOCKETS";
+        case WUPS_LOADER_HOOK_INIT_WRAPPER:
+            return "WUPS_LOADER_HOOK_INIT_WRAPPER";
+        case WUPS_LOADER_HOOK_FINI_WRAPPER:
+            return "WUPS_LOADER_HOOK_FINI_WRAPPER";
+        case WUPS_LOADER_HOOK_GET_CONFIG_DEPRECATED:
+            return "WUPS_LOADER_HOOK_GET_CONFIG_DEPRECATED";
+        case WUPS_LOADER_HOOK_CONFIG_CLOSED_DEPRECATED:
+            return "WUPS_LOADER_HOOK_CONFIG_CLOSED_DEPRECATED";
+        case WUPS_LOADER_HOOK_INIT_STORAGE_DEPRECATED:
+            return "WUPS_LOADER_HOOK_INIT_STORAGE_DEPRECATED";
+        case WUPS_LOADER_HOOK_INIT_PLUGIN:
+            return "WUPS_LOADER_HOOK_INIT_PLUGIN";
+        case WUPS_LOADER_HOOK_DEINIT_PLUGIN:
+            return "WUPS_LOADER_HOOK_DEINIT_PLUGIN";
+        case WUPS_LOADER_HOOK_APPLICATION_STARTS:
+            return "WUPS_LOADER_HOOK_APPLICATION_STARTS";
+        case WUPS_LOADER_HOOK_RELEASE_FOREGROUND:
+            return "WUPS_LOADER_HOOK_RELEASE_FOREGROUND";
+        case WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND:
+            return "WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND";
+        case WUPS_LOADER_HOOK_APPLICATION_REQUESTS_EXIT:
+            return "WUPS_LOADER_HOOK_APPLICATION_REQUESTS_EXIT";
+        case WUPS_LOADER_HOOK_APPLICATION_ENDS:
+            return "WUPS_LOADER_HOOK_APPLICATION_ENDS";
+        case WUPS_LOADER_HOOK_INIT_STORAGE:
+            return "WUPS_LOADER_HOOK_INIT_STORAGE";
+        case WUPS_LOADER_HOOK_INIT_CONFIG:
+            return "WUPS_LOADER_HOOK_INIT_CONFIG";
+        case WUPS_LOADER_HOOK_INIT_BUTTON_COMBO:
+            return "WUPS_LOADER_HOOK_INIT_BUTTON_COMBO";
+        case WUPS_LOADER_HOOK_INIT_WUT_THREAD:
+            return "WUPS_LOADER_HOOK_INIT_WUT_THREAD";
+    }
+    return "<UNKNOWN>";
 }

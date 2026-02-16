@@ -8,6 +8,7 @@
 #include "utils/buttoncombo/ButtonComboUtils.h"
 #include "utils/logger.h"
 #include "utils/storage/StorageUtils.h"
+#include "utils/utils.h"
 
 #include <wups/button_combo/api.h>
 #include <wups/button_combo_internal.h>
@@ -15,45 +16,13 @@
 
 #include <functional>
 
-static const char **hook_names = (const char *[]){
-        "WUPS_LOADER_HOOK_INIT_WUT_MALLOC",
-        "WUPS_LOADER_HOOK_FINI_WUT_MALLOC",
-        "WUPS_LOADER_HOOK_INIT_WUT_NEWLIB",
-        "WUPS_LOADER_HOOK_FINI_WUT_NEWLIB",
-        "WUPS_LOADER_HOOK_INIT_WUT_STDCPP",
-        "WUPS_LOADER_HOOK_FINI_WUT_STDCPP",
-        "WUPS_LOADER_HOOK_INIT_WUT_DEVOPTAB",
-        "WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB",
-        "WUPS_LOADER_HOOK_INIT_WUT_SOCKETS",
-        "WUPS_LOADER_HOOK_FINI_WUT_SOCKETS",
-
-        "WUPS_LOADER_HOOK_INIT_WRAPPER",
-        "WUPS_LOADER_HOOK_FINI_WRAPPER",
-
-        "WUPS_LOADER_HOOK_GET_CONFIG_DEPRECATED",
-        "WUPS_LOADER_HOOK_CONFIG_CLOSED_DEPRECATED",
-
-        "WUPS_LOADER_HOOK_INIT_STORAGE_DEPRECATED",
-
-        "WUPS_LOADER_HOOK_INIT_PLUGIN",
-        "WUPS_LOADER_HOOK_DEINIT_PLUGIN",
-        "WUPS_LOADER_HOOK_APPLICATION_STARTS",
-        "WUPS_LOADER_HOOK_RELEASE_FOREGROUND",
-        "WUPS_LOADER_HOOK_ACQUIRED_FOREGROUND",
-        "WUPS_LOADER_HOOK_APPLICATION_REQUESTS_EXIT",
-        "WUPS_LOADER_HOOK_APPLICATION_ENDS",
-        "WUPS_LOADER_HOOK_INIT_STORAGE",
-        "WUPS_LOADER_HOOK_INIT_CONFIG",
-        "WUPS_LOADER_HOOK_INIT_BUTTON_COMBO",
-        "WUPS_LOADER_HOOK_INIT_WUT_THREAD",
-};
 
 void CallHook(const std::vector<PluginContainer> &plugins, const wups_loader_hook_type_t hook_type) {
     CallHook(plugins, hook_type, [](const auto &) { return true; });
 }
 
 void CallHook(const std::vector<PluginContainer> &plugins, const wups_loader_hook_type_t hook_type, const std::function<bool(const PluginContainer &)> &pred) {
-    DEBUG_FUNCTION_LINE_VERBOSE("Calling hook of type %s [%d]", hook_names[hook_type], hook_type);
+    DEBUG_FUNCTION_LINE_VERBOSE("Calling hook of type %s [%d]", hookNameToString(hook.getType()).c_str(), hook_type);
     for (const auto &plugin : plugins) {
         if (pred(plugin)) {
             CallHook(plugin, hook_type);
@@ -67,7 +36,7 @@ void CallHook(const PluginContainer &plugin, const wups_loader_hook_type_t hook_
     }
     for (const auto &hook : plugin.getPluginLinkInformation().getHookDataList()) {
         if (hook.getType() == hook_type) {
-            DEBUG_FUNCTION_LINE_VERBOSE("Calling hook of type %s for plugin %s [%d]", hook_names[hook.getType()], plugin.getMetaInformation().getName().c_str(), hook_type);
+            DEBUG_FUNCTION_LINE_VERBOSE("Calling hook of type %s for plugin %s [%d]", hookNameToString(hook.getType()).c_str(), plugin.getMetaInformation().getName().c_str(), hook_type);
             void *func_ptr = hook.getFunctionPointer();
             if (func_ptr != nullptr) {
                 switch (hook_type) {
@@ -172,7 +141,7 @@ void CallHook(const PluginContainer &plugin, const wups_loader_hook_type_t hook_
                     }
                     default: {
                         DEBUG_FUNCTION_LINE_ERR("######################################");
-                        DEBUG_FUNCTION_LINE_ERR("Hook is not implemented %s [%d]", hook_names[hook_type], hook_type);
+                        DEBUG_FUNCTION_LINE_ERR("Hook is not implemented %s [%d]", hookNameToString(hook_type).c_str(), hook_type);
                         DEBUG_FUNCTION_LINE_ERR("######################################");
                     }
                 }

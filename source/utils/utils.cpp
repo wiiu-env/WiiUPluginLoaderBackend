@@ -236,6 +236,23 @@ CaptureStackTrace(uint32_t maxDepth) {
 
 #define SC17_FindClosestSymbol ((uint32_t(*)(uint32_t addr, int32_t * outDistance, char *symbolNameBuffer, uint32_t symbolNameBufferLength, char *moduleNameBuffer, uint32_t moduleNameBufferLength))(0x101C400 + 0x1f934))
 
+std::string getModuleAndSymbolName(uint32_t addr) {
+    int distance         = 0;
+    char moduleName[50]  = {};
+    char symbolName[256] = {};
+
+    if (SC17_FindClosestSymbol(addr, &distance, symbolName, sizeof(symbolName) - 1, moduleName, sizeof(moduleName) - 1) != 0) {
+        return string_format("0x%08X", addr);
+    } else {
+        moduleName[sizeof(moduleName) - 1] = '\0';
+        symbolName[sizeof(symbolName) - 1] = '\0';
+        return string_format("%s|%s+0x%X",
+                             moduleName,
+                             symbolName,
+                             distance);
+    }
+}
+
 void PrintCapturedStackTrace(std::span<uint32_t> trace) {
     if (trace.empty()) {
         DEBUG_FUNCTION_LINE_INFO("┌────────────────────── CAPTURED TRACE ──────────────────────┐");
@@ -248,8 +265,8 @@ void PrintCapturedStackTrace(std::span<uint32_t> trace) {
     for (size_t i = 0; i < trace.size(); ++i) {
         uint32_t addr        = trace[i];
         int distance         = 0;
-        char moduleName[100] = {};
-        char symbolName[100] = {};
+        char moduleName[50]  = {};
+        char symbolName[256] = {};
 
         if (SC17_FindClosestSymbol(addr, &distance, symbolName, sizeof(symbolName) - 1, moduleName, sizeof(moduleName) - 1) != 0) {
             DEBUG_FUNCTION_LINE_INFO("│ [%02d] 0x%08X", i, addr);

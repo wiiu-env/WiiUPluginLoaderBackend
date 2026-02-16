@@ -167,6 +167,8 @@ std::vector<std::string> getNonBaseAromaPluginFilenames(std::string_view basePat
 
 std::vector<uint32_t> CaptureStackTrace(uint32_t maxDepth);
 
+std::string getModuleAndSymbolName(uint32_t addr);
+
 void PrintCapturedStackTrace(std::span<uint32_t> trace);
 
 std::string hookNameToString(wups_loader_hook_type_t type);

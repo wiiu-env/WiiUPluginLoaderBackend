@@ -3,11 +3,15 @@
 #include <wups/button_combo/defines.h>
 
 #include <cstdint>
+#include <vector>
+
+struct ButtonComboInfo;
 
 namespace ButtonComboUtils::API {
     namespace Internal {
         uint32_t CreateButtonComboData();
         void RemoveButtonComboData(uint32_t buttonComboManagerHandle);
+        std::vector<ButtonComboInfo> GetButtonComboData(uint32_t buttonComboManagerHandle);
     } // namespace Internal
 
     WUPSButtonCombo_Error AddButtonCombo(void *identifier,

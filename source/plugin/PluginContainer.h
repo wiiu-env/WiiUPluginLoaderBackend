@@ -27,6 +27,8 @@
 #include <memory>
 #include <optional>
 
+
+struct ButtonComboInfo;
 class PluginData;
 
 class PluginContainer {
@@ -67,6 +69,7 @@ public:
 
     void InitButtonComboData();
     void DeinitButtonComboData();
+    std::vector<ButtonComboInfo> GetButtonComboData() const;
 
     [[nodiscard]] uint32_t getButtonComboManagerHandle() const;
 

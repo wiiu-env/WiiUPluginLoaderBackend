@@ -24,6 +24,16 @@ namespace ButtonComboUtils::API {
                 DEBUG_FUNCTION_LINE_WARN("Tried to remove ButtonComboManager by invalid handle: %08X", buttonComboManagerHandle);
             }
         }
+
+        std::vector<ButtonComboInfo> GetButtonComboData(uint32_t buttonComboManagerHandle) {
+            std::lock_guard lock(sButtonComboMutex);
+            for (auto &manager : sButtonComboManager) {
+                if (manager.getHandle() == buttonComboManagerHandle) {
+                    return manager.GetButtonCombos();
+                }
+            }
+            return {};
+        }
     } // namespace Internal
 
     namespace {

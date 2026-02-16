@@ -1,5 +1,6 @@
 #include "PluginContainer.h"
 
+#include "plugin/ButtonComboManager.h"
 #include "plugin/FunctionData.h"
 #include "plugin/HookData.h"
 #include "plugin/PluginConfigData.h"
@@ -8,6 +9,7 @@
 #include "plugin/RelocationData.h"
 #include "plugin/SectionInfo.h"
 
+#include "plugin/ButtonComboManager.h"
 #include "utils/buttoncombo/ButtonComboUtils.h"
 #include "utils/logger.h"
 #include "utils/storage/StorageUtils.h"
@@ -135,11 +137,20 @@ void PluginContainer::InitButtonComboData() {
     }
     mButtonComboManagerHandle = ButtonComboUtils::API::Internal::CreateButtonComboData();
 }
+
 void PluginContainer::DeinitButtonComboData() {
     if (getMetaInformation().getWUPSVersion() < WUPSVersion(0, 8, 2)) {
         return;
     }
     ButtonComboUtils::API::Internal::RemoveButtonComboData(mButtonComboManagerHandle);
+}
+
+
+std::vector<ButtonComboInfo> PluginContainer::GetButtonComboData() const {
+    if (getMetaInformation().getWUPSVersion() < WUPSVersion(0, 8, 2)) {
+        return {};
+    }
+    return ButtonComboUtils::API::Internal::GetButtonComboData(mButtonComboManagerHandle);
 }
 
 uint32_t PluginContainer::getButtonComboManagerHandle() const {

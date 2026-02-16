@@ -10,11 +10,17 @@
 
 class ButtonComboWrapper;
 
+struct ButtonComboInfo {
+    std::string label;
+    WUPSButtonCombo_CallbackOptions callbackOptions;
+    WUPSButtonCombo_ButtonComboInfoEx buttonComboOptions;
+    WUPSButtonCombo_ComboStatus status;
+};
+
 class ButtonComboManager {
 public:
     explicit ButtonComboManager();
     ~ButtonComboManager();
-
 
     ButtonComboManager(const ButtonComboManager &) = delete;
 
@@ -66,6 +72,8 @@ public:
     WUPSButtonCombo_Error ExecuteForWrapper(const WUPSButtonCombo_ComboHandle &handle, const std::function<WUPSButtonCombo_Error(ButtonComboWrapper &)> &callback);
 
     [[nodiscard]] uint32_t getHandle() const;
+
+    [[nodiscard]] std::vector<ButtonComboInfo> GetButtonCombos() const;
 
 private:
     std::forward_list<ButtonComboWrapper> mComboWrappers;

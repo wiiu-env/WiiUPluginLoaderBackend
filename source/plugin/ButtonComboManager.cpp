@@ -599,3 +599,27 @@ WUPSButtonCombo_Error ButtonComboManager::ExecuteForWrapper(const WUPSButtonComb
 uint32_t ButtonComboManager::getHandle() const {
     return *mHandle;
 }
+
+std::vector<ButtonComboInfo> ButtonComboManager::GetButtonCombos() const {
+    std::vector<ButtonComboInfo> result;
+    for (auto &wrapper : mComboWrappers) {
+        ButtonComboInfo res;
+        char text[256]                      = {};
+        WUPSButtonCombo_MetaOptionsOut meta = {text, sizeof(text)};
+        if (wrapper.GetButtonComboCallback(res.callbackOptions) != WUPS_BUTTON_COMBO_ERROR_SUCCESS) {
+            continue;
+        }
+        if (wrapper.GetButtonComboInfoEx(res.buttonComboOptions) != WUPS_BUTTON_COMBO_ERROR_SUCCESS) {
+            continue;
+        }
+        if (wrapper.GetButtonComboMeta(meta) != WUPS_BUTTON_COMBO_ERROR_SUCCESS) {
+            continue;
+        }
+        if (wrapper.GetButtonComboStatus(res.status) != WUPS_BUTTON_COMBO_ERROR_SUCCESS) {
+            continue;
+        }
+        res.label = text;
+        result.push_back(res);
+    }
+    return result;
+}

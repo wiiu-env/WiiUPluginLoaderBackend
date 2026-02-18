@@ -388,6 +388,21 @@ void CleanupPlugins(std::vector<PluginContainer> &pluginsToDeinit) {
         }
         plugin.DeinitButtonComboData();
     }
+
+    // Check for leaked memory
+    for (auto &plugin : pluginsToDeinit) {
+        if (const auto tracking = plugin.getTrackingMemoryAllocator()) {
+            if (const auto stats = tracking->GetHeapMemoryUsageSnapshot()) {
+                DEBUG_FUNCTION_LINE_WARN("Plugin \"%s\" leaked %d allocations", plugin.getMetaInformation().getName().c_str(), stats->allocationMap.size());
+                for (const auto &alloc : stats->allocationMap) {
+                    DEBUG_FUNCTION_LINE_WARN("Leaked %d bytes @ %p", alloc.second.size, alloc.first);
+                    if (!alloc.second.stackTrace.empty()) {
+                        PrintCapturedStackTrace(alloc.second.stackTrace);
+                    }
+                }
+            }
+        }
+    }
 }
 void CheckCleanupCallbackUsage(const std::vector<PluginContainer> &plugins) {
     auto *curThread = OSGetCurrentThread();

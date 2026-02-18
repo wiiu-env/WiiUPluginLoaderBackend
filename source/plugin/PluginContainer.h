@@ -33,7 +33,7 @@ class PluginData;
 
 class PluginContainer {
 public:
-    PluginContainer(PluginMetaInformation metaInformation, PluginLinkInformation pluginLinkInformation, std::shared_ptr<PluginData> pluginData);
+    PluginContainer(PluginMetaInformation metaInformation, PluginLinkInformation pluginLinkInformation, std::shared_ptr<PluginData> pluginData, std::optional<PluginMetaInformation::HeapTrackingOptions> heapTrackingOptions);
 
     PluginContainer(const PluginContainer &) = delete;
 
@@ -73,11 +73,6 @@ public:
 
     [[nodiscard]] uint32_t getButtonComboManagerHandle() const;
 
-    /**
-     * @return Returns true if setting the value was successful
-     */
-    bool useTrackingPluginHeapMemoryAllocator(PluginMetaInformation::HeapTrackingOptions options);
-
     [[nodiscard]] bool isUsingTrackingPluginHeapMemoryAllocator() const;
 
     [[nodiscard]] const IPluginHeapMemoryAllocator &getMemoryAllocator() const;
@@ -87,6 +82,11 @@ public:
     [[nodiscard]] size_t getMemoryFootprint() const;
 
 private:
+    /**
+     * @return Returns true if setting the value was successful
+     */
+    bool useTrackingPluginHeapMemoryAllocator(PluginMetaInformation::HeapTrackingOptions options);
+
     PluginMetaInformation mMetaInformation;
     PluginLinkInformation mPluginLinkInformation;
     std::optional<TrackingPluginHeapMemoryAllocator> mTrackingHeapAllocatorOpt;

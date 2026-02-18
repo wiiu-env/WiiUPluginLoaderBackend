@@ -5,10 +5,10 @@
 
 #include <wups/config.h>
 
+#include <cstdint>
+#include <functional>
 #include <memory>
 #include <vector>
-
-#include <cstdint>
 
 namespace WUPSConfigAPIBackend {
     class WUPSConfig;
@@ -18,6 +18,8 @@ class PluginLoadWrapper;
 class Input;
 class CategoryRenderer;
 class ConfigDisplayItem;
+class ConfigListState;
+
 class ConfigRenderer {
 
 public:
@@ -30,22 +32,31 @@ public:
     void Render() const;
 
     [[nodiscard]] bool NeedsRedraw() const;
-
     void ResetNeedsRedraw();
+    void RequestRedraw();
 
-    bool GetActivePluginsIfChanged(std::vector<PluginLoadWrapper> &result);
+    bool GetPluginsListIfChanged(std::vector<PluginLoadWrapper> &result);
+
+    void SetListState(std::unique_ptr<ConfigListState> state);
+    const std::vector<ConfigDisplayItem> &GetConfigItems();
+    std::vector<std::reference_wrapper<ConfigDisplayItem>> &GetFilteredConfigItems(); // Mutable access
+    int32_t GetCursorPos() const;
+    void EnterSelectedCategory();
+    void Exit();
+    void ExitWithReload();
+    void SetPluginsListDirty(bool dirty);
 
 private:
     ConfigSubState UpdateStateMain(const Input &input);
-
     void RenderStateMain() const;
-
-    void DrawConfigEntry(uint32_t yOffset, const GeneralConfigInformation &configInformation, bool isHighlighted, bool isActive) const;
+    void DrawConfigEntry(uint32_t yOffset, const ConfigDisplayItem &item, bool isHighlighted) const;
 
     void CallOnCloseCallback(const GeneralConfigInformation &info, const std::vector<std::unique_ptr<WUPSConfigAPIBackend::WUPSConfigCategory>> &categories);
     void CallOnCloseCallback(const GeneralConfigInformation &info, const WUPSConfigAPIBackend::WUPSConfig &config);
+    void SavePendingConfigs();
 
-    [[nodiscard]] const std::vector<std::reference_wrapper<ConfigDisplayItem>> &GetConfigList() const;
+
+    [[nodiscard]] const std::vector<std::reference_wrapper<ConfigDisplayItem>> &GetDisplayedConfigList() const;
 
     enum State {
         STATE_MAIN = 0,
@@ -53,18 +64,20 @@ private:
     };
 
     std::vector<ConfigDisplayItem> mConfigs;
-    std::vector<std::reference_wrapper<ConfigDisplayItem>> mAllConfigs;
-    std::vector<std::reference_wrapper<ConfigDisplayItem>> mActiveConfigs;
+    mutable std::vector<std::reference_wrapper<ConfigDisplayItem>> mFilteredConfigs;
+
+    std::unique_ptr<ConfigListState> mListState;
     std::unique_ptr<CategoryRenderer> mCategoryRenderer;
 
     State mState = STATE_MAIN;
+    // Used to signal the main loop to return a specific state
+    ConfigSubState mNextSubState = SUB_STATE_RUNNING;
 
     int32_t mCursorPos    = 0;
     int32_t mRenderOffset = 0;
     int32_t mCurrentOpen  = -1;
 
     bool mNeedRedraw            = true;
-    bool mSetActivePluginsMode  = false;
-    bool mActivePluginsDirty    = false;
+    bool mPluginListDirty       = false;
     bool mLastInputWasOnWiimote = false;
 };

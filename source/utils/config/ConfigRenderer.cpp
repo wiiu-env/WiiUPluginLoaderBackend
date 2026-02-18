@@ -1,4 +1,5 @@
 #include "ConfigRenderer.h"
+#include "ConfigRendererStates.h"
 
 #include "CategoryRenderer.h"
 #include "ConfigDisplayItem.h"
@@ -11,15 +12,11 @@
 #include "utils/logger.h"
 
 #include <algorithm>
+#include <iterator>
+#include <utility>
 
 ConfigRenderer::ConfigRenderer(std::vector<ConfigDisplayItem> &&vec) : mConfigs(std::move(vec)) {
-    std::ranges::copy(mConfigs,
-                      std::back_inserter(mAllConfigs));
-    std::ranges::copy_if(mConfigs,
-                         std::back_inserter(mActiveConfigs),
-                         [&](const auto &value) {
-                             return value.isActivePlugin();
-                         });
+    SetListState(std::make_unique<DefaultListState>());
 }
 
 ConfigRenderer::~ConfigRenderer() = default;
@@ -44,6 +41,10 @@ ConfigSubState ConfigRenderer::Update(Input &input, const WUPSConfigSimplePadDat
     if (complexInputData.vpad.vpadError == VPAD_READ_SUCCESS && complexInputData.vpad.data.hold != 0) {
         mLastInputWasOnWiimote = false;
     }
+
+    // Reset transient return state
+    mNextSubState = SUB_STATE_RUNNING;
+
     switch (mState) {
         case STATE_MAIN:
             return UpdateStateMain(input);
@@ -51,9 +52,9 @@ ConfigSubState ConfigRenderer::Update(Input &input, const WUPSConfigSimplePadDat
             if (mCategoryRenderer) {
                 auto subResult = mCategoryRenderer->Update(input, simpleInputData, complexInputData);
                 if (subResult != SUB_STATE_RUNNING) {
-                    mNeedRedraw         = true;
-                    mActivePluginsDirty = false;
-                    mState              = STATE_MAIN;
+                    mNeedRedraw      = true;
+                    mPluginListDirty = false;
+                    mState           = STATE_MAIN;
                     return SUB_STATE_RUNNING;
                 }
                 return SUB_STATE_RUNNING;
@@ -99,90 +100,50 @@ void ConfigRenderer::ResetNeedsRedraw() {
     }
 }
 
+void ConfigRenderer::RequestRedraw() {
+    mNeedRedraw = true;
+}
+
 ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
-    auto &configs = GetConfigList();
+    if (!mListState) return SUB_STATE_ERROR;
 
+    auto &configs               = GetDisplayedConfigList();
     const auto prevSelectedItem = mCursorPos;
+    auto totalElementSize       = (int32_t) configs.size();
 
-    const auto &savePendingConfigFn = [&configs, this]() {
-        for (const auto &element : configs) {
-            CallOnCloseCallback(element.get().getConfigInformation(), element.get().getConfig());
-        }
-    };
+    // Delegate specific inputs to the State
+    bool inputHandled = mListState->HandleInput(*this, input);
 
-    auto totalElementSize = (int32_t) configs.size();
+    if (mNextSubState != SUB_STATE_RUNNING) {
+        return mNextSubState;
+    }
+
+    if (inputHandled) {
+        return SUB_STATE_RUNNING;
+    }
+
+    // Handle Navigation (Common to all states)
     if (input.data.buttons_d & Input::eButtons::BUTTON_DOWN) {
         mCursorPos++;
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_LEFT) {
-        // Paging up
         mCursorPos -= MAX_BUTTONS_ON_SCREEN - 1;
-        // Don't jump past the top
-        if (mCursorPos < 0)
-            mCursorPos = 0;
+        if (mCursorPos < 0) mCursorPos = 0;
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_RIGHT) {
-        // Paging down
         mCursorPos += MAX_BUTTONS_ON_SCREEN - 1;
-        // Don't jump past the bottom
-        if (mCursorPos >= totalElementSize)
-            mCursorPos = totalElementSize - 1;
+        if (mCursorPos >= totalElementSize) mCursorPos = totalElementSize - 1;
     } else if (input.data.buttons_d & Input::eButtons::BUTTON_UP) {
         mCursorPos--;
-    } else if (input.data.buttons_d & Input::eButtons::BUTTON_PLUS) {
-        if (mSetActivePluginsMode) {
-            mNeedRedraw = true;
-            mCategoryRenderer.reset();
-            savePendingConfigFn();
-            return SUB_STATE_RETURN_WITH_PLUGIN_RELOAD;
-        }
-    } else if (input.data.buttons_d & Input::eButtons::BUTTON_X) {
-        if (!mSetActivePluginsMode && !mAllConfigs.empty()) {
-            mSetActivePluginsMode = true;
-            mNeedRedraw           = true;
-            return SUB_STATE_RUNNING;
-        }
-    } else if (input.data.buttons_d & Input::eButtons::BUTTON_A) {
-        if (mSetActivePluginsMode) {
-            mActivePluginsDirty = true;
-            mNeedRedraw         = true;
-            configs[mCursorPos].get().toggleIsActivePlugin();
-            return SUB_STATE_RUNNING;
-        } else if (!configs.empty()) {
-            if (mCursorPos != mCurrentOpen) {
-                mCategoryRenderer.reset();
-                mCategoryRenderer = make_unique_nothrow<CategoryRenderer>(&(configs[mCursorPos].get().getConfigInformation()), &(configs[mCursorPos].get().getConfig()), true);
-            }
-            mNeedRedraw  = true;
-            mCurrentOpen = mCursorPos;
-            mState       = STATE_SUB;
-            return SUB_STATE_RUNNING;
-        }
-    } else if (input.data.buttons_d & (Input::eButtons::BUTTON_B | Input::eButtons::BUTTON_HOME)) {
-        if (mSetActivePluginsMode) {
-            for (auto &cur : mConfigs) {
-                cur.resetIsActivePlugin();
-            }
-            mActivePluginsDirty   = false;
-            mNeedRedraw           = true;
-            mSetActivePluginsMode = false;
-            return SUB_STATE_RUNNING;
-        } else {
-            mNeedRedraw = true;
-            mCategoryRenderer.reset();
-            savePendingConfigFn();
-            return SUB_STATE_RETURN;
-        }
     }
 
-    if (mCursorPos < 0) {
-        mCursorPos = totalElementSize - 1;
-    } else if (mCursorPos >= totalElementSize) {
-        mCursorPos = 0;
-    }
-    if (mCursorPos < 0) {
+    if (totalElementSize > 0) {
+        if (mCursorPos < 0) mCursorPos = totalElementSize - 1;
+        else if (mCursorPos >= totalElementSize)
+            mCursorPos = 0;
+    } else {
         mCursorPos = 0;
     }
 
-    // Adjust the render offset when reaching the boundaries
+    // Adjust render offset
     if (mCursorPos < mRenderOffset) {
         mRenderOffset = mCursorPos;
     } else if (mCursorPos >= mRenderOffset + MAX_BUTTONS_ON_SCREEN - 1) {
@@ -197,71 +158,70 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
 }
 
 void ConfigRenderer::RenderStateMain() const {
-    auto &configs = GetConfigList();
+    auto &configs = GetDisplayedConfigList();
 
     DrawUtils::beginDraw();
     DrawUtils::clear(COLOR_BACKGROUND);
 
     auto totalElementSize = (int32_t) configs.size();
+    int start             = std::max(0, mRenderOffset);
+    int end               = std::min(start + MAX_BUTTONS_ON_SCREEN, totalElementSize);
 
-    // Calculate the range of items to display
-    int start = std::max(0, mRenderOffset);
-    int end   = std::min(start + MAX_BUTTONS_ON_SCREEN, totalElementSize);
-
-    if (mActiveConfigs.empty() && !mSetActivePluginsMode) {
+    if (configs.empty()) {
         DrawUtils::setFontSize(24);
-        std::string noConfigText = "No active plugins";
-        uint32_t szNoConfig      = DrawUtils::getTextWidth(noConfigText.data());
+        std::string noConfigText = "No plugins available";
 
-        if (!mAllConfigs.empty()) {
+        if (!mListState->IsMainView()) {
+            noConfigText = "No active plugins";
+        }
+
+        uint32_t szNoConfig = DrawUtils::getTextWidth(noConfigText.data());
+
+        if (mListState->IsMainView()) {
+            DrawUtils::print((SCREEN_WIDTH / 2) - (szNoConfig / 2), (SCREEN_HEIGHT / 2), noConfigText.data());
+        } else {
             const auto activateHint = string_format("Press %s to activate inactive plugins", mLastInputWasOnWiimote ? "\uE048" : "\uE002");
             const auto szHint       = DrawUtils::getTextWidth(activateHint.c_str());
-
             DrawUtils::print((SCREEN_WIDTH / 2) - (szNoConfig / 2), (SCREEN_HEIGHT / 2) - 16, noConfigText.data());
             DrawUtils::print((SCREEN_WIDTH / 2) - (szHint / 2), (SCREEN_HEIGHT / 2) + 16, activateHint.data());
-        } else {
-            DrawUtils::print((SCREEN_WIDTH / 2) - (szNoConfig / 2), (SCREEN_HEIGHT / 2), noConfigText.data());
         }
     } else {
         uint32_t yOffset = 8 + 24 + 8 + 4;
         for (int32_t i = start; i < end; i++) {
-            DrawConfigEntry(yOffset, configs[i].get().getConfigInformation(), i == mCursorPos, configs[i].get().isActivePlugin());
+            DrawConfigEntry(yOffset, configs[i].get(), i == mCursorPos);
             yOffset += 42 + 8;
         }
     }
 
     DrawUtils::setFontColor(COLOR_TEXT);
 
-    // draw top bar
+    // Top Bar
     DrawUtils::setFontSize(24);
-    if (mSetActivePluginsMode) {
-        DrawUtils::print(16, 6 + 24, "Please select the plugins that should be active");
-    } else {
-        DrawUtils::print(16, 6 + 24, "Wii U Plugin System Config Menu");
+    DrawUtils::print(16, 6 + 24, mListState->GetTitle().c_str());
 
-        auto countInactivePlugins = mAllConfigs.size() - mActiveConfigs.size();
+    if (mListState->IsMainView()) {
+        auto countInactivePlugins = mConfigs.size() - mFilteredConfigs.size();
         if (countInactivePlugins > 0) {
             DrawUtils::setFontSize(14);
             const std::string plugin_unloaded = string_format("Found %d inactive plugins", countInactivePlugins);
             DrawUtils::print(SCREEN_WIDTH - 16 - DrawUtils::getTextWidth(MODULE_VERSION_FULL) - 32, 8 + 24, plugin_unloaded.c_str(), true);
         }
     }
+
     DrawUtils::setFontSize(18);
     DrawUtils::print(SCREEN_WIDTH - 16, 8 + 24, MODULE_VERSION_FULL, true);
     DrawUtils::drawRectFilled(8, 8 + 24 + 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
 
-    // draw bottom bar
+    // Bottom Bar
     DrawUtils::drawRectFilled(8, SCREEN_HEIGHT - 24 - 8 - 4, SCREEN_WIDTH - 8 * 2, 3, COLOR_BLACK);
     DrawUtils::setFontSize(18);
-    DrawUtils::print(16, SCREEN_HEIGHT - 10, "\uE07D/\uE07E Navigate ");
-    if (mSetActivePluginsMode) {
-        DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, "\uE000 Toggle | \uE045 Apply", true);
-    } else if (totalElementSize > 0) {
-        const auto text = string_format("\ue000 Select | %s Manage plugins", mLastInputWasOnWiimote ? "\uE048" : "\uE002");
-        DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, text.c_str(), true);
-    }
 
-    // draw scroll indicator
+    if (totalElementSize > 0) {
+        DrawUtils::print(16, SCREEN_HEIGHT - 10, "\uE07D/\uE07E Navigate ");
+    }
+    DrawUtils::print(SCREEN_WIDTH - 16, SCREEN_HEIGHT - 10, mListState->GetBottomBar(mLastInputWasOnWiimote).c_str(), true);
+
+    // Scroll Indicator
     DrawUtils::setFontSize(24);
     if (end < totalElementSize) {
         DrawUtils::print(SCREEN_WIDTH / 2 + 12, SCREEN_HEIGHT - 32, "\ufe3e", true);
@@ -270,18 +230,15 @@ void ConfigRenderer::RenderStateMain() const {
         DrawUtils::print(SCREEN_WIDTH / 2 + 12, 32 + 20, "\ufe3d", true);
     }
 
-    // draw home button
+    // Home Button
     DrawUtils::setFontSize(18);
-    const char *exitHint = "\ue044 Exit";
-    if (mSetActivePluginsMode) {
-        exitHint = "\ue001 Abort";
-    }
+    const char *exitHint = mListState->IsMainView() ? "\ue001 Abort" : "\ue044 Exit";
     DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHint) / 2, SCREEN_HEIGHT - 10, exitHint, true);
 
     DrawUtils::endDraw();
 }
 
-void ConfigRenderer::DrawConfigEntry(uint32_t yOffset, const GeneralConfigInformation &configInformation, bool isHighlighted, bool isActive) const {
+void ConfigRenderer::DrawConfigEntry(uint32_t yOffset, const ConfigDisplayItem &item, bool isHighlighted) const {
     DrawUtils::setFontColor(COLOR_TEXT);
 
     if (isHighlighted) {
@@ -291,23 +248,96 @@ void ConfigRenderer::DrawConfigEntry(uint32_t yOffset, const GeneralConfigInform
     }
 
     int textXOffset = 16 * 2;
-    if (mSetActivePluginsMode) {
-        DrawUtils::setFontSize(24);
-        if (isActive) {
-            DrawUtils::print(textXOffset, yOffset + 8 + 24, "\u25C9");
-        } else {
-            DrawUtils::print(textXOffset, yOffset + 8 + 24, "\u25CE");
-        }
+
+    // Delegate Icon drawing to state, returns true if icon was drawn
+    if (mListState->RenderItemIcon(item, textXOffset, yOffset + 8 + 24)) {
         textXOffset += 32;
     }
 
     DrawUtils::setFontSize(24);
 
+    const auto &configInformation = item.getConfigInformation();
     DrawUtils::print(textXOffset, yOffset + 8 + 24, configInformation.name.c_str());
     uint32_t sz = DrawUtils::getTextWidth(configInformation.name.c_str());
     DrawUtils::setFontSize(12);
     DrawUtils::print(textXOffset + sz + 4, yOffset + 8 + 24, configInformation.author.c_str());
     DrawUtils::print(SCREEN_WIDTH - 16 * 2, yOffset + 8 + 24, configInformation.version.c_str(), true);
+}
+
+void ConfigRenderer::SetListState(std::unique_ptr<ConfigListState> state) {
+    mListState    = std::move(state);
+    mNeedRedraw   = true;
+    mCursorPos    = 0;
+    mRenderOffset = 0;
+    // Fallback to "show all"
+    std::function<bool(const ConfigDisplayItem &)> pred = [](const auto &) { return true; };
+    if (mListState) {
+        pred = mListState->GetConfigFilter();
+    }
+    // Copy references into filteredConfigView
+    mFilteredConfigs.clear();
+    std::ranges::copy_if(mConfigs, std::back_inserter(mFilteredConfigs),
+                         std::move(pred));
+}
+
+const std::vector<ConfigDisplayItem> &ConfigRenderer::GetConfigItems() {
+    return mConfigs;
+}
+
+std::vector<std::reference_wrapper<ConfigDisplayItem>> &ConfigRenderer::GetFilteredConfigItems() {
+    return mFilteredConfigs;
+}
+
+int32_t ConfigRenderer::GetCursorPos() const {
+    return mCursorPos;
+}
+
+void ConfigRenderer::EnterSelectedCategory() {
+    auto &items = GetDisplayedConfigList();
+    if (mCursorPos < 0 || static_cast<size_t>(mCursorPos) >= items.size()) return;
+
+    if (mCursorPos != mCurrentOpen) {
+        mCategoryRenderer.reset();
+        mCategoryRenderer = make_unique_nothrow<CategoryRenderer>(&(items[mCursorPos].get().getConfigInformation()), &(items[mCursorPos].get().getConfig()), true);
+    }
+    mNeedRedraw  = true;
+    mCurrentOpen = mCursorPos;
+    mState       = STATE_SUB;
+}
+
+void ConfigRenderer::SavePendingConfigs() {
+    for (const auto &element : mConfigs) {
+        CallOnCloseCallback(element.getConfigInformation(), element.getConfig());
+    }
+}
+
+void ConfigRenderer::Exit() {
+    mNeedRedraw = true;
+    mCategoryRenderer.reset();
+    SavePendingConfigs();
+    mNextSubState = SUB_STATE_RETURN;
+}
+
+void ConfigRenderer::ExitWithReload() {
+    mNeedRedraw = true;
+    mCategoryRenderer.reset();
+    SavePendingConfigs();
+    mNextSubState = SUB_STATE_RETURN_WITH_PLUGIN_RELOAD;
+}
+
+void ConfigRenderer::SetPluginsListDirty(bool dirty) {
+    mPluginListDirty = dirty;
+}
+
+bool ConfigRenderer::GetPluginsListIfChanged(std::vector<PluginLoadWrapper> &result) {
+    if (mPluginListDirty) {
+        result.clear();
+        for (const auto &cur : mConfigs) {
+            result.emplace_back(cur.getConfigInformation().pluginData, cur.isActivePlugin(), cur.isHeapTrackingEnabled());
+        }
+        return true;
+    }
+    return false;
 }
 
 void ConfigRenderer::CallOnCloseCallback(const GeneralConfigInformation &info, const std::vector<std::unique_ptr<WUPSConfigAPIBackend::WUPSConfigCategory>> &categories) {
@@ -321,18 +351,6 @@ void ConfigRenderer::CallOnCloseCallback(const GeneralConfigInformation &info, c
     }
 }
 
-bool ConfigRenderer::GetActivePluginsIfChanged(std::vector<PluginLoadWrapper> &result) {
-    if (mActivePluginsDirty) {
-        std::vector<std::string> inactive_plugins;
-        result.clear();
-        for (const auto &cur : mConfigs) {
-            result.emplace_back(cur.getConfigInformation().pluginData, cur.isActivePlugin());
-        }
-        return true;
-    }
-    return false;
-}
-
 void ConfigRenderer::CallOnCloseCallback(const GeneralConfigInformation &info, const WUPSConfigAPIBackend::WUPSConfig &config) {
     CallOnCloseCallback(info, config.getCategories());
     for (const auto &item : config.getItems()) {
@@ -340,9 +358,6 @@ void ConfigRenderer::CallOnCloseCallback(const GeneralConfigInformation &info, c
     }
 }
 
-const std::vector<std::reference_wrapper<ConfigDisplayItem>> &ConfigRenderer::GetConfigList() const {
-    if (mSetActivePluginsMode) {
-        return mAllConfigs;
-    }
-    return mActiveConfigs;
+const std::vector<std::reference_wrapper<ConfigDisplayItem>> &ConfigRenderer::GetDisplayedConfigList() const {
+    return mFilteredConfigs;
 }

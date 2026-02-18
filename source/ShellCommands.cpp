@@ -430,9 +430,6 @@ namespace ShellCommands {
         };
     } // namespace
 
-    std::unique_ptr<IOPShellModule::CommandGroup> sPluginGroup;
-    std::optional<IOPShellModule::Command> sPluginCmdHandle;
-
     std::string BytesToHumanReadable(uint32_t bytes) {
         char buffer[32];
         snprintf(buffer, sizeof(buffer), "%.2f KiB", bytes / 1024.0f);
@@ -658,14 +655,34 @@ namespace ShellCommands {
         }
     }
 
+    static std::unique_ptr<IOPShellModule::CommandGroup> sPluginsGroup;
+    void InitPluginsCommandGroup() {
+        // Must be in memory while commands are active
+        sPluginsGroup = std::make_unique<IOPShellModule::CommandGroup>("plugins", "Manage aroma plugins");
+        if (const auto res = sPluginsGroup->RegisterGroup(); res != IOPSHELL_MODULE_ERROR_SUCCESS) {
+            DEBUG_FUNCTION_LINE_WARN("Failed to register \"aroma plugins\" command: %s", IOPShellModule::GetErrorString(res));
+        }
+
+        if (const auto res = sPluginsGroup->AddCommand("heap_usage", PrintHeapUsage, "Show current heap usage for tracked plugins"); res != IOPSHELL_MODULE_ERROR_SUCCESS) {
+            DEBUG_FUNCTION_LINE_WARN("Failed to create \"aroma plugins heap_usage\" command: %s", IOPShellModule::GetErrorString(res));
+        }
+        if (const auto res = sPluginsGroup->AddRawCommand("list", ListPlugins, "Lists active plugins", "Usage: \"list -a\" to list all plugins"); res != IOPSHELL_MODULE_ERROR_SUCCESS) {
+            DEBUG_FUNCTION_LINE_WARN("Failed to create \"aroma plugins list\" command: %s", IOPShellModule::GetErrorString(res));
+        }
+        if (auto res = sPluginsGroup->AddCommand("details", PluginDetails, "Shows details for plugins"); res != IOPSHELL_MODULE_ERROR_SUCCESS) {
+            DEBUG_FUNCTION_LINE_WARN("Failed to create \"aroma plugins details\" command: %s", IOPShellModule::GetErrorString(res));
+        } else {
+            if (res = sPluginsGroup->AddAlias("details", "show"); res != IOPSHELL_MODULE_ERROR_SUCCESS) {
+                DEBUG_FUNCTION_LINE_WARN("Failed to create \"aroma plugins details\" alias \"aroma plugins show\": %s", IOPShellModule::GetErrorString(res));
+            }
+        }
+
+        if (const auto res = sPluginsGroup->RegisterGroup(); res != IOPSHELL_MODULE_ERROR_SUCCESS) {
+            DEBUG_FUNCTION_LINE_WARN("Failed to register \"aroma plugins\" command: %s", IOPShellModule::GetErrorString(res));
+        }
+    }
+
     void Init() {
-        sPluginGroup = std::make_unique<IOPShellModule::CommandGroup>("plugins", "Manage aroma plugins");
-
-        sPluginGroup->AddCommand("heap_usage", PrintHeapUsage, "Show current heap usage for tracked plugins");
-
-        sPluginGroup->AddRawCommand("list", ListPlugins, "Lists active plugins", "Usage: \"list -a\" to list all plugins");
-        sPluginGroup->AddCommand("details", PluginDetails, "Shows details for plugins");
-
-        sPluginCmdHandle = sPluginGroup->Register();
+        InitPluginsCommandGroup();
     }
 } // namespace ShellCommands

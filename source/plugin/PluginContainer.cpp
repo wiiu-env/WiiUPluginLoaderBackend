@@ -16,14 +16,19 @@
 
 #include <optional>
 
-PluginContainer::PluginContainer(PluginMetaInformation metaInformation, PluginLinkInformation pluginLinkInformation, std::shared_ptr<PluginData> pluginData)
+PluginContainer::PluginContainer(PluginMetaInformation metaInformation, PluginLinkInformation pluginLinkInformation, std::shared_ptr<PluginData> pluginData, std::optional<PluginMetaInformation::HeapTrackingOptions> heapTrackingOptions)
     : mMetaInformation(std::move(metaInformation)),
       mPluginLinkInformation(std::move(pluginLinkInformation)),
       mPluginData(std::move(pluginData)) {
     // Abuse this as a stable handle that references itself and survives std::move
     *mHandle = reinterpret_cast<uint32_t>(mHandle.get());
 
-    if (const bool res = useTrackingPluginHeapMemoryAllocator(mMetaInformation.getHeapTrackingOptions()); !res) {
+    auto trackingOptions = mMetaInformation.getHeapTrackingOptions();
+    if (heapTrackingOptions) {
+        trackingOptions = *heapTrackingOptions;
+    }
+
+    if (const bool res = useTrackingPluginHeapMemoryAllocator(trackingOptions); !res) {
         DEBUG_FUNCTION_LINE_WARN("Failed to set heap tracking options for \"%s\"", mMetaInformation.getName().c_str());
     }
 }

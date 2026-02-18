@@ -284,8 +284,11 @@ WUMS_APPLICATION_STARTS() {
         // Check which plugins are already loaded and which needs to be
         for (const auto &pluginLoadWrapper : filteredLoadOnNextLaunch) {
             const auto &pluginNeedsNoReloadFn = [&pluginLoadWrapper](const PluginContainer &container) {
+                bool willBeLinked = pluginLoadWrapper.isLoadAndLink();
                 return (container.getPluginDataCopy()->getHandle() == pluginLoadWrapper.getPluginData()->getHandle()) &&
-                       (container.isLinkedAndLoaded() == pluginLoadWrapper.isLoadAndLink());
+                       (container.isLinkedAndLoaded() == pluginLoadWrapper.isLoadAndLink()) &&
+                       // Only check if tracking is enabled if the plugin will actually be loaded.
+                       (!willBeLinked || (container.isUsingTrackingPluginHeapMemoryAllocator() == pluginLoadWrapper.isHeapTrackingEnabled()));
             };
             // Check if the plugin data is already loaded
             if (const auto it = std::ranges::find_if(gLoadedPlugins, pluginNeedsNoReloadFn);

@@ -15,21 +15,25 @@ struct GeneralConfigInformation {
 
 class ConfigDisplayItem {
 public:
-    ConfigDisplayItem(GeneralConfigInformation &info, std::unique_ptr<WUPSConfigAPIBackend::WUPSConfig> config, bool isActive);
+    ConfigDisplayItem(GeneralConfigInformation &info, std::unique_ptr<WUPSConfigAPIBackend::WUPSConfig> config, bool isActive, bool isHeapTracking = false);
 
     [[nodiscard]] const GeneralConfigInformation &getConfigInformation() const;
 
     [[nodiscard]] const WUPSConfigAPIBackend::WUPSConfig &getConfig() const;
 
     [[nodiscard]] bool isActivePlugin() const;
-
     void toggleIsActivePlugin();
-
     void resetIsActivePlugin();
+
+    [[nodiscard]] bool isHeapTrackingEnabled() const;
+    void toggleIsHeapTrackingEnabled();
+    void resetIsHeapTrackingEnabled();
 
 private:
     std::unique_ptr<WUPSConfigAPIBackend::WUPSConfig> mConfig;
     GeneralConfigInformation mInfo;
     bool mIsActivePlugin;
     bool mInitialIsActivePlugin;
+    bool mIsHeapTrackingEnabled;
+    bool mInitialIsHeapTrackingEnabled;
 };

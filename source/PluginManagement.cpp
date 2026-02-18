@@ -43,10 +43,10 @@ PluginManagement::loadPlugins(const std::vector<PluginLoadWrapper> &pluginDataLi
                     DisplayErrorNotificationMessage(errMsg, 15.0f);
                     continue;
                 }
-                plugins.emplace_back(std::move(*metaInfo), std::move(*linkInfo), pluginDataWrapper.getPluginData());
+                plugins.emplace_back(std::move(*metaInfo), std::move(*linkInfo), pluginDataWrapper.getPluginData(), pluginDataWrapper.getHeapTrackingOptions());
             } else {
                 DEBUG_FUNCTION_LINE_INFO("LOAD (INACTIVE) %s", metaInfo->getName().c_str());
-                plugins.emplace_back(std::move(*metaInfo), PluginLinkInformation::CreateStub(), pluginDataWrapper.getPluginData());
+                plugins.emplace_back(std::move(*metaInfo), PluginLinkInformation::CreateStub(), pluginDataWrapper.getPluginData(), std::nullopt);
             }
         } else {
             auto errMsg = string_format("Failed to load plugin: %s", pluginDataWrapper.getPluginData()->getSource().c_str());

@@ -253,7 +253,7 @@ std::string getModuleAndSymbolName(uint32_t addr) {
     }
 }
 
-void PrintCapturedStackTrace(std::span<uint32_t> trace) {
+void PrintCapturedStackTrace(const std::span<const uint32_t> trace) {
     if (trace.empty()) {
         DEBUG_FUNCTION_LINE_INFO("┌────────────────────── CAPTURED TRACE ──────────────────────┐");
         DEBUG_FUNCTION_LINE_INFO("│ <Empty Trace>");

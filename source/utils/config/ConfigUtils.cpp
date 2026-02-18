@@ -133,7 +133,7 @@ void ConfigUtils::displayMenu() {
             config = make_unique_nothrow<WUPSConfigAPIBackend::WUPSConfig>(info.name);
         }
 
-        configs.emplace_back(info, std::move(config), plugin.isLinkedAndLoaded());
+        configs.emplace_back(info, std::move(config), plugin.isLinkedAndLoaded(), plugin.isUsingTrackingPluginHeapMemoryAllocator());
     }
 
     // Sort Configs by name
@@ -226,7 +226,7 @@ void ConfigUtils::displayMenu() {
 
     std::vector<PluginLoadWrapper> newActivePluginsList;
 
-    if (subStateReturnValue == SUB_STATE_RETURN_WITH_PLUGIN_RELOAD && renderer.GetActivePluginsIfChanged(newActivePluginsList)) {
+    if (subStateReturnValue == SUB_STATE_RETURN_WITH_PLUGIN_RELOAD && renderer.GetPluginsListIfChanged(newActivePluginsList)) {
         startTime = OSGetTime();
         renderBasicScreen("Applying changes, app will now restart...");
 
@@ -243,6 +243,7 @@ void ConfigUtils::displayMenu() {
                 }
             }
         }
+
         gLoadOnNextLaunch = newActivePluginsList;
         WUPSBackendSettings::SetInactivePluginFilenames(newInactivePluginsList);
         if (!WUPSBackendSettings::SaveSettings()) {

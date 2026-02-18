@@ -38,7 +38,17 @@ extern "C" PluginBackendApiErrorType WUPSLoadAndLinkByDataHandle(const wups_back
 
         for (const auto &pluginData : gLoadedData) {
             if (pluginData->getHandle() == handle) {
-                gLoadOnNextLaunch.emplace_back(pluginData, true);
+                bool heapTrackingActive = false;
+#ifdef DEBUG
+                heapTrackingActive = true;
+#endif
+                for (const auto &plugin : gLoadedPlugins) {
+                    if (plugin.getPluginDataCopy()->getHandle() == handle) {
+                        heapTrackingActive = plugin.isUsingTrackingPluginHeapMemoryAllocator();
+                        break;
+                    }
+                }
+                gLoadOnNextLaunch.emplace_back(pluginData, true, heapTrackingActive);
                 found = true;
                 break;
             }
@@ -52,7 +62,7 @@ extern "C" PluginBackendApiErrorType WUPSLoadAndLinkByDataHandle(const wups_back
     // Keep inactive plugins loaded. Duplicates will be eliminated by comparing name/author
     for (const auto &plugin : gLoadedPlugins) {
         if (!plugin.isLinkedAndLoaded()) {
-            gLoadOnNextLaunch.emplace_back(plugin.getPluginDataCopy(), false);
+            gLoadOnNextLaunch.emplace_back(plugin.getPluginDataCopy(), false, false);
         }
     }
 

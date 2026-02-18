@@ -42,7 +42,11 @@ std::vector<PluginLoadWrapper> PluginDataFactory::loadDir(const std::string_view
             if (inactivePluginsFilenames.contains(fileName)) {
                 shouldBeLoadedAndLinked = false;
             }
-            result.emplace_back(std::move(pluginData), shouldBeLoadedAndLinked);
+            bool enableHeapTracking = false;
+#ifdef DEBUG
+            enableHeapTracking = true;
+#endif
+            result.emplace_back(std::move(pluginData), shouldBeLoadedAndLinked, enableHeapTracking);
         } else {
             auto errMsg = string_format("Failed to load plugin: %s", full_file_path.c_str());
             DEBUG_FUNCTION_LINE_ERR("%s", errMsg.c_str());

@@ -574,7 +574,9 @@ namespace ShellCommands {
             OSReport("Author:           %s\n", meta.getAuthor().c_str());
             OSReport("Version:          %s\n", meta.getVersion().c_str());
             OSReport("Build date:       %s\n", meta.getBuildTimestamp().c_str());
-            OSReport("Storage Id:       %s\n", meta.getStorageId().c_str());
+            if (!meta.getStorageId().empty()) {
+                OSReport("Storage Id:       %s\n", meta.getStorageId().c_str());
+            }
             OSReport("Active:           %s\n", plugin.isLinkedAndLoaded() ? "Yes" : "No");
             OSReport("API:              %s\n", meta.getWUPSVersion().toString().c_str());
 
@@ -594,56 +596,58 @@ namespace ShellCommands {
             const auto otherSize = memoryFootprint - pluginSize - textSize - dataSize;
             OSReport("\t- Other: ~%s\n", BytesToHumanReadable(otherSize).c_str());
             OSReport("\n");
-            const auto &sectionInfoList = plugin.getPluginLinkInformation().getSectionInfoList();
-            OSReport("Sections:         %d\n", sectionInfoList.size());
-            for (const auto &sectionInfo : sectionInfoList) {
-                OSReport("\t- 0x%08X - 0x%08X %-15s %-11s\n", sectionInfo.second.getAddress(), sectionInfo.second.getAddress() + sectionInfo.second.getSize(), sectionInfo.first.c_str(), BytesToHumanReadable(sectionInfo.second.getSize()).c_str());
-            }
-            OSReport("\n");
-
-            const auto &hookList = plugin.getPluginLinkInformation().getHookDataList();
-            OSReport("WUPS Hooks:       %d\n", hookList.size());
-            for (const auto &hook : hookList) {
-                OSReport("\t- %p - %s\n", hook.getFunctionPointer(), hookNameToString(hook.getType()).c_str());
-            }
-            OSReport("\n");
-            const auto &buttonCombos = plugin.GetButtonComboData();
-            OSReport("Button combos: %d\n", buttonCombos.size());
-            for (const auto &combo : buttonCombos) {
-                OSReport("\t- \"%s\" \n", combo.label.c_str());
-                OSReport("\t\tStatus:          %s\n", toString(combo.status).c_str());
-                OSReport("\t\tCallback:        %p (%s)\n", combo.callbackOptions.callback, combo.callbackOptions.callback != nullptr ? getModuleAndSymbolName(reinterpret_cast<uint32_t>(combo.callbackOptions.callback)).c_str() : "");
-                OSReport("\t\tContext:         %p\n", combo.callbackOptions.context);
-                OSReport("\t\tType:            %s\n", toString(combo.buttonComboOptions.type).c_str());
-                if (isHoldCombo(combo.buttonComboOptions.type)) {
-                    OSReport("\t\tHold duration:   %d\n", combo.buttonComboOptions.optionalHoldForXMs);
+            if (plugin.isLinkedAndLoaded()) {
+                const auto &sectionInfoList = plugin.getPluginLinkInformation().getSectionInfoList();
+                OSReport("Sections:         %d\n", sectionInfoList.size());
+                for (const auto &sectionInfo : sectionInfoList) {
+                    OSReport("\t- 0x%08X - 0x%08X %-15s %-11s\n", sectionInfo.second.getAddress(), sectionInfo.second.getAddress() + sectionInfo.second.getSize(), sectionInfo.first.c_str(), BytesToHumanReadable(sectionInfo.second.getSize()).c_str());
                 }
-                OSReport("\t\tCombo:           %s\n", getComboAsString(combo.buttonComboOptions.basicCombo.combo).c_str());
-                OSReport("\t\tController Mask: %s\n", getMaskAsString(combo.buttonComboOptions.basicCombo.controllerMask).c_str());
-            }
-            OSReport("\n");
-            const auto &functionPatches = plugin.getPluginLinkInformation().getFunctionDataList();
-            OSReport("Function patches: %d\n", functionPatches.size());
-            for (const auto &function : functionPatches) {
-                if (function.getPhysicalAddress() != nullptr) {
-                    OSReport("\t- Hook: %p -             PA: %p VA: %p\n", function.getReplaceAddress(), function.getPhysicalAddress(), function.getVirtualAddress());
+                OSReport("\n");
+
+                const auto &hookList = plugin.getPluginLinkInformation().getHookDataList();
+                OSReport("WUPS Hooks:       %d\n", hookList.size());
+                for (const auto &hook : hookList) {
+                    OSReport("\t- %p - %s\n", hook.getFunctionPointer(), hookNameToString(hook.getType()).c_str());
+                }
+                OSReport("\n");
+                const auto &buttonCombos = plugin.GetButtonComboData();
+                OSReport("Button combos: %d\n", buttonCombos.size());
+                for (const auto &combo : buttonCombos) {
+                    OSReport("\t- \"%s\" \n", combo.label.c_str());
+                    OSReport("\t\tStatus:          %s\n", toString(combo.status).c_str());
+                    OSReport("\t\tCallback:        %p (%s)\n", combo.callbackOptions.callback, combo.callbackOptions.callback != nullptr ? getModuleAndSymbolName(reinterpret_cast<uint32_t>(combo.callbackOptions.callback)).c_str() : "");
+                    OSReport("\t\tContext:         %p\n", combo.callbackOptions.context);
+                    OSReport("\t\tType:            %s\n", toString(combo.buttonComboOptions.type).c_str());
+                    if (isHoldCombo(combo.buttonComboOptions.type)) {
+                        OSReport("\t\tHold duration:   %d\n", combo.buttonComboOptions.optionalHoldForXMs);
+                    }
+                    OSReport("\t\tCombo:           %s\n", getComboAsString(combo.buttonComboOptions.basicCombo.combo).c_str());
+                    OSReport("\t\tController Mask: %s\n", getMaskAsString(combo.buttonComboOptions.basicCombo.controllerMask).c_str());
+                }
+                OSReport("\n");
+                const auto &functionPatches = plugin.getPluginLinkInformation().getFunctionDataList();
+                OSReport("Function patches: %d\n", functionPatches.size());
+                for (const auto &function : functionPatches) {
+                    if (function.getPhysicalAddress() != nullptr) {
+                        OSReport("\t- Hook: %p -             PA: %p VA: %p\n", function.getReplaceAddress(), function.getPhysicalAddress(), function.getVirtualAddress());
+                    } else {
+                        OSReport("\t- Hook: %p - %-9s - %s\n", function.getReplaceAddress(), toString(function.getLibrary()).c_str(), function.getName().c_str());
+                    }
+                }
+
+                OSReport("\n");
+                OSReport("Heap usage:\n");
+                if (const auto tracking = plugin.getTrackingMemoryAllocator(); tracking != nullptr) {
+                    if (const auto stats = tracking->GetHeapMemoryUsageSnapshot(); stats) {
+                        OSReport("\t- Currently allocated: %s\n", BytesToHumanReadable(stats->currentAllocated).c_str());
+                        OSReport("\t- Peak allocated:      %s\n", BytesToHumanReadable(stats->peakAllocated).c_str());
+                        OSReport("\t- Current allocations: %d\n", stats->allocationMap.size());
+                        OSReport("\t- Total allocations:   %d\n", stats->allocCount);
+                        OSReport("\t- Total frees:         %d\n", stats->freeCount);
+                    }
                 } else {
-                    OSReport("\t- Hook: %p - %-9s - %s\n", function.getReplaceAddress(), toString(function.getLibrary()).c_str(), function.getName().c_str());
+                    OSReport("\t Not tracked.\n");
                 }
-            }
-
-            OSReport("\n");
-            OSReport("Heap usage:\n");
-            if (const auto tracking = plugin.getTrackingMemoryAllocator(); tracking != nullptr) {
-                if (const auto stats = tracking->GetHeapMemoryUsageSnapshot(); stats) {
-                    OSReport("\t- Currently allocated: %s\n", BytesToHumanReadable(stats->currentAllocated).c_str());
-                    OSReport("\t- Peak allocated:      %s\n", BytesToHumanReadable(stats->peakAllocated).c_str());
-                    OSReport("\t- Current allocations: %d\n", stats->allocationMap.size());
-                    OSReport("\t- Total allocations:   %d\n", stats->allocCount);
-                    OSReport("\t- Total frees:         %d\n", stats->freeCount);
-                }
-            } else {
-                OSReport("\t Not tracked.\n");
             }
 
             OSReport("\n=================\n");

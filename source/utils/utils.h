@@ -171,4 +171,4 @@ std::string getModuleAndSymbolName(uint32_t addr);
 
 void PrintCapturedStackTrace(std::span<const uint32_t> trace);
 
-std::string hookNameToString(wups_loader_hook_type_t type);
+const char *hookNameToString(wups_loader_hook_type_t type);

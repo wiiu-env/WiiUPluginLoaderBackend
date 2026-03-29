@@ -607,7 +607,7 @@ namespace ShellCommands {
                 const auto &hookList = plugin.getPluginLinkInformation().getHookDataList();
                 OSReport("WUPS Hooks:       %d\n", hookList.size());
                 for (const auto &hook : hookList) {
-                    OSReport("\t- %p - %s\n", hook.getFunctionPointer(), hookNameToString(hook.getType()).c_str());
+                    OSReport("\t- %p - %s\n", hook.getFunctionPointer(), hookNameToString(hook.getType()));
                 }
                 OSReport("\n");
                 const auto &buttonCombos = plugin.GetButtonComboData();

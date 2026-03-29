@@ -285,7 +285,7 @@ void PrintCapturedStackTrace(const std::span<const uint32_t> trace) {
     DEBUG_FUNCTION_LINE_INFO("└────────────────────────────────────────────────────────────┘");
 }
 
-std::string hookNameToString(const wups_loader_hook_type_t type) {
+const char *hookNameToString(const wups_loader_hook_type_t type) {
     switch (type) {
         case WUPS_LOADER_HOOK_INIT_WUT_MALLOC:
             return "WUPS_LOADER_HOOK_INIT_WUT_MALLOC";

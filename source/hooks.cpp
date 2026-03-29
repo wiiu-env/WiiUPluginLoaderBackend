@@ -22,7 +22,7 @@ void CallHook(const std::vector<PluginContainer> &plugins, const wups_loader_hoo
 }
 
 void CallHook(const std::vector<PluginContainer> &plugins, const wups_loader_hook_type_t hook_type, const std::function<bool(const PluginContainer &)> &pred) {
-    DEBUG_FUNCTION_LINE_VERBOSE("Calling hook of type %s [%d]", hookNameToString(hook.getType()).c_str(), hook_type);
+    DEBUG_FUNCTION_LINE_VERBOSE("Calling hook of type %s [%d]", hookNameToString(hook_type), hook_type);
     for (const auto &plugin : plugins) {
         if (pred(plugin)) {
             CallHook(plugin, hook_type);
@@ -36,7 +36,7 @@ void CallHook(const PluginContainer &plugin, const wups_loader_hook_type_t hook_
     }
     for (const auto &hook : plugin.getPluginLinkInformation().getHookDataList()) {
         if (hook.getType() == hook_type) {
-            DEBUG_FUNCTION_LINE_VERBOSE("Calling hook of type %s for plugin %s [%d]", hookNameToString(hook.getType()).c_str(), plugin.getMetaInformation().getName().c_str(), hook_type);
+            DEBUG_FUNCTION_LINE_VERBOSE("Calling hook of type %s for plugin %s [%d]", hookNameToString(hook.getType()), plugin.getMetaInformation().getName().c_str(), hook_type);
             void *func_ptr = hook.getFunctionPointer();
             if (func_ptr != nullptr) {
                 switch (hook_type) {
@@ -141,7 +141,7 @@ void CallHook(const PluginContainer &plugin, const wups_loader_hook_type_t hook_
                     }
                     default: {
                         DEBUG_FUNCTION_LINE_ERR("######################################");
-                        DEBUG_FUNCTION_LINE_ERR("Hook is not implemented %s [%d]", hookNameToString(hook_type).c_str(), hook_type);
+                        DEBUG_FUNCTION_LINE_ERR("Hook is not implemented %s [%d]", hookNameToString(hook_type), hook_type);
                         DEBUG_FUNCTION_LINE_ERR("######################################");
                     }
                 }

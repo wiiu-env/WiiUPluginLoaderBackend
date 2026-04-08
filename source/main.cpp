@@ -17,6 +17,7 @@
 #include "utils/WUPSBackendSettings.h"
 #include "utils/input/VPADInput.h"
 #include "utils/logger.h"
+#include "utils/reent.h"
 #include "utils/utils.h"
 
 #include <buttoncombo/api.h>
@@ -164,7 +165,6 @@ WUMS_APPLICATION_ENDS() {
     deinitLogging();
 }
 
-void CheckCleanupCallbackUsage(const std::vector<PluginContainer> &plugins);
 void CleanupPlugins(std::vector<PluginContainer> &pluginsToDeinit);
 
 
@@ -189,6 +189,8 @@ WUMS_APPLICATION_STARTS() {
     gAllocatedAddresses.clear();
 
     initLogging();
+
+    ClearDanglingReentPtr();
 
     std::lock_guard lock(gLoadedDataMutex);
 
@@ -332,6 +334,7 @@ WUMS_APPLICATION_STARTS() {
         // PluginManagement::memsetBSS(plugins);
 
         const auto &needsInitsCheck = [](const PluginContainer &container) { return !container.isInitDone(); };
+        CallHook(gLoadedPlugins, WUPS_LOADER_HOOK_INIT_REENT_FUNCTIONS, needsInitsCheck);
         CallHook(gLoadedPlugins, WUPS_LOADER_HOOK_INIT_WUT_MALLOC, needsInitsCheck);
         CallHook(gLoadedPlugins, WUPS_LOADER_HOOK_INIT_WUT_NEWLIB, needsInitsCheck);
         CallHook(gLoadedPlugins, WUPS_LOADER_HOOK_INIT_WUT_STDCPP, needsInitsCheck);
@@ -367,19 +370,20 @@ void CleanupPlugins(std::vector<PluginContainer> &pluginsToDeinit) {
         DEBUG_FUNCTION_LINE_INFO("De-init plugin %s from %s. PluginData: %08X", pluginContainer.getMetaInformation().getName().c_str(), pluginContainer.getMetaInformation().getAuthor().c_str(), pluginContainer.getPluginDataCopy()->getHandle());
     }
 
-    currentThread->reserved[4] = 0;
+    { // legacy reent code
+        currentThread->reserved[4] = 0;
+    }
 
     CallHook(pluginsToDeinit, WUPS_LOADER_HOOK_DEINIT_PLUGIN);
     CallHook(pluginsToDeinit, WUPS_LOADER_HOOK_FINI_WRAPPER);
 
-    CheckCleanupCallbackUsage(pluginsToDeinit);
-
-    if (currentThread->cleanupCallback != saved_cleanupCallback) {
-        DEBUG_FUNCTION_LINE_WARN("WUPS_LOADER_HOOK_DEINIT_PLUGIN overwrote the ThreadCleanupCallback, we need to restore it!\n");
-        OSSetThreadCleanupCallback(OSGetCurrentThread(), saved_cleanupCallback);
+    { // legacy reent code
+        if (currentThread->cleanupCallback != saved_cleanupCallback) {
+            DEBUG_FUNCTION_LINE_WARN("WUPS_LOADER_HOOK_DEINIT_PLUGIN overwrote the ThreadCleanupCallback, we need to restore it!\n");
+            OSSetThreadCleanupCallback(OSGetCurrentThread(), saved_cleanupCallback);
+        }
+        currentThread->reserved[4] = saved_reent;
     }
-
-    currentThread->reserved[4] = saved_reent;
 
     DEBUG_FUNCTION_LINE("Restore function patches of plugins.");
     PluginManagement::RestoreFunctionPatches(pluginsToDeinit);
@@ -391,6 +395,8 @@ void CleanupPlugins(std::vector<PluginContainer> &pluginsToDeinit) {
         }
         plugin.DeinitButtonComboData();
     }
+
+    ClearReentDataForPlugins(pluginsToDeinit);
 
     // Check for leaked memory
     for (auto &plugin : pluginsToDeinit) {
@@ -404,36 +410,6 @@ void CleanupPlugins(std::vector<PluginContainer> &pluginsToDeinit) {
                     }
                 }
             }
-        }
-    }
-}
-void CheckCleanupCallbackUsage(const std::vector<PluginContainer> &plugins) {
-    auto *curThread = OSGetCurrentThread();
-    for (const auto &cur : plugins) {
-        if (!cur.isLinkedAndLoaded()) {
-            continue;
-        }
-
-        const auto textSection = cur.getPluginLinkInformation().getSectionInfo(".text");
-        if (!textSection) {
-            continue;
-        }
-        const uint32_t startAddress = textSection->getAddress();
-        const uint32_t endAddress   = textSection->getAddress() + textSection->getSize();
-        auto *pluginName            = cur.getMetaInformation().getName().c_str();
-        {
-            __OSLockScheduler(curThread);
-            const int state = OSDisableInterrupts();
-            OSThread *t     = *reinterpret_cast<OSThread **>(0x100567F8);
-            while (t) {
-                const auto address = reinterpret_cast<uint32_t>(t->cleanupCallback);
-                if (address != 0 && address >= startAddress && address <= endAddress) {
-                    OSReport("[WARN] PluginBackend: Thread 0x%p is using a function from plugin %s for the threadCleanupCallback\n", t, pluginName);
-                }
-                t = t->activeLink.next;
-            }
-            OSRestoreInterrupts(state);
-            __OSUnlockScheduler(curThread);
         }
     }
 }

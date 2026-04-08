@@ -7,11 +7,13 @@
 #include "utils/StorageUtilsDeprecated.h"
 #include "utils/buttoncombo/ButtonComboUtils.h"
 #include "utils/logger.h"
+#include "utils/reent.h"
 #include "utils/storage/StorageUtils.h"
 #include "utils/utils.h"
 
 #include <wups/button_combo/api.h>
 #include <wups/button_combo_internal.h>
+#include <wups/reent_internal.h>
 #include <wups/storage.h>
 
 #include <functional>
@@ -102,7 +104,8 @@ void CallHook(const PluginContainer &plugin, const wups_loader_hook_type_t hook_
                     }
                     case WUPS_LOADER_HOOK_INIT_CONFIG: {
                         wups_loader_init_config_args_t args{.arg_version = 1, .plugin_identifier = plugin.getHandle()};
-                        auto res = ((WUPSConfigAPIStatus(*)(wups_loader_init_config_args_t))((uint32_t *) func_ptr))(args);
+                        // clang-format off
+                        auto res = ((WUPSConfigAPIStatus (*)(wups_loader_init_config_args_t))((uint32_t *) func_ptr))(args);
                         // clang-format on
                         if (res != WUPSCONFIG_API_RESULT_SUCCESS) {
                             // TODO: More error handling? Notification?
@@ -131,12 +134,30 @@ void CallHook(const PluginContainer &plugin, const wups_loader_hook_type_t hook_
                         args.check_button_combo_available_function_ptr = &ButtonComboUtils::API::CheckComboAvailable;
                         args.detect_button_combo_blocking_function_ptr = &ButtonComboUtils::API::DetectButtonCombo_Blocking;
 
-                        auto res = ((WUPSButtonCombo_Error(*)(wups_loader_init_button_combo_args_t))((uint32_t *) func_ptr))(args);
+                        // clang-format off
+                        auto res = ((WUPSButtonCombo_Error (*)(wups_loader_init_button_combo_args_t))((uint32_t *) func_ptr))(args);
                         // clang-format on
                         if (res != WUPS_BUTTON_COMBO_ERROR_SUCCESS) {
                             // TODO: More error handling? Notification?
                             DEBUG_FUNCTION_LINE_ERR("WUPS_LOADER_HOOK_INIT_BUTTON_COMBO failed for plugin %s: %s", plugin.getMetaInformation().getName().c_str(), WUPSButtonComboAPI::GetStatusStr(res));
                         }
+                        break;
+                    }
+                    case WUPS_LOADER_HOOK_INIT_REENT_FUNCTIONS: {
+                        if (plugin.getMetaInformation().getWUPSVersion() <= WUPSVersion(0, 9, 0)) {
+                            break;
+                        }
+                        wups_loader_init_reent_args_t_ args;
+                        args.version               = WUPS_REENT_CUR_API_VERSION;
+                        args.restore_head_ptr      = &wups_backend_restore_head;
+                        args.get_context_ptr       = &wups_backend_get_context;
+                        args.set_sentinel_ptr      = &wups_backend_set_sentinel;
+                        args.add_reent_context_ptr = &wups_backend_register_context;
+
+                        // clang-format off
+                        ((void (*)(wups_loader_init_reent_args_t_))((uint32_t *) func_ptr))(args);
+                        // clang-format on
+
                         break;
                     }
                     default: {

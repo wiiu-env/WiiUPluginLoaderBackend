@@ -8,6 +8,7 @@
 #include "plugin/SectionInfo.h"
 #include "utils/config/ConfigUtils.h"
 #include "utils/logger.h"
+#include "utils/reent.h"
 
 #include <coreinit/cache.h>
 #include <coreinit/core.h>
@@ -276,6 +277,15 @@ DECL_FUNCTION(uint32_t, KiGetAppSymbolName, uint32_t addr, char *buffer, int32_t
 
 #pragma GCC pop_options
 
+
+DECL_FUNCTION(uint32_t, SomeExitHook) {
+    // Thats the last thing called in __PPCExit
+    const auto res = real_SomeExitHook();
+
+    MarkReentNodesForDeletion();
+    return res;
+}
+
 function_replacement_data_t method_hooks_static[] __attribute__((section(".data"))) = {
         REPLACE_FUNCTION(GX2SwapScanBuffers, LIBRARY_GX2, GX2SwapScanBuffers),
         REPLACE_FUNCTION(GX2SetTVBuffer, LIBRARY_GX2, GX2SetTVBuffer),
@@ -287,6 +297,7 @@ function_replacement_data_t method_hooks_static[] __attribute__((section(".data"
         REPLACE_FUNCTION(WPADRead, LIBRARY_PADSCORE, WPADRead),
         REPLACE_FUNCTION_VIA_ADDRESS(SC17_FindClosestSymbol, 0xfff10218, 0xfff10218),
         REPLACE_FUNCTION_VIA_ADDRESS(KiGetAppSymbolName, 0xfff0e3a0, 0xfff0e3a0),
+        REPLACE_FUNCTION_VIA_ADDRESS(SomeExitHook, 0x3201C400 + 0x40b4c, 0x101C400 + 0x40b4c),
 };
 
 uint32_t method_hooks_static_size __attribute__((section(".data"))) = sizeof(method_hooks_static) / sizeof(function_replacement_data_t);

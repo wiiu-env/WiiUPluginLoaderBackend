@@ -339,6 +339,8 @@ const char *hookNameToString(const wups_loader_hook_type_t type) {
             return "WUPS_LOADER_HOOK_INIT_BUTTON_COMBO";
         case WUPS_LOADER_HOOK_INIT_WUT_THREAD:
             return "WUPS_LOADER_HOOK_INIT_WUT_THREAD";
+        case WUPS_LOADER_HOOK_INIT_REENT_FUNCTIONS:
+            return "WUPS_LOADER_HOOK_INIT_REENT_FUNCTIONS";
     }
     return "<UNKNOWN>";
 }

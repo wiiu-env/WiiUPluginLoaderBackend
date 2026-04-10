@@ -190,6 +190,7 @@ WUMS_APPLICATION_STARTS() {
 
     initLogging();
 
+    // Only call this EXACTLY once per application cycle
     ClearDanglingReentPtr();
 
     std::lock_guard lock(gLoadedDataMutex);

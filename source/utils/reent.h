@@ -14,6 +14,4 @@ bool wups_backend_register_context(const void *pluginId, void *reentPtr, void (*
 
 void ClearReentDataForPlugins(const std::vector<PluginContainer> &plugins);
 
-void MarkReentNodesForDeletion();
-
 void ClearDanglingReentPtr();

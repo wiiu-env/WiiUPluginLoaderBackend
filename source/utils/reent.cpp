@@ -9,6 +9,7 @@
 #include <coreinit/scheduler.h>
 #include <coreinit/thread.h>
 #include <forward_list>
+#include <unordered_set>
 #include <wups/reent_internal.h>
 
 #define __WUPS_CONTEXT_THREAD_SPECIFIC_ID 0
@@ -64,24 +65,65 @@ struct __wups_reent_node {
     OSThreadCleanupCallbackFn savedCleanup;
 };
 
+
 namespace {
-    std::vector<__wups_reent_node *> sGlobalNodesCopy;
+    std::unordered_set<__wups_reent_node *> sGlobalNodesSeen;
     std::vector<__wups_reent_node *> sGlobalNodes;
     std::recursive_mutex sGlobalNodesMutex;
+
+    void removeNodeFromListsLocked(__wups_reent_node *curr) {
+        std::lock_guard lock(sGlobalNodesMutex);
+        if (const auto it = std::ranges::find(sGlobalNodes, curr); it != sGlobalNodes.end()) {
+            *it = sGlobalNodes.back();
+            sGlobalNodes.pop_back();
+        }
+        sGlobalNodesSeen.erase(curr);
+    }
 } // namespace
 
-void MarkReentNodesForDeletion() {
-    sGlobalNodesCopy = std::move(sGlobalNodes);
-}
 
 void ClearDanglingReentPtr() {
-    for (auto nodeToFree : sGlobalNodesCopy) {
+    std::lock_guard lock(sGlobalNodesMutex);
+
+    DEBUG_FUNCTION_LINE_ERR("Before clean up having %d entries", sGlobalNodes.size());
+
+    // This function is expected to be called exactly once at the start of each new application cycle.
+    // It acts as a garbage collector for nodes left behind by the previous application.
+    // Leftover nodes typically occur when threads are forcefully killed before they can execute
+    // their cleanup callbacks, or if a thread's cleanup function was wrongly overridden.
+    //
+    // Mechanism: Since threads do not survive across application boundaries, any node we
+    // observe across multiple cycles is guaranteed to be a dangling pointer from a dead thread.
+    std::erase_if(sGlobalNodes, [](__wups_reent_node *ptr) {
+        if (ptr == nullptr) {
+            return true;
+        }
+
+        // Try to register the pointer in our historical "seen" tracker.
+        auto [iterator, isNewValue] = sGlobalNodesSeen.insert(ptr);
+
+        if (isNewValue) {
+            // If it was newly inserted, it might be a valid node created during the current
+            // application cycle (e.g., initialized via a hook in an RPL's init function).
+            // We keep it in the vector for now.
+            return false;
+        }
+
+        // Otherwise, we have already seen this address in a previous cycle.
+        // This means the node belongs to a dead thread from an older application.
+        // It is now safe to execute its payload cleanup and free the memory.
+        auto *nodeToFree = *iterator;
         if (nodeToFree->cleanupFn) {
             nodeToFree->cleanupFn(nodeToFree->reentPtr);
         }
         free(nodeToFree);
-    }
-    sGlobalNodesCopy.clear();
+
+        // Make to remove it from the "seen" list as well.
+        sGlobalNodesSeen.erase(iterator);
+        return true;
+    });
+
+    DEBUG_FUNCTION_LINE_ERR("After clean up having %d entries", sGlobalNodes.size());
 }
 
 static void __wups_thread_cleanup(OSThread *thread, void *stack) {
@@ -104,10 +146,7 @@ static void __wups_thread_cleanup(OSThread *thread, void *stack) {
             curr->cleanupFn(curr->reentPtr);
         }
 
-        {
-            std::lock_guard lock(sGlobalNodesMutex);
-            std::erase(sGlobalNodes, curr);
-        }
+        removeNodeFromListsLocked(curr);
 
         free(curr);
         curr = next;
@@ -299,11 +338,10 @@ void ClearReentDataForPlugins(const std::vector<PluginContainer> &plugins) {
             if (nodeToFree->cleanupFn) {
                 nodeToFree->cleanupFn(nodeToFree->reentPtr);
             }
+
+            removeNodeFromListsLocked(nodeToFree);
             free(nodeToFree);
-            {
-                std::lock_guard lock(sGlobalNodesMutex);
-                std::erase(sGlobalNodes, nodeToFree);
-            }
+
             nodeToFree = nextNode;
         }
         wups_backend_restore_head(oldHead);

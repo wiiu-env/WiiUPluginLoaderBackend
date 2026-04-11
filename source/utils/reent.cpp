@@ -65,13 +65,12 @@ struct __wups_reent_node {
     OSThreadCleanupCallbackFn savedCleanup;
 };
 
-
 namespace {
     std::unordered_set<__wups_reent_node *> sGlobalNodesSeen;
     std::vector<__wups_reent_node *> sGlobalNodes;
     std::recursive_mutex sGlobalNodesMutex;
 
-    void removeNodeFromListsLocked(__wups_reent_node *curr) {
+    void removeNodeFromListsSafe(__wups_reent_node *curr) {
         std::lock_guard lock(sGlobalNodesMutex);
         if (const auto it = std::ranges::find(sGlobalNodes, curr); it != sGlobalNodes.end()) {
             *it = sGlobalNodes.back();
@@ -81,10 +80,7 @@ namespace {
     }
 } // namespace
 
-
 void ClearDanglingReentPtr() {
-    std::lock_guard lock(sGlobalNodesMutex);
-
     // This function is expected to be called exactly once at the start of each new application cycle.
     // It acts as a garbage collector for nodes left behind by the previous application.
     // Leftover nodes typically occur when threads are forcefully killed before they can execute
@@ -92,36 +88,70 @@ void ClearDanglingReentPtr() {
     //
     // Mechanism: Since threads do not survive across application boundaries, any node we
     // observe across multiple cycles is guaranteed to be a dangling pointer from a dead thread.
-    std::erase_if(sGlobalNodes, [](__wups_reent_node *ptr) {
-        if (ptr == nullptr) {
-            return true;
+    std::vector<__wups_reent_node *> snapshot;
+
+    // Snapshot Phase
+    //
+    // We instantly move the global state to a local variable.
+    // This protects us from iterator invalidation and allocator hook re-entrancy.
+    // If a plugin registers a new context while we are iterating, it will safely
+    // push to the newly emptied global vector without interrupting us.
+    {
+        std::lock_guard lock(sGlobalNodesMutex);
+        snapshot = std::move(sGlobalNodes);
+        sGlobalNodes.clear();
+    }
+
+    std::vector<__wups_reent_node *> nodesToFree;
+    std::vector<__wups_reent_node *> survivingNodes;
+
+    // Iterate over our isolated snapshot
+    for (auto *ptr : snapshot) {
+        if (!ptr) continue;
+
+        bool isDangling = false;
+
+        {
+            std::lock_guard lock(sGlobalNodesMutex);
+
+            if (auto it = sGlobalNodesSeen.find(ptr); it != sGlobalNodesSeen.end()) {
+                // We have already seen this address in a previous cycle.
+                // This means the node belongs to a dead thread from an older application.
+                isDangling = true;
+                sGlobalNodesSeen.erase(it);
+            } else {
+                // If it wasn't found, it might be a valid node created during the current
+                // application cycle (e.g., initialized via a hook in an RPL's init function).
+                // We add it to the seen list to check against in the NEXT cycle.
+                sGlobalNodesSeen.insert(ptr);
+            }
         }
 
-        // Try to register the pointer in our historical "seen" tracker.
-        auto [iterator, isNewValue] = sGlobalNodesSeen.insert(ptr);
-
-        if (isNewValue) {
-            // If it was newly inserted, it might be a valid node created during the current
-            // application cycle (e.g., initialized via a hook in an RPL's init function).
-            // We keep it in the vector for now.
-            return false;
+        if (isDangling) {
+            nodesToFree.push_back(ptr);
+        } else {
+            survivingNodes.push_back(ptr);
         }
+    }
 
-        // Otherwise, we have already seen this address in a previous cycle.
-        // This means the node belongs to a dead thread from an older application.
-        // It is now safe to execute its payload cleanup and free the memory.
-        auto *nodeToFree = *iterator;
+    // Merge the surviving nodes back into the global pool
+    {
+        std::lock_guard lock(sGlobalNodesMutex);
+        // We append instead of overwriting, just in case a hook successfully
+        // registered a brand-new node into the empty global list while we were processing.
+        sGlobalNodes.insert(sGlobalNodes.end(), survivingNodes.begin(), survivingNodes.end());
+    }
+
+    // It is now safe to execute payload cleanups and free the memory.
+    // This adds nodes to the global list so we couldn't do is earlier
+    for (auto *nodeToFree : nodesToFree) {
         if (nodeToFree->cleanupFn) {
             nodeToFree->cleanupFn(nodeToFree->reentPtr);
         }
         free(nodeToFree);
+    }
 
-        // Make to remove it from the "seen" list as well.
-        sGlobalNodesSeen.erase(iterator);
-        return true;
-    });
-
-    DEBUG_FUNCTION_LINE_INFO("Cleaning up %d dangling reent entries", sGlobalNodes.size());
+    DEBUG_FUNCTION_LINE_INFO("Cleaned up %d dangling reent entries.", nodesToFree.size());
 }
 
 static void __wups_thread_cleanup(OSThread *thread, void *stack) {
@@ -144,7 +174,7 @@ static void __wups_thread_cleanup(OSThread *thread, void *stack) {
             curr->cleanupFn(curr->reentPtr);
         }
 
-        removeNodeFromListsLocked(curr);
+        removeNodeFromListsSafe(curr);
 
         free(curr);
         curr = next;
@@ -231,6 +261,7 @@ bool wups_backend_register_context(const void *pluginId, void *reentPtr, void (*
     {
         std::lock_guard lock(sGlobalNodesMutex);
         sGlobalNodes.push_back(newNode);
+        DEBUG_FUNCTION_LINE_ERR("Added node %p. total size %d", newNode, sGlobalNodes.size());
     }
 
     return true;
@@ -337,7 +368,7 @@ void ClearReentDataForPlugins(const std::vector<PluginContainer> &plugins) {
                 nodeToFree->cleanupFn(nodeToFree->reentPtr);
             }
 
-            removeNodeFromListsLocked(nodeToFree);
+            removeNodeFromListsSafe(nodeToFree);
             free(nodeToFree);
 
             nodeToFree = nextNode;

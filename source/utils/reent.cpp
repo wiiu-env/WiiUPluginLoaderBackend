@@ -85,8 +85,6 @@ namespace {
 void ClearDanglingReentPtr() {
     std::lock_guard lock(sGlobalNodesMutex);
 
-    DEBUG_FUNCTION_LINE_ERR("Before clean up having %d entries", sGlobalNodes.size());
-
     // This function is expected to be called exactly once at the start of each new application cycle.
     // It acts as a garbage collector for nodes left behind by the previous application.
     // Leftover nodes typically occur when threads are forcefully killed before they can execute
@@ -123,7 +121,7 @@ void ClearDanglingReentPtr() {
         return true;
     });
 
-    DEBUG_FUNCTION_LINE_ERR("After clean up having %d entries", sGlobalNodes.size());
+    DEBUG_FUNCTION_LINE_INFO("Cleaning up %d dangling reent entries", sGlobalNodes.size());
 }
 
 static void __wups_thread_cleanup(OSThread *thread, void *stack) {

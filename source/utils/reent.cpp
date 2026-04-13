@@ -4,12 +4,12 @@
 #include "plugin/PluginContainer.h"
 #include "plugin/SectionInfo.h"
 
+#include <coreinit/cache.h>
 #include <coreinit/debug.h>
 #include <coreinit/interrupts.h>
 #include <coreinit/scheduler.h>
 #include <coreinit/thread.h>
 #include <forward_list>
-#include <unordered_set>
 #include <wups/reent_internal.h>
 
 #define __WUPS_CONTEXT_THREAD_SPECIFIC_ID 0
@@ -66,7 +66,7 @@ struct __wups_reent_node {
 };
 
 namespace {
-    std::unordered_set<__wups_reent_node *> sGlobalNodesSeen;
+    std::vector<__wups_reent_node *> sGlobalNodesCopy;
     std::vector<__wups_reent_node *> sGlobalNodes;
     std::recursive_mutex sGlobalNodesMutex;
 
@@ -76,82 +76,38 @@ namespace {
             *it = sGlobalNodes.back();
             sGlobalNodes.pop_back();
         }
-        sGlobalNodesSeen.erase(curr);
     }
 } // namespace
 
+void MarkReentNodesForDeletion() {
+    sGlobalNodesCopy = std::move(sGlobalNodes);
+    sGlobalNodes.clear();
+}
+
+void *wups_backend_set_sentinel() {
+    DEBUG_FUNCTION_LINE_VERBOSE("[%p] Set sentinel", OSGetCurrentThread());
+    auto *head = wups_get_thread_specific(__WUPS_CONTEXT_THREAD_SPECIFIC_ID);
+    wups_set_thread_specific(__WUPS_CONTEXT_THREAD_SPECIFIC_ID, WUPS_REENT_ALLOC_SENTINEL);
+    return head;
+}
+
+void wups_backend_restore_head(void *oldHead) {
+    DEBUG_FUNCTION_LINE_VERBOSE("[%p] Set head to %p", OSGetCurrentThread(), oldHead);
+    wups_set_thread_specific(__WUPS_CONTEXT_THREAD_SPECIFIC_ID, oldHead);
+}
+
 void ClearDanglingReentPtr() {
-    // This function is expected to be called exactly once at the start of each new application cycle.
-    // It acts as a garbage collector for nodes left behind by the previous application.
-    // Leftover nodes typically occur when threads are forcefully killed before they can execute
-    // their cleanup callbacks, or if a thread's cleanup function was wrongly overridden.
-    //
-    // Mechanism: Since threads do not survive across application boundaries, any node we
-    // observe across multiple cycles is guaranteed to be a dangling pointer from a dead thread.
-    std::vector<__wups_reent_node *> snapshot;
-
-    // Snapshot Phase
-    //
-    // We instantly move the global state to a local variable.
-    // This protects us from iterator invalidation and allocator hook re-entrancy.
-    // If a plugin registers a new context while we are iterating, it will safely
-    // push to the newly emptied global vector without interrupting us.
-    {
-        std::lock_guard lock(sGlobalNodesMutex);
-        snapshot = std::move(sGlobalNodes);
-        sGlobalNodes.clear();
-    }
-
-    std::vector<__wups_reent_node *> nodesToFree;
-    std::vector<__wups_reent_node *> survivingNodes;
-
-    // Iterate over our isolated snapshot
-    for (auto *ptr : snapshot) {
-        if (!ptr) continue;
-
-        bool isDangling = false;
-
-        {
-            std::lock_guard lock(sGlobalNodesMutex);
-
-            if (auto it = sGlobalNodesSeen.find(ptr); it != sGlobalNodesSeen.end()) {
-                // We have already seen this address in a previous cycle.
-                // This means the node belongs to a dead thread from an older application.
-                isDangling = true;
-                sGlobalNodesSeen.erase(it);
-            } else {
-                // If it wasn't found, it might be a valid node created during the current
-                // application cycle (e.g., initialized via a hook in an RPL's init function).
-                // We add it to the seen list to check against in the NEXT cycle.
-                sGlobalNodesSeen.insert(ptr);
-            }
-        }
-
-        if (isDangling) {
-            nodesToFree.push_back(ptr);
-        } else {
-            survivingNodes.push_back(ptr);
-        }
-    }
-
-    // Merge the surviving nodes back into the global pool
-    {
-        std::lock_guard lock(sGlobalNodesMutex);
-        // We append instead of overwriting, just in case a hook successfully
-        // registered a brand-new node into the empty global list while we were processing.
-        sGlobalNodes.insert(sGlobalNodes.end(), survivingNodes.begin(), survivingNodes.end());
-    }
-
-    // It is now safe to execute payload cleanups and free the memory.
-    // This adds nodes to the global list so we couldn't do is earlier
-    for (auto *nodeToFree : nodesToFree) {
+    auto *oldHead = wups_backend_set_sentinel();
+    for (auto nodeToFree : sGlobalNodesCopy) {
         if (nodeToFree->cleanupFn) {
+            DEBUG_FUNCTION_LINE_VERBOSE("[%p] Call cleanupFn(%p) for node %p (dangling)", OSGetCurrentThread(), nodeToFree->reentPtr, nodeToFree);
             nodeToFree->cleanupFn(nodeToFree->reentPtr);
         }
+        DEBUG_FUNCTION_LINE_VERBOSE("[%p] Free node %p (dangling)", OSGetCurrentThread(), nodeToFree);
         free(nodeToFree);
     }
-
-    DEBUG_FUNCTION_LINE_INFO("Cleaned up %d dangling reent entries.", nodesToFree.size());
+    sGlobalNodesCopy.clear();
+    wups_backend_restore_head(oldHead);
 }
 
 static void __wups_thread_cleanup(OSThread *thread, void *stack) {
@@ -171,11 +127,13 @@ static void __wups_thread_cleanup(OSThread *thread, void *stack) {
         __wups_reent_node *next = curr->next;
 
         if (curr->cleanupFn) {
+            DEBUG_FUNCTION_LINE_VERBOSE("[%p] Call cleanupFn(%p) for node %p", thread, curr->reentPtr, curr);
             curr->cleanupFn(curr->reentPtr);
         }
 
         removeNodeFromListsSafe(curr);
 
+        DEBUG_FUNCTION_LINE_VERBOSE("[%p] Free node %p", thread, curr);
         free(curr);
         curr = next;
     }
@@ -184,6 +142,7 @@ static void __wups_thread_cleanup(OSThread *thread, void *stack) {
 
     // Chain to previous OS callback
     if (savedCleanup) {
+        DEBUG_FUNCTION_LINE_VERBOSE("[%p] Call saved cleanup function %p", thread, savedCleanup);
         savedCleanup(thread, stack);
     }
 }
@@ -223,15 +182,6 @@ void *wups_backend_get_context(const void *pluginId, wups_loader_init_reent_erro
     return nullptr;
 }
 
-void *wups_backend_set_sentinel() {
-    auto *head = wups_get_thread_specific(__WUPS_CONTEXT_THREAD_SPECIFIC_ID);
-    wups_set_thread_specific(__WUPS_CONTEXT_THREAD_SPECIFIC_ID, WUPS_REENT_ALLOC_SENTINEL);
-    return head;
-}
-
-void wups_backend_restore_head(void *oldHead) {
-    wups_set_thread_specific(__WUPS_CONTEXT_THREAD_SPECIFIC_ID, oldHead);
-}
 
 bool wups_backend_register_context(const void *pluginId, void *reentPtr, void (*cleanupFn)(void *), void *oldHeadVoid) {
     auto *oldHead = static_cast<__wups_reent_node *>(oldHeadVoid);
@@ -250,18 +200,22 @@ bool wups_backend_register_context(const void *pluginId, void *reentPtr, void (*
     newNode->savedCleanup = nullptr;
 
     if (oldHead == nullptr || oldHead == WUPS_REENT_ALLOC_SENTINEL || oldHead->magic != WUPS_REENT_NODE_MAGIC || oldHead->version < WUPS_REENT_NODE_VERSION) {
+        DEBUG_FUNCTION_LINE_VERBOSE("[%p] Set OSSetThreadCleanupCallback for node %p", OSGetCurrentThread(), newNode);
         newNode->savedCleanup = OSSetThreadCleanupCallback(OSGetCurrentThread(), &__wups_thread_cleanup);
     } else {
+        DEBUG_FUNCTION_LINE_VERBOSE("[%p] Add to existing cleanup chain for node %p", OSGetCurrentThread(), newNode);
         newNode->savedCleanup = oldHead->savedCleanup;
         oldHead->savedCleanup = nullptr;
     }
+
+    OSMemoryBarrier();
 
     wups_set_thread_specific(__WUPS_CONTEXT_THREAD_SPECIFIC_ID, newNode);
 
     {
         std::lock_guard lock(sGlobalNodesMutex);
         sGlobalNodes.push_back(newNode);
-        DEBUG_FUNCTION_LINE_ERR("Added node %p. total size %d", newNode, sGlobalNodes.size());
+        DEBUG_FUNCTION_LINE_VERBOSE("[%p] Registered reent ptr %p as node %p", OSGetCurrentThread(), reentPtr, newNode);
     }
 
     return true;
@@ -365,10 +319,12 @@ void ClearReentDataForPlugins(const std::vector<PluginContainer> &plugins) {
         while (nodeToFree) {
             __wups_reent_node *nextNode = nodeToFree->next;
             if (nodeToFree->cleanupFn) {
+                DEBUG_FUNCTION_LINE_VERBOSE("[%p] Call cleanupFn(%p) for node %p (cleanup)", OSGetCurrentThread(), nodeToFree->reentPtr, nodeToFree);
                 nodeToFree->cleanupFn(nodeToFree->reentPtr);
             }
 
             removeNodeFromListsSafe(nodeToFree);
+            DEBUG_FUNCTION_LINE_VERBOSE("[%p] Free node %p (cleanup)", OSGetCurrentThread(), nodeToFree);
             free(nodeToFree);
 
             nodeToFree = nextNode;

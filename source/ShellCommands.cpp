@@ -680,10 +680,6 @@ namespace ShellCommands {
                 DEBUG_FUNCTION_LINE_WARN("Failed to create \"aroma plugins details\" alias \"aroma plugins show\": %s", IOPShellModule::GetErrorString(res));
             }
         }
-
-        if (const auto res = sPluginsGroup->RegisterGroup(); res != IOPSHELL_MODULE_ERROR_SUCCESS) {
-            DEBUG_FUNCTION_LINE_WARN("Failed to register \"aroma plugins\" command: %s", IOPShellModule::GetErrorString(res));
-        }
     }
 
     void Init() {

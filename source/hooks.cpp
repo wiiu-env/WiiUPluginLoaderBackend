@@ -149,9 +149,7 @@ void CallHook(const PluginContainer &plugin, const wups_loader_hook_type_t hook_
                         }
                         wups_loader_init_reent_args_t_ args;
                         args.version               = WUPS_REENT_CUR_API_VERSION;
-                        args.restore_head_ptr      = &wups_backend_restore_head;
                         args.get_context_ptr       = &wups_backend_get_context;
-                        args.set_sentinel_ptr      = &wups_backend_set_sentinel;
                         args.add_reent_context_ptr = &wups_backend_register_context;
 
                         // clang-format off

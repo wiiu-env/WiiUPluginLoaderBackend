@@ -13,7 +13,6 @@
 #include <wups/reent_internal.h>
 
 #define __WUPS_CONTEXT_THREAD_SPECIFIC_ID 0
-#define WUPS_REENT_ALLOC_SENTINEL         ((__wups_reent_node *) 0xFFFFFFFF)
 #define WUPS_REENT_NODE_VERSION           1
 #define WUPS_REENT_NODE_MAGIC             0x57555053 // WUPS
 
@@ -84,57 +83,42 @@ void MarkReentNodesForDeletion() {
     sGlobalNodes.clear();
 }
 
-void *wups_backend_set_sentinel() {
-    DEBUG_FUNCTION_LINE_VERBOSE("[%p] Set sentinel", OSGetCurrentThread());
-    auto *head = wups_get_thread_specific(__WUPS_CONTEXT_THREAD_SPECIFIC_ID);
-    wups_set_thread_specific(__WUPS_CONTEXT_THREAD_SPECIFIC_ID, WUPS_REENT_ALLOC_SENTINEL);
-    return head;
-}
-
-void wups_backend_restore_head(void *oldHead) {
-    DEBUG_FUNCTION_LINE_VERBOSE("[%p] Set head to %p", OSGetCurrentThread(), oldHead);
-    wups_set_thread_specific(__WUPS_CONTEXT_THREAD_SPECIFIC_ID, oldHead);
-}
-
 void ClearDanglingReentPtr() {
-    auto *oldHead = wups_backend_set_sentinel();
     for (auto nodeToFree : sGlobalNodesCopy) {
         if (nodeToFree->cleanupFn) {
             DEBUG_FUNCTION_LINE_VERBOSE("[%p] Call cleanupFn(%p) for node %p (dangling)", OSGetCurrentThread(), nodeToFree->reentPtr, nodeToFree);
             nodeToFree->cleanupFn(nodeToFree->reentPtr);
         }
         DEBUG_FUNCTION_LINE_VERBOSE("[%p] Free node %p (dangling)", OSGetCurrentThread(), nodeToFree);
-        free(nodeToFree);
+        MEMFreeToDefaultHeap(nodeToFree);
     }
     sGlobalNodesCopy.clear();
-    wups_backend_restore_head(oldHead);
 }
 
 static void __wups_thread_cleanup(OSThread *thread, void *stack) {
     auto *head = static_cast<__wups_reent_node *>(wups_get_thread_specific(__WUPS_CONTEXT_THREAD_SPECIFIC_ID));
 
-    if (!head || head == WUPS_REENT_ALLOC_SENTINEL || head->magic != WUPS_REENT_NODE_MAGIC) {
+    if (!head || head->magic != WUPS_REENT_NODE_MAGIC) {
         return;
     }
 
     OSThreadCleanupCallbackFn savedCleanup = head->savedCleanup;
 
-    // Set to effective global during free to prevent malloc re-entrancy loops
-    wups_set_thread_specific(__WUPS_CONTEXT_THREAD_SPECIFIC_ID, WUPS_REENT_ALLOC_SENTINEL);
-
     auto *curr = head;
     while (curr) {
         __wups_reent_node *next = curr->next;
+        if (curr->magic == WUPS_REENT_NODE_MAGIC && curr->version >= 1) {
+            if (curr->cleanupFn) {
+                DEBUG_FUNCTION_LINE_VERBOSE("[%p] Call cleanupFn(%p) for node %p", thread, curr->reentPtr, curr);
+                curr->cleanupFn(curr->reentPtr);
+            }
 
-        if (curr->cleanupFn) {
-            DEBUG_FUNCTION_LINE_VERBOSE("[%p] Call cleanupFn(%p) for node %p", thread, curr->reentPtr, curr);
-            curr->cleanupFn(curr->reentPtr);
+            removeNodeFromListsSafe(curr);
+
+            DEBUG_FUNCTION_LINE_VERBOSE("[%p] Free node %p", thread, curr);
+            MEMFreeToDefaultHeap(curr);
         }
 
-        removeNodeFromListsSafe(curr);
-
-        DEBUG_FUNCTION_LINE_VERBOSE("[%p] Free node %p", thread, curr);
-        free(curr);
         curr = next;
     }
 
@@ -147,46 +131,41 @@ static void __wups_thread_cleanup(OSThread *thread, void *stack) {
     }
 }
 
-void *wups_backend_get_context(const void *pluginId, wups_loader_init_reent_errors_t_ *outError) {
-    if (!outError) {
-        OSFatal("Called wups_backend_get_context with error nullptr");
-        return nullptr;
+bool wups_backend_get_context(const void *pluginId, void **outPtr) {
+    if (!outPtr) {
+        return false;
     }
+
+    *outPtr = nullptr;
 
     if (!OSGetCurrentThread()) {
-        *outError = WUPSReent_ERROR_NO_THREAD;
-        return nullptr;
+        return false;
     }
 
-    auto *head = static_cast<__wups_reent_node *>(wups_get_thread_specific(__WUPS_CONTEXT_THREAD_SPECIFIC_ID));
-
-    if (head == WUPS_REENT_ALLOC_SENTINEL) {
-        *outError = WUPSReent_ERROR_GLOBAL_REENT_REQUESTED;
-        return nullptr;
-    }
+    const auto *head = static_cast<__wups_reent_node *>(wups_get_thread_specific(__WUPS_CONTEXT_THREAD_SPECIFIC_ID));
     if (head && head->magic != WUPS_REENT_NODE_MAGIC) {
-        *outError = WUPSReent_ERROR_GLOBAL_REENT_REQUESTED;
-        return nullptr;
+        return false;
     }
 
     const __wups_reent_node *curr = head;
     while (curr) {
         if (curr->version >= 1 && curr->pluginId == pluginId) {
-            return curr->reentPtr;
+            *outPtr = curr->reentPtr;
+            break;
         }
         curr = curr->next;
     }
 
-    *outError = WUPSReent_ERROR_NONE;
-
-    return nullptr;
+    return true;
 }
 
+bool wups_backend_register_context(const void *pluginId, void *reentPtr, void (*cleanupFn)(void *)) {
+    auto *oldHead = static_cast<__wups_reent_node *>(wups_get_thread_specific(__WUPS_CONTEXT_THREAD_SPECIFIC_ID));
+    if (oldHead && (oldHead->magic != WUPS_REENT_NODE_MAGIC || oldHead->version < WUPS_REENT_NODE_VERSION)) {
+        return false;
+    }
 
-bool wups_backend_register_context(const void *pluginId, void *reentPtr, void (*cleanupFn)(void *), void *oldHeadVoid) {
-    auto *oldHead = static_cast<__wups_reent_node *>(oldHeadVoid);
-
-    auto *newNode = static_cast<__wups_reent_node *>(malloc(sizeof(__wups_reent_node)));
+    auto *newNode = static_cast<__wups_reent_node *>(MEMAllocFromDefaultHeap(sizeof(__wups_reent_node)));
     if (!newNode) {
         return false;
     }
@@ -199,7 +178,7 @@ bool wups_backend_register_context(const void *pluginId, void *reentPtr, void (*
     newNode->cleanupFn    = cleanupFn;
     newNode->savedCleanup = nullptr;
 
-    if (oldHead == nullptr || oldHead == WUPS_REENT_ALLOC_SENTINEL || oldHead->magic != WUPS_REENT_NODE_MAGIC || oldHead->version < WUPS_REENT_NODE_VERSION) {
+    if (oldHead == nullptr || oldHead->magic != WUPS_REENT_NODE_MAGIC || oldHead->version < WUPS_REENT_NODE_VERSION) {
         DEBUG_FUNCTION_LINE_VERBOSE("[%p] Set OSSetThreadCleanupCallback for node %p", OSGetCurrentThread(), newNode);
         newNode->savedCleanup = OSSetThreadCleanupCallback(OSGetCurrentThread(), &__wups_thread_cleanup);
     } else {
@@ -207,7 +186,6 @@ bool wups_backend_register_context(const void *pluginId, void *reentPtr, void (*
         newNode->savedCleanup = oldHead->savedCleanup;
         oldHead->savedCleanup = nullptr;
     }
-
     OSMemoryBarrier();
 
     wups_set_thread_specific(__WUPS_CONTEXT_THREAD_SPECIFIC_ID, newNode);
@@ -259,7 +237,7 @@ void ClearReentDataForPlugins(const std::vector<PluginContainer> &plugins) {
                 auto *head = static_cast<__wups_reent_node *>(wups_get_thread_specific_ex(__WUPS_CONTEXT_THREAD_SPECIFIC_ID, t));
 
                 // Safety checks with Sentinel/Magic
-                if (!head || head == WUPS_REENT_ALLOC_SENTINEL || head->magic != WUPS_REENT_NODE_MAGIC) {
+                if (!head || head->magic != WUPS_REENT_NODE_MAGIC) {
                     t = t->activeLink.next;
                     continue;
                 }
@@ -314,7 +292,6 @@ void ClearReentDataForPlugins(const std::vector<PluginContainer> &plugins) {
         }
 
         // Free removed entries
-        auto *oldHead                 = wups_backend_set_sentinel();
         __wups_reent_node *nodeToFree = deferredFreeHead;
         while (nodeToFree) {
             __wups_reent_node *nextNode = nodeToFree->next;
@@ -325,10 +302,9 @@ void ClearReentDataForPlugins(const std::vector<PluginContainer> &plugins) {
 
             removeNodeFromListsSafe(nodeToFree);
             DEBUG_FUNCTION_LINE_VERBOSE("[%p] Free node %p (cleanup)", OSGetCurrentThread(), nodeToFree);
-            free(nodeToFree);
+            MEMFreeToDefaultHeap(nodeToFree);
 
             nodeToFree = nextNode;
         }
-        wups_backend_restore_head(oldHead);
     }
 }

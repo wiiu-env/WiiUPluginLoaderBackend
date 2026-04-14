@@ -232,7 +232,7 @@ void ConfigRenderer::RenderStateMain() const {
 
     // Home Button
     DrawUtils::setFontSize(18);
-    const char *exitHint = mListState->IsMainView() ? "\ue001 Abort" : "\ue044 Exit";
+    const char *exitHint = mListState->IsMainView() ? "\ue044 Exit" : "\ue001 Abort";
     DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(exitHint) / 2, SCREEN_HEIGHT - 10, exitHint, true);
 
     DrawUtils::endDraw();

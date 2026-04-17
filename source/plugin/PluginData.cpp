@@ -47,3 +47,11 @@ size_t PluginData::getMemoryFootprint() const {
 
     return totalSize;
 }
+
+void PluginData::setAllowWithReentBug() {
+    mIsReentBugAllowed = true;
+}
+
+bool PluginData::isReentBugAllowed() const {
+    return mIsReentBugAllowed;
+}

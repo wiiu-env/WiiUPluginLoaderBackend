@@ -15,25 +15,125 @@
 #include "plugin/TrackingPluginHeapMemoryAllocator.h"
 #include "utils/ElfUtils.h"
 #include "utils/StringTools.h"
+#include "utils/WUPSBackendSettings.h"
 #include "utils/logger.h"
 
 #include <wums/defines/relocation_defines.h>
 
 #include <coreinit/cache.h>
 
+#include <cstring>
+#include <ranges>
 #include <vector>
 
-#include <cstdint>
+namespace {
+    bool hasPossiblyReentBug(const PluginMetaInformation &meta) {
+        if (meta.getWUPSVersion() < WUPSVersion(0, 7, 1)) {
+            // get_reent only got implemented with 0.7.1 or higher
+            return false;
+        }
+        if (meta.getWUPSVersion() >= WUPSVersion(0, 9, 1)) {
+            // Any plugin compiled with 0.9.1 is fine!
+            return false;
+        }
+
+        const time_t buildTime = parseBuildDate(meta.getBuildTimestamp().c_str());
+
+        // Threshold: Jan 25 2026 00:00:00
+        tm thresholdTm         = {};
+        thresholdTm.tm_mday    = 25;
+        thresholdTm.tm_mon     = 0; // Jan
+        thresholdTm.tm_year    = 2026 - 1900;
+        thresholdTm.tm_isdst   = -1;
+        const time_t threshold = mktime(&thresholdTm);
+
+        // Date-only comparison
+        return buildTime >= threshold;
+    }
+
+    void displayUseAnywayWarning(const PluginMetaInformation &info) {
+        DEBUG_FUNCTION_LINE_INFO("But the user decided to use it anyway. Show them an info");
+        // Has been explicitly re-enabled by the user.
+        DEBUG_FUNCTION_LINE_WARN("Using plugin \"%s\" is unstable. It may cause crashes: Please recompile with WUPS 0.9.1", info.getName().c_str());
+        const auto errMsg = string_format("Using plugin \"%s\" is unstable and may cause crashes. Consider updating or disabling it.", info.getName().c_str());
+        DisplayInfoNotificationMessage(errMsg, 30.0f);
+    }
+
+    bool HandlePossibleReentBug(const PluginLoadWrapper &pluginDataWrapper, const PluginMetaInformation &metaInfo, bool &reentBugWarningShown) {
+        const auto &brokenReentFilenames = WUPSBackendSettings::GetBrokenReentPluginFilenames();
+        if (pluginDataWrapper.isLoadAndLink()) { // Only check plugins are actually loaded
+            const std::optional<std::string> pluginFilenameOpt = getPluginFilename(pluginDataWrapper.getPluginData()->getSource());
+            if (hasPossiblyReentBug(metaInfo)) {
+                DEBUG_FUNCTION_LINE_INFO("Plugin \"%s\" has been (possibly) compiled with the reent bug. Please recompile with WUPS 0.9.1", metaInfo.getName().c_str());
+
+                bool errorHasBeenShownFile      = pluginFilenameOpt && brokenReentFilenames.contains(*pluginFilenameOpt);
+                bool errorHasBeenShownWiiloaded = pluginDataWrapper.getPluginData()->isReentBugAllowed();
+
+                if (errorHasBeenShownFile || errorHasBeenShownWiiloaded) {
+                    displayUseAnywayWarning(metaInfo);
+                } else {
+                    if (pluginFilenameOpt) { // loaded from sd card
+                        DEBUG_FUNCTION_LINE_INFO("Disable it and show an warning.");
+                        WUPSBackendSettings::AddBrokenReentPluginFilename(*pluginFilenameOpt);
+                        WUPSBackendSettings::AddInactivePluginFilename(*pluginFilenameOpt);
+
+                        if (!reentBugWarningShown) {
+                            DisplayWarnNotificationMessage("Some plugins have been disabled to avoid potential crashes. Update them if possible.", 300.0f);
+                            reentBugWarningShown = true;
+                        }
+                    } else {
+                        constexpr float REENT_BUG_WARN_DURATION = 30.0f;
+                        // wiiloaded
+                        DEBUG_FUNCTION_LINE_INFO("Its wiiloaded -> we disable it.");
+                        DisplayWarnNotificationMessage("Enable it in the config menu if you want to use it anyway", REENT_BUG_WARN_DURATION);
+                        auto errMsg = string_format("Using plugin \"%s\" might causes crashes and has NOT been loaded.", metaInfo.getName().c_str());
+                        DisplayWarnNotificationMessage(errMsg, REENT_BUG_WARN_DURATION);
+                        pluginDataWrapper.getPluginData()->setAllowWithReentBug();
+                    }
+
+                    // We don't want to load it.
+                    return false;
+                }
+            } else if (pluginFilenameOpt) {
+                // If plugin is compatible, remove it from the reent broken list.
+                DEBUG_FUNCTION_LINE_VERBOSE("Plugin \"%s\" has no reent bug, remove it from settings file", metaInfo.getName().c_str());
+                WUPSBackendSettings::RemoveBrokenReentPluginFilename(*pluginFilenameOpt);
+            }
+        }
+        return true;
+    }
+} // namespace
 
 std::vector<PluginContainer>
 PluginManagement::loadPlugins(const std::vector<PluginLoadWrapper> &pluginDataList) {
     std::vector<PluginContainer> plugins;
 
+    WUPSBackendSettings::LoadSettings();
+
+    bool reentBugWarningShown = false;
+
     for (const auto &pluginDataWrapper : pluginDataList) {
         PluginParseErrors error = PLUGIN_PARSE_ERROR_UNKNOWN;
         auto metaInfo           = PluginMetaInformationFactory::loadPlugin(*pluginDataWrapper.getPluginData(), error);
-        if (metaInfo && error == PLUGIN_PARSE_ERROR_NONE) {
-            if (pluginDataWrapper.isLoadAndLink()) {
+
+        // Early exit for failed parsing
+        if (!metaInfo || error != PLUGIN_PARSE_ERROR_NONE) {
+            auto errMsg = string_format("Failed to load plugin: %s", pluginDataWrapper.getPluginData()->getSource().c_str());
+            if (error == PLUGIN_PARSE_ERROR_INCOMPATIBLE_VERSION) {
+                errMsg += ". Incompatible version.";
+            }
+            DEBUG_FUNCTION_LINE_ERR("%s", errMsg.c_str());
+            DisplayErrorNotificationMessage(errMsg, 15.0f);
+            continue;
+        }
+
+        auto addPluginAsStub = [&]() {
+            plugins.emplace_back(std::move(*metaInfo), PluginLinkInformation::CreateStub(), pluginDataWrapper.getPluginData(), std::nullopt);
+        };
+
+        if (pluginDataWrapper.isLoadAndLink()) {
+            const bool pluginShouldBeLoaded = HandlePossibleReentBug(pluginDataWrapper, *metaInfo, reentBugWarningShown);
+            if (pluginShouldBeLoaded) {
                 DEBUG_FUNCTION_LINE_INFO("LOAD (ACTIVE)   %s", metaInfo->getName().c_str());
 
                 auto linkInfo = PluginLinkInformationFactory::load(*pluginDataWrapper.getPluginData());
@@ -45,16 +145,11 @@ PluginManagement::loadPlugins(const std::vector<PluginLoadWrapper> &pluginDataLi
                 }
                 plugins.emplace_back(std::move(*metaInfo), std::move(*linkInfo), pluginDataWrapper.getPluginData(), pluginDataWrapper.getHeapTrackingOptions());
             } else {
-                DEBUG_FUNCTION_LINE_INFO("LOAD (INACTIVE) %s", metaInfo->getName().c_str());
-                plugins.emplace_back(std::move(*metaInfo), PluginLinkInformation::CreateStub(), pluginDataWrapper.getPluginData(), std::nullopt);
+                addPluginAsStub();
             }
         } else {
-            auto errMsg = string_format("Failed to load plugin: %s", pluginDataWrapper.getPluginData()->getSource().c_str());
-            if (error == PLUGIN_PARSE_ERROR_INCOMPATIBLE_VERSION) {
-                errMsg += ". Incompatible version.";
-            }
-            DEBUG_FUNCTION_LINE_ERR("%s", errMsg.c_str());
-            DisplayErrorNotificationMessage(errMsg, 15.0f);
+            DEBUG_FUNCTION_LINE_INFO("LOAD (INACTIVE) %s", metaInfo->getName().c_str());
+            addPluginAsStub();
         }
     }
 
@@ -63,6 +158,7 @@ PluginManagement::loadPlugins(const std::vector<PluginLoadWrapper> &pluginDataLi
         OSFatal("WiiUPluginLoaderBackend: Failed to patch functions");
     }
 
+    WUPSBackendSettings::SaveSettings();
     return plugins;
 }
 
@@ -94,8 +190,7 @@ bool PluginManagement::doRelocation(const std::vector<RelocationData> &relocData
                     DEBUG_FUNCTION_LINE_ERR("Failed to acquire %s", rplName.c_str());
                     return false;
                 }
-                // Keep track RPLs we are using.
-                // They will be released on exit
+                // Keep track RPLs we are using. They will be released on exit
                 usedRPls[rplName] = rplHandle;
             } else {
                 rplHandle = usedRPls[rplName];
@@ -134,8 +229,6 @@ bool PluginManagement::doRelocation(const std::vector<RelocationData> &relocData
 
 bool PluginManagement::doRelocations(const std::vector<PluginContainer> &plugins,
                                      std::map<std::string, OSDynLoad_Module> &usedRPls) {
-
-
     OSDynLoadAllocFn prevDynLoadAlloc = nullptr;
     OSDynLoadFreeFn prevDynLoadFree   = nullptr;
 
@@ -162,7 +255,6 @@ bool PluginManagement::doRelocations(const std::vector<PluginContainer> &plugins
     }
 
     OSDynLoad_SetAllocator(prevDynLoadAlloc, prevDynLoadFree);
-
     return true;
 }
 

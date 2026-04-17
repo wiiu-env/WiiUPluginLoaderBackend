@@ -96,7 +96,7 @@ WUMS_INITIALIZE() {
             DrawUtils::setFontSize(24);
             auto message = "The Safe Mode of the Plugin System has been triggered.";
             DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(message) / 2, SCREEN_HEIGHT / 2 - 48, message, true);
-            message = "Any plugins 3rd party plugins have been disabled!";
+            message = "Any 3rd party plugins have been disabled!";
             DrawUtils::print(SCREEN_WIDTH / 2 + DrawUtils::getTextWidth(message) / 2, SCREEN_HEIGHT / 2 - 24, message, true);
 
             message = "To enable them again, open the plugin config menu (\ue004 + \ue07a + \ue046).";

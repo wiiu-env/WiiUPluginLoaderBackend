@@ -344,3 +344,47 @@ const char *hookNameToString(const wups_loader_hook_type_t type) {
     }
     return "<UNKNOWN>";
 }
+
+std::optional<std::string> getPluginFilename(const std::string &source) {
+    if (source.starts_with(getPluginPath()) && source.ends_with(".wps")) {
+        const std::size_t found = source.find_last_of("/\\");
+        return source.substr(found + 1);
+    }
+    return std::nullopt;
+}
+
+time_t parseBuildDate(const char *s) {
+    // Expected format: "Apr 16 2026" (ignoring any trailing time)
+    if (!s || strlen(s) < 11) {
+        return 0;
+    }
+
+    static const char *months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+    tm t = {};
+
+    // 1. Identify Month (0-2)
+    t.tm_mon = -1;
+    for (int i = 0; i < 12; ++i) {
+        if (strncmp(s, months[i], 3) == 0) {
+            t.tm_mon = i;
+            break;
+        }
+    }
+    if (t.tm_mon == -1) return 0;
+
+    // 2. Parse Day (starts at index 4)
+    t.tm_mday = static_cast<int>(strtol(s + 4, nullptr, 10));
+
+    // 3. Parse Year (starts at index 7)
+    // strtol will stop at the space before the time string automatically
+    t.tm_year = static_cast<int>(strtol(s + 7, nullptr, 10)) - 1900;
+
+    // We only care about the date, so we zero out the time
+    t.tm_hour  = 0;
+    t.tm_min   = 0;
+    t.tm_sec   = 0;
+    t.tm_isdst = -1;
+
+    return mktime(&t);
+}

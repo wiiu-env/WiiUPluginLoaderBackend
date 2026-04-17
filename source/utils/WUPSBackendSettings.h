@@ -21,4 +21,8 @@ namespace WUPSBackendSettings {
     }
 
     const std::set<std::string> &GetInactivePluginFilenames();
+
+    const std::set<std::string> &GetBrokenReentPluginFilenames();
+    void AddBrokenReentPluginFilename(const std::string &filename);
+    void RemoveBrokenReentPluginFilename(const std::string &filename);
 }; // namespace WUPSBackendSettings

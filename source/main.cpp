@@ -330,7 +330,7 @@ WUMS_APPLICATION_STARTS() {
 
         if (!PluginManagement::doRelocations(gLoadedPlugins, gUsedRPLs)) {
             DEBUG_FUNCTION_LINE_ERR("Relocations failed");
-            OSFatal("WiiUPluginLoaderBackend: Relocations failed.\n See crash logs for more information.");
+            OSFatal("WiiUPluginLoaderBackend: Relocations failed.\nSee crash logs for more information.");
         }
         // PluginManagement::memsetBSS(plugins);
 

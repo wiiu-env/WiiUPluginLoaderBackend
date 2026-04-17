@@ -172,3 +172,11 @@ std::string getModuleAndSymbolName(uint32_t addr);
 void PrintCapturedStackTrace(std::span<const uint32_t> trace);
 
 const char *hookNameToString(wups_loader_hook_type_t type);
+
+/**
+* Helper to extract the filename from the source path.
+* Returns nullopt if the source isn't a standard plugin path.
+*/
+std::optional<std::string> getPluginFilename(const std::string &source);
+
+time_t parseBuildDate(const char *s);

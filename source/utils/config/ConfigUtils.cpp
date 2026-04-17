@@ -235,11 +235,9 @@ void ConfigUtils::displayMenu() {
         std::vector<std::string> newInactivePluginsList;
         for (const auto &cur : newActivePluginsList) {
             if (!cur.isLoadAndLink()) {
-                auto &source = cur.getPluginData()->getSource();
-                if (source.starts_with(getPluginPath()) && source.ends_with(".wps")) {
-                    std::size_t found    = source.find_last_of("/\\");
-                    std::string filename = source.substr(found + 1);
-                    newInactivePluginsList.push_back(filename);
+                const auto &source = cur.getPluginData()->getSource();
+                if (const auto filenameOpt = getPluginFilename(source); filenameOpt) {
+                    newInactivePluginsList.push_back(*filenameOpt);
                 }
             }
         }

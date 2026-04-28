@@ -15,7 +15,10 @@
 #include <coreinit/screen.h>
 #include <padscore/kpad.h>
 
+#include <algorithm>
 #include <cstdlib>
+#include <unordered_map>
+#include <vector>
 
 // buffer width
 #define DRC_WIDTH 0x380
@@ -31,6 +34,58 @@ float DrawUtils::mUsedTVScale    = 1.5f;
 static SFT pFont                 = {};
 
 static Color font_col(0xFFFFFFFF);
+
+
+struct CachedGlyph {
+    SFT_GMetrics metrics;
+    std::vector<uint8_t> pixels;
+    uint16_t width;
+    uint16_t height;
+};
+
+static std::unordered_map<uint64_t, CachedGlyph> mGlyphCache;
+
+static const CachedGlyph &getOrCacheGlyph(wchar_t character) {
+    const uint64_t cacheKey = (static_cast<uint64_t>(pFont.xScale) << 32) | static_cast<uint64_t>(character);
+
+    if (const auto it = mGlyphCache.find(cacheKey); it != mGlyphCache.end()) {
+        return it->second;
+    }
+
+    CachedGlyph newGlyph;
+    newGlyph.width                   = 0;
+    newGlyph.height                  = 0;
+    newGlyph.metrics.advanceWidth    = 0;
+    newGlyph.metrics.minHeight       = 0;
+    newGlyph.metrics.leftSideBearing = 0;
+    newGlyph.metrics.yOffset         = 0;
+
+    SFT_Glyph gid;
+    if (sft_lookup(&pFont, character, &gid) >= 0) {
+        if (sft_gmetrics(&pFont, gid, &newGlyph.metrics) >= 0) {
+            uint16_t texWidth  = (newGlyph.metrics.minWidth + 3) & ~3;
+            uint16_t texHeight = newGlyph.metrics.minHeight;
+            if (texWidth == 0) texWidth = 4;
+            if (texHeight == 0) texHeight = 4;
+
+            newGlyph.width  = texWidth;
+            newGlyph.height = texHeight;
+
+            newGlyph.pixels.resize(texWidth * texHeight, 0);
+
+            SFT_Image img = {
+                    .pixels = newGlyph.pixels.data(),
+                    .width  = texWidth,
+                    .height = texHeight,
+            };
+
+            sft_render(&pFont, gid, img);
+        }
+    }
+
+    mGlyphCache[cacheKey] = std::move(newGlyph);
+    return mGlyphCache[cacheKey];
+}
 
 void DrawUtils::initBuffers(void *tvBuffer, const uint32_t tvSize, void *drcBuffer, const uint32_t drcSize) {
     DrawUtils::mTVBuffer  = static_cast<uint8_t *>(tvBuffer);
@@ -132,9 +187,74 @@ void DrawUtils::endDraw() {
     OSScreenFlipBuffersEx(SCREEN_TV);
 }
 
+static void FastMemset32(void *dest, uint32_t value, uint32_t size) {
+    // Handle Leading Alignment
+    if ((reinterpret_cast<uint32_t>(dest) & 31) != 0) {
+        while ((reinterpret_cast<uint32_t>(dest) & 31) != 0 && size >= 4) {
+            *static_cast<uint32_t *>(dest) = value;
+            dest                           = static_cast<uint8_t *>(dest) + 4;
+            size -= 4;
+        }
+    }
+
+    auto *d             = static_cast<uint32_t *>(dest);
+    uint32_t num_blocks = size / 32;
+    uint32_t remainder  = (size % 32) / 4;
+
+    if (value == 0) { // Fast Path if value is 0 (DCZeroRange)
+        for (uint32_t i = 0; i < num_blocks; i++) {
+            __asm__ volatile("dcbz 0, %0"
+                             :
+                             : "r"(d));
+            d += 8;
+        }
+    } else { // Save as floats to cut numer of instructions in half
+        union {
+            double f;
+            uint32_t u[2];
+        } cast;
+        cast.u[0]      = value;
+        cast.u[1]      = value;
+        double f_color = cast.f;
+
+        for (uint32_t i = 0; i < num_blocks; i++) {
+            // Claim/Zero the 32bit cache line
+            __asm__ volatile("dcbz 0, %0"
+                             :
+                             : "r"(d));
+
+            // Overwrite with the actual value using 64-bit FPU stores
+            __asm__ volatile(
+                    "stfd %[col], 0(%[ptr])\n"
+                    "stfd %[col], 8(%[ptr])\n"
+                    "stfd %[col], 16(%[ptr])\n"
+                    "stfd %[col], 24(%[ptr])\n"
+                    :
+                    : [col] "f"(f_color), [ptr] "r"(d)
+                    : "memory");
+            d += 8;
+        }
+    }
+
+    // Handle Trailing Remainder
+    for (uint32_t i = 0; i < remainder; i++) {
+        d[i] = value;
+    }
+}
+
 void DrawUtils::clear(const Color col) {
-    OSScreenClearBufferEx(SCREEN_TV, col.color);
-    OSScreenClearBufferEx(SCREEN_DRC, col.color);
+    const uint32_t drcOffset = mIsBackBuffer ? (mDRCSize / 2) : 0;
+    const uint32_t tvOffset  = mIsBackBuffer ? (mTVSize / 2) : 0;
+    uint32_t val             = col.color;
+    if (val == 0x000000FF) {
+        val = 0;
+    }
+    if (mDRCBuffer) {
+        FastMemset32(mDRCBuffer + drcOffset, val, mDRCSize / 2);
+    }
+    if (mTVBuffer) {
+        FastMemset32(mTVBuffer + tvOffset, val, mTVSize / 2);
+    }
 }
 
 void DrawUtils::drawPixel(const uint32_t x, const uint32_t y, const uint8_t r, const uint8_t g, const uint8_t b, const uint8_t a) {
@@ -142,41 +262,50 @@ void DrawUtils::drawPixel(const uint32_t x, const uint32_t y, const uint8_t r, c
         return;
     }
 
-    const float opacity = a / 255.0f;
-
     // put pixel in the drc buffer
-    uint32_t i = (x + y * DRC_WIDTH) * 4;
-    if (i + 3 < mDRCSize / 2) {
+    uint32_t i              = (x + y * DRC_WIDTH) * 4;
+    const uint32_t drcLimit = mDRCSize / 2;
+    if (i + 3 < drcLimit) {
         if (mIsBackBuffer) {
-            i += mDRCSize / 2;
+            i += drcLimit;
         }
         if (a == 0xFF) {
             mDRCBuffer[i]     = r;
             mDRCBuffer[i + 1] = g;
             mDRCBuffer[i + 2] = b;
         } else {
-            mDRCBuffer[i]     = r * opacity + mDRCBuffer[i] * (1 - opacity);
-            mDRCBuffer[i + 1] = g * opacity + mDRCBuffer[i + 1] * (1 - opacity);
-            mDRCBuffer[i + 2] = b * opacity + mDRCBuffer[i + 2] * (1 - opacity);
+            const uint32_t inv_a = 255 - a;
+            mDRCBuffer[i]        = (r * a + mDRCBuffer[i] * inv_a) >> 8;
+            mDRCBuffer[i + 1]    = (g * a + mDRCBuffer[i + 1] * inv_a) >> 8;
+            mDRCBuffer[i + 2]    = (b * a + mDRCBuffer[i + 2] * inv_a) >> 8;
         }
     }
 
-    // scale and put pixel in the tv buffer
-    for (uint32_t yy = (y * DrawUtils::mUsedTVScale); yy < ((y * DrawUtils::mUsedTVScale) + (uint32_t) DrawUtils::mUsedTVScale); yy++) {
-        for (uint32_t xx = (x * DrawUtils::mUsedTVScale); xx < ((x * DrawUtils::mUsedTVScale) + (uint32_t) DrawUtils::mUsedTVScale); xx++) {
-            uint32_t i = (xx + yy * DrawUtils::mUsedTVWidth) * 4;
-            if (i + 3 < mTVSize / 2) {
-                if (mIsBackBuffer) {
-                    i += mTVSize / 2;
-                }
+    // Corrected scaling for TV to eliminate gaps
+    const auto startX = static_cast<uint32_t>(x * mUsedTVScale);
+    const auto startY = static_cast<uint32_t>(y * mUsedTVScale);
+
+    // Calculate the end boundary by scaling the NEXT logical coordinate
+    const auto endX = static_cast<uint32_t>((x + 1) * mUsedTVScale);
+    const auto endY = static_cast<uint32_t>((y + 1) * mUsedTVScale);
+
+    const uint32_t tvLimit          = mTVSize / 2;
+    const uint32_t backBufferOffset = mIsBackBuffer ? tvLimit : 0;
+
+    for (uint32_t yy = startY; yy < endY; yy++) {
+        uint32_t rowOffset = (yy * DrawUtils::mUsedTVWidth) * 4 + backBufferOffset;
+        for (uint32_t xx = startX; xx < endX; xx++) {
+            uint32_t j = (xx * 4) + rowOffset;
+            if (j + 3 < (mIsBackBuffer ? mTVSize : tvLimit)) {
                 if (a == 0xFF) {
-                    mTVBuffer[i]     = r;
-                    mTVBuffer[i + 1] = g;
-                    mTVBuffer[i + 2] = b;
+                    mTVBuffer[j]     = r;
+                    mTVBuffer[j + 1] = g;
+                    mTVBuffer[j + 2] = b;
                 } else {
-                    mTVBuffer[i]     = r * opacity + mTVBuffer[i] * (1 - opacity);
-                    mTVBuffer[i + 1] = g * opacity + mTVBuffer[i + 1] * (1 - opacity);
-                    mTVBuffer[i + 2] = b * opacity + mTVBuffer[i + 2] * (1 - opacity);
+                    const uint32_t inv_a = 255 - a;
+                    mTVBuffer[j]         = (r * a + mTVBuffer[j] * inv_a) >> 8;
+                    mTVBuffer[j + 1]     = (g * a + mTVBuffer[j + 1] * inv_a) >> 8;
+                    mTVBuffer[j + 2]     = (b * a + mTVBuffer[j + 2] * inv_a) >> 8;
                 }
             }
         }
@@ -184,9 +313,35 @@ void DrawUtils::drawPixel(const uint32_t x, const uint32_t y, const uint8_t r, c
 }
 
 void DrawUtils::drawRectFilled(const uint32_t x, const uint32_t y, const uint32_t w, const uint32_t h, const Color col) {
-    for (uint32_t yy = y; yy < y + h; yy++) {
-        for (uint32_t xx = x; xx < x + w; xx++) {
-            drawPixel(xx, yy, col);
+    if (col.a == 0) return;
+
+    // Use fast path for opaque rectangles
+    if (col.a == 0xFF) {
+        const uint32_t color32 = (col.r << 24) | (col.g << 16) | (col.b << 8) | 0xFF;
+
+        uint32_t drcOffset = mIsBackBuffer ? (mDRCSize / 2) : 0;
+        auto *drc32        = reinterpret_cast<uint32_t *>(mDRCBuffer + drcOffset);
+        for (uint32_t yy = y; yy < y + h; yy++) {
+            std::fill_n(drc32 + x + (yy * DRC_WIDTH), w, color32);
+        }
+
+        uint32_t tvOffset      = mIsBackBuffer ? (mTVSize / 2) : 0;
+        auto *tv32             = reinterpret_cast<uint32_t *>(mTVBuffer + tvOffset);
+        const auto startX      = static_cast<uint32_t>(x * mUsedTVScale);
+        const auto startY      = static_cast<uint32_t>(y * mUsedTVScale);
+        const auto endX        = static_cast<uint32_t>((x + w) * mUsedTVScale);
+        const auto endY        = static_cast<uint32_t>((y + h) * mUsedTVScale);
+        const uint32_t scaledW = endX - startX;
+
+        for (uint32_t yy = startY; yy < endY; yy++) {
+            std::fill_n(tv32 + startX + (yy * mUsedTVWidth), scaledW, color32);
+        }
+    } else {
+        // Fallback to per-pixel for transparency
+        for (uint32_t yy = y; yy < y + h; yy++) {
+            for (uint32_t xx = x; xx < x + w; xx++) {
+                drawPixel(xx, yy, col);
+            }
         }
     }
 }
@@ -300,6 +455,7 @@ void DrawUtils::deinitFont() {
     sft_freefont(pFont.font);
     pFont.font = nullptr;
     pFont      = {};
+    mGlyphCache.clear();
 }
 
 void DrawUtils::setFontSize(uint32_t size) {
@@ -314,39 +470,59 @@ void DrawUtils::setFontColor(const Color col) {
 }
 
 static void draw_freetype_bitmap(const SFT_Image *bmp, const int32_t x, const int32_t y) {
-    int32_t i, j, p, q;
+    int32_t j, q;
 
     int32_t x_max = x + bmp->width;
     int32_t y_max = y + bmp->height;
 
     const auto *src = static_cast<uint8_t *>(bmp->pixels);
 
-    for (i = x, p = 0; i < x_max; i++, p++) {
-        for (j = y, q = 0; j < y_max; j++, q++) {
-            if (i < 0 || j < 0 || i >= SCREEN_WIDTH || j >= SCREEN_HEIGHT) {
+    for (j = y, q = 0; j < y_max; j++, q++) {
+        if (j < 0 || j >= SCREEN_HEIGHT) {
+            continue;
+        }
+
+        for (int32_t i = x, p = 0; i < x_max; i++, p++) {
+            if (i < 0 || i >= SCREEN_WIDTH) {
                 continue;
             }
 
-            const float opacity = src[q * bmp->width + p] / 255.0f;
-            DrawUtils::drawPixel(i, j, font_col.r, font_col.g, font_col.b, font_col.a * opacity);
+            const uint32_t alpha = src[q * bmp->width + p];
+            if (alpha == 0) {
+                continue;
+            }
+
+            DrawUtils::drawPixel(i, j, font_col.r, font_col.g, font_col.b, (font_col.a * alpha) >> 8);
         }
     }
 }
 
 void DrawUtils::print(const uint32_t x, const uint32_t y, const char *string, const bool alignRight) {
-    auto *buffer = new wchar_t[strlen(string) + 1];
+    if (!string || *string == '\0') return;
 
-    size_t num = mbstowcs(buffer, string, strlen(string));
+    const size_t len = strlen(string);
+    wchar_t stackBuffer[256];
+    wchar_t *buffer = stackBuffer;
+
+    if (len >= 256) {
+        buffer = new wchar_t[len + 1];
+    }
+
+    size_t num = mbstowcs(buffer, string, len);
     if (num > 0) {
         buffer[num] = 0;
     } else {
-        wchar_t *tmp = buffer;
-        while ((*tmp++ = *string++))
+        wchar_t *dest   = buffer;
+        const char *src = string;
+        while ((*dest++ = *src++))
             ;
     }
 
     print(x, y, buffer, alignRight);
-    delete[] buffer;
+
+    if (buffer != stackBuffer) {
+        delete[] buffer;
+    }
 }
 
 void DrawUtils::print(const uint32_t x, const uint32_t y, const wchar_t *string, const bool alignRight) {
@@ -357,86 +533,68 @@ void DrawUtils::print(const uint32_t x, const uint32_t y, const wchar_t *string,
         penX -= getTextWidth(string);
     }
 
-    uint16_t textureWidth = 0, textureHeight = 0;
     for (; *string; string++) {
-        SFT_Glyph gid; //  unsigned long gid;
-        if (sft_lookup(&pFont, *string, &gid) >= 0) {
-            SFT_GMetrics mtx;
-            if (sft_gmetrics(&pFont, gid, &mtx) < 0) {
-                DEBUG_FUNCTION_LINE_ERR("Failed to get glyph metrics");
-                return;
-            }
+        const CachedGlyph &glyph = getOrCacheGlyph(*string);
 
-            if (*string == '\n') {
-                penY += mtx.minHeight;
-                penX = x;
-                continue;
-            }
-
-            textureWidth  = (mtx.minWidth + 3) & ~3;
-            textureHeight = mtx.minHeight;
-
-            if (textureWidth == 0) {
-                textureWidth = 4;
-            }
-            if (textureHeight == 0) {
-                textureHeight = 4;
-            }
-
-            SFT_Image img = {
-                    .pixels = nullptr,
-                    .width  = textureWidth,
-                    .height = textureHeight,
-            };
-
-            auto buffer = make_unique_nothrow<uint8_t[]>((uint32_t) (img.width * img.height));
-            if (!buffer) {
-                DEBUG_FUNCTION_LINE_ERR("Failed to allocate memory for glyph");
-                return;
-            }
-            img.pixels = buffer.get();
-            if (sft_render(&pFont, gid, img) < 0) {
-                DEBUG_FUNCTION_LINE_ERR("Failed to render glyph");
-                return;
-            } else {
-                draw_freetype_bitmap(&img, static_cast<int32_t>(penX + mtx.leftSideBearing), penY + mtx.yOffset);
-                penX += static_cast<int32_t>(mtx.advanceWidth);
-            }
+        if (*string == '\n') {
+            penY += glyph.metrics.minHeight;
+            penX = x;
+            continue;
         }
+
+        if (glyph.width > 0 && glyph.height > 0) {
+            SFT_Image img = {
+                    .pixels = (void *) glyph.pixels.data(),
+                    .width  = glyph.width,
+                    .height = glyph.height,
+            };
+            draw_freetype_bitmap(&img, static_cast<int32_t>(penX + glyph.metrics.leftSideBearing), penY + glyph.metrics.yOffset);
+        }
+
+        penX += static_cast<int32_t>(glyph.metrics.advanceWidth);
     }
 }
 
 uint32_t DrawUtils::getTextWidth(const char *string) {
-    auto *buffer = new wchar_t[strlen(string) + 1];
+    if (!string || *string == '\0') return 0;
 
-    if (const size_t num = mbstowcs(buffer, string, strlen(string)); num > 0) {
+    const size_t len = strlen(string);
+
+    // Stack buffer for typical strings
+    wchar_t stackBuffer[256];
+    wchar_t *buffer = stackBuffer;
+
+    // Fall back to heap ONLY if the string is longer than our stack buffer
+    if (len >= 256) {
+        buffer = new wchar_t[len + 1];
+    }
+
+    if (const size_t num = mbstowcs(buffer, string, len); num > 0) {
         buffer[num] = 0;
     } else {
-        wchar_t *tmp = buffer;
-        while ((*tmp++ = *string++))
+        // Fallback: simple copy if mbstowcs fails
+        wchar_t *dest   = buffer;
+        const char *src = string;
+        while ((*dest++ = *src++))
             ;
     }
 
     const uint32_t width = getTextWidth(buffer);
-    delete[] buffer;
+
+    // Clean up only if we actually used the heap
+    if (buffer != stackBuffer) {
+        delete[] buffer;
+    }
 
     return width;
 }
 
 uint32_t DrawUtils::getTextWidth(const wchar_t *string) {
     uint32_t width = 0;
-
     for (; *string; string++) {
-        SFT_Glyph gid; //  unsigned long gid;
-        if (sft_lookup(&pFont, *string, &gid) >= 0) {
-            SFT_GMetrics mtx;
-            if (sft_gmetrics(&pFont, gid, &mtx) < 0) {
-                DEBUG_FUNCTION_LINE_ERR("bad glyph metrics");
-            }
-            width += static_cast<int32_t>(mtx.advanceWidth);
-        }
+        const CachedGlyph &glyph = getOrCacheGlyph(*string);
+        width += static_cast<int32_t>(glyph.metrics.advanceWidth);
     }
-
     return width;
 }
 
@@ -456,6 +614,8 @@ void DrawUtils::RenderScreen(const std::function<void()> &callback) {
     auto drcPitch2  = DCReadReg32(SCREEN_DRC, D1OVL_PITCH_REG);
 
     OSScreenInit();
+    OSScreenEnableEx(SCREEN_TV, 0);
+    OSScreenEnableEx(SCREEN_DRC, 0);
 
     uint32_t screen_buf0_size = OSScreenGetBufferSizeEx(SCREEN_TV);
     uint32_t screen_buf1_size = OSScreenGetBufferSizeEx(SCREEN_DRC);
@@ -487,24 +647,12 @@ void DrawUtils::RenderScreen(const std::function<void()> &callback) {
         }
     }
 
+
+    FastMemset32(screenbuffer0, (COLOR_BACKGROUND).color, screen_buf0_size);
+    FastMemset32(screenbuffer1, (COLOR_BACKGROUND).color, screen_buf1_size);
+
     OSScreenSetBufferEx(SCREEN_TV, screenbuffer0);
     OSScreenSetBufferEx(SCREEN_DRC, screenbuffer1);
-
-    // Clear screens
-    OSScreenClearBufferEx(SCREEN_TV, 0);
-    OSScreenClearBufferEx(SCREEN_DRC, 0);
-
-    // Flip buffers
-    OSScreenFlipBuffersEx(SCREEN_TV);
-    OSScreenFlipBuffersEx(SCREEN_DRC);
-
-    // Clear screens
-    OSScreenClearBufferEx(SCREEN_TV, 0);
-    OSScreenClearBufferEx(SCREEN_DRC, 0);
-
-    // Flip buffers
-    OSScreenFlipBuffersEx(SCREEN_TV);
-    OSScreenFlipBuffersEx(SCREEN_DRC);
 
     OSScreenEnableEx(SCREEN_TV, 1);
     OSScreenEnableEx(SCREEN_DRC, 1);
@@ -514,6 +662,7 @@ void DrawUtils::RenderScreen(const std::function<void()> &callback) {
         DEBUG_FUNCTION_LINE_ERR("Failed to init Font");
         goto error_exit;
     }
+
 
     // disable the home button menu to prevent opening it when exiting
     OSEnableHomeButtonMenu(false);

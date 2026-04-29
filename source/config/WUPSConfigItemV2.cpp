@@ -17,7 +17,7 @@ namespace WUPSConfigAPIBackend {
 
     WUPSConfigItemV2::~WUPSConfigItemV2() {
         if (this->mCallbacks.onDelete == nullptr) {
-            DEBUG_FUNCTION_LINE_WARN("onDelete callback not implemented. [%s]", mDisplayName.c_str());
+            DEBUG_FUNCTION_LINE_INFO("onDelete callback not implemented. [%s]", mDisplayName.c_str());
             return;
         }
         this->mCallbacks.onDelete(mContext);

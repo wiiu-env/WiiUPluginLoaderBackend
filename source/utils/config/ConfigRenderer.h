@@ -2,6 +2,7 @@
 
 #include "ConfigDefines.h"
 #include "ConfigDisplayItem.h"
+#include "InputRepeater.h"
 
 #include <wups/config.h>
 
@@ -80,4 +81,6 @@ private:
     bool mNeedRedraw            = true;
     bool mPluginListDirty       = false;
     bool mLastInputWasOnWiimote = false;
+
+    InputRepeater mNavRepeater;
 };

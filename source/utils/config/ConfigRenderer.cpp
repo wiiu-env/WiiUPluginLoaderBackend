@@ -103,13 +103,10 @@ void ConfigRenderer::ResetNeedsRedraw() {
 void ConfigRenderer::RequestRedraw() {
     mNeedRedraw = true;
 }
-
 ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
-    if (!mListState) return SUB_STATE_ERROR;
-
-    auto &configs               = GetDisplayedConfigList();
-    const auto prevSelectedItem = mCursorPos;
-    auto totalElementSize       = (int32_t) configs.size();
+    if (!mListState) {
+        return SUB_STATE_ERROR;
+    }
 
     // Delegate specific inputs to the State
     bool inputHandled = mListState->HandleInput(*this, input);
@@ -122,16 +119,23 @@ ConfigSubState ConfigRenderer::UpdateStateMain(const Input &input) {
         return SUB_STATE_RUNNING;
     }
 
-    // Handle Navigation (Common to all states)
-    if (input.data.buttons_d & Input::eButtons::BUTTON_DOWN) {
+    const auto prevSelectedItem = mCursorPos;
+    auto &configs               = GetDisplayedConfigList();
+    auto totalElementSize       = (int32_t) configs.size();
+
+    uint32_t navMask = Input::eButtons::BUTTON_UP | Input::eButtons::BUTTON_DOWN |
+                       Input::eButtons::BUTTON_LEFT | Input::eButtons::BUTTON_RIGHT;
+    uint32_t actionButton = mNavRepeater.update(input, navMask);
+
+    if (actionButton & Input::eButtons::BUTTON_DOWN) {
         mCursorPos++;
-    } else if (input.data.buttons_d & Input::eButtons::BUTTON_LEFT) {
+    } else if (actionButton & Input::eButtons::BUTTON_LEFT) {
         mCursorPos -= MAX_BUTTONS_ON_SCREEN - 1;
         if (mCursorPos < 0) mCursorPos = 0;
-    } else if (input.data.buttons_d & Input::eButtons::BUTTON_RIGHT) {
+    } else if (actionButton & Input::eButtons::BUTTON_RIGHT) {
         mCursorPos += MAX_BUTTONS_ON_SCREEN - 1;
         if (mCursorPos >= totalElementSize) mCursorPos = totalElementSize - 1;
-    } else if (input.data.buttons_d & Input::eButtons::BUTTON_UP) {
+    } else if (actionButton & Input::eButtons::BUTTON_UP) {
         mCursorPos--;
     }
 

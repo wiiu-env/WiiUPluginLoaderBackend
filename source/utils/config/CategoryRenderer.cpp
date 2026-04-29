@@ -91,9 +91,12 @@ ConfigSubState CategoryRenderer::UpdateStateMain(const Input &input, const WUPSC
     const int32_t prevSelectedItem = mCursorPos;
 
     if (mIsItemMovementAllowed) {
-        if (input.data.buttons_d & Input::eButtons::BUTTON_DOWN) {
+        uint32_t navMask      = Input::eButtons::BUTTON_UP | Input::eButtons::BUTTON_DOWN;
+        uint32_t actionButton = mNavRepeater.update(input, navMask);
+
+        if (actionButton & Input::eButtons::BUTTON_DOWN) {
             mCursorPos++;
-        } else if (input.data.buttons_d & Input::eButtons::BUTTON_UP) {
+        } else if (actionButton & Input::eButtons::BUTTON_UP) {
             mCursorPos--;
         } else if (input.data.buttons_d & Input::eButtons::BUTTON_A) {
             if (mCursorPos < static_cast<int32_t>(mCat->getCategories().size())) {
@@ -107,6 +110,8 @@ ConfigSubState CategoryRenderer::UpdateStateMain(const Input &input, const WUPSC
                 return SUB_STATE_RUNNING;
             }
         }
+    } else {
+        mNavRepeater.reset();
     }
 
     if (mCursorPos < 0) {

@@ -217,8 +217,8 @@ void ConfigUtils::displayMenu() {
         renderer.ResetNeedsRedraw();
 
         auto diffTime = OSTicksToMicroseconds(OSGetTime() - startTime);
-        if (diffTime < 16000) {
-            OSSleepTicks(OSMicrosecondsToTicks(16000 - diffTime));
+        if (diffTime < 33000) {
+            OSSleepTicks(OSMicrosecondsToTicks(33000 - diffTime));
         }
     }
 

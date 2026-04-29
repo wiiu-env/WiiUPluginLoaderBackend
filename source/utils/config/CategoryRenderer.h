@@ -2,6 +2,7 @@
 
 #include "ConfigDefines.h"
 #include "ConfigDisplayItem.h"
+#include "InputRepeater.h"
 
 #include <wups/config.h>
 
@@ -57,4 +58,6 @@ private:
     bool mFirstFrame            = true;
     bool mIsRoot                = false;
     bool mNeedsRedraw           = true;
+
+    InputRepeater mNavRepeater;
 };

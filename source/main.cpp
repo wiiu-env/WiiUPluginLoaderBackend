@@ -379,10 +379,10 @@ void CleanupPlugins(std::vector<PluginContainer> &pluginsToDeinit) {
     CallHook(pluginsToDeinit, WUPS_LOADER_HOOK_INIT_WUT_SOCKETS);
 
     CallHook(pluginsToDeinit, WUPS_LOADER_HOOK_DEINIT_PLUGIN);
+    CallHook(pluginsToDeinit, WUPS_LOADER_HOOK_FINI_WRAPPER);
 
     CallHook(pluginsToDeinit, WUPS_LOADER_HOOK_FINI_WUT_DEVOPTAB);
     CallHook(pluginsToDeinit, WUPS_LOADER_HOOK_FINI_WUT_SOCKETS);
-    CallHook(pluginsToDeinit, WUPS_LOADER_HOOK_FINI_WRAPPER);
 
     { // legacy reent code
         if (currentThread->cleanupCallback != saved_cleanupCallback) {

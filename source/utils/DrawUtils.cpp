@@ -614,8 +614,6 @@ void DrawUtils::RenderScreen(const std::function<void()> &callback) {
     auto drcPitch2  = DCReadReg32(SCREEN_DRC, D1OVL_PITCH_REG);
 
     OSScreenInit();
-    OSScreenEnableEx(SCREEN_TV, 0);
-    OSScreenEnableEx(SCREEN_DRC, 0);
 
     uint32_t screen_buf0_size = OSScreenGetBufferSizeEx(SCREEN_TV);
     uint32_t screen_buf1_size = OSScreenGetBufferSizeEx(SCREEN_DRC);
@@ -646,7 +644,6 @@ void DrawUtils::RenderScreen(const std::function<void()> &callback) {
             goto error_exit;
         }
     }
-
 
     FastMemset32(screenbuffer0, (COLOR_BACKGROUND).color, screen_buf0_size);
     FastMemset32(screenbuffer1, (COLOR_BACKGROUND).color, screen_buf1_size);

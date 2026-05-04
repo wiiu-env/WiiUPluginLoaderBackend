@@ -6,7 +6,7 @@ class InputRepeater {
 public:
     // thresholdDelay: frames to wait before starting repeat (e.g., 15)
     // repeatRate: frames between repeats (e.g., 6)
-    explicit InputRepeater(uint32_t thresholdDelay = 15, uint32_t repeatRate = 6)
+    explicit InputRepeater(uint32_t thresholdDelay = 12, uint32_t repeatRate = 3)
         : mThresholdDelay(thresholdDelay), mRepeatRate(repeatRate) {}
 
     uint32_t update(const Input &input, uint32_t mask) {

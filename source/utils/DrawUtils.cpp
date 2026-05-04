@@ -1,5 +1,6 @@
 #include "DrawUtils.h"
 
+#include "NotificationsUtils.h"
 #include "dc.h"
 #include "globals.h"
 #include "logger.h"
@@ -641,6 +642,7 @@ void DrawUtils::RenderScreen(const std::function<void()> &callback) {
         }
         if (!screenbuffer0 || !screenbuffer1) {
             DEBUG_FUNCTION_LINE_ERR("Failed to alloc buffers");
+            DisplayInfoNotificationMessage("Not enough memory to render the config menu, please try again", 5.0);
             goto error_exit;
         }
     }
